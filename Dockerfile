@@ -37,7 +37,7 @@ FROM php:8.2-fpm-alpine
 RUN apk add --no-cache nginx bash
 
 # Copiar configuración de Nginx adaptada a Laravel
-COPY ./nginx.conf /etc/nginx/conf.d/default.conf
+COPY ./nginx.conf /etc/nginx/nginx.conf
 
 # Copiar proyecto desde la etapa build
 COPY --from=build /var/www/html /var/www/html
