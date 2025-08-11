@@ -26,10 +26,6 @@ COPY . .
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 RUN npm ci --silent && npm run build
 
-# Cachear configuración de Laravel
-RUN php artisan config:cache \
-    && php artisan route:cache \
-    && php artisan view:cache
 
 # Etapa 2: Producción (PHP-FPM + Nginx - Alpine)
 FROM php:8.2-fpm-alpine as production
