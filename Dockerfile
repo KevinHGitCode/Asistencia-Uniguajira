@@ -30,6 +30,9 @@ RUN npm ci --silent && npm run build
 # Etapa 2: Producción (PHP-FPM + Nginx - Alpine)
 FROM php:8.2-fpm-alpine as production
 
+# Instalar extensiones necesarias en producción
+RUN docker-php-ext-install pdo pdo_mysql
+
 # Instalar Nginx y utilidades
 RUN apk add --no-cache nginx bash
 
@@ -37,7 +40,7 @@ RUN apk add --no-cache nginx bash
 RUN mkdir -p /run/nginx /var/www/html/storage /var/www/html/bootstrap/cache \
     && rm -f /etc/nginx/conf.d/* || true
 
-# Copiar configuración principal y site (asegúrate de tener ambos archivos en repo)
+# Copiar configuración principal y site
 COPY ./nginx.conf /etc/nginx/nginx.conf
 COPY ./default.conf /etc/nginx/conf.d/default.conf
 
