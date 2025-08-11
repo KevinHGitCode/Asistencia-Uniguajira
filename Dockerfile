@@ -1,60 +1,63 @@
 # Etapa 1: Construcción (Composer + Node + PHP)
 FROM php:8.2-fpm as build
 
-# Instalar dependencias del sistema
+# Instalar dependencias del sistema (Debian)
 RUN apt-get update && apt-get install -y \
     libpng-dev libjpeg-dev libfreetype6-dev zip git unzip curl \
-    libonig-dev libxml2-dev nodejs npm \
+    libonig-dev libxml2-dev ca-certificates \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install pdo pdo_mysql mbstring gd bcmath opcache
+    && docker-php-ext-install pdo pdo_mysql mbstring gd bcmath opcache \
+    && rm -rf /var/lib/apt/lists/*
 
 # Instalar Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 # Instalar Node.js 20
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y nodejs
+    && apt-get update && apt-get install -y nodejs \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /var/www/html
 
-# Copiar archivos del proyecto
+# Copiar proyecto
 COPY . .
 
-# Instalar dependencias de PHP y JS
-RUN composer install --no-dev --optimize-autoloader
-RUN npm install && npm run build
+# Instalar dependencias de PHP y JS (producción)
+RUN composer install --no-dev --optimize-autoloader --no-interaction
+RUN npm ci --silent && npm run build
 
 # Cachear configuración de Laravel
 RUN php artisan config:cache \
     && php artisan route:cache \
     && php artisan view:cache
 
-# Etapa 2: Producción (PHP-FPM + Nginx)
+# Etapa 2: Producción (PHP-FPM + Nginx - Alpine)
 FROM php:8.2-fpm-alpine as production
 
-# Instalar Nginx y bash
+# Instalar Nginx y utilidades
 RUN apk add --no-cache nginx bash
 
-# Crear carpeta para logs de Nginx
-RUN mkdir -p /run/nginx
+# Crear carpeta run y limpiar conf.d para evitar duplicados
+RUN mkdir -p /run/nginx /var/www/html/storage /var/www/html/bootstrap/cache \
+    && rm -f /etc/nginx/conf.d/* || true
 
-# Copiar configuración de Nginx
-COPY ./nginx.conf /etc/nginx/conf.d/default.conf
-
-# Copiar proyecto desde la etapa build
-COPY --from=build /var/www/html /var/www/html
+# Copiar configuración principal y site (asegúrate de tener ambos archivos en repo)
+COPY ./nginx.conf /etc/nginx/nginx.conf
+COPY ./default.conf /etc/nginx/conf.d/default.conf
 
 # Copiar script de inicio
 COPY ./start.sh /start.sh
 RUN chmod +x /start.sh
 
+# Copiar proyecto desde la etapa build
+COPY --from=build /var/www/html /var/www/html
+
 WORKDIR /var/www/html
 
 # Permisos para Laravel
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Exponer puerto
 EXPOSE 80
 
-# Arranque
 CMD ["sh", "/start.sh"]
