@@ -31,18 +31,20 @@ RUN php artisan config:cache \
     && php artisan view:cache
 
 # Etapa 2: Producción (PHP-FPM + Nginx)
-FROM php:8.2-fpm-alpine
+FROM php:8.2-fpm-alpine as production
 
-# Instalar Nginx
+# Instalar Nginx y bash
 RUN apk add --no-cache nginx bash
 
+# Crear carpeta de logs de Nginx
+RUN mkdir -p /run/nginx
+
 # Copiar configuración de Nginx adaptada a Laravel
-COPY ./nginx.conf /etc/nginx/nginx.conf
+COPY ./nginx.conf /etc/nginx/conf.d/default.conf
 
 # Copiar proyecto desde la etapa build
 COPY --from=build /var/www/html /var/www/html
 
-# Configuración de trabajo
 WORKDIR /var/www/html
 
 # Permisos para Laravel
@@ -51,5 +53,5 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 # Exponer puerto
 EXPOSE 80
 
-# Arrancar PHP-FPM y Nginx
-CMD ["sh", "-c", "php-fpm -D && nginx -g 'daemon off;'"]
+# Arrancar PHP-FPM + Nginx
+CMD sh -c "php-fpm -D && nginx -g 'daemon off;'"
