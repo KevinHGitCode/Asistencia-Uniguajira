@@ -13,19 +13,19 @@ Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
-Route::view('new', 'new')
+Route::view('Nuevo', 'events.new')
     ->middleware(['auth', 'verified'])
     ->name('new');
 
-Route::view('list', 'list')
+Route::view('Listas', 'events.list')
     ->middleware(['auth', 'verified'])
     ->name('list');
 
-Route::view('statistics', 'statistics')
+Route::view('Estadisticas', 'statistics.statistics')
     ->middleware(['auth', 'verified'])
     ->name('statistics');
 
-Route::view('users', 'users')
+Route::view('Usuarios', 'users.users')
     ->middleware(['auth', 'verified'])
     ->name('users');
 
