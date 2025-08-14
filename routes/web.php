@@ -13,6 +13,22 @@ Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
+Route::view('new', 'new')
+    ->middleware(['auth', 'verified'])
+    ->name('new');
+
+Route::view('list', 'list')
+    ->middleware(['auth', 'verified'])
+    ->name('list');
+
+Route::view('statistics', 'statistics')
+    ->middleware(['auth', 'verified'])
+    ->name('statistics');
+
+Route::view('users', 'users')
+    ->middleware(['auth', 'verified'])
+    ->name('users');
+
 Route::middleware(['auth'])->group(function () {
     Route::redirect('settings', 'settings/profile');
 
