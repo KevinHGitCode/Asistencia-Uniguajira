@@ -7,11 +7,36 @@
     />
 </svg> --}}
 
-<img 
-    src="{{ asset('images/logo-uniguajira-seo-150x150.webp') }}" 
-    alt="Logo Uniguajira" 
-    class="me-2"
-    width="150px"
-    height="150px"
->
+<div>
+    <img 
+        src="{{ asset('images/logo-uniguajira-seo-150x150.webp') }}" 
+        alt="Logo Uniguajira" 
+        class="logo-uniguajira me-2"
+    >
+</div>
+
+<style>
+    .logo-uniguajira {
+        width: 150px !important;
+        height: 150px !important;
+        max-width: none !important;
+    }
+
+    /* móviles */
+    @media (max-width: 640px) { 
+        .logo-uniguajira {
+            width: 100px !important;
+            height: 100px !important;
+        }
+    }
+
+    /* tablets */
+    @media (min-width: 641px) and (max-width: 1024px) { 
+        .logo-uniguajira {
+            width: 110px !important;
+            height: 110px !important;
+            margin-bottom: 1.2rem;
+        }
+    }
+</style>
 
