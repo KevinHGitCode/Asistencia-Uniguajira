@@ -1,18 +1,25 @@
 <x-layouts.app :title="__('New')">
-    <div class="flex h-full w-full flex-1 flex-col gap-4 rounded-xl">
-        <div class="grid auto-rows-min gap-4 md:grid-cols-3">
-            <div class="relative aspect-video overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-700">
-                <x-placeholder-pattern class="absolute inset-0 size-full stroke-gray-900/20 dark:stroke-neutral-100/20" />
-            </div>
-            <div class="relative aspect-video overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-700">
-                <x-placeholder-pattern class="absolute inset-0 size-full stroke-gray-900/20 dark:stroke-neutral-100/20" />
-            </div>
-            <div class="relative aspect-video overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-700">
-                <x-placeholder-pattern class="absolute inset-0 size-full stroke-gray-900/20 dark:stroke-neutral-100/20" />
-            </div>
-        </div>
-        <div class="relative h-full flex-1 overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-700">
-            <x-placeholder-pattern class="absolute inset-0 size-full stroke-gray-900/20 dark:stroke-neutral-100/20" />
+    <div>
+        <p class="text-2xl font-bold text-gray-800 mb-4"> Nuevo evento </p>
+
+        <div>
+            <form wire:submit="createEvent" class="flex flex-col gap-6">
+                <flux:input wire:model="eventName" :label="__('Nombre del evento')" type="text" required autofocus
+                    placeholder="Día del amor y la amistad" />
+
+                <flux:input wire:model="description" :label="__('Descripción del evento')" type="text" required
+                    placeholder="Evento especial para celebrar el amor y la amistad" />
+
+                <flux:input wire:model="date" :label="__('Fecha del evento')" type="date" required />
+
+                <flux:input wire:model="startTime" :label="__('Hora de inicio')" type="time" required />
+
+                <flux:input wire:model="endTime" :label="__('Hora de finalización')" type="time" required />
+
+                <flux:button variant="primary" type="submit" class="w-full">
+                    {{ __('Crear Evento') }}
+                </flux:button>
+            </form>
         </div>
     </div>
 </x-layouts.app>
