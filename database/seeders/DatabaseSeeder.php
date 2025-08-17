@@ -18,6 +18,41 @@ class DatabaseSeeder extends Seeder
         User::factory()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',
+            'password' => bcrypt('12345678'),
         ]);
+
+        User::factory()->create([
+            'name' => 'carlos',
+            'email' => 'carlitos@example.com',
+            'password' => bcrypt('12345678'),
+        ]);
+
+        User::factory()->create([
+            'name' => 'luis',
+            'email' => 'luis@example.com',
+            'password' => bcrypt('12345678'),
+        ]);
+
+        User::factory()->create([
+            'name' => 'kevin',
+            'email' => 'kevin@example.com',
+            'password' => bcrypt('12345678'),
+        ]);
+
+        User::factory()->create([
+            'name' => 'daniel',
+            'email' => 'daniel@example.com',
+            'password' => bcrypt('12345678'),
+        ]);
+
+        User::factory()->create([
+            'name' => 'renzo',
+            'email' => 'renzo@example.com',
+            'password' => bcrypt('12345678'),
+        ]);
+
+
+        User::factory(10)->create();
+        $this->call(EventSeeder::class);
     }
 }
