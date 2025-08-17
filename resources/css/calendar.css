@@ -1,0 +1,63 @@
+
+/* Estilos específicos para labels del calendario */
+
+/* Asegurar que los labels estén siempre centrados */
+#cal-heatmap .ch-subdomain-text {
+    text-anchor: middle !important;
+    dominant-baseline: central !important;
+    font-weight: 500;
+    pointer-events: none;
+    user-select: none;
+}
+
+/* Ajustes específicos para diferentes tamaños de celda */
+@media (max-width: 768px) {
+    #cal-heatmap .ch-subdomain-text {
+        font-size: 10px !important;
+        font-weight: 600;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+    #cal-heatmap .ch-subdomain-text {
+        font-size: 12px !important;
+    }
+}
+
+@media (min-width: 1025px) {
+    #cal-heatmap .ch-subdomain-text {
+        font-size: 14px !important;
+    }
+}
+
+/* Asegurar que el contenedor del SVG no interfiera */
+#cal-heatmap svg {
+    overflow: visible !important;
+}
+
+/* Ajustes para diferentes niveles de zoom */
+@media (resolution: 150dpi), (resolution: 1.5dppx) {
+    #cal-heatmap .ch-subdomain-text {
+        font-size: calc(var(--cell-size, 20px) * 0.4) !important;
+    }
+}
+
+@media (resolution: 200dpi), (resolution: 2dppx) {
+    #cal-heatmap .ch-subdomain-text {
+        font-size: calc(var(--cell-size, 20px) * 0.35) !important;
+    }
+}
+
+/* Estilos para temas */
+.dark #cal-heatmap .ch-subdomain-text {
+    fill: #ffffff !important;
+}
+
+#cal-heatmap .ch-subdomain-text {
+    fill: #000000 !important;
+}
+
+/* Transiciones suaves para cambios de tamaño */
+#cal-heatmap .ch-subdomain-text {
+    transition: font-size 0.2s ease, x 0.2s ease, y 0.2s ease;
+}
