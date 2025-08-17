@@ -17,19 +17,16 @@ Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
-Route::view('Nuevo', 'events.new')
-    ->middleware(['auth', 'verified'])
-    ->name('new');
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::view('eventos/nuevo', 'events.new')->name('new');
+    Route::view('eventos/lista', 'events.list')->name('list');
+});
 
-Route::view('Listas', 'events.list')
-    ->middleware(['auth', 'verified'])
-    ->name('list');
-
-Route::view('Estadisticas', 'statistics.statistics')
+Route::view('estadisticas', 'statistics.statistics')
     ->middleware(['auth', 'verified'])
     ->name('statistics');
 
-Route::view('Usuarios', 'users.users')
+Route::view('usuarios', 'users.users')
     ->middleware(['auth', 'verified'])
     ->name('users');
 
@@ -43,7 +40,6 @@ Route::middleware(['auth'])->group(function () {
 
     Route::post('settings/language/switch', [LanguageController::class, 'switch'])
         ->name('settings.language.switch');
-
 });
 
 Route::get('/api/event-calendar', function () {
