@@ -26,6 +26,10 @@ Route::view('estadisticas', 'statistics.statistics')
     ->middleware(['auth', 'verified'])
     ->name('statistics');
 
+Route::view('graficos/tipos', 'statistics.charts.types')
+    ->middleware(['auth', 'verified'])
+    ->name('charts.types');
+
 Route::view('usuarios', 'users.users')
     ->middleware(['auth', 'verified'])
     ->name('users');
