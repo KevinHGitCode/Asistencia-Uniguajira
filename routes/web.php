@@ -4,6 +4,7 @@ use App\Livewire\Settings\Appearance;
 use App\Livewire\Settings\Password;
 use App\Livewire\Settings\Profile;
 use Illuminate\Support\Facades\Route;
+use App\Models\Event;
 
 Route::middleware('auth')->get('/', function () {
     return redirect()->route('dashboard');
@@ -36,5 +37,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('settings/password', Password::class)->name('settings.password');
     Route::get('settings/appearance', Appearance::class)->name('settings.appearance');
 });
+
+Route::get('/api/event-calendar', function () {
+    return Event::selectRaw('DATE(created_at) as date, COUNT(*) as count')
+        ->groupBy('date')
+        ->pluck('count', 'date');
+});
+
 
 require __DIR__.'/auth.php';
