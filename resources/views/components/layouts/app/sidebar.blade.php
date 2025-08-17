@@ -15,16 +15,25 @@
 
         <flux:navlist variant="outline">
             <flux:navlist.group :heading="__('Platform')" class="grid">
+
                 <flux:navlist.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')"
                     wire:navigate>{{ __('Home') }}</flux:navlist.item>
+
                 <flux:navlist.item icon="plus" :href="route('new')" :current="request()->routeIs('new')"
                     wire:navigate>{{ __('New') }}</flux:navlist.item>
+
                 <flux:navlist.item icon="numbered-list" :href="route('list')" :current="request()->routeIs('list')"
                     wire:navigate>{{ __('Event list') }}</flux:navlist.item>
+
                 <flux:navlist.item icon="chart-bar" :href="route('statistics')" :current="request()->routeIs('statistics')"
                     wire:navigate>{{ __('Statistics') }}</flux:navlist.item>
+
+                <flux:navlist.item icon="chart-bar" :href="route('charts.types')" :current="request()->routeIs('charts.types')"
+                    wire:navigate>{{ __('Tipos de graficos') }}</flux:navlist.item>
+
                 <flux:navlist.item icon="users" :href="route('users')" :current="request()->routeIs('users')"
                     wire:navigate>{{ __('Users') }}</flux:navlist.item>
+                    
             </flux:navlist.group>
         </flux:navlist>
 
