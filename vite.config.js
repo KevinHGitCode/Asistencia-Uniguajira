@@ -9,7 +9,6 @@ export default defineConfig({
         laravel({
             input: ['resources/css/app.css', 'resources/js/app.js', 
                     'resources/css/calendar.css', 'resources/js/calendar.js',
-                    'resources/js/charts.js'
                 ],
             refresh: true,
         }),
