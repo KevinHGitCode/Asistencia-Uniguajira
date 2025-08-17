@@ -50,5 +50,9 @@ class DatabaseSeeder extends Seeder
             'email' => 'renzo@example.com',
             'password' => bcrypt('12345678'),
         ]);
+
+
+        User::factory(10)->create();
+        $this->call(EventSeeder::class);
     }
 }
