@@ -60,7 +60,10 @@
             </div>
         </div>
         <div class="relative h-full flex-1 overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-700">
-            <img src="https://editorial.uefa.com/resources/027f-17a3eb7de39a-460b563d750c-1000/manchester_united_v_chelsea_-_uefa_champions_league_final.jpeg" alt="Imagen de fondo" class="w-full h-full object-cover">
+            <div class="h-full w-full" id="cal-heatmap"></div>
+            {{-- <div id="event-calendar" class="h-full w-full"></div> --}}
+            {{-- @vite('resources/js/calendar.js'); --}}
+            {{-- <img src="https://editorial.uefa.com/resources/027f-17a3eb7de39a-460b563d750c-1000/manchester_united_v_chelsea_-_uefa_champions_league_final.jpeg" alt="Imagen de fondo" class="w-full h-full object-cover"> --}}
         </div>
 
     </div>
