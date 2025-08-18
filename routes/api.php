@@ -2,7 +2,27 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Models\Event;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
+
+
+Route::get('/eventos-json', function () {
+    $now = now();
+    $year = $now->year;
+    if ($now->month >= 1 && $now->month <= 6) {
+        // Primer semestre: 1 de enero a 30 de junio
+        $start = "$year-01-01";
+        $end = "$year-06-30";
+    } else {
+        // Segundo semestre: 1 de julio a 31 de diciembre
+        $start = "$year-07-01";
+        $end = "$year-12-31";
+    }
+    return Event::selectRaw('DATE(date) as date, COUNT(*) as count')
+        ->whereBetween('date', [$start, $end])
+        ->groupBy('date')
+        ->get();
+});

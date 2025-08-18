@@ -10,9 +10,17 @@ function handleRouteChange(routeName) {
 
     switch (routeName) {
         case 'dashboard':
-            // setTimeout(() => {
-            //     paintCalendar();
-            // }, 300);
+            // Debounce para evitar repintados dobles
+            if (window._dashboardCalendarTimeout) {
+                clearTimeout(window._dashboardCalendarTimeout);
+            }
+            window._dashboardCalendarTimeout = setTimeout(() => {
+                if (typeof window.paintCalendar !== 'function') {
+                    import('./calendar.js').then(() => window.paintCalendar());
+                } else {
+                    window.paintCalendar();
+                }
+            }, 100);
             break;
 
         case 'tipos':

@@ -1,53 +1,4 @@
 
-// const cal = new CalHeatmap();
-// // Detect theme from project (assuming you have a way to check, e.g., a class on body)
-// const isDarkTheme = document.documentElement.classList.contains('dark');
-
-// cal.paint({
-//     domain: {
-//         type: "month",
-//         gutter: 1,
-//         padding: [5, 5, 5, 5],
-//         dynamicDimension: true,
-//         sort: 'asc',
-//         label: {
-//             position: 'top'
-//         },
-//     },
-//     subDomain: {
-//         type: "xDay",
-//         width: 30,
-//         height: 30,
-//         gutter: 5,
-//         radius: 5,
-//         label: 'D',
-//         color: (t, v, backgroundColor) => {
-//             if (isDarkTheme) {
-//                 return 'white';
-//             }
-//             return 'black';
-//         },
-//     },
-//     date: {
-//         start: new Date(),
-//         highlight: [
-//             new Date('2025-08-19'),
-//             new Date('2025-09-04'),
-//             new Date('2025-10-05'),
-//             new Date('2025-12-09'),
-//             new Date(new Date().toLocaleString('en-CO', { timeZone: 'America/Bogota' })) // TODO: hay que terminar de pulir esta fecha de hoy para que no haya conflicto de zonas horarias
-//         ],
-//         locale: 'es',
-//         timezone: 'America/Bogota'
-//         },    
-//         // range: 6,
-//     theme: isDarkTheme ? 'dark' : 'light',
-//     animationDuration: 2000
-// });
-
-
-// Para luego hacer responsive
-
 // --- INICIO: Soporte para repintar el calendario con Livewire ---
 let calInstance = null;
 let isCalendarInitialized = false;
@@ -71,16 +22,53 @@ function getResponsiveDimensions() {
     };
 }
 
-function paintCalendar() {
+
+async function fetchEventsAndPaintCalendar() {
+    const response = await fetch('/api/eventos-json');
+    const eventos = await response.json();
+    return eventos;
+}
+
+
+window.paintCalendar = async () => {
     const calContainer = document.getElementById('cal-heatmap');
     if (!calContainer) return;
+
     // Destruir instancia previa si existe
     if (calInstance) {
         calInstance.destroy();
         calInstance = null;
     }
+
     const isDarkTheme = document.documentElement.classList.contains('dark');
+    console.log(`Repaint calendar: isDarkTheme=${isDarkTheme}`);
+
+    const events = await fetchEventsAndPaintCalendar();
     const dimensions = getResponsiveDimensions();
+
+    // Función para determinar el semestre y las fechas de inicio
+    const getSemesterInfo = () => {
+        const now = new Date();
+        const currentMonth = now.getMonth(); // 0-11
+        const currentYear = now.getFullYear();
+
+        let startDate, range;
+
+        if (currentMonth >= 0 && currentMonth <= 5) {
+            // Primer semestre (Enero - Junio)
+            startDate = new Date(currentYear, 0, 1); // 1 de enero
+            range = 6; // 6 meses
+        } else {
+            // Segundo semestre (Julio - Diciembre)
+            startDate = new Date(currentYear, 6, 1); // 1 de julio
+            range = 6; // 6 meses
+        }
+
+        return { startDate, range };
+    };
+
+    const semesterInfo = getSemesterInfo();
+
     calInstance = new CalHeatmap();
     calInstance.paint({
         domain: {
@@ -108,13 +96,13 @@ function paintCalendar() {
             }
         },
         data: {
-            source: [],
+            source: events,
             type: 'json',
             x: 'date',
             y: 'count'
         },
         date: {
-            start: new Date(),
+            start: semesterInfo.startDate, // Fecha de inicio del semestre
             highlight: [
                 new Date('2025-08-19'),
                 new Date('2025-09-04'),
@@ -125,32 +113,24 @@ function paintCalendar() {
             locale: 'es',
             timezone: 'America/Bogota'
         },
-        range: 6,
+        range: semesterInfo.range, // 6 meses por semestre
         theme: isDarkTheme ? 'dark' : 'light',
-        animationDuration: 0,
+        animationDuration: 750,
         itemSelector: '#cal-heatmap',
         scale: {
             color: {
                 type: 'threshold',
-                scheme: 'Blues',
-                domain: [1, 3, 5, 10]
+                domain: [1, 3, 5, 10],
+                range: isDarkTheme
+                    ? ['#22223b', '#4a4e69', '#9a8c98', '#f2e9e4', '#ffbe76'] // Ejemplo modo oscuro
+                    : ['#e3eafc', '#b6ccfe', '#7ea6f6', '#4f83cc', '#274690'] // Azules suaves modo claro
             }
         }
     });
+
     isCalendarInitialized = true;
-}
+};
 
-// Inicializar al cargar la página
-document.addEventListener('DOMContentLoaded', function() {
-    paintCalendar();
-});
-
-// Repintar al volver al dashboard con Livewire
-window.addEventListener('dashboard:show', function() {
-    setTimeout(() => {
-        paintCalendar();
-    }, 500);
-});
 
 // Repintar al cambiar el tamaño de la ventana (con debounce)
 let resizeTimeout;
@@ -178,7 +158,6 @@ const observer = new MutationObserver(function(mutations) {
             const newIsDarkTheme = document.documentElement.classList.contains('dark');
             if (newIsDarkTheme !== lastTheme) {
                 lastTheme = newIsDarkTheme;
-                paintCalendar();
             }
         }
     });

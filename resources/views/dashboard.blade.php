@@ -66,16 +66,5 @@
             <div class="h-full w-full flex justify-center" id="cal-heatmap"></div>
             {{-- <img src="https://editorial.uefa.com/resources/027f-17a3eb7de39a-460b563d750c-1000/manchester_united_v_chelsea_-_uefa_champions_league_final.jpeg" alt="Imagen de fondo" class="w-full h-full object-cover"> --}}
         </div>
-
-        <!-- Livewire hook para repintar el calendario -->
-        <script>
-            document.addEventListener('livewire:navigated', function(e) {
-                // Solo repintar si estamos en el dashboard
-                if (window.location.pathname === '{{ route('dashboard', [], false) }}') {
-                    window.dispatchEvent(new Event('dashboard:show'));
-                }
-            });
-        </script>
-
     </div>
 </x-layouts.app>
