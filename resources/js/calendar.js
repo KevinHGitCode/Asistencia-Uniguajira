@@ -115,7 +115,7 @@ window.paintCalendar = async () => {
         },
         range: semesterInfo.range, // 6 meses por semestre
         theme: isDarkTheme ? 'dark' : 'light',
-        animationDuration: 750,
+        animationDuration: 1000,
         itemSelector: '#cal-heatmap',
         scale: {
             color: {
