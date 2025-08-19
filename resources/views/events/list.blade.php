@@ -1,18 +1,19 @@
 <x-layouts.app :title="__('List')">
-    <div class="flex h-full w-full flex-1 flex-col gap-4 rounded-xl">
-        <div class="grid auto-rows-min gap-4 md:grid-cols-3">
-            <div class="relative aspect-video overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-700">
-                <x-placeholder-pattern class="absolute inset-0 size-full stroke-gray-900/20 dark:stroke-neutral-100/20" />
-            </div>
-            <div class="relative aspect-video overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-700">
-                <x-placeholder-pattern class="absolute inset-0 size-full stroke-gray-900/20 dark:stroke-neutral-100/20" />
-            </div>
-            <div class="relative aspect-video overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-700">
-                <x-placeholder-pattern class="absolute inset-0 size-full stroke-gray-900/20 dark:stroke-neutral-100/20" />
-            </div>
-        </div>
-        <div class="relative h-full flex-1 overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-700">
-            <x-placeholder-pattern class="absolute inset-0 size-full stroke-gray-900/20 dark:stroke-neutral-100/20" />
-        </div>
+    <div>
+        <p class="text-2xl font-bold text-white mb-4"> Tus eventos </p>
     </div>
+        
+        <div class="relative h-full flex-1 overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-700">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-4">
+                <livewire:event.card title="Annual Charity Gala" date="2024-12-10" location="Grand Ballroom, City Hall" />
+                <livewire:event.card title="Annual Charity Gala" date="2024-12-10" location="Grand Ballroom, City Hall" />
+                <livewire:event.card title="Annual Charity Gala" date="2024-12-10" location="Grand Ballroom, City Hall" />
+                <livewire:event.card title="Annual Charity Gala" date="2024-12-10" location="Grand Ballroom, City Hall" />
+                <livewire:event.card title="Annual Charity Gala" date="2024-12-10" location="Grand Ballroom, City Hall" />
+                <livewire:event.card title="Annual Charity Gala" date="2024-12-10" location="Grand Ballroom, City Hall" />
+                <livewire:event.card title="Annual Charity Gala" date="2024-12-10" location="Grand Ballroom, City Hall" />
+                <livewire:event.card title="Annual Charity Gala" date="2024-12-10" location="Grand Ballroom, City Hall" />
+                <livewire:event.card title="Annual Charity Gala" date="2024-12-10" location="Grand Ballroom, City Hall" />
+            </div>
+        </div>
 </x-layouts.app>
