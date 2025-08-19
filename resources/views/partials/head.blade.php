@@ -15,7 +15,7 @@
 <!-- importacion de `Cal-Heatmap`: gráficos tipo calendario y librerias auxiliares -->
 <script src="https://d3js.org/d3.v6.min.js"></script>
 <script src="https://unpkg.com/cal-heatmap/dist/cal-heatmap.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/dayjs@1/locale/zh-cn.js"></script>  <!-- esto da error -->
+{{-- <script src="https://cdn.jsdelivr.net/npm/dayjs@1/locale/zh-cn.js"></script>  <!-- esto da error --> --}}
 <link rel="stylesheet" href="https://unpkg.com/cal-heatmap/dist/cal-heatmap.css">
 
 <!-- importacion de `Apache Echarts` para graficos -->
@@ -23,5 +23,5 @@
 
 
 
-@vite(['resources/css/app.css', 'resources/js/app.js'])
+@vite(['resources/css/app.css', 'resources/js/app.js', 'resources/css/calendar.css', 'resources/js/calendar.js'])
 @fluxAppearance
