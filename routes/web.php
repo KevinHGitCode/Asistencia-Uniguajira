@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Route;
 use App\Models\Event;
 
 use \App\Http\Controllers\Lang\LanguageController;
+use App\Http\Controllers\EventController;
 
 Route::middleware('auth')->get('/', function () {
     return redirect()->route('dashboard');
@@ -18,8 +19,9 @@ Route::view('dashboard', 'dashboard')
     ->name('dashboard');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::view('eventos/nuevo', 'events.new')->name('new');
-    Route::view('eventos/lista', 'events.list')->name('list');
+    Route::get('eventos/nuevo', [EventController::class, 'create'])->name('new');
+    Route::get('eventos/lista', [EventController::class, 'index'])->name('list');
+    Route::post('eventos/lista', [EventController::class, 'store'])->name('new');
 });
 
 Route::view('estadisticas', 'statistics.statistics')

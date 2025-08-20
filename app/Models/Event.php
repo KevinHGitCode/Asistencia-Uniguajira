@@ -13,8 +13,13 @@ class Event extends Model
         'title',
         'description',
         'date', // fecha del evento
+        'start_time', // hora de inicio
+        'end_time', // hora de finalización
         'user_id', // creador
     ];
 
-    protected $dates = ['date'];
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

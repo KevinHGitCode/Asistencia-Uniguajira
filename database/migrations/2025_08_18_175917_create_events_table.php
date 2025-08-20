@@ -12,7 +12,9 @@ return new class extends Migration {
             $table->string('title');
             $table->text('description')->nullable();
             $table->date('date');
-            $table->foreignId('user_id')->constrained()->onDelete('cascade'); // creador del evento
+            $table->time('start_time')->nullable();
+            $table->time('end_time')->nullable();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->timestamps();
         });
     }

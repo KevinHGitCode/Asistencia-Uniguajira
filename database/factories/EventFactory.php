@@ -16,6 +16,8 @@ class EventFactory extends Factory
             'title' => $this->faker->sentence(3),
             'description' => $this->faker->paragraph(),
             'date' => $this->faker->dateTimeBetween('-6 months', '+3 months'),
+            'start_time' => $this->faker->time('H:i:s'),
+            'end_time' => $this->faker->time('H:i:s'),
             'user_id' => User::inRandomOrder()->first()->id ?? User::factory(),
         ];
     }
