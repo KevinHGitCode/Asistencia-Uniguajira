@@ -9,6 +9,8 @@ class Event extends Model
 {
     use HasFactory;
 
+    protected $table = 'events';
+
     protected $fillable = [
         'title',
         'description',
@@ -21,5 +23,16 @@ class Event extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function asistencias()
+    {
+        return $this->hasMany(Asistencia::class, 'evento_id');
+    }
+
+    public function participantes()
+    {
+        return $this->belongsToMany(Participante::class, 'asistencias', 'evento_id', 'participante_id')
+            ->withTimestamps();
     }
 }
