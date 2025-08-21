@@ -11,9 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('vinculaciones', function (Blueprint $table) {
+        // Vinculaciones
+        Schema::create('affiliations', function (Blueprint $table) {
             $table->id();
-            $table->enum('tipo_vinculacion', ['Catedratico', 'Ocasional', 'Planta'])->nullable();
+            $table->enum('affiliation_type', ['Adjunct', 'Temporary', 'Permanent'])->nullable();
             $table->timestamps();
         });
     }
@@ -23,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('vinculaciones');
+        Schema::dropIfExists('affiliations');
     }
 };

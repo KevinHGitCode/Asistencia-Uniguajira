@@ -11,9 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('estamentos', function (Blueprint $table) {
+        // Estamentos
+        Schema::create('roles', function (Blueprint $table) {
             $table->id();
-            $table->enum('tipo_estamento', ['Docente', 'Estudiante'])->nullable();
+            $table->enum('role_type', ['Teacher', 'Student'])->nullable();
             $table->timestamps();
         });
     }
@@ -23,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('estamentos');
+        Schema::dropIfExists('roles');
     }
 };

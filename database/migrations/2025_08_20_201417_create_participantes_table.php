@@ -11,15 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('participantes', function (Blueprint $table) {
+        // Participantes
+        Schema::create('participants', function (Blueprint $table) {
             $table->id();
-            $table->string('documento', 20)->unique();
-            $table->string('nombres', 100);
-            $table->string('apellidos', 100);
+            $table->string('document', 20)->unique();
+            $table->string('first_name', 100);
+            $table->string('last_name', 100);
             $table->string('email')->unique();
-            $table->foreignId('estamento_id')->constrained('estamentos')->onDelete('cascade');
-            $table->foreignId('programa_id')->nullable()->constrained('programas')->onDelete('cascade');
-            $table->foreignId('vinculacion_id')->nullable()->constrained('vinculaciones')->onDelete('cascade');
+            $table->foreignId('role_id')->constrained('roles')->onDelete('cascade');
+            $table->foreignId('program_id')->nullable()->constrained('programs')->onDelete('cascade');
+            $table->foreignId('affiliation_id')->nullable()->constrained('affiliations')->onDelete('cascade');
             $table->timestamps();
         });
     }
@@ -29,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('participantes');
+        Schema::dropIfExists('participants');
     }
 };
