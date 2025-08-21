@@ -4,17 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Vinculacion extends Model
+class Affiliation extends Model
 {
-    protected $table = 'vinculaciones';
 
     protected $fillable = [
-        'tipo_vinculacion',
+        'affiliation_type',
     ];
 
-
-    public function participantes()
+    public function participants()
     {
-        return $this->hasMany(Participante::class, 'vinculacion_id');
+        return $this->hasMany(Participant::class, 'affiliation_id');
     }
 }

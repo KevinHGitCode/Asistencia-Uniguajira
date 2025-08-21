@@ -4,17 +4,16 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Asistencia extends Model
+class Attendance extends Model
 {
-    protected $table = 'asistencias';
 
-    public function participante()
+    public function participant()
     {
-        return $this->belongsTo(Participante::class, 'participante_id');
+        return $this->belongsTo(Participant::class, 'participant_id');
     }
 
-    public function evento()
+    public function event()
     {
-        return $this->belongsTo(Event::class, 'evento_id');
+        return $this->belongsTo(Event::class, 'event_id');
     }
 }

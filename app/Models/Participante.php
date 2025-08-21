@@ -4,44 +4,42 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Participante extends Model
+class Participant extends Model
 {
-    protected $table = 'participantes';
 
     protected $fillable = [
-        'documento',
-        'nombres',
-        'apellidos',
+        'document',
+        'first_name',
+        'last_name',
         'email',
-        'estamento_id',
-        'programa_id',
-        'vinculacion_id',
+        'role_id',
+        'program_id',
+        'affiliation_id',
     ];
 
-    public function estamento()
+    public function role()
     {
-        return $this->belongsTo(Estamento::class, 'estamento_id');
+        return $this->belongsTo(Role::class, 'role_id');
     }
 
-    public function programa()
+    public function program()
     {
-        return $this->belongsTo(Programa::class, 'programa_id');
+        return $this->belongsTo(Program::class, 'program_id');
     }
 
-    public function vinculacion()
+    public function affiliation()
     {
-        return $this->belongsTo(Vinculacion::class, 'vinculacion_id');
+        return $this->belongsTo(Affiliation::class, 'affiliation_id');
     }
 
-    public function asistencias()
+    public function attendances()
     {
-        return $this->hasMany(Asistencia::class, 'participante_id');
+        return $this->hasMany(Attendance::class, 'participant_id');
     }
 
-    public function eventos()
+    public function events()
     {
-        return $this->belongsToMany(Event::class, 'asistencias', 'participante_id', 'evento_id')
-            ->withPivot('fecha_hora')
+        return $this->belongsToMany(Event::class, 'attendances', 'participant_id', 'event_id')
             ->withTimestamps();
     }
 }

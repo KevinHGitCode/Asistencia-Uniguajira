@@ -2,18 +2,19 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 
-class Estamento extends Model
+use Illuminate\Database\Eloquent\Model;
+use App\Models\Participant;
+
+class Role extends Model
 {
-    protected $table = 'estamentos';
 
     protected $fillable = [
-        'tipo_estamento',
+        'role_type',
     ];
 
-    public function participantes()
+    public function participants()
     {
-        return $this->hasMany(Participante::class, 'estamento_id');
+        return $this->hasMany(Participant::class, 'role_id');
     }
 }

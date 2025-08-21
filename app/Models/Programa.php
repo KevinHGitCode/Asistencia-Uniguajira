@@ -4,17 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Programa extends Model
+class Program extends Model
 {
-    protected $table = 'programas';
 
     protected $fillable = [
-        'nombre',
+        'name',
     ];
 
-
-    public function participantes()
+    public function participants()
     {
-        return $this->hasMany(Participante::class, 'programa_id');
+        return $this->hasMany(Participant::class, 'program_id');
     }
 }
