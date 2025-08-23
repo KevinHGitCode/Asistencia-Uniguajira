@@ -1,35 +1,31 @@
 import sys
 import pandas as pd
 
-# Ruta fija al archivo Excel
 FILE_PATH = "/home/kevin/Proyectos/laravel/Asistencia-Uniguajira/database/seeders/files/seed.xlsx"
 
 def fix_emails(path):
-    # Leer Excel
     df = pd.read_excel(path)
 
     if "Correo" not in df.columns:
         print("❌ La columna 'Correo' no existe en el archivo.")
         return
 
-    # Diccionario para contar duplicados
     seen = {}
+    new_emails = []
 
-    def make_unique(email):
+    for email in df["Correo"]:
         if pd.isna(email):
-            return email
+            new_emails.append(email)
+            continue
         if email not in seen:
             seen[email] = 0
-            return email
+            new_emails.append(email)
         else:
             seen[email] += 1
             name, domain = email.split("@")
-            return f"{name}+{seen[email]}@{domain}"
+            new_emails.append(f"{name}+{seen[email]}@{domain}")
 
-    # Aplicar función
-    df["Correo"] = df["Correo"].apply(make_unique)
-
-    # Guardar en el mismo archivo (sobreescribir)
+    df["Correo"] = new_emails
     df.to_excel(path, index=False)
     print(f"✅ Correos procesados y guardados en {path}")
 
