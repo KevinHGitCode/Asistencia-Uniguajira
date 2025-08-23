@@ -14,7 +14,7 @@ return new class extends Migration
         // Vinculaciones
         Schema::create('affiliations', function (Blueprint $table) {
             $table->id();
-            $table->enum('affiliation_type', ['Adjunct', 'Temporary', 'Permanent'])->nullable();
+            $table->enum('affiliation_type', ['CATEDRATICO', 'OCASIONAL', 'PLANTA'])->nullable();
             $table->timestamps();
         });
     }
