@@ -14,7 +14,7 @@ return new class extends Migration
         // Estamentos
         Schema::create('roles', function (Blueprint $table) {
             $table->id();
-            $table->enum('role_type', ['Teacher', 'Student'])->nullable();
+            $table->string('role_type', 100)->unique();
             $table->timestamps();
         });
     }

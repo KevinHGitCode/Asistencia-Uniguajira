@@ -15,7 +15,7 @@ return new class extends Migration
         Schema::create('programs', function (Blueprint $table) {
             $table->id();
             $table->string('name', 100)->unique();
-            $table->enum('program_type', ['Undergraduate', 'Postgraduate'])->nullable();
+            $table->enum('program_type', ['Pregrado', 'Posgrado'])->nullable();
             $table->timestamps();
         });
     }
