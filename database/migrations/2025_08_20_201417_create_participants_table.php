@@ -18,9 +18,9 @@ return new class extends Migration
             $table->string('first_name', 100);
             $table->string('last_name', 100);
             $table->string('email')->unique();
-            $table->foreignId('role_id')->constrained('roles')->onDelete('cascade');
+            $table->enum('role', ['Estudiante', 'Docente']);
+            $table->enum('affiliation', ['Catedratico', 'Ocasional','Planta'])->nullable();
             $table->foreignId('program_id')->nullable()->constrained('programs')->onDelete('cascade');
-            $table->foreignId('affiliation_id')->nullable()->constrained('affiliations')->onDelete('cascade');
             $table->timestamps();
         });
     }

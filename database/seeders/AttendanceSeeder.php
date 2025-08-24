@@ -26,13 +26,10 @@ class AttendanceSeeder extends Seeder
         foreach ($rows as $row) {
             [$document, $firstName, $lastName, $roleName, $email, $programName, $programType, $affiliationType] = $row;
 
-            // Roles (ej: "Estudiante", "Docente")
-            $role = Role::firstOrCreate(['role_type' => $roleName]);
-
-            //
+            // Remplazar valores nulos o vacíos
             $programType = match (strtolower($programType)) {
-                'pregrado', 'undergraduate' => 'Pregrado',
-                'posgrado', 'postgrado', 'postgraduate' => 'Posgrado',
+                'pregrado' => 'Pregrado',
+                'posgrado', 'postgrado' => 'Posgrado',
                 default => null,
             };
 
@@ -43,9 +40,8 @@ class AttendanceSeeder extends Seeder
             );
 
             // Vinculación (0 = null, otro valor = texto real)
-            $affiliation = null;
             if ($affiliationType !== 0 && $affiliationType !== '0') {
-                $affiliation = Affiliation::firstOrCreate(['affiliation_type' => $affiliationType]);
+                $affiliationType = null;
             }
 
             // Crear o actualizar Participant
@@ -55,9 +51,9 @@ class AttendanceSeeder extends Seeder
                     'first_name'     => $firstName,
                     'last_name'      => $lastName,
                     'email'          => $email,
-                    'role_id'        => $role->id,
+                    'role'           => $roleName, // Roles (ej: "Estudiante", "Docente")
+                    'affiliation'    => $affiliationType, // null si es 0
                     'program_id'     => $program->id,
-                    'affiliation_id' => $affiliation?->id, // null si es 0
                 ]
             );
         }
