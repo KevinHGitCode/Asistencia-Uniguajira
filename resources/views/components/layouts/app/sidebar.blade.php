@@ -19,10 +19,10 @@
                 <flux:navlist.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')"
                     wire:navigate>{{ __('Home') }}</flux:navlist.item>
 
-                <flux:navlist.item icon="plus" :href="route('new')" :current="request()->routeIs('new')"
+                <flux:navlist.item icon="plus" :href="route('events.new')" :current="request()->routeIs('events.new')"
                     wire:navigate>{{ __('New') }}</flux:navlist.item>
 
-                <flux:navlist.item icon="numbered-list" :href="route('list')" :current="request()->routeIs('list')"
+                <flux:navlist.item icon="numbered-list" :href="route('events.list')" :current="request()->routeIs('events.list')"
                     wire:navigate>{{ __('Event list') }}</flux:navlist.item>
 
                 <flux:navlist.item icon="chart-bar" :href="route('statistics')" :current="request()->routeIs('statistics')"
