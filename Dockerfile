@@ -1,54 +1,62 @@
 # Etapa 1: Construcción (Composer + Node + PHP)
 FROM php:8.2-fpm as build
 
-# Instalar dependencias del sistema
+# Instalar dependencias del sistema (Debian)
 RUN apt-get update && apt-get install -y \
     libpng-dev libjpeg-dev libfreetype6-dev zip git unzip curl \
-    libonig-dev libxml2-dev nodejs npm \
+    libonig-dev libxml2-dev ca-certificates \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install pdo pdo_mysql mbstring gd bcmath opcache
+    && docker-php-ext-install pdo pdo_mysql mbstring gd bcmath opcache \
+    && rm -rf /var/lib/apt/lists/*
 
 # Instalar Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 # Instalar Node.js 20
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y nodejs
+    && apt-get update && apt-get install -y nodejs \
+    && rm -rf /var/lib/apt/lists/*
 
-# Configuración de trabajo
 WORKDIR /var/www/html
 
-# Copiar archivos del proyecto
+# Copiar proyecto
 COPY . .
 
-# Instalar dependencias de PHP y JS
-RUN composer install --no-dev --optimize-autoloader
-RUN npm install && npm run build
+# Instalar dependencias de PHP y JS (producción)
+RUN composer install --no-dev --optimize-autoloader --no-interaction
+RUN npm ci --silent && npm run build
 
-# Cachear configuración de Laravel
-RUN php artisan config:cache \
-    && php artisan route:cache \
-    && php artisan view:cache
 
-# Etapa 2: Producción con Nginx
-FROM nginx:alpine
+# Etapa 2: Producción (PHP-FPM + Nginx - Alpine)
+FROM php:8.2-fpm-alpine as production
 
-# Copiar configuración de Nginx adaptada a Laravel
-COPY ./nginx.conf /etc/nginx/conf.d/default.conf
+# Instalar extensiones necesarias en producción
+RUN docker-php-ext-install pdo pdo_mysql
 
-# Copiar PHP-FPM y proyecto desde la etapa build
-COPY --from=build /usr/local/etc/php /usr/local/etc/php
-COPY --from=build /usr/local/bin /usr/local/bin
-COPY --from=build /usr/local/lib/php /usr/local/lib/php
+# Instalar Nginx y utilidades
+RUN apk add --no-cache nginx bash
+
+# Crear carpeta run y limpiar conf.d para evitar duplicados
+RUN mkdir -p /run/nginx /var/www/html/storage /var/www/html/bootstrap/cache \
+    && rm -f /etc/nginx/conf.d/* || true
+
+# Copiar configuración principal y site
+COPY ./nginx.conf /etc/nginx/nginx.conf
+COPY ./default.conf /etc/nginx/conf.d/default.conf
+
+# Copiar script de inicio
+COPY ./start.sh /start.sh
+RUN chmod +x /start.sh
+
+# Copiar proyecto desde la etapa build
 COPY --from=build /var/www/html /var/www/html
 
 WORKDIR /var/www/html
 
 # Permisos para Laravel
-RUN chown -R nginx:nginx /var/www/html/storage /var/www/html/bootstrap/cache
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Exponer puerto
 EXPOSE 80
 
-# Arrancar PHP-FPM + Nginx
-CMD ["sh", "-c", "php-fpm -D && nginx -g 'daemon off;'"]
+CMD ["sh", "/start.sh"]

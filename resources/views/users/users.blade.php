@@ -12,7 +12,17 @@
             </div>
         </div>
         <div class="relative h-full flex-1 overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-700">
-            <x-placeholder-pattern class="absolute inset-0 size-full stroke-gray-900/20 dark:stroke-neutral-100/20" />
+            <div class=" inset-0 overflow-auto p-4 md:grid md:grid-cols-2 gap-4">
+
+                @foreach ($users as $user)
+                    @livewire('user.card', ['title' => $user->name], key($user->id))
+                @endforeach 
+               
+            </div>
+        
         </div>
     </div>
+
+
+
 </x-layouts.app>

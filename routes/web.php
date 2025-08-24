@@ -6,6 +6,7 @@ use App\Livewire\Settings\Profile;
 use App\Livewire\Settings\Language;
 use Illuminate\Support\Facades\Route;
 use App\Models\Event;
+use App\Http\Controllers\UserController;
 
 use \App\Http\Controllers\Lang\LanguageController;
 use App\Http\Controllers\EventController;
@@ -32,7 +33,7 @@ Route::view('graficos/tipos', 'statistics.charts.types')
     ->middleware(['auth', 'verified'])
     ->name('charts.types');
 
-Route::view('usuarios', 'users.users')
+Route::get('usuarios', [UserController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('users');
 
@@ -55,4 +56,5 @@ Route::get('/api/event-calendar', function () {
 });
 
 
-require __DIR__.'/auth.php';
+
+require __DIR__ . '/auth.php';

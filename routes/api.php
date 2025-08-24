@@ -3,6 +3,12 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Models\Event;
+use App\Models\Participant;
+use App\Models\Role;
+use App\Models\Program;
+use App\Models\Affiliation;
+use App\Models\Attendance;
+use App\Models\User;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -25,4 +31,42 @@ Route::get('/eventos-json', function () {
         ->whereBetween('date', [$start, $end])
         ->groupBy('date')
         ->get();
+});
+
+// Route to get all events in JSON format
+// Todas estas rutas tiene el prefix /api
+
+// Get all events
+Route::get('/events', function () {
+    return Event::all();
+});
+
+// Get all participants
+Route::get('/participants', function () {
+    return Participant::all();
+});
+
+// Get all roles
+Route::get('/roles', function () {
+    return Role::all();
+});
+
+// Get all programs
+Route::get('/programs', function () {
+    return Program::all();
+});
+
+// Get all affiliations
+Route::get('/affiliations', function () {
+    return Affiliation::all();
+});
+
+// Get all attendances
+Route::get('/attendances', function () {
+    return Attendance::all();
+});
+
+// Get all users
+Route::get('/users', function () {
+    return User::all();
 });

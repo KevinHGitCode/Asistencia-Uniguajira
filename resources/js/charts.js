@@ -154,8 +154,12 @@ window.paintCharts = () => {
 };
 
 // 🔑 Redimensionar sin recrear todo
+let resizeTimeout;
 window.addEventListener('resize', () => {
-    Object.values(charts).forEach(chart => {
-        if (chart) chart.resize();
-    });
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+        Object.values(charts).forEach(chart => {
+            if (chart) chart.resize();
+        });
+    }, 200);
 });
