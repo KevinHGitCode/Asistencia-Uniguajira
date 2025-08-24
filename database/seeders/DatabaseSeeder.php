@@ -44,9 +44,9 @@ class DatabaseSeeder extends Seeder
             'password' => bcrypt('12345678'),
         ]);
 
-
-        User::factory(10)->create();
         $this->call(EventSeeder::class);
         $this->call(ProgramSeeder::class);
+        $this->call(ParticipantSeeder::class);
+        $this->call(AttendanceSeeder::class);
     }
 }
