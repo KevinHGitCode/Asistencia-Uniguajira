@@ -19,9 +19,9 @@ Route::view('dashboard', 'dashboard')
     ->name('dashboard');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('eventos/nuevo', [EventController::class, 'create'])->name('new');
-    Route::get('eventos/lista', [EventController::class, 'index'])->name('list');
-    Route::post('eventos/lista', [EventController::class, 'store'])->name('new');
+    Route::get('eventos/nuevo', [EventController::class, 'create'])->name('events.new');
+    Route::post('eventos/nuevo', [EventController::class, 'store'])->name('events.new');
+    Route::get('eventos/lista', [EventController::class, 'index'])->name('events.list');
 });
 
 Route::view('estadisticas', 'statistics.statistics')

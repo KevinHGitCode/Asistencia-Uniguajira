@@ -3,7 +3,8 @@
         <p class="text-2xl font-bold text-white mb-4"> Nuevo evento </p>
 
         <div>
-            <form wire:submit="{{route('new')}}" class="flex flex-col gap-6">
+            <form wire:submit="{{route('events.new')}}" class="flex flex-col gap-6">
+
                 <flux:input wire:model="eventName" :label="__('Nombre del evento')" type="text" required autofocus
                     placeholder="Día del amor y la amistad" />
 
@@ -19,6 +20,7 @@
                 <flux:button variant="primary" type="submit" class="w-full">
                     {{ __('Crear Evento') }}
                 </flux:button>
+                
             </form>
         </div>
     </div>
