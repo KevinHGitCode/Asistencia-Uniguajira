@@ -23,54 +23,67 @@ class AttendanceSeeder extends Seeder
         // Saltar cabecera
         array_shift($rows);
 
+        // 1. Crear un hash de programas y subirlos a la base de datos
+        $programHash = [];
+        $programsToInsert = [];
         foreach ($rows as $row) {
             [$document, $firstName, $lastName, $roleName, $email, $programName, $programType, $affiliationType] = $row;
-
-            // Remplazar valores nulos o vacíos
             $programType = match (strtolower($programType)) {
-                'pregrado' => 'Pregrado',
-                'posgrado', 'postgrado' => 'Posgrado',
+                'pregrado', 'undergraduate' => 'Pregrado',
+                'posgrado', 'postgrado', 'postgraduate' => 'Posgrado',
                 default => null,
             };
-
-            // Programas (ej: "INGENIERIA DE SISTEMAS - RIOHACHA", "Pregrado")
-            $program = Program::firstOrCreate(
-                ['name' => $programName],
-                ['program_type' => $programType]
-            );
-
-            // Vinculación (0 = null, otro valor = texto real)
-            if ($affiliationType !== 0 && $affiliationType !== '0') {
-                $affiliationType = null;
+            $key = $programName . '|' . $programType;
+            if (!isset($programHash[$key])) {
+                $programHash[$key] = null; // placeholder
+                $programsToInsert[$key] = [
+                    'name' => $programName,
+                    'program_type' => $programType,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
             }
-
-            // Crear o actualizar Participant
-            Participant::updateOrCreate(
-                ['document' => $document],
-                [
-                    'first_name'     => $firstName,
-                    'last_name'      => $lastName,
-                    'email'          => $email,
-                    'role'           => $roleName, // Roles (ej: "Estudiante", "Docente")
-                    'affiliation'    => $affiliationType, // null si es 0
-                    'program_id'     => $program->id,
-                ]
-            );
+        }
+        
+        // Insertar programas únicos
+        if (!empty($programsToInsert)) {
+            Program::insert(array_values($programsToInsert));
+        }
+        // Obtener todos los programas de la base de datos y actualizar el hash con sus IDs
+        foreach (Program::all() as $program) {
+            $key = $program->name . '|' . $program->program_type;
+            $programHash[$key] = $program->id;
         }
 
-        // // Ejemplo básico de lectura de Excel con maatwebsite/excel
-        // // Ruta hacia tu archivo
-        // $path = database_path('seeders/files/attendances.xlsx');
-
-        // // Leer todo en arrays (cada hoja es un array)
-        // $sheets = Excel::toArray([], $path);
-
-        // // Tomar la primera hoja
-        // $rows = $sheets[0];
-
-        // // Mostrar filas en consola
-        // foreach ($rows as $row) {
-        //     dump($row);
-        // }
+        // 2. Bulk insert de participantes en lotes de 500
+        $participantsToInsert = [];
+        foreach ($rows as $row) {
+            [$document, $firstName, $lastName, $roleName, $email, $programName, $programType, $affiliationType] = $row;
+            $programType = match (strtolower($programType)) {
+                'pregrado', 'undergraduate' => 'Pregrado',
+                'posgrado', 'postgrado', 'postgraduate' => 'Posgrado',
+                default => null,
+            };
+            $key = $programName . '|' . $programType;
+            $participantsToInsert[] = [
+                'document' => $document,
+                'first_name' => $firstName,
+                'last_name' => $lastName,
+                'email' => $email,
+                'role' => $roleName,
+                'affiliation' => ($affiliationType !== 0 && $affiliationType !== '0') ? $affiliationType : null,
+                'program_id' => $programHash[$key] ?? null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+            if (count($participantsToInsert) === 500) {
+                Participant::insert($participantsToInsert);
+                $participantsToInsert = [];
+            }
+        }
+        if (!empty($participantsToInsert)) {
+            Participant::insert($participantsToInsert);
+        }
     }
+
 }

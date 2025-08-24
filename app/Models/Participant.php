@@ -12,24 +12,14 @@ class Participant extends Model
         'first_name',
         'last_name',
         'email',
-        'role_id',
+        'role',
+        'affiliation',
         'program_id',
-        'affiliation_id',
     ];
-
-    public function role()
-    {
-        return $this->belongsTo(Role::class, 'role_id');
-    }
 
     public function program()
     {
         return $this->belongsTo(Program::class, 'program_id');
-    }
-
-    public function affiliation()
-    {
-        return $this->belongsTo(Affiliation::class, 'affiliation_id');
     }
 
     public function attendances()
