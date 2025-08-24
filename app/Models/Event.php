@@ -27,12 +27,12 @@ class Event extends Model
 
     public function asistencias()
     {
-        return $this->hasMany(Asistencia::class, 'evento_id');
+        return $this->hasMany(Attendance::class, 'event_id');
     }
 
     public function participantes()
     {
-        return $this->belongsToMany(Participante::class, 'asistencias', 'evento_id', 'participante_id')
+        return $this->belongsToMany(Participant::class, 'attendances', 'event_id', 'participant_id')
             ->withTimestamps();
     }
 }
