@@ -1,41 +1,15 @@
+
+import { getResponsiveDimensions } from './dimensions.js';
+import { clearCalendarContainer, 
+            fetchEventsAndPaintCalendar,
+            getSemesterInfo
+        } from './utils.js';
+
 // --- INICIO: Soporte para repintar el calendario con Livewire ---
 let calInstance = null;
 let isCalendarInitialized = false;
 let isCalendarPainting = false; // Flag para prevenir múltiples ejecuciones simultáneas
 
-function getResponsiveDimensions() {
-    const container = document.getElementById('cal-heatmap-container');
-    if (!container) return { cellSize: 20, gutter: 2, containerWidth: 0, containerHeight: 0 };
-    const containerWidth = container.offsetWidth;
-    const containerHeight = container.offsetHeight;
-    let cellSize = Math.min(Math.max(containerWidth / 45, 15), 30);
-    let gutter = Math.max(cellSize * 0.1, 2);
-    if (window.innerWidth < 768) {
-        cellSize = Math.min(containerWidth / 20, 25);
-        gutter = Math.max(cellSize * 0.1, 1);
-    }
-    return {
-        cellSize: Math.floor(cellSize),
-        gutter: Math.floor(gutter),
-        containerWidth,
-        containerHeight
-    };
-}
-
-// Función para limpiar completamente el contenedor del calendario
-function clearCalendarContainer() {
-    const calContainer = document.getElementById('cal-heatmap');
-    if (calContainer) {
-        calContainer.innerHTML = '';
-        calContainer.removeAttribute('style');
-    }
-}
-
-async function fetchEventsAndPaintCalendar() {
-    const response = await fetch('/api/eventos-json');
-    const eventos = await response.json();
-    return eventos;
-}
 
 window.paintCalendar = async () => {
     // Prevenir múltiples ejecuciones simultáneas
@@ -71,27 +45,6 @@ window.paintCalendar = async () => {
 
         const events = await fetchEventsAndPaintCalendar();
         const dimensions = getResponsiveDimensions();
-
-        // Función para determinar el semestre y las fechas de inicio
-        const getSemesterInfo = () => {
-            const now = new Date();
-            const currentMonth = now.getMonth(); // 0-11
-            const currentYear = now.getFullYear();
-
-            let startDate, range;
-
-            if (currentMonth >= 0 && currentMonth <= 5) {
-                // Primer semestre (Enero - Junio)
-                startDate = new Date(currentYear, 0, 1); // 1 de enero
-                range = 6; // 6 meses
-            } else {
-                // Segundo semestre (Julio - Diciembre)
-                startDate = new Date(currentYear, 6, 1); // 1 de julio
-                range = 6; // 6 meses
-            }
-
-            return { startDate, range };
-        };
 
         const semesterInfo = getSemesterInfo();
 
@@ -167,35 +120,35 @@ window.paintCalendar = async () => {
     }
 };
 
-// Función para verificar si estamos en el dashboard
-function isInDashboard() {
-    return window.location.pathname === '/dashboard' || 
-           window.location.pathname.endsWith('/dashboard');
+// Limpiar observadores cuando salgamos del dashboard
+function cleanupCalendarObservers() {
+    if (zoomCheckInterval) {
+        clearInterval(zoomCheckInterval);
+        zoomCheckInterval = null;
+    }
+    themeObserver.disconnect();
+    
+    if (repaintTimeout) {
+        clearTimeout(repaintTimeout);
+    }
+    if (resizeTimeout) {
+        clearTimeout(resizeTimeout);
+    }
+    
+    console.log('📅 Calendar observers cleaned up');
 }
 
-// Debounced repaint function
-let repaintTimeout;
-function debouncedRepaint(delay = 300) {
-    if (!isInDashboard()) return;
-    
-    clearTimeout(repaintTimeout);
-    repaintTimeout = setTimeout(() => {
-        if (isCalendarInitialized && !isCalendarPainting) {
-            paintCalendar();
-        }
-    }, delay);
+// Inicializar observadores solo cuando estemos en dashboard
+function initCalendarObservers() {
+    if (isInDashboard()) {
+        startZoomMonitoring();
+        themeObserver.observe(document.documentElement, {
+            attributes: true,
+            attributeFilter: ['class']
+        });
+        console.log('📅 Calendar observers initialized');
+    }
 }
-
-// Repintar al cambiar el tamaño de la ventana (con debounce mejorado)
-let resizeTimeout;
-window.addEventListener('resize', function() {
-    if (!isInDashboard()) return;
-    
-    clearTimeout(resizeTimeout);
-    resizeTimeout = setTimeout(() => {
-        debouncedRepaint(500);
-    }, 300);
-});
 
 // Repintar al cambiar el zoom (con mejor detección)
 let lastZoom = window.devicePixelRatio;
@@ -218,6 +171,20 @@ function startZoomMonitoring() {
     }, 500);
 }
 
+
+// Debounced repaint function
+let repaintTimeout;
+function debouncedRepaint(delay = 300) {
+    if (!isInDashboard()) return;
+    
+    clearTimeout(repaintTimeout);
+    repaintTimeout = setTimeout(() => {
+        if (isCalendarInitialized && !isCalendarPainting) {
+            paintCalendar();
+        }
+    }, delay);
+}
+
 // Manejar cambios de tema (mejorado)
 let lastTheme = document.documentElement.classList.contains('dark');
 const themeObserver = new MutationObserver(function(mutations) {
@@ -235,35 +202,22 @@ const themeObserver = new MutationObserver(function(mutations) {
     });
 });
 
-// Inicializar observadores solo cuando estemos en dashboard
-function initCalendarObservers() {
-    if (isInDashboard()) {
-        startZoomMonitoring();
-        themeObserver.observe(document.documentElement, {
-            attributes: true,
-            attributeFilter: ['class']
-        });
-        console.log('📅 Calendar observers initialized');
-    }
+function isInDashboard() {
+    return window.location.pathname === '/dashboard' || 
+           window.location.pathname.endsWith('/dashboard');
 }
 
-// Limpiar observadores cuando salgamos del dashboard
-function cleanupCalendarObservers() {
-    if (zoomCheckInterval) {
-        clearInterval(zoomCheckInterval);
-        zoomCheckInterval = null;
-    }
-    themeObserver.disconnect();
+// Repintar al cambiar el tamaño de la ventana (con debounce mejorado)
+let resizeTimeout;
+window.addEventListener('resize', function() {
+    if (!isInDashboard()) return;
     
-    if (repaintTimeout) {
-        clearTimeout(repaintTimeout);
-    }
-    if (resizeTimeout) {
-        clearTimeout(resizeTimeout);
-    }
-    
-    console.log('📅 Calendar observers cleaned up');
-}
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+        debouncedRepaint(500);
+    }, 300);
+});
+
 
 // Manejar navegación de Livewire
 document.addEventListener('livewire:navigated', function() {

@@ -13,6 +13,7 @@ class DashboardController extends Controller
     public function index()
     {
         $user = Auth::user();
+        $username = ucfirst(strtolower($user->name));
 
         if ($user->role === 'super_admin') {
             // Super Admin → Totales generales
@@ -32,6 +33,6 @@ class DashboardController extends Controller
             })->distinct('participant_id')->count('participant_id');
         }
 
-        return view('dashboard', compact('eventosCount', 'asistenciasCount', 'participantesCount'));
+        return view('dashboard', compact('username', 'eventosCount', 'asistenciasCount', 'participantesCount'));
     }
 }

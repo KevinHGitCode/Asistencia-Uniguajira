@@ -2,7 +2,7 @@
     <div class="flex h-full w-full flex-1 flex-col gap-6 rounded-xl p-6">
         <!-- Header de bienvenida -->
         <div class="mb-6">
-            <h1 class="text-3xl font-bold mb-2">¡Bienvenido, Daniel!</h1>
+            <h1 class="text-3xl font-bold mb-2">¡Bienvenido, {{ $username }}!</h1>
             <p>Gestiona tus eventos y consulta estadísticas de asistencia</p>
         </div>
 
@@ -56,7 +56,7 @@
 
 
         <!-- Contenedor del calendario mejorado -->
-        <div id="cal-heatmap-container" class="relative border border-gray-700 rounded-xl">
+        <div id="cal-heatmap-container" class="relative border border-gray-700 rounded-xl select-none">
             <!-- Header del calendario -->
             <div class="p-4 border-b border-gray-700">
                 <h2 class="text-lg font-bold text-center">Calendario de Eventos</h2>
