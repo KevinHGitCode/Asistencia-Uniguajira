@@ -13,6 +13,7 @@ class ExampleTest extends TestCase
     {
         $response = $this->get('/');
 
-        $response->assertStatus(200);
+        $response->assertStatus(302);
+        $response->assertRedirect('/login'); // o la ruta donde redirija en tu app
     }
 }

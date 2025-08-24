@@ -2,12 +2,11 @@
 
 namespace Database\Seeders;
 
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Maatwebsite\Excel\Facades\Excel;
-use App\Models\Participant;
-use App\Models\Role;
-use App\Models\Program;
-use App\Models\Affiliation;
+use \App\Models\Event;
+use \App\Models\Participant;
+use \App\Models\Attendance;
 
 class AttendanceSeeder extends Seeder
 {
@@ -16,65 +15,26 @@ class AttendanceSeeder extends Seeder
      */
     public function run(): void
     {
-        $path = database_path('seeders/files/seed.xlsx');
-        $sheets = Excel::toArray([], $path);
-        $rows = $sheets[0];
+        // Solo eventos cuya fecha sea hoy o anterior
+        $today = now()->toDateString();
+        $events = Event::whereDate('date', '<=', $today)->get();
 
-        // Saltar cabecera
-        array_shift($rows);
-
-        foreach ($rows as $row) {
-            [$document, $firstName, $lastName, $roleName, $email, $programName, $programType, $affiliationType] = $row;
-
-            // Roles (ej: "Estudiante", "Docente")
-            $role = Role::firstOrCreate(['role_type' => $roleName]);
-
-            //
-            $programType = match (strtolower($programType)) {
-                'pregrado', 'undergraduate' => 'Pregrado',
-                'posgrado', 'postgrado', 'postgraduate' => 'Posgrado',
-                default => null,
-            };
-
-            // Programas (ej: "INGENIERIA DE SISTEMAS - RIOHACHA", "Pregrado")
-            $program = Program::firstOrCreate(
-                ['name' => $programName],
-                ['program_type' => $programType]
-            );
-
-            // Vinculación (0 = null, otro valor = texto real)
-            $affiliation = null;
-            if ($affiliationType !== 0 && $affiliationType !== '0') {
-                $affiliation = Affiliation::firstOrCreate(['affiliation_type' => $affiliationType]);
+        foreach ($events as $event) {
+            $attendancesCount = fake()->numberBetween(20, 50);
+            // Seleccionar participantes aleatorios directamente en la base de datos
+            $participantIds = Participant::inRandomOrder()->limit($attendancesCount)->pluck('id');
+            $rows = [];
+            foreach ($participantIds as $participantId) {
+                $rows[] = [
+                    'event_id' => $event->id,
+                    'participant_id' => $participantId,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
             }
-
-            // Crear o actualizar Participant
-            Participant::updateOrCreate(
-                ['document' => $document],
-                [
-                    'first_name'     => $firstName,
-                    'last_name'      => $lastName,
-                    'email'          => $email,
-                    'role_id'        => $role->id,
-                    'program_id'     => $program->id,
-                    'affiliation_id' => $affiliation?->id, // null si es 0
-                ]
-            );
+            if (!empty($rows)) {
+                Attendance::insert($rows);
+            }
         }
-
-        // // Ejemplo básico de lectura de Excel con maatwebsite/excel
-        // // Ruta hacia tu archivo
-        // $path = database_path('seeders/files/attendances.xlsx');
-
-        // // Leer todo en arrays (cada hoja es un array)
-        // $sheets = Excel::toArray([], $path);
-
-        // // Tomar la primera hoja
-        // $rows = $sheets[0];
-
-        // // Mostrar filas en consola
-        // foreach ($rows as $row) {
-        //     dump($row);
-        // }
     }
 }

@@ -14,8 +14,8 @@ return new class extends Migration
         // Asistencias
         Schema::create('attendances', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('event_id')->constrained('events')->onDelete('cascade');
-            $table->foreignId('participant_id')->constrained('participants')->onDelete('cascade');
+            $table->foreignId('event_id')->constrained('events');
+            $table->foreignId('participant_id')->constrained('participants');
             $table->timestamps();
         });
     }

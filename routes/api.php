@@ -48,7 +48,7 @@ Route::get('/participants', function () {
 
 // Get all roles
 Route::get('/roles', function () {
-    return Role::all();
+    return Participant::select('role')->distinct()->get();
 });
 
 // Get all programs
@@ -58,7 +58,7 @@ Route::get('/programs', function () {
 
 // Get all affiliations
 Route::get('/affiliations', function () {
-    return Affiliation::all();
+    return Participant::select('affiliation')->distinct()->get();
 });
 
 // Get all attendances
