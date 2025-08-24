@@ -2,10 +2,11 @@
 
 namespace Database\Seeders;
 
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Maatwebsite\Excel\Facades\Excel;
-use App\Models\Participant;
-use App\Models\Program;
+use \App\Models\Event;
+use \App\Models\Participant;
+use \App\Models\Attendance;
 
 class AttendanceSeeder extends Seeder
 {
@@ -14,78 +15,26 @@ class AttendanceSeeder extends Seeder
      */
     public function run(): void
     {
-        $path = database_path('seeders/files/seed.xlsx');
-        $sheets = Excel::toArray([], $path);
-        $rows = $sheets[0];
+        // Solo eventos cuya fecha sea hoy o anterior
+        $today = now()->toDateString();
+        $events = Event::whereDate('date', '<=', $today)->get();
 
-        // Saltar cabecera
-        array_shift($rows);
-
-        // 1. Crear un hash (set) de programas únicos
-        $programHash = [];
-        $programsToInsert = [];
-        foreach ($rows as $row) {
-            [$document, $firstName, $lastName, $roleName, $email, $programName, $programType, $affiliationType] = $row;
-            $programType = match (strtolower($programType)) {
-                'pregrado', 'undergraduate' => 'Pregrado',
-                'posgrado', 'postgrado', 'postgraduate' => 'Posgrado',
-                default => null,
-            };
-            $key = $programName . '|' . $programType;
-            if (!isset($programHash[$key])) {
-                $programHash[$key] = null; // placeholder
-                $programsToInsert[$key] = [
-                    'name' => $programName,
-                    'program_type' => $programType,
+        foreach ($events as $event) {
+            $attendancesCount = fake()->numberBetween(20, 50);
+            // Seleccionar participantes aleatorios directamente en la base de datos
+            $participantIds = Participant::inRandomOrder()->limit($attendancesCount)->pluck('id');
+            $rows = [];
+            foreach ($participantIds as $participantId) {
+                $rows[] = [
+                    'event_id' => $event->id,
+                    'participant_id' => $participantId,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ];
             }
-        }
-        
-        // Insertar o actualizar programas (ignora duplicados)
-        if (!empty($programsToInsert)) {
-            Program::upsert(
-                array_values($programsToInsert),
-                ['name'], // clave única
-                ['program_type', 'updated_at'] // campos a actualizar
-            );
-        }
-
-        // Obtener todos los programas de la base de datos y actualizar el hash con sus IDs
-        foreach (Program::all() as $program) {
-            $key = $program->name . '|' . $program->program_type;
-            $programHash[$key] = $program->id;
-        }
-
-        // 2. Bulk insert de participantes en lotes de 500
-        $participantsToInsert = [];
-        foreach ($rows as $row) {
-            [$document, $firstName, $lastName, $roleName, $email, $programName, $programType, $affiliationType] = $row;
-            $programType = match (strtolower($programType)) {
-                'pregrado', 'undergraduate' => 'Pregrado',
-                'posgrado', 'postgrado', 'postgraduate' => 'Posgrado',
-                default => null,
-            };
-            $key = $programName . '|' . $programType;
-            $participantsToInsert[] = [
-                'document' => $document,
-                'first_name' => $firstName,
-                'last_name' => $lastName,
-                'email' => $email,
-                'role' => $roleName,
-                'affiliation' => ($affiliationType !== 0 && $affiliationType !== '0') ? $affiliationType : null,
-                'program_id' => $programHash[$key] ?? null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
-            if (count($participantsToInsert) === 500) {
-                Participant::insert($participantsToInsert);
-                $participantsToInsert = [];
+            if (!empty($rows)) {
+                Attendance::insert($rows);
             }
-        }
-        if (!empty($participantsToInsert)) {
-            Participant::insert($participantsToInsert);
         }
     }
 }
