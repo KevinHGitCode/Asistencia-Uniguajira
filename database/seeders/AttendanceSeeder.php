@@ -5,9 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Models\Participant;
-use App\Models\Role;
 use App\Models\Program;
-use App\Models\Affiliation;
 
 class AttendanceSeeder extends Seeder
 {
@@ -23,7 +21,7 @@ class AttendanceSeeder extends Seeder
         // Saltar cabecera
         array_shift($rows);
 
-        // 1. Crear un hash de programas y subirlos a la base de datos
+        // 1. Crear un hash (set) de programas únicos
         $programHash = [];
         $programsToInsert = [];
         foreach ($rows as $row) {
@@ -45,10 +43,15 @@ class AttendanceSeeder extends Seeder
             }
         }
         
-        // Insertar programas únicos
+        // Insertar o actualizar programas (ignora duplicados)
         if (!empty($programsToInsert)) {
-            Program::insert(array_values($programsToInsert));
+            Program::upsert(
+                array_values($programsToInsert),
+                ['name'], // clave única
+                ['program_type', 'updated_at'] // campos a actualizar
+            );
         }
+
         // Obtener todos los programas de la base de datos y actualizar el hash con sus IDs
         foreach (Program::all() as $program) {
             $key = $program->name . '|' . $program->program_type;
@@ -85,5 +88,4 @@ class AttendanceSeeder extends Seeder
             Participant::insert($participantsToInsert);
         }
     }
-
 }
