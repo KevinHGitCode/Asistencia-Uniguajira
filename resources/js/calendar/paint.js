@@ -57,7 +57,7 @@ export async function paintCalendar(forcedTheme = null) {
                 dynamicDimension: true,
                 sort: 'asc',
                 label: {
-                    position: 'top'
+                    position: 'top',
                 }
             },
             subDomain: {
