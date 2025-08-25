@@ -16,7 +16,7 @@ function handleRouteChange(routeName) {
             }
             window._dashboardCalendarTimeout = setTimeout(() => {
                 if (typeof window.paintCalendar !== 'function') {
-                    import('./calendar/index.js').then(() => window.paintCalendar());
+                    import('./calendar/paint.js').then((module) => module.paintCalendar());
                 } else {
                     window.paintCalendar();
                 }
