@@ -1,5 +1,5 @@
 # Etapa 1: Construcción (Composer + Node + PHP)
-FROM php:8.2-fpm as build
+FROM php:8.3-fpm as build
 
 # Instalar dependencias del sistema (Debian)
 RUN apt-get update && apt-get install -y \
@@ -28,7 +28,7 @@ RUN npm ci --silent && npm run build
 
 
 # Etapa 2: Producción (PHP-FPM + Nginx - Alpine)
-FROM php:8.2-fpm-alpine as production
+FROM php:8.3-fpm-alpine as production
 
 # Instalar extensiones necesarias en producción
 RUN apk add --no-cache libzip-dev \
