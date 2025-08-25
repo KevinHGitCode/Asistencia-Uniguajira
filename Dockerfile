@@ -4,9 +4,9 @@ FROM php:8.2-fpm as build
 # Instalar dependencias del sistema (Debian)
 RUN apt-get update && apt-get install -y \
     libpng-dev libjpeg-dev libfreetype6-dev zip git unzip curl \
-    libonig-dev libxml2-dev ca-certificates \
+    libonig-dev libxml2-dev libzip-dev ca-certificates \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install pdo pdo_mysql mbstring gd bcmath opcache \
+    && docker-php-ext-install pdo pdo_mysql mbstring gd bcmath opcache zip \
     && rm -rf /var/lib/apt/lists/*
 
 # Instalar Composer
@@ -31,7 +31,8 @@ RUN npm ci --silent && npm run build
 FROM php:8.2-fpm-alpine as production
 
 # Instalar extensiones necesarias en producción
-RUN docker-php-ext-install pdo pdo_mysql
+RUN apk add --no-cache libzip-dev \
+    && docker-php-ext-install pdo pdo_mysql zip
 
 # Instalar Nginx y utilidades
 RUN apk add --no-cache nginx bash
