@@ -26,7 +26,7 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('eventos/nuevo', [EventController::class, 'create'])->name('events.new');
-    Route::post('eventos/nuevo', [EventController::class, 'store'])->name('events.new');
+    Route::post('eventos/nuevo', [EventController::class, 'store'])->name('events.new.store');
     Route::get('eventos/lista', [EventController::class, 'index'])->name('events.list');
 });
 
