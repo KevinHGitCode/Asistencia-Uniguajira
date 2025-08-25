@@ -14,7 +14,15 @@ class EventController extends Controller
      */
     public function index()
     {
-        return view('events.list');
+        // Obtener solo los eventos del usuario autenticado
+        // Ordenados por fecha más reciente primero
+        $events = Event::where('user_id', Auth::id())
+                    ->orderBy('date', 'desc')
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+        
+        // Pasar los eventos a la vista
+        return view('events.list', compact('events'));
     }
 
     /**

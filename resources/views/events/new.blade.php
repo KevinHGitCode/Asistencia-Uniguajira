@@ -5,7 +5,7 @@
         <div class="border border-white rounded-lg p-6 bg-gray-800">
             <form action="{{ route('events.new.store') }}" method="POST" class="flex flex-col gap-6">
                 @csrf
-                
+
                 <!-- Cambiar 'eventName' por 'title' -->
                 <flux:input name="title" :label="__('Nombre del evento')" type="text" required autofocus
                     placeholder="Día del amor y la amistad" />
@@ -39,9 +39,13 @@
                         {{ __('Crear Evento') }}
                     </flux:button>
 
-                    @if (session()->has('success'))
-                        <p style="color: green;">{{ session('success') }}</p>
-                    @endif 
+                    
+                        @if (session()->has('success'))
+                            <div class=" gap-6 ml-4 bg-green-300 border border-green-400 text-green-700 px-4 py-3 rounded">
+                            <p style="color: green;">{{ session('success') }}</p>
+                            </div>
+                        @endif
+                    
                 </div>
             </form>
         </div>
