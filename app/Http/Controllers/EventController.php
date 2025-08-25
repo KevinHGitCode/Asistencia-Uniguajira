@@ -51,8 +51,6 @@ class EventController extends Controller
             
             Event::create($validated);
 
-            session()->flash('success', 'Evento creado exitosamente.');
-
             // Redirigir para evitar reenvío del formulario
             return redirect()->route('events.new')->with('success', 'Evento creado exitosamente.');
             

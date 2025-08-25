@@ -1,6 +1,6 @@
 <x-layouts.app :title="__('New')">
     <div>
-        <p class="text-2xl font-bold mb-4 text-gray-900 dark:text-white"> Nuevo evento </p>
+        <h1 class="text-2xl font-bold mb-4 text-gray-900 dark:text-white"> Nuevo evento </h1>
 
         <div class="border border-white rounded-lg p-6 bg-gray-800">
             <form action="{{ route('events.new.store') }}" method="POST" class="flex flex-col gap-6">
@@ -13,7 +13,8 @@
                 <flux:input name="description" :label="__('Descripción del evento')" type="text" required
                     placeholder="Evento especial para celebrar el amor y la amistad" />
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-4">
+                    {{-- //TODO: que tenga datos por defecto con la fecha actual y la hora actual pero cerrada (terminando en 00)--}}
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <flux:input name="date" :label="__('Fecha del evento')" type="date" required />
 
                     <!-- Cambiar 'startTime' por 'start_time' -->

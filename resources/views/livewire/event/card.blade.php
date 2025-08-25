@@ -10,8 +10,13 @@
         </div>
 
         <div class="flex items-center gap-2">
+            <flux:icon name="clock" variant="micro" />
+            <span>{{ $date }}</span>
+        </div>
+
+        <div class="flex items-center gap-2">
             <flux:icon name="map-pin" variant="micro" />
-            <span>{{ $location }}</span>
+            <span>{{ 'Uniguajira' }}</span>
         </div>
     </div>
 </div>
