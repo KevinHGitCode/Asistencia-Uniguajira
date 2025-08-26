@@ -19,7 +19,7 @@
 		<div class="mb-6">
 			<flux:heading class="text-lg font-semibold mb-2">Acciones realizadas</flux:heading>
 			<ul class="list-disc pl-6 text-gray-700 dark:text-gray-200">
-				{{-- Ejemplo de acciones, reemplaza por datos reales si tienes relaciones --}}
+				{{-- Ejemplo de acciones--}}
 				<li>Eventos creados: <span class="font-bold">0</span></li>
 				<li>Asistencias registradas: <span class="font-bold">0</span></li>
 				<li>Último acceso: <span class="font-bold">{{ $user->updated_at ? $user->updated_at->format('d/m/Y H:i') : 'N/A' }}</span></li>
