@@ -4,6 +4,17 @@ import { clearCalendarContainer,
             fetchEventsAndPaintCalendar,
             getSemesterInfo
         } from './utils.js';
+import { openModal } from './modal.js';
+import CalHeatmap from 'cal-heatmap';
+
+// Importar los estilos básicos
+import 'cal-heatmap/cal-heatmap.css';
+
+// Importar plugins que necesites
+import Legend from 'cal-heatmap/plugins/Legend';
+import Tooltip from 'cal-heatmap/plugins/Tooltip';
+
+
 
 // --- INICIO: Soporte para repintar el calendario con Livewire ---
 let calInstance = null;
@@ -107,8 +118,24 @@ export async function paintCalendar(forcedTheme = null) {
             }
         });
 
+        calInstance.on('click', async (event, timestamp, value) => {
+            const date = new Date(timestamp).toISOString().split('T')[0]; // YYYY-MM-DD
+            
+            try {
+                const response = await fetch(`/api/events/${date}`);
+                const eventos = await response.json();
+
+                openModal(date, eventos);
+            } catch (error) {
+                console.error('Error al obtener eventos:', error);
+            }
+        });
+
+
         isCalendarInitialized = true;
         console.log('📅 Calendar painted successfully');
+
+        
 
     } catch (error) {
         console.error('📅 Error painting calendar:', error);

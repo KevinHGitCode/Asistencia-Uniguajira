@@ -1,4 +1,5 @@
 <x-layouts.app :title="__('Dashboard')">
+    @include('calendar.modal')
     <div class="flex h-full w-full flex-1 flex-col gap-6 rounded-xl p-6">
         <!-- Header de bienvenida -->
         <div class="mb-6">
@@ -9,7 +10,8 @@
         <!-- Cards de estadísticas principales -->
         <div class="grid auto-rows-min gap-6 md:grid-cols-3">
             <!-- Eventos creados -->
-            <div class="relative overflow-hidden rounded-xl border border-gray-700 p-6 hover:bg-gray-750 transition-colors">
+            <div
+                class="relative overflow-hidden rounded-xl border border-gray-700 p-6 hover:bg-gray-750 transition-colors">
                 <div class="flex items-center justify-between">
                     <div>
                         <h3 class="text-lg font-medium mb-2">Eventos creados</h3>
@@ -24,7 +26,8 @@
             </div>
 
             <!-- Asistencias totales -->
-            <div class="relative overflow-hidden rounded-xl border border-gray-700 p-6 hover:bg-gray-750 transition-colors">
+            <div
+                class="relative overflow-hidden rounded-xl border border-gray-700 p-6 hover:bg-gray-750 transition-colors">
                 <div class="flex items-center justify-between">
                     <div>
                         <h3 class="text-lg font-medium mb-2">Asistencias totales</h3>
@@ -39,7 +42,8 @@
             </div>
 
             <!-- Asistentes totales -->
-            <div class="relative overflow-hidden rounded-xl border border-gray-700 p-6 hover:bg-gray-750 transition-colors">
+            <div
+                class="relative overflow-hidden rounded-xl border border-gray-700 p-6 hover:bg-gray-750 transition-colors">
                 <div class="flex items-center justify-between">
                     <div>
                         <h3 class="text-lg font-medium mb-2">Asistentes totales</h3>

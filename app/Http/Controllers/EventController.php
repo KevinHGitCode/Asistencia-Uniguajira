@@ -17,10 +17,10 @@ class EventController extends Controller
         // Obtener solo los eventos del usuario autenticado
         // Ordenados por fecha más reciente primero
         $events = Event::where('user_id', Auth::id())
-                    ->orderBy('date', 'desc')
-                    ->orderBy('created_at', 'desc')
-                    ->get();
-        
+            ->orderBy('date', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
         // Pasar los eventos a la vista
         return view('events.list', compact('events'));
     }
@@ -48,16 +48,15 @@ class EventController extends Controller
             ]);
 
             $validated['user_id'] = Auth::id();
-            
+
             Event::create($validated);
 
             // Redirigir para evitar reenvío del formulario
             return redirect()->route('events.new')->with('success', 'Evento creado exitosamente.');
-            
         } catch (\Exception $e) {
             // Log del error para debugging
             Log::error('Error creating event: ' . $e->getMessage());
-            
+
             return back()->withInput()->withErrors(['error' => 'Hubo un error al crear el evento. Por favor, inténtalo de nuevo.']);
         }
     }
@@ -92,5 +91,11 @@ class EventController extends Controller
     public function destroy(string $id)
     {
         //
+    }
+
+    public function getByDate($date)
+    {
+        $events = Event::whereDate('date', $date)->get();
+        return response()->json($events);
     }
 }

@@ -2,22 +2,20 @@
 #cal-heatmap .ch-subdomain-text {
     text-anchor: middle !important;
     dominant-baseline: central !important;
-    /* font-weight: 500; */
     pointer-events: none;
     user-select: none;
-    fill: #000000 !important;
+    /* fill: #000000 !important; */
     transition: font-size 0.2s ease, x 0.2s ease, y 0.2s ease;
 }
 
-.dark #cal-heatmap .ch-subdomain-text {
+/* .dark #cal-heatmap .ch-subdomain-text {
     fill: #ffffff !important;
-}
+} */
 
 /* Responsive subdominios */
 @media (max-width: 768px) {
     #cal-heatmap .ch-subdomain-text {
-        font-size: 16px !important;
-        /* font-weight: 100; */
+        font-size: 10px !important;
     }
 }
 @media (min-width: 769px) and (max-width: 1024px) {
@@ -31,18 +29,6 @@
     }
 }
 
-/* Ajustes con zoom/pantallas retina */
-/* @media (resolution: 150dpi), (resolution: 1.5dppx) {
-    #cal-heatmap .ch-subdomain-text {
-        font-size: calc(var(--cell-size, 20px) * 0.4) !important;
-    }
-}
-@media (resolution: 200dpi), (resolution: 2dppx) {
-    #cal-heatmap .ch-subdomain-text {
-        font-size: calc(var(--cell-size, 20px) * 0.35) !important;
-    }
-} */
-
 /* ================= DOMINIOS (meses) ================= */
 #cal-heatmap .ch-domain-text {
     font-size: 12px !important;
@@ -54,7 +40,7 @@
 /* Responsive dominios */
 @media (max-width: 768px) {
     #cal-heatmap .ch-domain-text {
-        font-size: 14px !important;
+        font-size: 12px !important;
     }
 }
 @media (min-width: 769px) and (max-width: 1024px) {
