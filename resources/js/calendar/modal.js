@@ -3,6 +3,8 @@ export function openModal(fecha, eventos) {
     const modalTitle = document.getElementById('calendarModalTitle');
     const modalContent = document.getElementById('calendarModalBody');
     const eventCount = document.getElementById('eventCount');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
 
     modalTitle.textContent = `Eventos para el ${fecha}`;
 
@@ -45,7 +47,9 @@ export function openModal(fecha, eventos) {
 
 export function closeModal() {
     const modal = document.getElementById("calendarModal");
+    modal.classList.remove('flex');
     modal.classList.add("hidden");
+    
 }
 
 

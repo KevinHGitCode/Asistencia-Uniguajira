@@ -1,6 +1,6 @@
 <!-- Modal mejorado -->
 <div id="calendarModal"
-    class="fixed inset-0 z-50 hidden bg-black/40 backdrop-blur-sm transition flex items-center justify-center">
+    class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm transition items-center justify-center hidden">
     <div
         class="modal-content bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl w-full max-w-3xl mx-4 max-h-[90vh] flex flex-col animate-fadeIn overflow-hidden">
 
