@@ -17,7 +17,7 @@ class Event extends Model
         'date', // fecha del evento
         'start_time', // hora de inicio
         'end_time', // hora de finalización
-        'user_id', // creador
+        'user_id', // Agregar user_id al fillable
     ];
 
     public function user()

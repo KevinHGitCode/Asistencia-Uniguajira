@@ -1,63 +1,69 @@
-
-/* Estilos específicos para labels del calendario */
-
-/* Asegurar que los labels estén siempre centrados */
+/* ================= SUBDOMINIOS (días) ================= */
 #cal-heatmap .ch-subdomain-text {
     text-anchor: middle !important;
     dominant-baseline: central !important;
-    font-weight: 500;
+    /* font-weight: 500; */
     pointer-events: none;
     user-select: none;
+    fill: #000000 !important;
+    transition: font-size 0.2s ease, x 0.2s ease, y 0.2s ease;
 }
 
-/* Ajustes específicos para diferentes tamaños de celda */
+.dark #cal-heatmap .ch-subdomain-text {
+    fill: #ffffff !important;
+}
+
+/* Responsive subdominios */
 @media (max-width: 768px) {
     #cal-heatmap .ch-subdomain-text {
-        font-size: 10px !important;
-        font-weight: 600;
+        font-size: 16px !important;
+        /* font-weight: 100; */
     }
 }
-
 @media (min-width: 769px) and (max-width: 1024px) {
+    #cal-heatmap .ch-subdomain-text {
+        font-size: 14px !important;
+    }
+}
+@media (min-width: 1025px) {
     #cal-heatmap .ch-subdomain-text {
         font-size: 12px !important;
     }
 }
 
-@media (min-width: 1025px) {
-    #cal-heatmap .ch-subdomain-text {
-        font-size: 14px !important;
-    }
-}
-
-/* Asegurar que el contenedor del SVG no interfiera */
-#cal-heatmap svg {
-    overflow: visible !important;
-}
-
-/* Ajustes para diferentes niveles de zoom */
-@media (resolution: 150dpi), (resolution: 1.5dppx) {
+/* Ajustes con zoom/pantallas retina */
+/* @media (resolution: 150dpi), (resolution: 1.5dppx) {
     #cal-heatmap .ch-subdomain-text {
         font-size: calc(var(--cell-size, 20px) * 0.4) !important;
     }
 }
-
 @media (resolution: 200dpi), (resolution: 2dppx) {
     #cal-heatmap .ch-subdomain-text {
         font-size: calc(var(--cell-size, 20px) * 0.35) !important;
     }
+} */
+
+/* ================= DOMINIOS (meses) ================= */
+#cal-heatmap .ch-domain-text {
+    font-size: 12px !important;
+    font-weight: 100;
+    text-transform: capitalize;
+    transition: font-size 0.2s ease;
 }
 
-/* Estilos para temas */
-.dark #cal-heatmap .ch-subdomain-text {
-    fill: #ffffff !important;
+/* Responsive dominios */
+@media (max-width: 768px) {
+    #cal-heatmap .ch-domain-text {
+        font-size: 14px !important;
+    }
 }
-
-#cal-heatmap .ch-subdomain-text {
-    fill: #000000 !important;
+@media (min-width: 769px) and (max-width: 1024px) {
+    #cal-heatmap .ch-domain-text {
+        font-size: 12px !important;
+    }
 }
-
-/* Transiciones suaves para cambios de tamaño */
-#cal-heatmap .ch-subdomain-text {
-    transition: font-size 0.2s ease, x 0.2s ease, y 0.2s ease;
+@media (min-width: 1025px) {
+    #cal-heatmap .ch-domain-text {
+        font-size: 12px !important;
+    }
 }

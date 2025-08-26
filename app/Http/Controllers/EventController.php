@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Event;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class EventController extends Controller
 {
@@ -11,7 +14,15 @@ class EventController extends Controller
      */
     public function index()
     {
-        return view('events.list');
+        // Obtener solo los eventos del usuario autenticado
+        // Ordenados por fecha más reciente primero
+        $events = Event::where('user_id', Auth::id())
+                    ->orderBy('date', 'desc')
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+        
+        // Pasar los eventos a la vista
+        return view('events.list', compact('events'));
     }
 
     /**
@@ -27,7 +38,28 @@ class EventController extends Controller
      */
     public function store(Request $request)
     {
-        return redirect()->route('list')->with('success', 'Evento creado exitosamente.');
+        try {
+            $validated = $request->validate([
+                'title' => 'required|string|max:255',
+                'description' => 'nullable|string',
+                'date' => 'required|date',
+                'start_time' => 'nullable|date_format:H:i',
+                'end_time' => 'nullable|date_format:H:i|after_or_equal:start_time',
+            ]);
+
+            $validated['user_id'] = Auth::id();
+            
+            Event::create($validated);
+
+            // Redirigir para evitar reenvío del formulario
+            return redirect()->route('events.new')->with('success', 'Evento creado exitosamente.');
+            
+        } catch (\Exception $e) {
+            // Log del error para debugging
+            Log::error('Error creating event: ' . $e->getMessage());
+            
+            return back()->withInput()->withErrors(['error' => 'Hubo un error al crear el evento. Por favor, inténtalo de nuevo.']);
+        }
     }
 
     /**
