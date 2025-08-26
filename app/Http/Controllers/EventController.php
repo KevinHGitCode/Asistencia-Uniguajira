@@ -40,11 +40,12 @@ class EventController extends Controller
     {
         try {
             $validated = $request->validate([
-                'title' => 'required|string|max:255',
-                'description' => 'nullable|string',
-                'date' => 'required|date',
-                'start_time' => 'nullable|date_format:H:i',
-                'end_time' => 'nullable|date_format:H:i|after_or_equal:start_time',
+                    'title' => 'required|string|max:255',
+                    'description' => 'nullable|string',
+                    'date' => 'required|date',
+                    'start_time' => 'nullable|date_format:H:i',
+                    'end_time' => 'nullable|date_format:H:i|after_or_equal:start_time',
+                    'location' => 'required|string|max:255', // validación para ubicación
             ]);
 
             $validated['user_id'] = Auth::id();
