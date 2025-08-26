@@ -2,19 +2,30 @@
 
     <div class="flex items-center gap-4">
         <div>
-            <flux:avatar src="https://unavatar.io/x/calebporzio" />
+            <flux:avatar src="https://unavatar.io/x/{{ $user->name }}" />
         </div>
 
-        <div class="mb-4">
-            <flux:heading class="flex items-center gap-2">
+        <div class="flex-1">
+            <flux:heading class="flex items-center gap-2 mb-1">
                 {{ $title }}
             </flux:heading>
+            <p class="text-sm text-gray-600 dark:text-gray-400">
+                {{ $user->email }}
+            </p>
+            <!-- Mostrar cantidad de eventos -->
+            <p class="text-xs text-blue-600 dark:text-blue-400">
+                {{ $user->events->count() }} evento(s) creado(s)
+            </p>
         </div>
 
         <div class="ml-auto">
             {{-- botón detalles a la derecha --}}
-            <a href="{{ route('users.information', ['user' => $user->id]) }}">
-                <flux:button square>...</flux:button>
+            <a href="{{ route('users.information', ['id' => $user->id]) }}">
+                <flux:button square variant="ghost" size="sm" title="Ver información">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </flux:button>
             </a>
         </div>
     </div>

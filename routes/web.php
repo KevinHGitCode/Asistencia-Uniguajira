@@ -42,13 +42,16 @@ Route::middleware(['auth', 'verified'])->prefix('usuarios')->group(function () {
     Route::get('/', [UserController::class, 'index'])->name('users.index');
     Route::get('/create', [UserController::class, 'create'])->name('user.form');
     Route::post('/', [UserController::class, 'store'])->name('users.store');
-    Route::get('/{id}', [UserController::class, 'show'])->name('user.show');
+    
+    //Rutas específicas antes de rutas con parámetros dinámicos
+    Route::get('/{id}/information', [UserController::class, 'information'])->name('users.information');
     Route::get('/{id}/edit', [UserController::class, 'edit'])->name('user.edit');
     Route::post('/{id}/edit', [UserController::class, 'update'])->name('user.update');
     Route::post('/{id}/delete', [UserController::class, 'destroy'])->name('users.delete');
-    Route::get('/information/{user}', [UserController::class, 'information'])->name('users.information');
+    
+    //Ruta genérica al final
+    Route::get('/{id}', [UserController::class, 'show'])->name('user.show');
 });
-   
 
 Route::middleware(['auth'])->group(function () {
     Route::redirect('settings', 'settings/profile');
