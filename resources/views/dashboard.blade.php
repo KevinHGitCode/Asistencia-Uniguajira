@@ -8,24 +8,25 @@
         </div>
 
         <div class="grid auto-rows-min gap-6 md:grid-cols-3">
-            @livewire('card-stat', [
-                'title' => 'Eventos creados',
-                'value' => $eventosCount,
-                'icon'  => view('components.icons.calendar-check')->render()
-            ])
+            <livewire:card-stat title="Eventos creados" :value="$eventosCount">
+                <x-slot name="icon">
+                    <flux:icon.calendar-check class="size-8" />
+                </x-slot>
+            </livewire:card-stat>
 
-            @livewire('card-stat', [
-                'title' => 'Asistencias totales',
-                'value' => $asistenciasCount,
-                'icon'  => view('components.icons.list-checks')->render()
-            ])
+            <livewire:card-stat title="Asistencias totales" :value="$asistenciasCount">
+                <x-slot name="icon">
+                    <flux:icon.list-checks class="size-8" />
+                </x-slot>
+            </livewire:card-stat>
 
-            @livewire('card-stat', [
-                'title' => 'Asistentes totales',
-                'value' => $participantesCount,
-                'icon'  => view('components.icons.users')->render()
-            ])
+            <livewire:card-stat title="Asistentes totales" :value="$participantesCount">
+                <x-slot name="icon">
+                    <flux:icon.users class="size-8" />
+                </x-slot>
+            </livewire:card-stat>
         </div>
+
 
 
 

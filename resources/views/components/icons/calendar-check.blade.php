@@ -1,1 +1,0 @@
-<flux:icon.calendar-check class="size-8" />

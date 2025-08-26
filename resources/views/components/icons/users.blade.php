@@ -1,1 +1,0 @@
-<flux:icon.users class="size-8" />
