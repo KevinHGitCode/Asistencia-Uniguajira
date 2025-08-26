@@ -3,22 +3,31 @@
         <p class="text-2xl font-bold text-white mb-4"> Tus eventos </p>
     </div>
 
-    <flux:dropdown>
-        <flux:button icon:trailing="chevron-down">Filter</flux:button>
+    <div class="mb-4 flex items-center justify-between">
+        <flux:dropdown>
+            <flux:button icon:trailing="chevron-down">Filtrar</flux:button>
 
-        <flux:menu keep-open>
-            <flux:menu.checkbox checked>Draft</flux:menu.checkbox>
-            <flux:menu.checkbox checked>Published</flux:menu.checkbox>
-            <flux:menu.checkbox>Archived</flux:menu.checkbox>
-        </flux:menu>
-    </flux:dropdown>
+            <flux:menu keep-open>
+                <flux:menu.checkbox checked>Todo</flux:menu.checkbox>
+                <flux:menu.checkbox>Por fecha</flux:menu.checkbox>
+                <flux:menu.checkbox>Proximos</flux:menu.checkbox>
+                <flux:menu.checkbox>Pasados</flux:menu.checkbox>
+                <flux:menu.checkbox>Actuales</flux:menu.checkbox>
+            </flux:menu>
+        </flux:dropdown>
+    </div>
 
     <div class="relative h-full flex-1 overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-700">
         @if ($events->count() > 0)
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-4">
                 @foreach ($events as $event)
-                    <livewire:event.card :title="$event->title" :date="$event->date" :location="$event->description ?? 'Sin descripción'" :start-time="$event->start_time"
-                        :end-time="$event->end_time" />
+                    <livewire:event.card 
+                        :title="$event->title" 
+                        :date="$event->date" 
+                        :location="$event->location ?? 'Sin ubicación'" 
+                        :description="$event->description ?? 'Sin descripción'"
+                        :start_time="$event->start_time"
+                        :end_time="$event->end_time" />
                 @endforeach
             </div>
         @else

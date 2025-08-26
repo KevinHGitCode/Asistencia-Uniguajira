@@ -31,7 +31,7 @@
                 <flux:navlist.item icon="chart-bar" :href="route('charts.types')" :current="request()->routeIs('charts.types')"
                     wire:navigate>{{ __('Tipos de graficos') }}</flux:navlist.item>
 
-                <flux:navlist.item icon="users" :href="route('users')" :current="request()->routeIs('users')"
+                <flux:navlist.item icon="users" :href="route('users.index')" :current="request()->routeIs('users.index')"
                     wire:navigate>{{ __('Users') }}</flux:navlist.item>
                     
             </flux:navlist.group>

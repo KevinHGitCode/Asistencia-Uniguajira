@@ -21,6 +21,7 @@ class EventSeeder extends Seeder
                 'date' => $faker->dateTimeBetween('-6 months', '+3 months')->format('Y-m-d'),
                 'start_time' => $start,
                 'end_time' => $end,
+                'location' => $faker->city(), // ubicación aleatoria
                 'user_id' => $faker->randomElement($userIds),
                 'created_at' => now(),
                 'updated_at' => now(),

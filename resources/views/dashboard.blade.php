@@ -1,4 +1,5 @@
 <x-layouts.app :title="__('Dashboard')">
+    @include('calendar.modal')
     <div class="flex h-full w-full flex-1 flex-col gap-6 rounded-xl p-6">
         <!-- Header de bienvenida -->
         <div class="mb-6">

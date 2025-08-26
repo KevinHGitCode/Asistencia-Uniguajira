@@ -38,9 +38,17 @@ Route::view('graficos/tipos', 'statistics.charts.types')
     ->middleware(['auth', 'verified'])
     ->name('charts.types');
 
-Route::get('usuarios', [UserController::class, 'index'])
-    ->middleware(['auth', 'verified'])
-    ->name('users');
+Route::middleware(['auth', 'verified'])->prefix('usuarios')->group(function () {
+    Route::get('/', [UserController::class, 'index'])->name('users.index');
+    Route::get('/create', [UserController::class, 'create'])->name('user.form');
+    Route::post('/', [UserController::class, 'store'])->name('users.store');
+    Route::get('/{id}', [UserController::class, 'show'])->name('user.show');
+    Route::get('/{id}/edit', [UserController::class, 'edit'])->name('user.edit');
+    Route::post('/{id}/edit', [UserController::class, 'update'])->name('user.update');
+    Route::post('/{id}/delete', [UserController::class, 'destroy'])->name('users.delete');
+    Route::get('/information/{user}', [UserController::class, 'information'])->name('users.information');
+});
+   
 
 Route::middleware(['auth'])->group(function () {
     Route::redirect('settings', 'settings/profile');

@@ -14,6 +14,7 @@ return new class extends Migration {
             $table->date('date');
             $table->time('start_time')->nullable();
             $table->time('end_time')->nullable();
+            $table->string('location')->nullable(); // Nueva columna para la ubicación
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->timestamps();
         });

@@ -6,21 +6,20 @@
             <form action="{{ route('events.new.store') }}" method="POST" class="flex flex-col gap-6">
                 @csrf
 
-                <!-- Cambiar 'eventName' por 'title' -->
                 <flux:input name="title" :label="__('Nombre del evento')" type="text" required autofocus
                     placeholder="Día del amor y la amistad" />
 
                 <flux:input name="description" :label="__('Descripción del evento')" type="text" required
                     placeholder="Evento especial para celebrar el amor y la amistad" />
 
-                    {{-- //TODO: que tenga datos por defecto con la fecha actual y la hora actual pero cerrada (terminando en 00)--}}
+                <flux:input name="location" :label="__('Ubicación del evento')" type="text" required
+                    placeholder="Auditorio principal, Uniguajira" />
+
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <flux:input name="date" :label="__('Fecha del evento')" type="date" required />
 
-                    <!-- Cambiar 'startTime' por 'start_time' -->
                     <flux:input name="start_time" :label="__('Hora de inicio')" type="time" required />
 
-                    <!-- Cambiar 'endTime' por 'end_time' -->
                     <flux:input name="end_time" :label="__('Hora de finalización')" type="time" required />
                 </div>
 

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\EventController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Models\Event;
@@ -32,6 +33,9 @@ Route::get('/eventos-json', function () {
         ->groupBy('date')
         ->get();
 });
+
+Route::get('/events/{date}', [EventController::class, 'getByDate']);
+
 
 // Route to get all events in JSON format
 // Todas estas rutas tiene el prefix /api

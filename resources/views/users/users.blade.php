@@ -16,18 +16,26 @@
         </div>
         
         <div class="flex justi">
-            <flux:button variant="subtle">Crear Usuario</flux:button>
+            <a>
+                <flux:button href="{{ route('user.form') }}" variant="subtle">Crear Usuario</flux:button>
+            </a>
+            
 
         </div>
         <div class="relative h-full flex-1 overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-700">
             <div class=" inset-0 overflow-auto p-4 md:grid md:grid-cols-2 gap-4">
 
                 @foreach ($users as $user)
-                    @livewire('user.card', ['title' => $user->name], key($user->id))
+                    @livewire('user.card', ['title' => $user->name, 'user' => $user], key($user->id))
                 @endforeach 
                
             </div>
         
+            <div>
+               
+
+            </div>
+
         </div>
     </div>
 

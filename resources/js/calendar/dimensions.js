@@ -11,18 +11,20 @@ export function getResponsiveDimensions() {
     let cellSize, gutter;
 
     if (containerWidth >= 2000) {
-        cellSize = 35;   // estático
+        // ✅ Pantallas muy grandes: medida estática
+        cellSize = 35;
         gutter = 3;
-    }
-
+    } 
     else if (containerWidth >= 1000) {
-        // Ajuste dinámico al ancho disponible
+        // ✅ Ajuste dinámico para pantallas medianas/grandes
+        // Calcular según el ancho, pero sin que aparezca scroll horizontal
         cellSize = Math.min(Math.max(containerWidth / 55, 18), 32);
         gutter = Math.max(cellSize * 0.1, 2);
-    }
-    
+    } 
     else {
-        cellSize = Math.min(containerWidth / 20, 28); // un poco más grande para no perder visibilidad
+        // ✅ Contenedores pequeños (< 1000px)
+        // Se usan celdas más grandes para no perder visibilidad
+        cellSize = Math.min(containerWidth / 18, 30);
         gutter = Math.max(cellSize * 0.12, 1);
     }
 
