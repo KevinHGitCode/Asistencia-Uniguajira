@@ -21,7 +21,7 @@ class UserController extends Controller
      */
     public function create()
     {
-        //
+        return view('users.create');
     }
 
     /**
@@ -29,7 +29,7 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        return "proceso";
     }
 
     /**
@@ -37,15 +37,17 @@ class UserController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $users = User::findOrFail($id);
+        return view('users.show', compact('user'));
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Show the information view for the specified user.
      */
-    public function edit(string $id)
+    public function information(string $id)
     {
-        //
+        $user = User::findOrFail($id);
+        return view('users.information', compact('user'));
     }
 
     /**
