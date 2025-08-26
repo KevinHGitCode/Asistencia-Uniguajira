@@ -1,2 +1,2 @@
 import './handle-sidebar';
-import CalHeatmap from 'cal-heatmap';
+// import CalHeatmap from 'cal-heatmap';
