@@ -13,6 +13,9 @@
             <div>
                 <flux:heading class="text-2xl font-bold">{{ $user->name }}</flux:heading>
                 <p class="text-gray-600 dark:text-gray-300">{{ $user->email }}</p>
+                    @if($user->role)
+                        <flux:badge color="lime">{{ $user->role }}</flux:badge>
+                    @endif
             </div>
         </div>
 
@@ -83,10 +86,10 @@
 
         <div>
             <flux:heading class="text-lg font-semibold mb-2">Detalles</flux:heading>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
+            <div class="flex flex-col gap-2">
+                {{-- <div>
                     <span class="font-semibold">ID:</span> {{ $user->id }}
-                </div>
+                </div> --}}
                 <div>
                     <span class="font-semibold">Correo:</span> {{ $user->email }}
                 </div>
