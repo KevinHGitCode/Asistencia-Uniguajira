@@ -13,7 +13,7 @@
             <div>
                 <flux:heading class="text-2xl font-bold">{{ $user->name }}</flux:heading>
                 <p class="text-gray-600 dark:text-gray-300">{{ $user->email }}</p>
-                    @if($user->role)
+                    @if($user->role === 'administrador')
                         <flux:badge color="lime">{{ $user->role }}</flux:badge>
                     @endif
             </div>
