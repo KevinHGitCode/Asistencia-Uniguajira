@@ -29,7 +29,22 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        return "proceso";
+       
+         $validated = $request->validate([
+
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|string|min:6',
+        ]);
+
+        $user = User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => bcrypt($validated['password']),
+        ]);
+
+        return redirect()->route('users.index')->with('success', 'Usuario creado correctamente');
+        //sss
     }
 
     /**
@@ -82,7 +97,23 @@ class UserController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+
+        $user = User::findOrFail($id);
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $user->id,
+            
+        ]);
+
+        $user->name = $validated['name'];
+        $user->email = $validated['email'];
+        $user->save();
+
+        return redirect()->route('users.index')->with('success', 'Usuario actualizado correctamente');
+
+
+
     }
 
     /**
@@ -90,6 +121,9 @@ class UserController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $user = User::findOrFail($id);
+        $user->delete();
+
+        return redirect()->route('users.index')->with('success', 'Usuario eliminado correctamente');
     }
 }

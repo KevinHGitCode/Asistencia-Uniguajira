@@ -13,6 +13,9 @@
             <div>
                 <flux:heading class="text-2xl font-bold">{{ $user->name }}</flux:heading>
                 <p class="text-gray-600 dark:text-gray-300">{{ $user->email }}</p>
+                    @if($user->role)
+                        <flux:badge color="lime">{{ $user->role }}</flux:badge>
+                    @endif
             </div>
         </div>
 
@@ -26,14 +29,67 @@
                         class="font-bold">{{ $user->updated_at ? $user->updated_at->format('d/m/Y H:i') : 'N/A' }}</span>
                 </li>
             </ul>
+
+            <div class="flex justify-end gap-2 mb-4">
+
+                {{-- boton editar user --}}
+
+                <flux:modal.trigger name="edit-profile">
+                    <flux:button>Editar perfil</flux:button>
+                </flux:modal.trigger>
+
+                <flux:modal name="edit-profile" class="md:w-96">
+                    <form action="{{ route('user.update', $user->id) }}" method="POST" class="space-y-6">
+                        @csrf
+                        <div>
+                            <flux:heading size="lg">Update profile</flux:heading>
+                            <flux:text class="mt-2">Make changes to your personal details.</flux:text>
+                        </div>
+                        <flux:input label="Name" name="name" placeholder="Your name" />
+                        <flux:input label="Email" name="email" type="email" placeholder="Your email" />
+                        <div class="flex">
+                            <flux:spacer />
+                            <flux:button type="submit" variant="primary">Save changes</flux:button>
+                        </div>
+                    </form>
+                </flux:modal>
+
+
+
+                {{-- boton eliminar user --}}
+                <flux:modal.trigger name="delete-profile">
+                    <flux:button variant="danger">Eliminar</flux:button>
+                </flux:modal.trigger>
+
+                <flux:modal name="delete-profile" class="min-w-[22rem]">
+                    <form action="{{ route('users.delete', $user->id) }}" method="POST" class="space-y-6">
+                        @csrf
+                        <div>
+                            <flux:heading size="lg">¿Eliminar usuario?</flux:heading>
+                            <flux:text class="mt-2">
+                                <p>Estás a punto de eliminar este usuario.</p>
+                                <p>Esta acción no se puede revertir.</p>
+                            </flux:text>
+                        </div>
+                        <div class="flex gap-2">
+                            <flux:spacer />
+                            <flux:modal.close>
+                                <flux:button variant="ghost">Cancelar</flux:button>
+                            </flux:modal.close>
+                            <flux:button type="submit" variant="danger">Eliminar usuario</flux:button>
+                        </div>
+                    </form>
+                </flux:modal>
+            </div>
+
         </div>
 
         <div>
             <flux:heading class="text-lg font-semibold mb-2">Detalles</flux:heading>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
+            <div class="flex flex-col gap-2">
+                {{-- <div>
                     <span class="font-semibold">ID:</span> {{ $user->id }}
-                </div>
+                </div> --}}
                 <div>
                     <span class="font-semibold">Correo:</span> {{ $user->email }}
                 </div>

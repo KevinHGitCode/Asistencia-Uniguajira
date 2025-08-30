@@ -15,7 +15,7 @@ class DashboardController extends Controller
         $user = Auth::user();
         $username = ucfirst(strtolower($user->name));
 
-        if ($user->role === 'super_admin') {
+        if ($user->role === 'admin') {
             // Super Admin → Totales generales
             $eventosCount = Event::count();
             $asistenciasCount = Attendance::count();

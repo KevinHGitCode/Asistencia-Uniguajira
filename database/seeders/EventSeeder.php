@@ -22,6 +22,7 @@ class EventSeeder extends Seeder
                 'start_time' => $start,
                 'end_time' => $end,
                 'location' => $faker->city(), // ubicación aleatoria
+                'link' => $faker->url(), // enlace aleatorio
                 'user_id' => $faker->randomElement($userIds),
                 'created_at' => now(),
                 'updated_at' => now(),

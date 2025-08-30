@@ -5,14 +5,14 @@ import { clearCalendarContainer,
             getSemesterInfo
         } from './utils.js';
 import { openModal } from './modal.js';
-import CalHeatmap from 'cal-heatmap';
+// import CalHeatmap from 'cal-heatmap';
 
-// Importar los estilos básicos
-import 'cal-heatmap/cal-heatmap.css';
+// // Importar los estilos básicos
+// import 'cal-heatmap/cal-heatmap.css';
 
-// Importar plugins que necesites
-import Legend from 'cal-heatmap/plugins/Legend';
-import Tooltip from 'cal-heatmap/plugins/Tooltip';
+// // Importar plugins que necesites
+// import Legend from 'cal-heatmap/plugins/Legend';
+// import Tooltip from 'cal-heatmap/plugins/Tooltip';
 
 
 
