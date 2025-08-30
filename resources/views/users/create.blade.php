@@ -19,7 +19,7 @@
                 <flux:input name="password" :label="__('Contraseña')" type="password" required placeholder="Contraseña" />
                 <div class="flex justify-start">
                     <flux:button variant="primary" type="submit" class="px-3 py-6">
-                        {{ __('Crear Usuario') }}
+                        {{ __('Crear ') }}
                     </flux:button>
                 </div>
             </form>

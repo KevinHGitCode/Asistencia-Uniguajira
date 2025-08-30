@@ -26,6 +26,59 @@
                         class="font-bold">{{ $user->updated_at ? $user->updated_at->format('d/m/Y H:i') : 'N/A' }}</span>
                 </li>
             </ul>
+
+            <div class="flex justify-end gap-2 mb-4">
+
+                {{-- boton editar user --}}
+
+                <flux:modal.trigger name="edit-profile">
+                    <flux:button>Editar perfil</flux:button>
+                </flux:modal.trigger>
+
+                <flux:modal name="edit-profile" class="md:w-96">
+                    <form action="{{ route('user.update', $user->id) }}" method="POST" class="space-y-6">
+                        @csrf
+                        <div>
+                            <flux:heading size="lg">Update profile</flux:heading>
+                            <flux:text class="mt-2">Make changes to your personal details.</flux:text>
+                        </div>
+                        <flux:input label="Name" name="name" placeholder="Your name" />
+                        <flux:input label="Email" name="email" type="email" placeholder="Your email" />
+                        <div class="flex">
+                            <flux:spacer />
+                            <flux:button type="submit" variant="primary">Save changes</flux:button>
+                        </div>
+                    </form>
+                </flux:modal>
+
+
+
+                {{-- boton eliminar user --}}
+                <flux:modal.trigger name="delete-profile">
+                    <flux:button variant="danger">Eliminar</flux:button>
+                </flux:modal.trigger>
+
+                <flux:modal name="delete-profile" class="min-w-[22rem]">
+                    <form action="{{ route('users.delete', $user->id) }}" method="POST" class="space-y-6">
+                        @csrf
+                        <div>
+                            <flux:heading size="lg">¿Eliminar usuario?</flux:heading>
+                            <flux:text class="mt-2">
+                                <p>Estás a punto de eliminar este usuario.</p>
+                                <p>Esta acción no se puede revertir.</p>
+                            </flux:text>
+                        </div>
+                        <div class="flex gap-2">
+                            <flux:spacer />
+                            <flux:modal.close>
+                                <flux:button variant="ghost">Cancelar</flux:button>
+                            </flux:modal.close>
+                            <flux:button type="submit" variant="danger">Eliminar usuario</flux:button>
+                        </div>
+                    </form>
+                </flux:modal>
+            </div>
+
         </div>
 
         <div>
