@@ -122,8 +122,14 @@ class UserController extends Controller
     public function destroy(string $id)
     {
         $user = User::findOrFail($id);
-        $user->delete();
+        $password = request('password');
+        $authUser = auth()->user();
 
+        if (!\Illuminate\Support\Facades\Hash::check($password, $authUser->password)) {
+            return redirect()->back()->withErrors(['password' => 'La contraseña es incorrecta.']);
+        }
+
+        $user->delete();
         return redirect()->route('users.index')->with('success', 'Usuario eliminado correctamente');
     }
 }

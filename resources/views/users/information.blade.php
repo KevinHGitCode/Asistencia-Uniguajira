@@ -177,17 +177,24 @@
                         <flux:text class="mt-2">
                             <p>Estás a punto de eliminar este usuario.</p>
                             <p>Esta acción no se puede revertir.</p>
+                            <p class="text-red-600 font-semibold mt-2">Por favor ingresa tu contraseña para confirmar.</p>
                         </flux:text>
                     </div>
-                        <div class="flex gap-2">
-                            <flux:spacer />
-                            <flux:modal.close>
-                                <flux:button variant="ghost">Cancelar</flux:button>
-                            </flux:modal.close>
-                            <flux:button type="submit" variant="danger">Eliminar usuario</flux:button>
-                        </div>
-                    </form>
-                </flux:modal>
+                    <div>
+                        <flux:input label="Contraseña" name="password" type="password" placeholder="Ingresa tu contraseña" required />
+                        @error('password')
+                            <div class="text-red-600 text-sm mt-2">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    <div class="flex gap-2">
+                        <flux:spacer />
+                        <flux:modal.close>
+                            <flux:button variant="ghost">Cancelar</flux:button>
+                        </flux:modal.close>
+                        <flux:button type="submit" variant="danger">Eliminar usuario</flux:button>
+                    </div>
+                </form>
+            </flux:modal>
         </div>
 
     </div>
