@@ -20,7 +20,7 @@
                 </x-slot>
             </livewire:card-stat>
 
-            <livewire:card-stat title="Asistentes totales" :value="$participantesCount">
+            <livewire:card-stat title="Participantes totales" :value="$participantesCount">
                 <x-slot name="icon">
                     <flux:icon.users class="size-8" />
                 </x-slot>
