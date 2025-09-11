@@ -7,7 +7,10 @@
 
         <div class="flex-1">
             <flux:heading class="flex items-center gap-2 mb-1">
-                {{ $title }}
+                        {{ $title }}
+                        @if(isset($user->role) && ($user->role === 'admin'))
+                            <flux:badge color="lime">{{ $user->role }}</flux:badge>
+                        @endif
             </flux:heading>
             <p class="text-sm text-gray-600 dark:text-gray-400">
                 {{ $user->email }}

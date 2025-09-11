@@ -13,6 +13,9 @@
             <div>
                 <flux:heading class="text-2xl font-bold">{{ $user->name }}</flux:heading>
                 <p class="text-gray-600 dark:text-gray-300">{{ $user->email }}</p>
+                    @if($user->role === 'administrador')
+                        <flux:badge color="lime">{{ $user->role }}</flux:badge>
+                    @endif
             </div>
         </div>
 
@@ -51,42 +54,16 @@
                     </form>
                 </flux:modal>
 
-
-
-                {{-- boton eliminar user --}}
-                <flux:modal.trigger name="delete-profile">
-                    <flux:button variant="danger">Eliminar</flux:button>
-                </flux:modal.trigger>
-
-                <flux:modal name="delete-profile" class="min-w-[22rem]">
-                    <form action="{{ route('users.delete', $user->id) }}" method="POST" class="space-y-6">
-                        @csrf
-                        <div>
-                            <flux:heading size="lg">¿Eliminar usuario?</flux:heading>
-                            <flux:text class="mt-2">
-                                <p>Estás a punto de eliminar este usuario.</p>
-                                <p>Esta acción no se puede revertir.</p>
-                            </flux:text>
-                        </div>
-                        <div class="flex gap-2">
-                            <flux:spacer />
-                            <flux:modal.close>
-                                <flux:button variant="ghost">Cancelar</flux:button>
-                            </flux:modal.close>
-                            <flux:button type="submit" variant="danger">Eliminar usuario</flux:button>
-                        </div>
-                    </form>
-                </flux:modal>
             </div>
 
         </div>
 
         <div>
             <flux:heading class="text-lg font-semibold mb-2">Detalles</flux:heading>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
+            <div class="flex flex-col gap-2">
+                {{-- <div>
                     <span class="font-semibold">ID:</span> {{ $user->id }}
-                </div>
+                </div> --}}
                 <div>
                     <span class="font-semibold">Correo:</span> {{ $user->email }}
                 </div>
@@ -184,5 +161,41 @@
                 <p>{{ $user->name }} aún no ha creado ningún evento.</p>
             </div>
         @endif
+
+            <div class="flex justify-end mt-8">
+                {{-- boton eliminar user --}}
+                <flux:modal.trigger name="delete-profile">
+                    <flux:button variant="danger">Eliminar</flux:button>
+                </flux:modal.trigger>
+            </div>
+
+            <flux:modal name="delete-profile" class="min-w-[22rem]">
+                <form action="{{ route('users.delete', $user->id) }}" method="POST" class="space-y-6">
+                    @csrf
+                    <div>
+                        <flux:heading size="lg">¿Eliminar usuario?</flux:heading>
+                        <flux:text class="mt-2">
+                            <p>Estás a punto de eliminar este usuario.</p>
+                            <p>Esta acción no se puede revertir.</p>
+                            <p class="text-red-600 font-semibold mt-2">Por favor ingresa tu contraseña para confirmar.</p>
+                        </flux:text>
+                    </div>
+                    <div>
+                        <flux:input label="Contraseña" name="password" type="password" placeholder="Ingresa tu contraseña" required />
+                        @error('password')
+                            <div class="text-red-600 text-sm mt-2">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    <div class="flex gap-2">
+                        <flux:spacer />
+                        <flux:modal.close>
+                            <flux:button variant="ghost">Cancelar</flux:button>
+                        </flux:modal.close>
+                        <flux:button type="submit" variant="danger">Eliminar usuario</flux:button>
+                    </div>
+                </form>
+            </flux:modal>
+        </div>
+
     </div>
 </x-layouts.app>
