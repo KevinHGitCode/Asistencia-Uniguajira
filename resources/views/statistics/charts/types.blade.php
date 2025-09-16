@@ -17,13 +17,13 @@
         @endphp
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3 p-2">
-            <div id="chart_bar" class="{{ $chartStyles }}"></div>
-            <div id="chart_pie" class="{{ $chartStyles }}"></div>
-            <div id="chart_line" class="{{ $chartStyles }}"></div>
-            <div id="chart_stacked" class="{{ $chartStyles }}"></div>
-            <div id="chart_radar" class="{{ $chartStyles }}"></div>
-            <div id="chart_heatmap" class="{{ $chartStyles }}"></div>
-            <div id="chart_kpi" class="{{ $chartStyles }}"></div>
+            @livewire('chart-container', ['id' => 'chart_bar', 'class' => $chartStyles])
+            @livewire('chart-container', ['id' => 'chart_pie', 'class' => $chartStyles])
+            @livewire('chart-container', ['id' => 'chart_line', 'class' => $chartStyles])
+            @livewire('chart-container', ['id' => 'chart_stacked', 'class' => $chartStyles])
+            @livewire('chart-container', ['id' => 'chart_radar', 'class' => $chartStyles])
+            @livewire('chart-container', ['id' => 'chart_heatmap', 'class' => $chartStyles])
+            @livewire('chart-container', ['id' => 'chart_kpi', 'class' => $chartStyles])
         </div>
 
     </div>
