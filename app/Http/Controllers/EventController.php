@@ -40,15 +40,19 @@ class EventController extends Controller
     {
         try {
             $validated = $request->validate([
-                    'title' => 'required|string|max:255',
-                    'description' => 'nullable|string',
-                    'date' => 'required|date',
-                    'start_time' => 'nullable|date_format:H:i',
-                    'end_time' => 'nullable|date_format:H:i|after_or_equal:start_time',
-                    'location' => 'required|string|max:255', // validación para ubicación
+                'title' => 'required|string|max:255',
+                'description' => 'nullable|string',
+                'date' => 'required|date',
+                'start_time' => 'nullable|date_format:H:i',
+                'end_time' => 'nullable|date_format:H:i|after_or_equal:start_time',
+                'location' => 'required|string|max:255',
             ]);
 
             $validated['user_id'] = Auth::id();
+
+            // Generar un link único para el evento
+            $slug = str_replace(' ', '-', strtolower($validated['title'])) . '-' . date('Ymd', strtotime($validated['date'])) . '-' . uniqid();
+            $validated['link'] = $slug;
 
             Event::create($validated);
 
@@ -58,7 +62,12 @@ class EventController extends Controller
             // Log del error para debugging
             Log::error('Error creating event: ' . $e->getMessage());
 
-            return back()->withInput()->withErrors(['error' => 'Hubo un error al crear el evento. Por favor, inténtalo de nuevo.']);
+            $errorMsg = 'Hubo un error al crear el evento. Por favor, inténtalo de nuevo.';
+            if (app()->environment() !== 'production') {
+                $errorMsg .= ' Detalles: ' . $e->getMessage();
+            }
+            // Mantener los datos del formulario con withInput()
+            return back()->withInput()->withErrors(['error' => $errorMsg]);
         }
     }
 

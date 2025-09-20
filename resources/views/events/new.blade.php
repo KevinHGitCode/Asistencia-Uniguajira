@@ -6,21 +6,27 @@
             <form action="{{ route('events.new.store') }}" method="POST" class="flex flex-col gap-6">
                 @csrf
 
+
                 <flux:input name="title" :label="__('Nombre del evento')" type="text" required autofocus
-                    placeholder="Día del amor y la amistad" />
+                    placeholder="Día del amor y la amistad" :value="old('title')" />
+
 
                 <flux:input name="description" :label="__('Descripción del evento')" type="text" required
-                    placeholder="Evento especial para celebrar el amor y la amistad" />
+                    placeholder="Evento especial para celebrar el amor y la amistad" :value="old('description')" />
+
 
                 <flux:input name="location" :label="__('Ubicación del evento')" type="text" required
-                    placeholder="Auditorio principal, Uniguajira" />
+                    placeholder="Auditorio principal, Uniguajira" :value="old('location')" />
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <flux:input name="date" :label="__('Fecha del evento')" type="date" required />
 
-                    <flux:input name="start_time" :label="__('Hora de inicio')" type="time" required />
+                    <flux:input name="date" :label="__('Fecha del evento')" type="date" required :value="old('date')" />
 
-                    <flux:input name="end_time" :label="__('Hora de finalización')" type="time" required />
+
+                    <flux:input name="start_time" :label="__('Hora de inicio')" type="time" required :value="old('start_time')" />
+
+
+                    <flux:input name="end_time" :label="__('Hora de finalización')" type="time" required :value="old('end_time')" />
                 </div>
 
                 <!-- Mostrar errores de validación -->
