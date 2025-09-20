@@ -19,10 +19,13 @@ class AttendanceSeeder extends Seeder
         $today = now()->toDateString();
         $events = Event::whereDate('date', '<=', $today)->get();
 
+        // Seleccionar 400 participantes aleatorios para todo el proceso
+        $allParticipantIds = Participant::inRandomOrder()->limit(400)->pluck('id')->toArray();
+
         foreach ($events as $event) {
-            $attendancesCount = fake()->numberBetween(20, 50);
-            // Seleccionar participantes aleatorios directamente en la base de datos
-            $participantIds = Participant::inRandomOrder()->limit($attendancesCount)->pluck('id');
+            $attendancesCount = fake()->numberBetween(30, 60);
+            // Seleccionar IDs aleatorios de los 400 para este evento
+            $participantIds = collect($allParticipantIds)->shuffle()->take($attendancesCount);
             $rows = [];
             foreach ($participantIds as $participantId) {
                 $rows[] = [

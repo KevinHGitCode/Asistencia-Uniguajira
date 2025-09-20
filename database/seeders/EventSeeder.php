@@ -12,7 +12,8 @@ class EventSeeder extends Seeder
         $faker = \Faker\Factory::create();
         $userIds = \App\Models\User::pluck('id')->toArray();
         $rows = [];
-        for ($i = 0; $i < 20; $i++) {
+        $numEvents = 50; // Número de eventos a crear
+        for ($i = 0; $i < $numEvents; $i++) {
             $start = $faker->time('H:i:s');
             $end = $faker->time('H:i:s');
             $rows[] = [
