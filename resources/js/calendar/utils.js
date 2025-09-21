@@ -13,6 +13,17 @@ export async function fetchEventsAndPaintCalendar() {
     return eventos;
 }
 
+export async function fetchMyEventsAndPaintCalendar() {
+    const response = await fetch('/api/mis-eventos-json');
+    if (!response.ok) {
+        console.error("Error al traer eventos", response.status);
+        return [];
+    }
+    const data = await response.json();
+    console.log("🔑 Auth:", data.auth_id);
+    return data.eventos;
+}
+
 // Función para determinar el semestre y las fechas de inicio
 export const getSemesterInfo = () => {
     const now = new Date();

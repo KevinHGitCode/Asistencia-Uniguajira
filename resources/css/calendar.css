@@ -8,6 +8,18 @@
     transition: font-size 0.2s ease, x 0.2s ease, y 0.2s ease;
 }
 
+/* Fondo de las fechas resaltadas */
+.highlight.ch-subdomain-bg {
+  fill: #1c4412 !important; /* Azul intenso */ /* Borde opcional */
+  stroke-width: 1px;
+}
+
+/* Texto de las fechas resaltadas */
+.highlight.ch-subdomain-text {
+  fill: #ffffff !important; /* Blanco */
+  font-weight: normal; /* O normal si no quieres negrilla */
+}
+
 /* .dark #cal-heatmap .ch-subdomain-text {
     fill: #ffffff !important;
 } */

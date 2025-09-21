@@ -2,6 +2,7 @@
 import { getResponsiveDimensions } from './dimensions.js';
 import { clearCalendarContainer, 
             fetchEventsAndPaintCalendar,
+            fetchMyEventsAndPaintCalendar,
             getSemesterInfo
         } from './utils.js';
 import { openModal } from './modal.js';
@@ -57,6 +58,12 @@ export async function paintCalendar(forcedTheme = null) {
         const events = await fetchEventsAndPaintCalendar();
         const dimensions = getResponsiveDimensions();
 
+
+        const myevents = await fetchMyEventsAndPaintCalendar();
+        console.log(myevents);
+
+        const highlightDates = myevents.map(e => new Date(e.date));
+
         const semesterInfo = getSemesterInfo();
 
         calInstance = new CalHeatmap();
@@ -93,13 +100,7 @@ export async function paintCalendar(forcedTheme = null) {
             },
             date: {
                 start: semesterInfo.startDate,
-                highlight: [
-                    new Date('2025-08-19'),
-                    new Date('2025-09-04'),
-                    new Date('2025-10-05'),
-                    new Date('2025-12-09'),
-                    new Date()
-                ],
+                highlight: highlightDates, // Resaltar mis eventos,
                 locale: 'es',
                 timezone: 'America/Bogota'
             },
