@@ -76,7 +76,8 @@ class EventController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $event = Event::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
+        return view('events.show', compact('event'));
     }
 
     /**

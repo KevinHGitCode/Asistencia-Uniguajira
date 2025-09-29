@@ -9,29 +9,29 @@
     <flux:sidebar sticky stashable class="border-e border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
         <flux:sidebar.toggle class="lg:hidden" icon="x-mark" />
 
-        <a href="{{ route('dashboard') }}" class="me-5 flex items-center space-x-2 rtl:space-x-reverse" wire:navigate>
+        <a href="{{ route('dashboard') }}" class="me-5 flex items-center space-x-2 rtl:space-x-reverse hover:scale-105 transition-transform" wire:navigate>
             <x-app-logo />
         </a>
 
         <flux:navlist variant="outline">
             <flux:navlist.group :heading="__('Platform')" class="grid">
 
-                <flux:navlist.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')"
+                <flux:navlist.item icon="home" :href="route('dashboard')" class="hover:scale-105 transition-transform" :current="request()->routeIs('dashboard')"
                     wire:navigate>{{ __('Home') }}</flux:navlist.item>
 
-                <flux:navlist.item icon="plus" :href="route('events.new')" :current="request()->routeIs('events.new')"
+                <flux:navlist.item icon="plus" :href="route('events.new')" class="hover:scale-105 transition-transform" :current="request()->routeIs('events.new')"
                     wire:navigate>{{ __('New') }}</flux:navlist.item>
 
-                <flux:navlist.item icon="numbered-list" :href="route('events.list')" :current="request()->routeIs('events.list')"
+                <flux:navlist.item icon="numbered-list" :href="route('events.list')" class="hover:scale-105 transition-transform" :current="request()->routeIs('events.list')"
                     wire:navigate>{{ __('Event list') }}</flux:navlist.item>
 
-                <flux:navlist.item icon="chart-bar" :href="route('statistics')" :current="request()->routeIs('statistics')"
+                <flux:navlist.item icon="chart-bar" :href="route('statistics')" class="hover:scale-105 transition-transform" :current="request()->routeIs('statistics')"
                     wire:navigate>{{ __('Statistics') }}</flux:navlist.item>
 
-                <flux:navlist.item icon="chart-bar" :href="route('charts.types')" :current="request()->routeIs('charts.types')"
+                <flux:navlist.item icon="chart-bar" :href="route('charts.types')" class="hover:scale-105 transition-transform" :current="request()->routeIs('charts.types')"
                     wire:navigate>{{ __('Tipos de graficos') }}</flux:navlist.item>
 
-                <flux:navlist.item icon="users" :href="route('users.index')" :current="request()->routeIs('users.index')"
+                <flux:navlist.item icon="users" :href="route('users.index')" class="hover:scale-105 transition-transform" :current="request()->routeIs('users.index')"
                     wire:navigate>{{ __('Users') }}</flux:navlist.item>
                     
             </flux:navlist.group>
