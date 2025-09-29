@@ -30,9 +30,9 @@
                 </li>
             </ul>
 
-            <div class="flex justify-end gap-2 mb-4">
+            {{-- <div class="flex justify-end gap-2 mb-4">
 
-                {{-- boton editar user --}}
+                 boton editar user 
 
                 <flux:modal.trigger name="edit-profile">
                     <flux:button>Editar perfil</flux:button>
@@ -54,7 +54,7 @@
                     </form>
                 </flux:modal>
 
-            </div>
+            </div> --}}
 
         </div>
 
@@ -162,6 +162,9 @@
             </div>
         @endif
 
+            
+        </div>
+        <div>
             <div class="flex justify-end mt-8">
                 {{-- boton eliminar user --}}
                 <flux:modal.trigger name="delete-profile">
@@ -195,6 +198,7 @@
                     </div>
                 </form>
             </flux:modal>
+
         </div>
 
     </div>
