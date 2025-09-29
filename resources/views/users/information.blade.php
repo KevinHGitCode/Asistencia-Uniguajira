@@ -9,7 +9,14 @@
 
     <div class="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800 mb-6">
         <div class="flex items-center gap-6 mb-6">
-            <flux:avatar src="https://unavatar.io/x/{{ $user->name }}" />
+            <div>
+                @livewire('user.avatar', [
+                    'user' => $user,
+                    'size' => 'h-10 w-10',
+                    'textSize' => 'text-2xl',
+                    'showUpload' => false
+                ], key('avatar-'.$user->id))
+            </div>
             <div>
                 <flux:heading class="text-2xl font-bold">{{ $user->name }}</flux:heading>
                 <p class="text-gray-600 dark:text-gray-300">{{ $user->email }}</p>
