@@ -91,86 +91,39 @@
         </flux:heading>
 
         @if ($events->count() > 0)
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                @foreach ($events as $event)
-                    <div class="border border-gray-200 dark:border-gray-600 rounded-lg p-4 bg-gray-50 dark:bg-gray-700">
-                        <!-- Título del evento -->
-                        <h4 class="font-semibold text-gray-900 dark:text-white mb-2 truncate">
-                            {{ $event->title }}
-                        </h4>
+              <!-- GRID de eventos -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            @foreach ($events as $event)
+                <div class="p-4 border rounded-lg shadow-sm dark:border-zinc-700 bg-white dark:bg-zinc-800">
+                    <h4 class="text-md font-bold mb-1">{{ $event->title }}</h4>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                        {{ $event->description }}
+                    </p>
+                    <p class="text-xs text-gray-500">
+                        Creado el {{ $event->created_at->format('d/m/Y') }}
+                    </p>
+                </div>
+            @endforeach
+        </div>
 
-                        <!-- Fecha -->
-                        <div class="flex items-center text-sm text-gray-600 dark:text-gray-300 mb-2">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M8 7V3a1 1 0 011-1h6a1 1 0 011 1v4h3a1 1 0 011 1v8a1 1 0 01-1 1H5a1 1 0 01-1-1V8a1 1 0 011-1h3z">
-                                </path>
-                            </svg>
-                            {{ \Carbon\Carbon::parse($event->date)->format('d/m/Y') }}
-
-                            <!-- Indicador si es evento futuro o pasado -->
-                            @if ($event->date >= now()->toDateString())
-                                <span
-                                    class="ml-2 px-2 py-1 text-xs bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100 rounded">
-                                    Próximo
-                                </span>
-                            @else
-                                <span
-                                    class="ml-2 px-2 py-1 text-xs bg-gray-100 text-gray-800 dark:bg-gray-600 dark:text-gray-300 rounded">
-                                    Pasado
-                                </span>
-                            @endif
-                        </div>
-
-                        <!-- Horarios (si existen) -->
-                        @if ($event->start_time || $event->end_time)
-                            <div class="flex items-center text-sm text-gray-600 dark:text-gray-300 mb-2">
-                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z">
-                                    </path>
-                                </svg>
-                                @if ($event->start_time && $event->end_time)
-                                    {{ \Carbon\Carbon::parse($event->start_time)->format('H:i') }} -
-                                    {{ \Carbon\Carbon::parse($event->end_time)->format('H:i') }}
-                                @elseif($event->start_time)
-                                    Desde {{ \Carbon\Carbon::parse($event->start_time)->format('H:i') }}
-                                @elseif($event->end_time)
-                                    Hasta {{ \Carbon\Carbon::parse($event->end_time)->format('H:i') }}
-                                @endif
-                            </div>
-                        @endif
-
-                        <!-- Descripción (si existe) -->
-                        @if ($event->description)
-                            <div class="text-sm text-gray-600 dark:text-gray-300 mb-3">
-                                <p class="line-clamp-2">{{ $event->description }}</p>
-                            </div>
-                        @endif
-
-                        <!-- Fecha de creación -->
-                        <div
-                            class="text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-600 pt-2">
-                            Creado: {{ $event->created_at->format('d/m/Y H:i') }}
-                        </div>
-                    </div>
-                @endforeach
-            </div>
+        <!-- Paginación -->
+        <div class="mt-6">
+            {{ $events->links('pagination::tailwind') }}
+        </div>
         @else
-            <!-- Mensaje cuando el usuario no tiene eventos -->
-            <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+           <div class="text-center py-8 text-gray-500 dark:text-gray-400">
                 <svg class="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M8 7V3a1 1 0 011-1h6a1 1 0 011 1v4h3a1 1 0 011 1v8a1 1 0 01-1 1H5a1 1 0 01-1-1V8a1 1 0 011-1h3z">
+                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M8 7V3a1 1 0 011-1h6a1 1 0 011 1v4h3a1 1 0 011 1v8a1 1 0 01-1 1H5a1 1 0 01-1-1V8a1 1 0 011-1h3z">
                     </path>
-                </svg>
+                 </svg>
                 <h3 class="text-lg font-semibold mb-2">No hay eventos creados</h3>
-                <p>{{ $user->name }} aún no ha creado ningún evento.</p>
-            </div>
+                 <p>{{ $user->name }} aún no ha creado ningún evento.</p>
+          </div>
         @endif
 
             
-        </div>
+    </div>
         <div>
             <div class="flex justify-end mt-8">
                 {{-- boton eliminar user --}}
