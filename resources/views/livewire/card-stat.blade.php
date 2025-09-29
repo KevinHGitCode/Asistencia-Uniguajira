@@ -11,7 +11,8 @@
         
         <div class="flex-1">
             <h3 class="text-lg font-medium mb-2">{{ $title }}</h3>
-            <p class="text-sm text-gray-400">{{ $user->email }}</p>
+            <p>{{ $value }}</p>
+             <p class="text-sm text-gray-400">{{ $user->email ?? 'Sin correo' }}</p>   
         </div>
         
         <!-- Botón de configuración -->
