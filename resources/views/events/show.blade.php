@@ -10,7 +10,7 @@
 
     <div class="relative flex h-full w-full flex-1 flex-col gap-4 p-2 rounded-xl border border-neutral-200 dark:border-neutral-700">
 
-        <div class="p-4 overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-700">
+        <div class="p-4 overflow-hidden rounded-xl">
 
             <h1 class="text-3xl font-bold mb-4">Detalles del Evento</h1>   
 
