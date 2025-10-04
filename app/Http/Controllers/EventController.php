@@ -6,6 +6,7 @@ use App\Models\Event;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use App\Models\Attendance;
 
 class EventController extends Controller
 {
@@ -77,7 +78,10 @@ class EventController extends Controller
     public function show(string $id)
     {
         $event = Event::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
-        return view('events.show', compact('event'));
+
+        $asistenciasCount = Attendance::where('event_id', $event->id)->count();
+
+        return view('events.show', compact('event', 'asistenciasCount'));
     }
 
     /**
