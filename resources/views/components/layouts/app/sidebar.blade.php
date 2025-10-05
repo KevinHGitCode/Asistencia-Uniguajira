@@ -56,19 +56,27 @@
 
         <!-- Desktop User Menu -->
         <flux:dropdown class="hidden lg:block" position="bottom" align="start">
-            <flux:profile :name="auth()->user()->name" :initials="auth()->user()->initials()"
-                icon:trailing="chevrons-up-down" />
-
+           <flux:profile name="{{ auth()->user()->name }}"  avatar="{{ auth()->user()->avatar ? asset('storage/' . auth()->user()->avatar) : null }}"
+             icon:trailing="chevrons-up-down"
+            class="flex items-center space-x-2"
+            avatar-class="h-8 w-8 rounded-full object-cover"/>
             <flux:menu class="w-[220px]">
                 <flux:menu.radio.group>
                     <div class="p-0 text-sm font-normal">
                         <div class="flex items-center gap-2 px-1 py-1.5 text-start text-sm">
                             <span class="relative flex h-8 w-8 shrink-0 overflow-hidden rounded-lg">
-                                <span
-                                    class="flex h-full w-full items-center justify-center rounded-lg bg-neutral-200 text-black dark:bg-neutral-700 dark:text-white">
-                                    {{ auth()->user()->initials() }}
-                                </span>
+                                 @if (auth()->user()->avatar)
+                                       <img src="{{ asset('storage/' . auth()->user()->avatar) }}"
+                                        alt="{{ auth()->user()->name }}"
+                                        class="h-full w-full object-cover rounded-lg">
+                                    @else
+                                        <span
+                                            class="flex h-full w-full items-center justify-center rounded-lg bg-neutral-200 text-black dark:bg-neutral-700 dark:text-white">
+                                            {{ auth()->user()->initials() }}
+                                        </span>
+                                     @endif
                             </span>
+
 
                             <div class="grid flex-1 text-start text-sm leading-tight">
                                 <span class="truncate font-semibold">{{ auth()->user()->name }}</span>
@@ -104,18 +112,29 @@
         <flux:spacer />
 
         <flux:dropdown position="top" align="end">
-            <flux:profile :initials="auth()->user()->initials()" icon-trailing="chevron-down" />
-
+           
+        <flux:profile
+            avatar="{{ auth()->user()->avatar ? asset('storage/' . auth()->user()->avatar) : null }}"
+            icon-trailing="chevron-down"
+            class="flex items-center space-x-2"
+            avatar-class="h-8 w-8 rounded-full object-cover"/>
             <flux:menu>
                 <flux:menu.radio.group>
                     <div class="p-0 text-sm font-normal">
                         <div class="flex items-center gap-2 px-1 py-1.5 text-start text-sm">
                             <span class="relative flex h-8 w-8 shrink-0 overflow-hidden rounded-lg">
-                                <span
-                                    class="flex h-full w-full items-center justify-center rounded-lg bg-neutral-200 text-black dark:bg-neutral-700 dark:text-white">
-                                    {{ auth()->user()->initials() }}
-                                </span>
+                                 @if (auth()->user()->avatar)
+                                       <img src="{{ asset('storage/' . auth()->user()->avatar) }}"
+                                        alt="{{ auth()->user()->name }}"
+                                        class="h-full w-full object-cover rounded-lg">
+                                    @else
+                                        <span
+                                            class="flex h-full w-full items-center justify-center rounded-lg bg-neutral-200 text-black dark:bg-neutral-700 dark:text-white">
+                                            {{ auth()->user()->initials() }}
+                                        </span>
+                                     @endif
                             </span>
+
 
                             <div class="grid flex-1 text-start text-sm leading-tight">
                                 <span class="truncate font-semibold">{{ auth()->user()->name }}</span>
