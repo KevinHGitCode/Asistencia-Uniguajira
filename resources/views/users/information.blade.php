@@ -43,10 +43,7 @@
             </div>
         </div>
 
-        <div class="flex justify-left gap-2 mt-4">
-            <flux:modal.trigger name="edit-profile">
-                <flux:button class="dark:hover:scale-105 transition-transform">Editar perfil</flux:button>
-            </flux:modal.trigger>
+
 
             {{-- <div class="flex justify-end gap-2 mb-4">
 
@@ -76,7 +73,7 @@
 
             </div> --}}
 
-        </div>
+ 
 
         <div>
             <flux:heading class="text-lg font-semibold mb-2">Detalles</flux:heading>
