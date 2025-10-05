@@ -61,35 +61,29 @@ class UserController extends Controller
      */
     public function information(string $id)
     {
-        $user = User::findOrFail($id);
-    
-    // Obtener todos los eventos del usuario con información adicional
-    $events = $user->events()
+         $user = User::findOrFail($id);
+
+         // Obtener eventos paginados
+        $events = $user->events()
                   ->orderBy('date', 'desc')
                   ->orderBy('created_at', 'desc')
-                  ->get();
-    
-    // Calcular estadísticas
-    $eventsCount = $events->count();
-    
-    // Contar eventos por estado (futuros, pasados)
-    $now = now();
-    $upcomingEvents = $events->filter(function ($event) use ($now) {
-        return $event->date >= $now->toDateString();
-    })->count();
-    
-    $pastEvents = $events->filter(function ($event) use ($now) {
-        return $event->date < $now->toDateString();
-    })->count();
-    
-    // Pasar todas las variables a la vista
-    return view('users.information', compact(
-        'user', 
-        'events', 
-        'eventsCount', 
-        'upcomingEvents', 
-        'pastEvents'
-    ));
+                  ->paginate(6); // <-- aquí limitamos a 5 por página
+
+         // Calcular estadísticas (usando todos los eventos, no solo la página actual)
+         $allEvents = $user->events()->get();
+        $eventsCount = $allEvents->count();
+
+        $now = now();
+         $upcomingEvents = $allEvents->where('date', '>=', $now->toDateString())->count();
+        $pastEvents     = $allEvents->where('date', '<', $now->toDateString())->count();
+
+        return view('users.information', compact(
+          'user',
+          'events',       // paginados
+          'eventsCount',
+          'upcomingEvents',
+          'pastEvents'
+     ));
     }
 
     /**

@@ -11,8 +11,12 @@
     <div>
 
         <p class="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Nuevo usuario</p>
+<<<<<<< HEAD
 
         <div class="border border-white rounded-lg p-6 bg-gray-800 dark:bg-black">
+=======
+        <div class="border border-gray 200 dark:border zinc-700 rounded-lg p-6 bg-white dark:bg-gray-900 shadow-sm">
+>>>>>>> d6bb3fcd5728d1ab1e2dc8b33f84cd51725532a4
             <form action="{{ route('users.store') }}" method="POST" class="flex flex-col gap-6">
                 @csrf
                 <flux:input name="name" :label="__('Nombre')" type="text" required autofocus placeholder="Nombre completo" />
