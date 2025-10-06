@@ -7,7 +7,8 @@ php artisan route:clear || true
 php artisan view:clear || true
 
 # habilitar storage link
-php artisan storage:link || true
+rm -rf public/storage
+php artisan storage:link
 
 # Opcional: si quieres generar cache en runtime (después de asegurarte que env vars OK)
 # php artisan config:cache --no-interaction || true
