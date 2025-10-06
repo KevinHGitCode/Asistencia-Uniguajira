@@ -17,7 +17,7 @@ class EventSeeder extends Seeder
         for ($i = 0; $i < $numEvents; $i++) {
             $start = $faker->time('H:i:s');
             $end = $faker->time('H:i:s');
-             $title = $faker->sentence(3);
+            $title = $faker->sentence(3);
             $slug = Str::slug($title) . '-' . date('Ymd', strtotime($faker->date())) . '-' . uniqid();
 
             $rows[] = [
