@@ -1,13 +1,21 @@
 <div class="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-800 ">
 
     <div class="flex items-center gap-4">
-        <div>
-            <flux:avatar src="https://unavatar.io/x/{{ $user->name }}" />
-        </div>
+       <div>
+         @livewire('user.avatar', [
+          'user' => $user,
+          'size' => 'h-8 w-8',
+          'textSize' => 'text-sm',
+          'showUpload' => false
+         ], key('avatar-'.$user->id))
+     </div>
 
         <div class="flex-1">
             <flux:heading class="flex items-center gap-2 mb-1">
-                {{ $title }}
+                        {{ $title }}
+                        @if(isset($user->role) && ($user->role === 'admin'))
+                            <flux:badge color="lime">{{ $user->role }}</flux:badge>
+                        @endif
             </flux:heading>
             <p class="text-sm text-gray-600 dark:text-gray-400">
                 {{ $user->email }}

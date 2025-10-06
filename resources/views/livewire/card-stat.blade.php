@@ -1,3 +1,4 @@
+
 <div class="relative overflow-hidden rounded-xl border border-gray-700 p-6 hover:bg-gray-750 transition-colors">
     <div class="flex items-center justify-between">
         <div>
@@ -11,5 +12,5 @@
                 <span class="text-4xl font-bold">{{ $value }}</span>
             </div>
         </div>
-    </div>
+    </div>
 </div>

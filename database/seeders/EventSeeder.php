@@ -12,7 +12,8 @@ class EventSeeder extends Seeder
         $faker = \Faker\Factory::create();
         $userIds = \App\Models\User::pluck('id')->toArray();
         $rows = [];
-        for ($i = 0; $i < 20; $i++) {
+        $numEvents = 50; // Número de eventos a crear
+        for ($i = 0; $i < $numEvents; $i++) {
             $start = $faker->time('H:i:s');
             $end = $faker->time('H:i:s');
             $rows[] = [
@@ -22,6 +23,7 @@ class EventSeeder extends Seeder
                 'start_time' => $start,
                 'end_time' => $end,
                 'location' => $faker->city(), // ubicación aleatoria
+                'link' => $faker->url(), // enlace aleatorio
                 'user_id' => $faker->randomElement($userIds),
                 'created_at' => now(),
                 'updated_at' => now(),

@@ -20,7 +20,7 @@
                 </x-slot>
             </livewire:card-stat>
 
-            <livewire:card-stat title="Asistentes totales" :value="$participantesCount">
+            <livewire:card-stat title="Participantes totales" :value="$participantesCount">
                 <x-slot name="icon">
                     <flux:icon.users class="size-8" />
                 </x-slot>
@@ -43,5 +43,24 @@
                 <div class="flex justify-center min-w-max" id="cal-heatmap"></div>
             </div>
         </div>
+
+        <!-- Leyenda de eventos centrada -->
+        <div class="flex justify-center mt-4">
+        <div class="flex items-center gap-6">
+            <!-- Tus eventos -->
+            <div class="flex items-center gap-2">
+            <div class="w-4 h-4 rounded-sm" style="background-color: #1c4412;"></div>
+            <span class="text-sm">Tus eventos</span>
+            </div>
+
+            <!-- Eventos de otros -->
+            <div class="flex items-center gap-2">
+            <div class="w-4 h-4 rounded-sm" style="background-color: rgb(74, 78, 105);"></div>
+            <span class="text-sm">Eventos de otros</span>
+            </div>
+        </div>
+        </div>
+
+
     </div>
 </x-layouts.app>

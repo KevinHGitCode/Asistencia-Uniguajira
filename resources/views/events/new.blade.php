@@ -1,29 +1,34 @@
 <x-layouts.app :title="__('New')">
     <div>
-        <h1 class="text-2xl font-bold mb-4 text-gray-900 dark:text-white"> Nuevo evento </h1>
+        <h1 class="text-2xl font-bold mb-4"> Nuevo evento </h1>
 
-        <div class="border border-white rounded-lg p-6 bg-gray-800">
+        <div class="border border-white rounded-lg p-6 dark:bg-black">
             <form action="{{ route('events.new.store') }}" method="POST" class="flex flex-col gap-6">
                 @csrf
 
                 <flux:input name="title" :label="__('Nombre del evento')" type="text" required autofocus
-                    placeholder="Día del amor y la amistad" />
+                    placeholder="Día del amor y la amistad" :value="old('title')" />
+
 
                 <flux:input name="description" :label="__('Descripción del evento')" type="text" required
-                    placeholder="Evento especial para celebrar el amor y la amistad" />
+                    placeholder="Evento especial para celebrar el amor y la amistad" :value="old('description')" />
+
 
                 <flux:input name="location" :label="__('Ubicación del evento')" type="text" required
-                    placeholder="Auditorio principal, Uniguajira" />
+                    placeholder="Auditorio principal, Uniguajira" :value="old('location')" />
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <flux:input name="date" :label="__('Fecha del evento')" type="date" required />
 
-                    <flux:input name="start_time" :label="__('Hora de inicio')" type="time" required />
+                    <flux:input name="date" :label="__('Fecha del evento')" type="date" required :value="old('date')" />
 
-                    <flux:input name="end_time" :label="__('Hora de finalización')" type="time" required />
+
+                    <flux:input name="start_time" :label="__('Hora de inicio')" type="time" required :value="old('start_time')" />
+
+
+                    <flux:input name="end_time" :label="__('Hora de finalización')" type="time" required :value="old('end_time')" />
+                    
                 </div>
 
-                <!-- Mostrar errores de validación -->
                 @if ($errors->any())
                     <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
                         <ul>
@@ -35,14 +40,13 @@
                 @endif
 
                 <div class="flex justify-start">
-                    <flux:button variant="primary" type="submit" class="px-3 py-6">
-                        {{ __('Crear Evento') }}
+                    <flux:button variant="primary" type="submit" class="px-3 py-6 dark:hover:bg-gray-300 hover:scale-105 transition-colors transition-transform">
+                        {{ __('Crear evento') }}
                     </flux:button>
 
-                    
                         @if (session()->has('success'))
                             <div class=" gap-6 ml-4 bg-green-300 border border-green-400 text-green-700 px-4 py-3 rounded">
-                            <p style="color: green;">{{ session('success') }}</p>
+                            <p>{{ session('success') }}</p>
                             </div>
                         @endif
                     

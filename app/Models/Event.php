@@ -18,6 +18,7 @@ class Event extends Model
         'start_time', // hora de inicio
         'end_time', // hora de finalización
         'location', // ubicación del evento
+        'link', // enlace del evento
         'user_id', // Agregar user_id al fillable
     ];
 
