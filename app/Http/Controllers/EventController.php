@@ -58,7 +58,8 @@ class EventController extends Controller
             Event::create($validated);
 
             // Redirigir para evitar reenvío del formulario
-            return redirect()->route('events.new')->with('success', 'Evento creado exitosamente.');
+            return redirect()->route('events.new')->with('success', 'Evento creado exitosamente.')
+             ->with('event_link', route('events.access', ['slug' => $validated['link']]));
         } catch (\Exception $e) {
             // Log del error para debugging
             Log::error('Error creating event: ' . $e->getMessage());
@@ -99,6 +100,11 @@ class EventController extends Controller
     {
         //
     }
+    public function access($slug){
+      $event = Event::where('link', $slug)->firstOrFail();
+       return view('events.access', compact('event'));
+    }
+
 
     /**
      * Remove the specified resource from storage.

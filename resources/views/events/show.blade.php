@@ -23,14 +23,23 @@
                     <p class="text-lg mb-2"><strong>Hora de Fin:</strong> {{ $event->end_time }}</p>
                     <p class="text-lg mb-2"><strong>Ubicación:</strong> {{ $event->location ?? 'Sin ubicación' }}</p>
                     <p class="text-lg mb-2"><strong>Descripción:</strong> {{ $event->description ?? 'Sin descripción' }}</p>
-                    <p class="text-lg mb-2"><strong>Link del Evento:</strong> {{ $event->link }}</p>
+                    <p class="text-lg mb-2">
+                        <strong>Link del Evento:</strong>
+                        <a href="{{ route('events.access', $event->link) }}" 
+                            target="_blank" 
+                            class="text-blue-600 dark:text-blue-400 underline hover:text-blue-800">
+                            {{ route('events.access', $event->link) }}
+                        </a>
+                    </p>
+
                 </div>
 
                 <div class="mb-4 border border-neutral-200 dark:border-neutral-700 p-4 rounded-lg">
                     <h2 class="text-2xl font-semibold mb-2">Código QR del Evento</h2>
                         <div class="flex items-center justify-center">
-                            {{-- {!! QrCode::size(200)->generate(route('events.attendance', $event->code)) !!} 
-                            {!! QrCode::size(200)->generate($event->link) !!} --}}
+                            <div class="flex items-center justify-center">
+                            {!! QrCode::size(200)->generate(route('events.access', $event->link)) !!}
+                        </div>
                         </div>
                 </div>
         </div>
