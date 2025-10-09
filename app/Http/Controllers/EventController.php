@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use App\Models\Attendance;
+use Carbon\Carbon;
+use setasign\Fpdi\Tfpdf\Fpdi;
 
 class EventController extends Controller
 {
@@ -119,4 +121,118 @@ class EventController extends Controller
         $events = Event::whereDate('date', $date)->get();
         return response()->json($events);
     }
+
+    public function descargarAsistencia($id)
+    {
+        $evento = Event::with(['asistencias.participant'])->findOrFail($id);
+        // Función auxiliar
+        function limitarTexto($texto, $limite = 25) {
+            return mb_strlen($texto) > $limite
+                ? mb_substr($texto, 0, $limite - 3) . '...'
+                : $texto;
+        }
+
+        $pdf = new Fpdi();
+        $path = public_path('formatos/Formato_Asistencia.pdf');
+
+        if (!file_exists($path)) {
+            dd('Archivo no encontrado en:', $path);
+        }
+
+        // Cargar formato base
+        $pageCount = $pdf->setSourceFile($path);
+        $tplIdx = $pdf->importPage(1);
+        $size = $pdf->getTemplateSize($tplIdx);
+
+        // Crear primera página
+        $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
+        $pdf->useTemplate($tplIdx);
+        $pdf->SetFont('Arial', '', 8);
+
+        $startY = 82;
+        $rowHeight = 6;
+        $maxRows = 17;
+        $row = 0;
+
+        foreach ($evento->asistencias as $i => $asistencia) {
+            $p = $asistencia->participant;
+
+            // Si se llena la hoja, crear una nueva con el formato
+            if ($row >= $maxRows) {
+                $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
+                $pdf->useTemplate($tplIdx);
+                $pdf->SetFont('Arial', '', 8);
+                $row = 0;
+            }
+
+            $y = $startY + ($row * $rowHeight);
+
+
+            // === Datos del asistente ===
+            $pdf->SetXY(32, $y);  // Nombres y Apellidos
+            $pdf->Cell(61, 6, limitarTexto(trim(($p->first_name ?? '') . ' ' . ($p->last_name ?? '')), 32), 0, 0, 'L');
+
+            $pdf->SetXY(93, $y);  // Nº Identificación
+            $pdf->Cell(38, 6, limitarTexto($p->document ?? '', 13), 0, 0, 'L');
+
+            $pdf->SetXY(131, $y); // Código (role)
+            $pdf->Cell(28, 6, limitarTexto($p->role ?? '', 13), 0, 0, 'L');
+
+            $pdf->SetXY(159, $y); // Programa académico
+            $pdf->Cell(34, 6, limitarTexto($p->program->name ?? '', 22), 0, 0, 'L');
+
+            $pdf->SetXY(193, $y); // Teléfono (affiliation)
+            $pdf->Cell(28, 6, limitarTexto($p->affiliation ?? '', 20), 0, 0, 'L');
+
+            $pdf->SetXY(285, $y); // Hora de firma (registro de asistencia)
+            $pdf->Cell(20, 6, Carbon::parse($asistencia->created_at)->format('h:i A'), 0, 0, 'C');
+
+
+
+
+            // === Sexo ===
+            if (($p->gender ?? '') === 'F') { $pdf->SetXY(178, $y); $pdf->Write(0, 'X'); }
+            if (($p->gender ?? '') === 'M') { $pdf->SetXY(184, $y); $pdf->Write(0, 'X'); }
+
+            // === Grupo priorizado ===
+            $grupos = is_array($p->priority_group)
+                ? $p->priority_group
+                : explode(',', $p->priority_group ?? '');
+
+            foreach ($grupos as $g) {
+                switch (trim($g)) {
+                    case 'E': $pdf->SetXY(192, $y); $pdf->Write(0, 'X'); break;
+                    case 'D': $pdf->SetXY(198, $y); $pdf->Write(0, 'X'); break;
+                    case 'V': $pdf->SetXY(204, $y); $pdf->Write(0, 'X'); break;
+                    case 'C': $pdf->SetXY(210, $y); $pdf->Write(0, 'X'); break;
+                    case 'H': $pdf->SetXY(216, $y); $pdf->Write(0, 'X'); break;
+                }
+            }
+
+            $row++;
+        }
+
+        // for ($x = 0; $x <= 290; $x += 10) {
+        //     $pdf->SetXY($x, 5);
+        //     $pdf->Write(0, "|$x");
+        // }
+
+        // for ($y = 0; $y <= 200; $y += 10) {
+        //     $pdf->SetXY(5, $y);
+        //     $pdf->Write(0, "-$y");
+        // }
+
+
+        $nombreEvento = str_replace(' ', '_', $evento->title);
+        $fecha = Carbon::parse($evento->date)->format('Y-m-d');
+        $nombreArchivo = "Asistencia_{$nombreEvento}_{$fecha}.pdf";
+
+        return response($pdf->Output('S'), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => "attachment; filename=\"{$nombreArchivo}\"",
+        ]);
+    }
+
+
+
 }

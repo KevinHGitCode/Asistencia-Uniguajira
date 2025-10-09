@@ -30,6 +30,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('eventos/nuevo', [EventController::class, 'store'])->name('events.new.store');
     Route::get('eventos/lista', [EventController::class, 'index'])->name('events.list');
     Route::get('eventos/{id}', [EventController::class, 'show'])->name('events.show');
+
+    Route::get('eventos/{id}/descargar-asistencia', [EventController::class, 'descargarAsistencia'])
+        ->name('events.download');
    
 });
    Route::get('/events/acceso/{slug}', [EventController::class, 'access'])->name('events.access');

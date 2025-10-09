@@ -32,6 +32,11 @@
                         </a>
                     </p>
 
+                    <a href="{{ route('events.download', $event->id) }}"
+                        class="px-4 py-2 rounded-xl bg-green-600 text-white font-medium shadow-md hover:bg-green-700 hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                        Descargar listado de asistencia
+                    </a>
+
                 </div>
 
                 <div class="mb-4 border border-neutral-200 dark:border-neutral-700 p-4 rounded-lg">
