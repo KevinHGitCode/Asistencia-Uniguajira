@@ -4,6 +4,9 @@ Sistema web para la gestión y control de asistencias en la Universidad de La Gu
 
 [🔗 Accede a la aplicación](https://asistencia-uniguajira.onrender.com/)
 
+
+
+
 ---
 
 ## 🚀 Características principales

@@ -45,6 +45,16 @@ Route::get('/events', function () {
     return Event::all();
 });
 
+// Get events by user ID
+Route::get('/events/user/{user_id}', function ($user_id) {
+    return Event::where('user_id', $user_id)->get();
+});
+
+//consultar eventos con información del usuario
+Route::get('/events-with-user', function () {
+    return Event::with('user')->get();
+});
+
 // Get all participants
 Route::get('/participants', function () {
     return Participant::all();
