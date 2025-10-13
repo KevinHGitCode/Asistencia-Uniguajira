@@ -1,0 +1,47 @@
+services:
+  app:
+    build: .
+    container_name: asistencia_app
+    restart: unless-stopped
+    depends_on:
+      - db
+    networks:
+      - asistencia_net
+
+  nginx:
+    image: nginx:latest
+    container_name: asistencia_nginx
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      # Servir el contenido generado dentro del contenedor
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./default.conf:/etc/nginx/conf.d/default.conf:ro
+      - storage_data:/var/www/html/storage/app/public
+    depends_on:
+      - app
+    networks:
+      - asistencia_net
+
+  db:
+    image: mysql:8
+    container_name: asistencia_db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: asistencia
+      MYSQL_USER: asistencia_user
+      MYSQL_PASSWORD: asistencia_pass
+      MYSQL_ROOT_PASSWORD: rootpass
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - asistencia_net
+
+volumes:
+  storage_data:
+  db_data:
+
+networks:
+  asistencia_net:
+    driver: bridge

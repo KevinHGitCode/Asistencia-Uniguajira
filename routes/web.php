@@ -30,9 +30,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('eventos/nuevo', [EventController::class, 'store'])->name('events.new.store');
     Route::get('eventos/lista', [EventController::class, 'index'])->name('events.list');
     Route::get('eventos/{id}', [EventController::class, 'show'])->name('events.show');
-    Route::get('eventos/{id}/editar', [EventController::class, 'edit'])->name('events.edit');
-    /* Route::post('eventos/{id}/editar', [EventController::class, 'update'])->name('events.update');
-    Route::post('eventos/{id}/eliminar', [EventController::class, 'destroy'])->name('events.delete'); */
+
+    Route::get('eventos/{id}/descargar-asistencia', [EventController::class, 'descargarAsistencia'])
+        ->name('events.download');
+   
 });
 
 

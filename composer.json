@@ -16,6 +16,8 @@
         "livewire/flux": "^2.1.1",
         "livewire/volt": "^1.7.0",
         "maatwebsite/excel": "^3.1.66",
+        "setasign/fpdi": "^2.6",
+        "setasign/tfpdf": "^1.33",
         "simplesoftwareio/simple-qrcode": "^4.2"
     },
     "require-dev": {

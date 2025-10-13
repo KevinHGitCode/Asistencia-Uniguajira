@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\Event;
+use Illuminate\Support\Str;
 
 class EventSeeder extends Seeder
 {
@@ -16,6 +17,9 @@ class EventSeeder extends Seeder
         for ($i = 0; $i < $numEvents; $i++) {
             $start = $faker->time('H:i:s');
             $end = $faker->time('H:i:s');
+            $title = $faker->sentence(3);
+            $slug = Str::slug($title) . '-' . date('Ymd', strtotime($faker->date())) . '-' . uniqid();
+
             $rows[] = [
                 'title' => $faker->sentence(3),
                 'description' => $faker->paragraph(),
@@ -23,7 +27,7 @@ class EventSeeder extends Seeder
                 'start_time' => $start,
                 'end_time' => $end,
                 'location' => $faker->city(), // ubicación aleatoria
-                'link' => $faker->url(), // enlace aleatorio
+                'link' => $slug, 
                 'user_id' => $faker->randomElement($userIds),
                 'created_at' => now(),
                 'updated_at' => now(),
