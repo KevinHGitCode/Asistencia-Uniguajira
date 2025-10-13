@@ -1,0 +1,23 @@
+# Dependencias
+node_modules
+vendor
+
+# Cachés y logs
+storage/*.key
+storage/framework/*
+storage/logs/*
+bootstrap/cache/*
+
+# Archivos del sistema
+.DS_Store
+.idea
+.vscode
+.git
+.gitignore
+
+# Build del frontend
+/public/hot
+/public/storage
+/public/build
+npm-debug.log
+yarn-error.log

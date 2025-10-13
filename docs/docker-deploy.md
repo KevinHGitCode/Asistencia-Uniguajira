@@ -37,3 +37,18 @@ docker run -d -p 8080:80 --name asistencia-container attendance-app
 ```
 
 
+**Eliminar imagenes huerfanas**
+```bash
+sudo docker image prune -f
+```
+
+
+
+**Cuando se tiene un docker-compose.yml**
+```bash
+# eliminar lo construido
+docker compose down
+
+# construir lo definido en el archivo
+docker compose up -d --build
+```
