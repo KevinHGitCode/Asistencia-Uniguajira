@@ -41,33 +41,19 @@
 
                 <div class="mb-4 border border-neutral-200 dark:border-neutral-700 p-4 rounded-lg">
                     <h2 class="text-2xl font-semibold mb-2">Código QR del Evento</h2>
+                    <div class="flex items-center justify-center">
                         <div class="flex items-center justify-center">
-                            <div class="flex items-center justify-center">
                             {!! QrCode::size(200)->generate(route('events.access', $event->link)) !!}
                         </div>
-                        </div>
+                    </div>
                 </div>
-        </div>
+            </div>
     
-            <livewire:card-stat title="Asistencias totales" :value="$asistenciasCount">
-                <x-slot name="icon">
-                    <flux:icon.list-checks class="size-8" />
-                </x-slot>
-            </livewire:card-stat>
+            {{-- Componente con modal de asistentes --}}
+            @livewire('event.attendees-modal', ['eventId' => $event->id])
 
         </div>
 
     </div>
 
 </x-layouts.app>
-
-
-
-
-
-{{-- <div class="mb-4 border border-neutral-200 dark:border-neutral-700 p-4 rounded-lg">
-                    <h2 class="text-2xl font-semibold mb-2">Código QR del Evento</h2>
-                    <div class="flex items-center justify-center">
-                        {!! QrCode::size(200)->generate(route('events.attendance', $event->code)) !!}
-                <p class="text-lg mb-2"><strong>Link del evento:</strong> {{ $event->link}}</p>
-                </div> --}}

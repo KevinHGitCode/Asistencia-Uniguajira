@@ -23,7 +23,7 @@
         @if ($events->count() > 0)
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-4">
                 @foreach ($events as $event)
-                    <a href="{{ route('events.show', $event->id) }}" class="block hover:shadow-lg hover:scale-105 transition-transform">
+                    <a href="{{ route('events.show', $event->id) }}" class="block hover:shadow-lg hover:scale-102 transition-transform duration-200">
                         <livewire:event.card
                             :title="$event->title" 
                             :date="$event->date" 
