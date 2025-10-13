@@ -27,7 +27,7 @@ class AttendeesModal extends Component
             ->orderBy('created_at', 'desc')
             ->get();
         
-        $this->totalAttendees = $this->attendees->count();
+        $this->totalAttendees = count($this->attendees);
     }
 
     public function render()
