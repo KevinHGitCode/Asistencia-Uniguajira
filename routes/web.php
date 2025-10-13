@@ -33,10 +33,23 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('eventos/{id}/descargar-asistencia', [EventController::class, 'descargarAsistencia'])
         ->name('events.download');
-   
 });
 
+    //----------------------------------------------------------------
 
+// Ruta pública para mostrar confirmación de asistencia
+Route::get('/events/acceso/{slug}/confirmacion/{attendanceId}', [App\Http\Controllers\AttendanceController::class, 'confirmation'])
+    ->name('attendance.confirmation');
+
+// Ruta pública para acceder al evento
+Route::get('/events/acceso/{slug}', [EventController::class, 'access'])
+    ->name('events.access');
+
+// Ruta pública para registrar asistencia
+Route::post('/events/acceso/{slug}', [App\Http\Controllers\AttendanceController::class, 'store'])
+    ->name('attendance.store');
+
+    //----------------------------------------------------------------
 
 // Ruta pública para acceder al evento
 Route::get('/events/acceso/{slug}', [EventController::class, 'access'])

@@ -49,13 +49,16 @@ class AttendanceController extends Controller
             }
 
             // Registrar la asistencia
-            Attendance::create([
+            $attendance = Attendance::create([
                 'event_id' => $event->id,
                 'participant_id' => $participant->id,
             ]);
 
-            // Retornar con mensaje de éxito
-            return back()->with('success', '¡Asistencia registrada exitosamente! Bienvenido/a ' . $participant->first_name . ' ' . $participant->last_name);
+            // Redirigir a la página de confirmación con información del participante
+            return redirect()->route('attendance.confirmation', [
+                'slug' => $event->link,
+                'attendanceId' => $attendance->id
+            ]);
 
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return back()->withErrors([
@@ -67,6 +70,38 @@ class AttendanceController extends Controller
             return back()->withErrors([
                 'error' => 'Hubo un error al registrar la asistencia. Por favor, inténtalo de nuevo.'
             ])->withInput();
+        }
+    }
+
+    /**
+     * Mostrar confirmación de asistencia registrada
+     */
+    public function confirmation($slug, $attendanceId)
+    {
+        try {
+            // Buscar el evento
+            $event = Event::where('link', $slug)->firstOrFail();
+
+            // Buscar la asistencia con el participante
+            $attendance = Attendance::with('participant.program')
+                ->where('id', $attendanceId)
+                ->where('event_id', $event->id)
+                ->firstOrFail();
+
+            $participant = $attendance->participant;
+
+            // Contar total de asistencias del participante
+            $totalAttendances = Attendance::where('participant_id', $participant->id)->count();
+
+            return view('events.confirmation', compact('event', 'participant', 'attendance', 'totalAttendances'));
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return redirect()->route('events.access', $slug)
+                ->withErrors(['error' => 'No se encontró el registro de asistencia.']);
+        } catch (\Exception $e) {
+            Log::error('Error al mostrar confirmación: ' . $e->getMessage());
+            return redirect()->route('events.access', $slug)
+                ->withErrors(['error' => 'Hubo un error al cargar la información.']);
         }
     }
 }
