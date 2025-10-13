@@ -9,9 +9,9 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Event;
 use App\Http\Controllers\UserController;
-
 use \App\Http\Controllers\Lang\LanguageController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\AttendanceController;
 
 Route::middleware('auth')->get('/', function () {
     return redirect()->route('dashboard');
@@ -30,9 +30,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('eventos/nuevo', [EventController::class, 'store'])->name('events.new.store');
     Route::get('eventos/lista', [EventController::class, 'index'])->name('events.list');
     Route::get('eventos/{id}', [EventController::class, 'show'])->name('events.show');
-   
+    Route::get('eventos/{id}/editar', [EventController::class, 'edit'])->name('events.edit');
+    /* Route::post('eventos/{id}/editar', [EventController::class, 'update'])->name('events.update');
+    Route::post('eventos/{id}/eliminar', [EventController::class, 'destroy'])->name('events.delete'); */
 });
-   Route::get('/events/acceso/{slug}', [EventController::class, 'access'])->name('events.access');
+
+
+
+// Ruta pública para acceder al evento
+Route::get('/events/acceso/{slug}', [EventController::class, 'access'])
+    ->name('events.access');
+
+// Ruta pública para registrar asistencia
+Route::post('/events/acceso/{slug}', [App\Http\Controllers\AttendanceController::class, 'store'])
+    ->name('attendance.store');
+
+
+
+Route::get('/events/acceso/{slug}', [EventController::class, 'access'])->name('events.access');
 
 Route::view('estadisticas', 'statistics.statistics')
     ->middleware(['auth', 'verified'])
