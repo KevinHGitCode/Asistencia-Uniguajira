@@ -5,11 +5,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Models\Event;
 use App\Models\Participant;
-use App\Models\Role;
 use App\Models\Program;
-use App\Models\Affiliation;
 use App\Models\Attendance;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -36,6 +35,34 @@ Route::get('/eventos-json', function () {
 
 Route::get('/events/{date}', [EventController::class, 'getByDate']);
 
+
+
+/**
+ * =============================================
+ * RUTAS PARA LAS ESTADÍSTICAS ESPECÍFICAS DEL EVENTO
+ * =============================================
+ */
+
+// Ruta para obtener datos de programas específicos del evento
+Route::get('/statistics/event/{event}/programs', function ($event) {
+    return DB::table('attendances')
+        ->join('participants', 'attendances.participant_id', '=', 'participants.id')
+        ->join('programs', 'participants.program_id', '=', 'programs.id')
+        ->select('programs.name as program', DB::raw('COUNT(*) as count'))
+        ->where('attendances.event_id', $event)
+        ->groupBy('programs.name')
+        ->get();
+});
+
+// Ruta para obtener datos de roles específicos del evento
+Route::get('/statistics/event/{event}/roles', function ($event) {
+    return DB::table('attendances')
+        ->join('participants', 'attendances.participant_id', '=', 'participants.id')
+        ->select('participants.role as role', DB::raw('COUNT(*) as count'))
+        ->where('attendances.event_id', $event)
+        ->groupBy('participants.role')
+        ->get();
+});
 
 /**
  * =============================================
@@ -75,6 +102,11 @@ Route::get('/participants', function () {
     return Participant::all();
 });
 
+// Get participants by program ID
+Route::get('/participants/program/{program_id}', function ($program_id) {
+    return Participant::where('program_id', $program_id)->get();
+});
+
 // Get all roles
 Route::get('/roles', function () {
     return Participant::select('role')->distinct()->get();
@@ -99,3 +131,4 @@ Route::get('/attendances', function () {
 Route::get('/users', function () {
     return User::all();
 });
+

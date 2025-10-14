@@ -8,7 +8,7 @@
         </ol>
     </nav>
 
-    <div class="relative flex h-full w-full flex-1 flex-col gap-4 p-2 rounded-xl border border-neutral-200 dark:border-neutral-700">
+    <div class="relative flex w-full mb-3 flex-1 flex-col gap-4 p-1 rounded-xl border border-neutral-200 dark:border-neutral-700">
 
         <div class="p-4 overflow-hidden rounded-xl">
 
@@ -16,7 +16,8 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 
-                <div class="mb-4 border border-neutral-200 dark:border-neutral-700 p-4 rounded-lg">
+                {{-- Contenedor para la informacion del evento --}}
+                <div class="border border-neutral-200 dark:border-neutral-700 p-4 rounded-lg">
                     <p class="text-lg mb-2"><strong>Título:</strong> {{ $event->title }}</p>
                     <p class="text-lg mb-2"><strong>Fecha:</strong> {{ $event->date }}</p>
                     <p class="text-lg mb-2"><strong>Hora de Inicio:</strong> {{ $event->start_time }}</p>
@@ -39,7 +40,8 @@
 
                 </div>
 
-                <div class="mb-4 border border-neutral-200 dark:border-neutral-700 p-4 rounded-lg">
+                {{-- Contenedor para el codigo QR --}}
+                <div class="border border-neutral-200 dark:border-neutral-700 p-4 rounded-lg">
                     <h2 class="text-2xl font-semibold mb-2">Código QR del Evento</h2>
                     <div class="flex items-center justify-center">
                         <div class="flex items-center justify-center">
@@ -47,10 +49,44 @@
                         </div>
                     </div>
                 </div>
+                
+                <div class="md:col-span-2 flex flex-col gap-4">
+                    {{-- Componente con modal de asistentes --}}
+                    @livewire('event.attendees-modal', ['eventId' => $event->id])
+                    
+                    {{-- Contenedor para las estadísticas --}}
+                    <div class="border border-neutral-200 dark:border-neutral-700 p-4 rounded-lg">
+                        <h2 class="text-2xl font-semibold mb-4">Estadísticas del Evento</h2>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                            <!-- Gráfica circular - Programa -->
+                            <div>
+                                <h3 class="text-lg font-medium mb-2">Distribución por Programa</h3>
+                                <div id="chart_program_pie" class="relative aspect-video overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-700"></div>
+                            </div>
+
+                            <!-- Gráfica de barras - Programa -->
+                            <div>
+                                <h3 class="text-lg font-medium mb-2">Participación por Programa</h3>
+                                <div id="chart_program_bar" class="relative aspect-video overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-700"></div>
+                            </div>
+
+                            <!-- Gráfica circular - Rol -->
+                            <div>
+                                <h3 class="text-lg font-medium mb-2">Distribución por Rol</h3>
+                                <div id="chart_role_pie" class="relative aspect-video overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-700"></div>
+                            </div>
+
+                            <!-- Gráfica de barras - Rol -->
+                            <div>
+                                <h3 class="text-lg font-medium mb-2">Participación por Rol</h3>
+                                <div id="chart_role_bar" class="relative aspect-video overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-700"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-    
-            {{-- Componente con modal de asistentes --}}
-            @livewire('event.attendees-modal', ['eventId' => $event->id])
 
         </div>
 

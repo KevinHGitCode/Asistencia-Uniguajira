@@ -1,6 +1,6 @@
 <div>
     <flux:modal.trigger name="attendees-modal-{{ $eventId }}">
-        <div class="cursor-pointer hover:scale-101 transition-transform">
+        <div class="cursor-pointer hover:scale-[1.008] transition-transform duration-200">
             <div class="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800 hover:shadow-lg">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-4">

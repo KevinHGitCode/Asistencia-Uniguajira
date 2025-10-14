@@ -48,7 +48,22 @@ function handleRouteChange(routeName) {
             break;
 
         default:
-            console.log("Ruta no definida en el manejador.");
+            const path = window.location.pathname;
+            const eventMatch = path.match(/\/eventos\/(\d+)/);
+            if (eventMatch) {
+                const eventId = eventMatch[1]; // Extraer el ID del evento desde la URL
+                console.log(`Cargando gráficas para el evento con ID: ${eventId}`);
+                if (typeof window.createEventCharts !== 'function') {
+                    import('./charts-details-event.js').then(() => {
+                        window.createEventCharts(eventId);
+                    });
+                } else {
+                    window.createEventCharts(eventId);
+                }
+            } else {
+                console.log("Ruta no definida en el manejador.");
+            }
+            break;
     }
 }
 
