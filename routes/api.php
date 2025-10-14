@@ -37,6 +37,21 @@ Route::get('/eventos-json', function () {
 Route::get('/events/{date}', [EventController::class, 'getByDate']);
 
 
+/**
+ * =============================================
+ * RUTAS PARA LA DATA DE LAS ESTADISTICAS/GRAFICAS DE LOS EVENTOS
+ * =============================================
+ */
+
+
+
+
+
+/**
+ * =============================================
+ * RUTAS DE PRUEBA
+ * =============================================
+ */
 // Route to get all events in JSON format
 // Todas estas rutas tiene el prefix /api
 
