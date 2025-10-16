@@ -27,10 +27,10 @@ RUN mkdir -p storage/framework/{sessions,views,cache} bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
 # Instalar dependencias de PHP (sin ejecutar scripts artisan en build)
-#RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
 
 ## opcion para ejecutar las migraciones solo una vez, permanecer comentado
-RUN composer install --optimize-autoloader --no-interaction --no-scripts
+##RUN composer install --optimize-autoloader --no-interaction --no-scripts
 
 # Compilar assets con Node (modo producción)
 RUN npm ci --silent && npm run build
