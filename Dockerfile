@@ -47,7 +47,8 @@ RUN apk add --no-cache libzip-dev \
 RUN apk add --no-cache nginx bash
 
 # Crear carpetas necesarias y limpiar configuraciones duplicadas
-RUN mkdir -p /run/nginx /var/www/html/storage /var/www/html/bootstrap/cache \
+RUN mkdir -p /run/nginx /var/www/html/storage /var/www/html/storage/framework/{sessions,views,cache} /var/www/html/bootstrap/cache \
+    && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache || true \
     && rm -f /etc/nginx/conf.d/* || true
 
 # Copiar configuración de Nginx
