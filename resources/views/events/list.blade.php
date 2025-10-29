@@ -19,7 +19,7 @@
         </flux:dropdown>
     </div>
 
-    <div class="relative h-full flex-1 overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-700">
+    <div class="relative flex-1 overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-700">
         @if ($events->count() > 0)
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-4">
                 @foreach ($events as $event)

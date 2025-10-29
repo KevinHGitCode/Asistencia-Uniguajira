@@ -7,7 +7,8 @@
                 @csrf
 
                 <flux:input name="title" :label="__('Nombre del evento')" type="text" required autofocus
-                    placeholder="Día del amor y la amistad" :value="old('title')" />
+                    placeholder="Día del amor y la amistad" :value="old('title')" 
+                    class="custom-input" />
 
 
                 <flux:input name="description" :label="__('Descripción del evento')" type="text" required
@@ -40,8 +41,8 @@
                 @endif
 
                 <div class="flex justify-start">
-                    <flux:button variant="primary" type="submit" class="px-3 py-6 dark:hover:bg-gray-300 hover:scale-105 transition-colors transition-transform">
-                        {{ __('Crear evento') }}
+                    <flux:button variant="primary" type="submit" class="px-3 py-6 dark:hover:bg-gray-300 hover:scale-103 transition-colors transition-transform">
+                        {{ __('Create event') }}
                     </flux:button>
 
                         @if (session()->has('success'))
