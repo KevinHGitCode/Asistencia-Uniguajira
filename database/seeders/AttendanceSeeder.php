@@ -19,22 +19,45 @@ class AttendanceSeeder extends Seeder
         $today = now()->toDateString();
         $events = Event::whereDate('date', '<=', $today)->get();
 
-        // Seleccionar 400 participantes aleatorios para todo el proceso
-        $allParticipantIds = Participant::inRandomOrder()->limit(400)->pluck('id')->toArray();
-
         foreach ($events as $event) {
-            $attendancesCount = fake()->numberBetween(30, 60);
-            // Seleccionar IDs aleatorios de los 400 para este evento
-            $participantIds = collect($allParticipantIds)->shuffle()->take($attendancesCount);
+            // Seleccionar entre 2 y 5 programas aleatorios
+            $programIds = \App\Models\Program::inRandomOrder()->limit(fake()->numberBetween(2, 5))->pluck('id');
+
             $rows = [];
-            foreach ($participantIds as $participantId) {
+
+            foreach ($programIds as $programId) {
+                // Seleccionar entre 40 y 60 estudiantes del programa
+                $studentIds = Participant::where('role', 'Estudiante')
+                    ->where('program_id', $programId)
+                    ->inRandomOrder()
+                    ->limit(fake()->numberBetween(40, 60))
+                    ->pluck('id');
+
+                foreach ($studentIds as $studentId) {
+                    $rows[] = [
+                        'event_id' => $event->id,
+                        'participant_id' => $studentId,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                }
+            }
+
+            // Seleccionar entre 0 y 10 profesores
+            $teacherIds = Participant::where('role', 'Docente')
+                ->inRandomOrder()
+                ->limit(fake()->numberBetween(0, 10))
+                ->pluck('id');
+
+            foreach ($teacherIds as $teacherId) {
                 $rows[] = [
                     'event_id' => $event->id,
-                    'participant_id' => $participantId,
+                    'participant_id' => $teacherId,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ];
             }
+
             if (!empty($rows)) {
                 Attendance::insert($rows);
             }
