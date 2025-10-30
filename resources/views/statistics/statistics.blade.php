@@ -52,4 +52,8 @@
             <div class="p-4 border rounded-lg">Usuarios con más Asistencias</div>
         </div>
     </section>
+
+    {{-- @push('scripts')
+    <script type="module" src="/resources/js/statistics-general.js"></script>
+    @endpush --}}
 </x-layouts.app>
