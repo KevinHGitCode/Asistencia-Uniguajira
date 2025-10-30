@@ -202,6 +202,13 @@ Route::get('/participants/program/{program_id}', function ($program_id) {
     return Participant::where('program_id', $program_id)->get();
 });
 
+// Get count of participants by program
+Route::get('/participants/count-by-program', function () {
+    return Participant::select('program_id', DB::raw('COUNT(*) as count'))
+        ->groupBy('program_id')
+        ->get();
+});
+
 // Get all roles
 Route::get('/roles', function () {
     return Participant::select('role')->distinct()->get();

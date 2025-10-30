@@ -10,6 +10,14 @@ use \App\Models\Attendance;
 
 class AttendanceSeeder extends Seeder
 {
+    // Constantes configurables
+    private const MIN_PROGRAMS = 2; // Mínimo de programas por evento
+    private const MAX_PROGRAMS = 5; // Máximo de programas por evento
+    private const MIN_STUDENTS = 40; // Mínimo de estudiantes por programa
+    private const MAX_STUDENTS = 60; // Máximo de estudiantes por programa
+    private const MIN_TEACHERS = 0; // Mínimo de docentes por evento
+    private const MAX_TEACHERS = 10; // Máximo de docentes por evento
+
     /**
      * Run the database seeds.
      */
@@ -20,17 +28,19 @@ class AttendanceSeeder extends Seeder
         $events = Event::whereDate('date', '<=', $today)->get();
 
         foreach ($events as $event) {
-            // Seleccionar entre 2 y 5 programas aleatorios
-            $programIds = \App\Models\Program::inRandomOrder()->limit(fake()->numberBetween(2, 5))->pluck('id');
+            // Seleccionar programas aleatorios
+            $programIds = \App\Models\Program::inRandomOrder()
+                ->limit(fake()->numberBetween(self::MIN_PROGRAMS, self::MAX_PROGRAMS))
+                ->pluck('id');
 
             $rows = [];
 
             foreach ($programIds as $programId) {
-                // Seleccionar entre 40 y 60 estudiantes del programa
+                // Seleccionar estudiantes aleatorios
                 $studentIds = Participant::where('role', 'Estudiante')
                     ->where('program_id', $programId)
                     ->inRandomOrder()
-                    ->limit(fake()->numberBetween(40, 60))
+                    ->limit(fake()->numberBetween(self::MIN_STUDENTS, self::MAX_STUDENTS))
                     ->pluck('id');
 
                 foreach ($studentIds as $studentId) {
@@ -43,10 +53,10 @@ class AttendanceSeeder extends Seeder
                 }
             }
 
-            // Seleccionar entre 0 y 10 profesores
+            // Seleccionar docentes aleatorios
             $teacherIds = Participant::where('role', 'Docente')
                 ->inRandomOrder()
-                ->limit(fake()->numberBetween(0, 10))
+                ->limit(fake()->numberBetween(self::MIN_TEACHERS, self::MAX_TEACHERS))
                 ->pluck('id');
 
             foreach ($teacherIds as $teacherId) {
