@@ -19,6 +19,13 @@ return new class extends Migration
             $table->enum('role', ['admin', 'user'])->default('user');
             $table->string('avatar')->nullable();
             $table->string('password');
+            
+            $table->foreignId('dependency_id')
+                  ->nullable()
+                  ->constrained('dependencies')
+                  ->onUpdate('cascade')
+                  ->onDelete('set null');
+
             $table->rememberToken();
             $table->timestamps();
         });

@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Dependency;
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -13,6 +14,8 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+
+        $this->call(DependenciesSeeder::class);
 
         User::factory()->create([
             'name' => 'carlos',
@@ -40,6 +43,7 @@ class DatabaseSeeder extends Seeder
             'email' => 'kevin.user@example.com',
             'password' => bcrypt('12345678'),
             'role' => 'user',
+            'dependency_id' => Dependency::where('name', 'Bienestar Universitario')->first()->id,
         ]);
 
         User::factory()->create([
@@ -60,6 +64,8 @@ class DatabaseSeeder extends Seeder
             'name' => 'user',
             'email' => 'user@example.com',
             'password' => bcrypt('12345678'),
+            'role' => 'user',
+            'dependency_id' => Dependency::where('name', 'Gestión Documental')->first()->id,
         ]);
 
         $this->call(EventSeeder::class);
