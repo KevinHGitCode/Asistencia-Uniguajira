@@ -65,4 +65,10 @@ class User extends Authenticatable
     {
         return $this->hasMany(Event::class);
     }
+
+    public function dependency() 
+    {
+        return $this->belongsTo(Dependency::class);
+    }
+
 }

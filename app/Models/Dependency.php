@@ -10,4 +10,16 @@ class Dependency extends Model
     use HasFactory;
 
     protected $fillable = ['name'];
+
+    public function users() 
+    {
+        return $this->hasMany(User::class);
+    }
+
+    public function events()
+    {
+        return $this->hasMany(Event::class);
+    }
+
+
 }

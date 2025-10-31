@@ -37,4 +37,10 @@ class Event extends Model
         return $this->belongsToMany(Participant::class, 'attendances', 'event_id', 'participant_id')
             ->withTimestamps();
     }
+
+    public function dependency()
+    {
+        return $this->belongsTo(Dependency::class);
+    }
+
 }
