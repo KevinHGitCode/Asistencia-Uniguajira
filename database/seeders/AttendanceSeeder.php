@@ -10,6 +10,14 @@ use \App\Models\Attendance;
 
 class AttendanceSeeder extends Seeder
 {
+    // Constantes configurables
+    private const MIN_PROGRAMS = 2; // Mínimo de programas por evento
+    private const MAX_PROGRAMS = 5; // Máximo de programas por evento
+    private const MIN_STUDENTS = 40; // Mínimo de estudiantes por programa
+    private const MAX_STUDENTS = 60; // Máximo de estudiantes por programa
+    private const MIN_TEACHERS = 0; // Mínimo de docentes por evento
+    private const MAX_TEACHERS = 10; // Máximo de docentes por evento
+
     /**
      * Run the database seeds.
      */
@@ -19,22 +27,47 @@ class AttendanceSeeder extends Seeder
         $today = now()->toDateString();
         $events = Event::whereDate('date', '<=', $today)->get();
 
-        // Seleccionar 400 participantes aleatorios para todo el proceso
-        $allParticipantIds = Participant::inRandomOrder()->limit(400)->pluck('id')->toArray();
-
         foreach ($events as $event) {
-            $attendancesCount = fake()->numberBetween(30, 60);
-            // Seleccionar IDs aleatorios de los 400 para este evento
-            $participantIds = collect($allParticipantIds)->shuffle()->take($attendancesCount);
+            // Seleccionar programas aleatorios
+            $programIds = \App\Models\Program::inRandomOrder()
+                ->limit(fake()->numberBetween(self::MIN_PROGRAMS, self::MAX_PROGRAMS))
+                ->pluck('id');
+
             $rows = [];
-            foreach ($participantIds as $participantId) {
+
+            foreach ($programIds as $programId) {
+                // Seleccionar estudiantes aleatorios
+                $studentIds = Participant::where('role', 'Estudiante')
+                    ->where('program_id', $programId)
+                    ->inRandomOrder()
+                    ->limit(fake()->numberBetween(self::MIN_STUDENTS, self::MAX_STUDENTS))
+                    ->pluck('id');
+
+                foreach ($studentIds as $studentId) {
+                    $rows[] = [
+                        'event_id' => $event->id,
+                        'participant_id' => $studentId,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                }
+            }
+
+            // Seleccionar docentes aleatorios
+            $teacherIds = Participant::where('role', 'Docente')
+                ->inRandomOrder()
+                ->limit(fake()->numberBetween(self::MIN_TEACHERS, self::MAX_TEACHERS))
+                ->pluck('id');
+
+            foreach ($teacherIds as $teacherId) {
                 $rows[] = [
                     'event_id' => $event->id,
-                    'participant_id' => $participantId,
+                    'participant_id' => $teacherId,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ];
             }
+
             if (!empty($rows)) {
                 Attendance::insert($rows);
             }

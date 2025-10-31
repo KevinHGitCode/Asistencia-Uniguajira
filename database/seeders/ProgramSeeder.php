@@ -21,14 +21,22 @@ class ProgramSeeder extends Seeder
         foreach ($rows as $row) {
             [, , , , , $programName, $programType] = $row;
 
+            // Separar el nombre del programa y la sede
+            [$programName, $campus] = array_map('trim', explode(' - ', $programName) + [null, null]);
+
+            // Convertir a Title Case
+            $programName = ucwords(strtolower($programName));
+            $campus = $campus ? ucwords(strtolower($campus)) : null;
+
             $programType = match (strtolower($programType)) {
                 'pregrado' => 'Pregrado',
                 'posgrado', 'postgrado' => 'Posgrado',
                 default => null,
             };
 
-            $programsToInsert[$programName . '|' . $programType] = [
+            $programsToInsert[$programName . '|' . $campus . '|' . $programType] = [
                 'name' => $programName,
+                'campus' => $campus,
                 'program_type' => $programType,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -38,7 +46,7 @@ class ProgramSeeder extends Seeder
         if (!empty($programsToInsert)) {
             Program::upsert(
                 array_values($programsToInsert),
-                ['name'],
+                ['name', 'campus'], // Clave única incluye campus
                 ['program_type', 'updated_at']
             );
         }

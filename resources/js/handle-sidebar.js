@@ -32,7 +32,11 @@ function handleRouteChange(routeName) {
             break;
 
         case 'estadisticas':
-            // console.log("Cargar estadísticas...");
+            if (typeof window.createGeneralCharts !== 'function') {
+                import('./statistics-general.js').then( () => { window.createGeneralCharts() });
+            } else {
+                window.createGeneralCharts();
+            }
             break;
 
         case 'lista':

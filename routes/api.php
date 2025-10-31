@@ -66,13 +66,108 @@ Route::get('/statistics/event/{event}/roles', function ($event) {
 
 /**
  * =============================================
- * RUTAS PARA LA DATA DE LAS ESTADISTICAS/GRAFICAS DE LOS EVENTOS
+ * RUTAS PARA LAS ESTADÍSTICAS GENERALES
  * =============================================
  */
 
+// Número total de eventos
+Route::get('/statistics/total-events', function () {
+    return \App\Models\Event::count();
+});
 
+// Número de eventos por rol
+Route::get('/statistics/events-by-role', function () {
+    return \App\Models\Participant::select('role', DB::raw('COUNT(*) as count'))
+        ->groupBy('role')
+        ->get();
+});
 
+// Número de eventos por usuario
+Route::get('/statistics/events-by-user', function () {
+    return \App\Models\Event::select('user_id', DB::raw('COUNT(*) as count'))
+        ->groupBy('user_id')
+        ->get();
+});
 
+// Número total de asistencias
+Route::get('/statistics/total-attendances', function () {
+    return \App\Models\Attendance::count();
+});
+
+// Número total de participantes
+Route::get('/statistics/total-participants', function () {
+    return \App\Models\Participant::count();
+});
+
+// Asistencias por programa
+Route::get('/statistics/attendances-by-program', function () {
+    return DB::table('attendances')
+        ->join('participants', 'attendances.participant_id', '=', 'participants.id')
+        ->join('programs', 'participants.program_id', '=', 'programs.id')
+        ->select('programs.name as program', DB::raw('COUNT(*) as count'))
+        ->groupBy('programs.name')
+        ->get();
+});
+
+// Participantes por programa
+Route::get('/statistics/participants-by-program', function () {
+    return \App\Models\Participant::join('programs', 'participants.program_id', '=', 'programs.id')
+        ->select('programs.name as program', DB::raw('COUNT(DISTINCT participants.id) as count'))
+        ->groupBy('programs.name')
+        ->get();
+});
+
+// Eventos vs tiempo
+Route::get('/statistics/events-over-time', function () {
+    return \App\Models\Event::select(DB::raw('DATE(date) as date'), DB::raw('COUNT(*) as count'))
+        ->groupBy('date')
+        ->orderBy('date')
+        ->get();
+});
+
+// Asistencias vs tiempo
+Route::get('/statistics/attendances-over-time', function () {
+    return DB::table('attendances')
+        ->join('events', 'attendances.event_id', '=', 'events.id')
+        ->select(DB::raw('DATE(events.date) as date'), DB::raw('COUNT(*) as count'))
+        ->groupBy('date')
+        ->orderBy('date')
+        ->get();
+});
+
+// Eventos con más asistencias
+Route::get('/statistics/top-events', function () {
+    return DB::table('attendances')
+        ->join('events', 'attendances.event_id', '=', 'events.id')
+        ->select('events.title', DB::raw('COUNT(*) as count'))
+        ->groupBy('events.title')
+        ->orderByDesc('count')
+        ->limit(5)
+        ->get();
+});
+
+// Participantes con más asistencias
+Route::get('/statistics/top-participants', function () {
+    return DB::table('attendances')
+        ->join('participants', 'attendances.participant_id', '=', 'participants.id')
+        ->select(DB::raw("CONCAT(participants.first_name, ' ', participants.last_name) as name"), DB::raw('COUNT(*) as count'))
+        ->groupBy('participants.id', 'participants.first_name', 'participants.last_name')
+        ->orderByDesc('count')
+        ->limit(5)
+        ->get();
+});
+
+// Usuarios con más asistencias
+Route::get('/statistics/top-users', function () {
+    return DB::table('attendances')
+        ->join('events', 'attendances.event_id', '=', 'events.id')
+        ->join('users', 'events.user_id', '=', 'users.id')
+        ->select('users.name', DB::raw('COUNT(*) as count'))
+        ->groupBy('users.id', 'users.name')
+        ->orderByDesc('count')
+        ->limit(5)
+        ->get();
+});
 
 /**
  * =============================================
@@ -105,6 +200,13 @@ Route::get('/participants', function () {
 // Get participants by program ID
 Route::get('/participants/program/{program_id}', function ($program_id) {
     return Participant::where('program_id', $program_id)->get();
+});
+
+// Get count of participants by program
+Route::get('/participants/count-by-program', function () {
+    return Participant::select('program_id', DB::raw('COUNT(*) as count'))
+        ->groupBy('program_id')
+        ->get();
 });
 
 // Get all roles

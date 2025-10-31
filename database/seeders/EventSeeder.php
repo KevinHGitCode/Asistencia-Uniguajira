@@ -8,13 +8,16 @@ use Illuminate\Support\Str;
 
 class EventSeeder extends Seeder
 {
+    // Constantes configurables
+    private const NUM_EVENTS = 50; // Número de eventos a crear
+
     public function run(): void
     {
         $faker = \Faker\Factory::create();
         $userIds = \App\Models\User::pluck('id')->toArray();
         $rows = [];
-        $numEvents = 50; // Número de eventos a crear
-        for ($i = 0; $i < $numEvents; $i++) {
+
+        for ($i = 0; $i < self::NUM_EVENTS; $i++) {
             $start = $faker->time('H:i:s');
             $end = $faker->time('H:i:s');
             $title = $faker->sentence(3);
