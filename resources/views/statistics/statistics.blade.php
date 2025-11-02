@@ -4,56 +4,73 @@
     {{-- Sección: General --}}
     <section class="mb-8">
         <h2 class="text-2xl font-semibold mb-4">General</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div class="p-4 border rounded-lg">Número de Eventos: <span id="total-events">0</span></div>
-            <div class="p-4 border rounded-lg">Número de Asistencias: <span id="total-attendances">0</span></div>
-            <div class="p-4 border rounded-lg">Número de Participantes: <span id="total-participants">0</span></div>
-            <div class="p-4 border rounded-lg">Número de Eventos por Rol</div>
-            <div class="p-4 border rounded-lg">Número de Eventos por Usuario</div>
+        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-4">
+            {{-- Area de contadores --}}
+            <div class="flex items-center p-4 border rounded-lg bg-white shadow-md">
+                <x-icon name="calendar" class="w-6 h-6 text-blue-500 mr-3" />
+                <div>
+                    <p class="text-lg font-semibold" id="total-events">0</p>
+                    <p class="text-sm text-gray-500">Número de Eventos</p>
+                </div>
+            </div>
+            <div class="flex items-center p-4 border rounded-lg bg-white shadow-md">
+                <x-icon name="users" class="w-6 h-6 text-green-500 mr-3" />
+                <div>
+                    <p class="text-lg font-semibold" id="total-attendances">0</p>
+                    <p class="text-sm text-gray-500">Número de Asistencias</p>
+                </div>
+            </div>
+            <div class="flex items-center p-4 border rounded-lg bg-white shadow-md">
+                <x-icon name="user" class="w-6 h-6 text-purple-500 mr-3" />
+                <div>
+                    <p class="text-lg font-semibold" id="total-participants">0</p>
+                    <p class="text-sm text-gray-500">Número de Participantes</p>
+                </div>
+            </div>
         </div>
     </section>
 
-    {{-- Sección: Programa --}}
+    {{-- Sección: Graficas y estadisticas --}}
     <section class="mb-8">
-        <h2 class="text-2xl font-semibold mb-4">Programa</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-                <h3 class="text-lg font-medium mb-2">Asistencias por Programa</h3>
-                <div id="chart_program_attendances_bar" class="h-64"></div>
-            </div>
-            <div>
-                <h3 class="text-lg font-medium mb-2">Participantes por Programa</h3>
-                <div id="chart_program_participants_pie" class="h-64"></div>
-            </div>
-        </div>
-    </section>
+        @php
+            $chartStyles = "relative aspect-video overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-700";
+        @endphp
 
-    {{-- Sección: Tiempo --}}
-    <section class="mb-8">
-        <h2 class="text-2xl font-semibold mb-4">Tiempo</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-                <h3 class="text-lg font-medium mb-2">Eventos vs Tiempo</h3>
-                <div id="chart_events_time" class="h-64"></div>
+        {{-- Gráficas: Programa --}}
+        <section class="mb-8">
+            <h2 class="text-2xl font-semibold mb-4">Programa</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 p-2">
+                @livewire('chart-container', ['id' => 'chart_program_attendances_bar', 'class' => $chartStyles])
+                @livewire('chart-container', ['id' => 'chart_program_participants_pie', 'class' => $chartStyles])
             </div>
-            <div>
-                <h3 class="text-lg font-medium mb-2">Asistencias vs Tiempo</h3>
-                <div id="chart_attendances_time" class="h-64"></div>
+        </section>
+
+        {{-- Gráficas: Tiempo --}}
+        <section class="mb-8">
+            <h2 class="text-2xl font-semibold mb-4">Tiempo</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 p-2">
+                @livewire('chart-container', ['id' => 'chart_events_time', 'class' => $chartStyles])
+                @livewire('chart-container', ['id' => 'chart_attendances_time', 'class' => $chartStyles])
             </div>
-        </div>
-    </section>
+        </section>
 
-    {{-- Sección: Tops --}}
-    <section class="mb-8">
-        <h2 class="text-2xl font-semibold mb-4">Tops</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div class="p-4 border rounded-lg">Eventos con más Asistencias</div>
-            <div class="p-4 border rounded-lg">Participantes con más Asistencias</div>
-            <div class="p-4 border rounded-lg">Usuarios con más Asistencias</div>
-        </div>
-    </section>
+        {{-- Gráficas: Tops --}}
+        <section class="mb-8">
+            <h2 class="text-2xl font-semibold mb-4">Tops</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 p-2">
+                @livewire('chart-container', ['id' => 'chart_top_events', 'class' => $chartStyles])
+                @livewire('chart-container', ['id' => 'chart_top_participants', 'class' => $chartStyles])
+                @livewire('chart-container', ['id' => 'chart_top_users', 'class' => $chartStyles])
+            </div>
+        </section>
 
-    {{-- @push('scripts')
-    <script type="module" src="/resources/js/statistics-general.js"></script>
-    @endpush --}}
+        {{-- Gráficas: Eventos por Usuarios --}}
+        <section class="mb-8">
+            <h2 class="text-2xl font-semibold mb-4">Eventos por usuarios</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 p-2">
+                @livewire('chart-container', ['id' => 'chart_events_by_role', 'class' => $chartStyles])
+                @livewire('chart-container', ['id' => 'chart_events_by_user', 'class' => $chartStyles])
+            </div>
+        </section>
+    </section>
 </x-layouts.app>
