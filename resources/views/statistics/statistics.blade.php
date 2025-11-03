@@ -6,25 +6,25 @@
         <h2 class="text-2xl font-semibold mb-4">General</h2>
         <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-4">
             {{-- Area de contadores --}}
-            <div class="flex items-center p-4 border rounded-lg bg-white shadow-md">
-                <x-icon name="calendar" class="w-6 h-6 text-blue-500 mr-3" />
+            <div class="flex items-center p-4 border rounded-lg bg-white dark:bg-neutral-800 shadow-md">
+                <x-icon name="calendar" class="w-6 h-6 text-blue-500 dark:text-blue-300 mr-3" />
                 <div>
-                    <p class="text-lg font-semibold" id="total-events">0</p>
-                    <p class="text-sm text-gray-500">Número de Eventos</p>
+                    <p class="text-lg font-semibold text-gray-900 dark:text-gray-100" id="total-events">0</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Número de Eventos</p>
                 </div>
             </div>
-            <div class="flex items-center p-4 border rounded-lg bg-white shadow-md">
-                <x-icon name="users" class="w-6 h-6 text-green-500 mr-3" />
+            <div class="flex items-center p-4 border rounded-lg bg-white dark:bg-neutral-800 shadow-md">
+                <x-icon name="users" class="w-6 h-6 text-green-500 dark:text-green-300 mr-3" />
                 <div>
-                    <p class="text-lg font-semibold" id="total-attendances">0</p>
-                    <p class="text-sm text-gray-500">Número de Asistencias</p>
+                    <p class="text-lg font-semibold text-gray-900 dark:text-gray-100" id="total-attendances">0</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Número de Asistencias</p>
                 </div>
             </div>
-            <div class="flex items-center p-4 border rounded-lg bg-white shadow-md">
-                <x-icon name="user" class="w-6 h-6 text-purple-500 mr-3" />
+            <div class="flex items-center p-4 border rounded-lg bg-white dark:bg-neutral-800 shadow-md">
+                <x-icon name="user" class="w-6 h-6 text-purple-500 dark:text-purple-300 mr-3" />
                 <div>
-                    <p class="text-lg font-semibold" id="total-participants">0</p>
-                    <p class="text-sm text-gray-500">Número de Participantes</p>
+                    <p class="text-lg font-semibold text-gray-900 dark:text-gray-100" id="total-participants">0</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Número de Participantes</p>
                 </div>
             </div>
         </div>
@@ -39,9 +39,11 @@
         {{-- Gráficas: Programa --}}
         <section class="mb-8">
             <h2 class="text-2xl font-semibold mb-4">Programa</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 p-2">
+            <div class="grid grid-cols-1 gap-3 p-2">
+                {{-- Asistencias por Programa --}}
                 @livewire('chart-container', ['id' => 'chart_program_attendances_bar', 'class' => $chartStyles])
-                @livewire('chart-container', ['id' => 'chart_program_participants_pie', 'class' => $chartStyles])
+                {{-- Participantes por Programa --}}
+                @livewire('chart-container', ['id' => 'chart_program_participants_pie', 'class' => $chartStyles.' md:h-[500px]'])
             </div>
         </section>
 
