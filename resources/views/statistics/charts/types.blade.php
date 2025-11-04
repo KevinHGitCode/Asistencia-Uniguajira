@@ -13,12 +13,13 @@
         <!-- Gráfico ancho abajo -->
         <div id="chart_radar" class="relative h-full flex-1 overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-700"></div> --}}
         @php
-            $chartStyles = "relative aspect-video overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-700";
+            $chartStyles = "relative overflow-hidden rounded-lg border border-neutral-200 dark:border-neutral-700";
+            $spanTwo = " md:col-span-2";
         @endphp
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 p-2">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 p-1">
             @livewire('chart-container', ['id' => 'chart_bar', 'class' => $chartStyles])
-            @livewire('chart-container', ['id' => 'chart_pie', 'class' => $chartStyles])
+            @livewire('chart-container', ['id' => 'chart_pie', 'class' => $chartStyles.$spanTwo])
             @livewire('chart-container', ['id' => 'chart_line', 'class' => $chartStyles])
             @livewire('chart-container', ['id' => 'chart_stacked', 'class' => $chartStyles])
             @livewire('chart-container', ['id' => 'chart_radar', 'class' => $chartStyles])
