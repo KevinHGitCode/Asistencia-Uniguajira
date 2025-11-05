@@ -32,8 +32,15 @@ function handleRouteChange(routeName) {
             break;
 
         case 'estadisticas':
-            // console.log("Cargar estadísticas...");
+            if (typeof window.createGeneralCharts !== 'function') {
+                import('./charts/general/index.js').then(() => { 
+                    window.createGeneralCharts(); 
+                });
+            } else {
+                window.createGeneralCharts();
+            }
             break;
+
 
         case 'lista':
             // console.log("Mostrar lista de eventos...");

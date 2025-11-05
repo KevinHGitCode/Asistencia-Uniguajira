@@ -86,24 +86,58 @@ function createCharts() {
                 left: 'center',
                 textStyle: { color: isDarkMode() ? '#fff' : '#333' }
             },
+            tooltip: {
+                trigger: 'item',
+                backgroundColor: isDarkMode() ? 'rgba(50,50,50,0.7)' : 'rgba(255,255,255,0.9)',
+                textStyle: { color: isDarkMode() ? '#fff' : '#333' },
+                borderColor: isDarkMode() ? '#555' : '#ddd'
+            },
             legend: {
-                bottom: '5%',
-                textStyle: { color: isDarkMode() ? '#fff' : '#333' }
+                textStyle: { color: isDarkMode() ? '#fff' : '#333' },
+                type: 'scroll',
+                orient: 'vertical',
+                right: 40,
+                top: 40,
+                itemWidth: 26,
+                itemHeight: 10,
+                pageIconColor: '#317cf6ff',       // color flechas (Tailwind blue-500)
+                pageTextStyle: { color: isDarkMode() ? '#fff' : '#666' },
+                data: [
+                    'Ingeniería', 'Administración', 'Contaduría', 'Trabajo Social', 'Pedagogía', 'Neg. Int.',
+                    'Administración 2', 'Contaduría 2', 'Trabajo Social 2', 'Pedagogía 2', 'Neg. Int. 2'
+                ]
             },
             series: [{
                 type: 'pie',
-                radius: '50%',
+                radius: ['0%', '58%'],          // 👈 radio ajustado
+                center: ['40%', '50%'],          // 👈 centra mejor el gráfico al dejar espacio para la leyenda
+                avoidLabelOverlap: true,
+                label: {
+                    color: isDarkMode() ? '#fff' : '#333',
+                    formatter: '{b}\n{d}%',       // nombre y porcentaje
+                    fontSize: 11
+                },
+                labelLine: {
+                    length: 20,
+                    length2: 6
+                },
+                labelLayout: {
+                    hideOverlap: true,
+                    moveOverlap: true
+                },
                 data: [
                     { value: 120, name: 'Ingeniería' },
                     { value: 80, name: 'Administración' },
                     { value: 90, name: 'Contaduría' },
                     { value: 70, name: 'Trabajo Social' },
                     { value: 60, name: 'Pedagogía' },
-                    { value: 110, name: 'Neg. Int.' }
-                ],
-                label: {
-                    color: isDarkMode() ? '#fff' : '#333'
-                }
+                    { value: 210, name: 'Neg. Int.' },
+                    { value: 80, name: 'Administración 2' },
+                    { value: 90, name: 'Contaduría 2' },
+                    { value: 70, name: 'Trabajo Social 2' },
+                    { value: 60, name: 'Pedagogía 2' },
+                    { value: 10, name: 'Neg. Int. 2' }
+                ]
             }]
         }));
     }

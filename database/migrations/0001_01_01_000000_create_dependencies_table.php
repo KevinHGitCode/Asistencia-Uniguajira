@@ -11,16 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Programas
-        Schema::create('programs', function (Blueprint $table) {
+        Schema::create('dependencies', function (Blueprint $table) {
             $table->id();
-            $table->string('name', 100);
-            $table->enum('program_type', ['Pregrado', 'Posgrado'])->nullable();
-            $table->string('campus', 100)->nullable();
+            $table->string('name')->unique();
             $table->timestamps();
-
-            // Clave única para la combinación de nombre y campus
-            $table->unique(['name', 'campus']);
         });
     }
 
@@ -29,6 +23,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('programs');
+        Schema::dropIfExists('dependencies');
     }
 };

@@ -20,6 +20,9 @@
             <p class="text-sm text-gray-600 dark:text-gray-400">
                 {{ $user->email }}
             </p>
+            @if(isset($user->role) && $user->role === 'user')
+                <p class="text-sm text-zinc-700 dark:text-zinc-300 font-medium mt-1"><span class="font-normal">{{ $user->dependency->name ?? 'N/A' }}</span></p>
+            @endif
             <!-- Mostrar cantidad de eventos -->
             <p class="text-xs text-blue-600 dark:text-blue-400">
                 {{ $user->events->count() }} evento(s) creado(s)

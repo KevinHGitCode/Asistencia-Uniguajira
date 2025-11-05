@@ -64,3 +64,13 @@ select:focus[data-flux-control] {
 /* \[:where(&)\]:size-4 {
     @apply size-4;
 } */
+
+
+.custom-input input:focus,
+.custom-input textarea:focus,
+.custom-input select:focus,
+.custom-input:focus-within input {
+    /* border-color: #9333ea; violeta */
+    /* box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.3); */
+    /* outline: none; */
+}

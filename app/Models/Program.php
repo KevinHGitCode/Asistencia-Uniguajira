@@ -9,6 +9,7 @@ class Program extends Model
 
     protected $fillable = [
         'name',
+        'campus',
     ];
 
     public function participants()

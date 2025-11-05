@@ -24,6 +24,7 @@ class User extends Authenticatable
         'password',
         'role',
         'avatar',
+        'dependency_id',
     ];
 
     /**
@@ -65,4 +66,10 @@ class User extends Authenticatable
     {
         return $this->hasMany(Event::class);
     }
+
+    public function dependency() 
+    {
+        return $this->belongsTo(Dependency::class);
+    }
+
 }

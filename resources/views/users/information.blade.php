@@ -37,6 +37,9 @@
                     <li>Nombre: <span>{{ $user->name }}</span></li>
                     <li>Correo: <span>{{ $user->email }}</span></li>
                     <li>Rol: <span>{{ $user->role }}</span></li>
+                    @if($user->role === 'user')
+                        <li>Dependencia: <span>{{ $user->dependency->name ?? 'N/A' }}</span></li>
+                    @endif
                     <li>Fecha de creación: <span>{{ $user->created_at->format('d/m/Y H:i') }}</span></li>
                     <li>Última actualización: <span>{{ $user->updated_at->format('d/m/Y H:i') }}</span></li>
                 </ul>

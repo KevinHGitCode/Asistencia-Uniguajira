@@ -9,6 +9,9 @@ use App\Models\Program;
 
 class ParticipantSeeder extends Seeder
 {
+    // Constantes configurables
+    private const BATCH_SIZE = 500; // Tamaño del lote para inserciones masivas
+
     public function run(): void
     {
         $path = database_path('seeders/files/seed.xlsx');
@@ -21,7 +24,7 @@ class ParticipantSeeder extends Seeder
         // Construir hash de programas existentes
         $programHash = [];
         foreach (Program::all() as $program) {
-            $key = $program->name . '|' . $program->program_type;
+            $key = strtolower($program->name) . '|' . strtolower($program->campus);
             $programHash[$key] = $program->id;
         }
 
@@ -30,13 +33,15 @@ class ParticipantSeeder extends Seeder
         foreach ($rows as $row) {
             [$document, $firstName, $lastName, $roleName, $email, $programName, $programType, $affiliationType] = $row;
 
-            $programType = match (strtolower($programType)) {
-                'pregrado', 'undergraduate' => 'Pregrado',
-                'posgrado', 'postgrado', 'postgraduate' => 'Posgrado',
-                default => null,
-            };
+            // Convertir nombres a Title Case
+            $firstName = ucwords(strtolower($firstName));
+            $lastName = ucwords(strtolower($lastName));
 
-            $key = $programName . '|' . $programType;
+            // Separar el nombre del programa y la sede
+            [$programName, $campus] = array_map('trim', explode(' - ', $programName) + [null, null]);
+
+            // Convertir a minúsculas para la comparación
+            $programKey = strtolower($programName) . '|' . strtolower($campus);
 
             $participantsToInsert[] = [
                 'document'    => $document,
@@ -45,12 +50,12 @@ class ParticipantSeeder extends Seeder
                 'email'       => $email,
                 'role'        => $roleName,
                 'affiliation' => ($affiliationType !== 0 && $affiliationType !== '0') ? $affiliationType : null,
-                'program_id'  => $programHash[$key] ?? null,
+                'program_id'  => $programHash[$programKey] ?? null,
                 'created_at'  => now(),
                 'updated_at'  => now(),
             ];
 
-            if (count($participantsToInsert) === 500) {
+            if (count($participantsToInsert) === self::BATCH_SIZE) {
                 Participant::insert($participantsToInsert);
                 $participantsToInsert = [];
             }

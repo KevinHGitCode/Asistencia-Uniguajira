@@ -133,7 +133,7 @@ class EventController extends Controller
         }
 
         $pdf = new Fpdi();
-        $path = public_path('formatos/Formato_Asistencia.pdf');
+        $path = public_path('formatos/LISTADO_DE_ASISTENCIA_GENERAL_REVISION_8.pdf');
 
         if (!file_exists($path)) {
             dd('Archivo no encontrado en:', $path);
@@ -147,11 +147,26 @@ class EventController extends Controller
         // Crear primera página
         $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
         $pdf->useTemplate($tplIdx);
-        $pdf->SetFont('Arial', '', 8);
+        $pdf->SetFont('Arial', 'B', 12);
+        // Título del evento
+        $pdf->SetXY(44, 39); // coordenadas exactas según tu formato
+        $pdf->Cell(0,8,
+            iconv('UTF-8', 'ISO-8859-1//TRANSLIT', strtoupper($evento->title ?? 'SIN TÍTULO')),
+            0, 0, 'L'
+        );
 
-        $startY = 82;
-        $rowHeight = 6;
-        $maxRows = 17;
+        // Fecha del evento
+        $pdf->SetXY(224, 31);
+        $pdf->Cell(0,8,
+            iconv('UTF-8', 'ISO-8859-1//TRANSLIT', Carbon::parse($evento->date)->format('d   m    Y')),
+            0, 0, 'L'
+        );
+
+        $pdf->SetFont('Arial', '', 12);
+
+        $startY = 62.2;
+        $rowHeight = 8.15;
+        $maxRows = 16;
         $row = 0;
 
         foreach ($evento->asistencias as $i => $asistencia) {
@@ -161,53 +176,99 @@ class EventController extends Controller
             if ($row >= $maxRows) {
                 $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
                 $pdf->useTemplate($tplIdx);
-                $pdf->SetFont('Arial', '', 8);
                 $row = 0;
+
+                $pdf->SetFont('Arial', 'B', 12);
+                // Título del evento
+                $pdf->SetXY(44, 39); // coordenadas exactas según tu formato
+                $pdf->Cell(0,8,
+                    iconv('UTF-8', 'ISO-8859-1//TRANSLIT', strtoupper($evento->title ?? 'SIN TÍTULO')),
+                    0, 0, 'L'
+                );
+
+                // Fecha del evento
+                $pdf->SetXY(224, 31);
+                $pdf->Cell(0,8,
+                    iconv('UTF-8', 'ISO-8859-1//TRANSLIT', Carbon::parse($evento->date)->format('d   m    Y')),
+                    0, 0, 'L'
+                );
+
+                $pdf->SetFont('Arial', '', 12);
             }
 
-            $y = $startY + ($row * $rowHeight);
+
+            $y = round($startY + ($row * $rowHeight), 2);
 
 
             // === Datos del asistente ===
-            $pdf->SetXY(32, $y);  // Nombres y Apellidos
-            $pdf->Cell(61, 6, limitarTexto(trim(($p->first_name ?? '') . ' ' . ($p->last_name ?? '')), 32), 0, 0, 'L');
 
-            $pdf->SetXY(93, $y);  // Nº Identificación
-            $pdf->Cell(38, 6, limitarTexto($p->document ?? '', 13), 0, 0, 'L');
+            // Numero de registro
+            $pdf->SetXY(19, $y);
+            $pdf->Cell(12, 7.8, $i + 1, 0, 0, 'C');
 
-            $pdf->SetXY(131, $y); // Código (role)
-            $pdf->Cell(28, 6, limitarTexto($p->role ?? '', 13), 0, 0, 'L');
+            // Nombres y Apellidos
+            $pdf->SetXY(30.2, $y);
+            $pdf->Cell(61,7.8,
+                iconv('UTF-8', 'ISO-8859-1//TRANSLIT',
+                    limitarTexto(trim(($p->first_name ?? '') . ' ' . ($p->last_name ?? '')), 32)
+                ),
+                0, 0, 'L'
+            );
 
-            $pdf->SetXY(159, $y); // Programa académico
-            $pdf->Cell(34, 6, limitarTexto($p->program->name ?? '', 22), 0, 0, 'L');
+            // Cargo o rol
+            $pdf->SetXY(105.5, $y);
+            $pdf->Cell(28,7.8,
+                iconv('UTF-8', 'ISO-8859-1//TRANSLIT',
+                    limitarTexto($p->role ?? '', 13)
+                ),
+                0, 0, 'L'
+            );
 
-            $pdf->SetXY(193, $y); // Teléfono (affiliation)
-            $pdf->Cell(28, 6, limitarTexto($p->affiliation ?? '', 20), 0, 0, 'L');
+            // Dependencia o programa
+            $pdf->SetFont('Arial', '', 10);
+            $pdf->SetXY(137.3, $y);
+            $pdf->Cell(34,7.8,
+                iconv('UTF-8', 'ISO-8859-1//TRANSLIT',
+                    limitarTexto($p->program->name ?? '', 18)
+                ),
+                0, 0, 'L'
+            );
 
-            $pdf->SetXY(285, $y); // Hora de firma (registro de asistencia)
-            $pdf->Cell(20, 6, Carbon::parse($asistencia->created_at)->format('h:i A'), 0, 0, 'C');
+            // Correo electrónico
+            $pdf->SetFont('Arial', '', 10);
+            $pdf->SetXY(180, $y);
+            $pdf->Cell(34,7.8,
+                iconv('UTF-8', 'ISO-8859-1//TRANSLIT',
+                    limitarTexto($p->email ?? '', 30)
+                ),
+                0, 0, 'L'
+            );
 
+            //$pdf->SetFont('Arial', '', 12);
+            // Hora de registro
+            $pdf->SetXY(242.2, $y);
+            $pdf->Cell(20, 7.8, Carbon::parse($asistencia->created_at)->format('h:i A'), 0, 0, 'C');
 
+            $pdf->SetFont('Arial', '', 12);
 
+            // // === Sexo ===
+            // if (($p->gender ?? '') === 'F') { $pdf->SetXY(178, $y); $pdf->Write(0, 'X'); }
+            // if (($p->gender ?? '') === 'M') { $pdf->SetXY(184, $y); $pdf->Write(0, 'X'); }
 
-            // === Sexo ===
-            if (($p->gender ?? '') === 'F') { $pdf->SetXY(178, $y); $pdf->Write(0, 'X'); }
-            if (($p->gender ?? '') === 'M') { $pdf->SetXY(184, $y); $pdf->Write(0, 'X'); }
+            // // === Grupo priorizado ===
+            // $grupos = is_array($p->priority_group)
+            //     ? $p->priority_group
+            //     : explode(',', $p->priority_group ?? '');
 
-            // === Grupo priorizado ===
-            $grupos = is_array($p->priority_group)
-                ? $p->priority_group
-                : explode(',', $p->priority_group ?? '');
-
-            foreach ($grupos as $g) {
-                switch (trim($g)) {
-                    case 'E': $pdf->SetXY(192, $y); $pdf->Write(0, 'X'); break;
-                    case 'D': $pdf->SetXY(198, $y); $pdf->Write(0, 'X'); break;
-                    case 'V': $pdf->SetXY(204, $y); $pdf->Write(0, 'X'); break;
-                    case 'C': $pdf->SetXY(210, $y); $pdf->Write(0, 'X'); break;
-                    case 'H': $pdf->SetXY(216, $y); $pdf->Write(0, 'X'); break;
-                }
-            }
+            // foreach ($grupos as $g) {
+            //     switch (trim($g)) {
+            //         case 'E': $pdf->SetXY(192, $y); $pdf->Write(0, 'X'); break;
+            //         case 'D': $pdf->SetXY(198, $y); $pdf->Write(0, 'X'); break;
+            //         case 'V': $pdf->SetXY(204, $y); $pdf->Write(0, 'X'); break;
+            //         case 'C': $pdf->SetXY(210, $y); $pdf->Write(0, 'X'); break;
+            //         case 'H': $pdf->SetXY(216, $y); $pdf->Write(0, 'X'); break;
+            //     }
+            // }
 
             $row++;
         }
