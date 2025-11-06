@@ -1,5 +1,6 @@
+// charts/general/programParticipantsPie.js
 import { getEnhancedOptions, isDarkMode } from '../utils/theme.js';
-import { shortName } from '../utils/shortName.js'; // 👈 nueva importación
+import { shortName } from '../utils/shortName.js';
 
 export function renderProgramParticipantsPie(charts) {
   const el = document.getElementById('chart_program_participants_pie');
@@ -21,6 +22,24 @@ export function renderProgramParticipantsPie(charts) {
           left: 'center', 
           textStyle: { color: dark ? '#fff' : '#333' } 
         },
+        tooltip: {
+          trigger: 'item',
+          formatter: params => {
+            // 🔹 Buscar el nombre completo según el nombre abreviado
+            const fullItem = data.find(i => shortName(i.program) === params.name);
+            const fullName = fullItem ? fullItem.program : params.name;
+            return `
+              <div style="min-width:180px">
+                <strong>${fullName}</strong><br>
+                Participantes: ${params.value}<br>
+                Porcentaje: ${params.percent}%
+              </div>
+            `;
+          },
+          backgroundColor: dark ? 'rgba(50,50,50,0.85)' : 'rgba(255,255,255,0.95)',
+          borderColor: dark ? '#555' : '#ddd',
+          textStyle: { color: dark ? '#fff' : '#333' },
+        },
         legend: {
           type: 'scroll',
           orient: 'vertical',
@@ -30,7 +49,7 @@ export function renderProgramParticipantsPie(charts) {
           pageIconColor: '#3b82f6',
           pageTextStyle: { color: dark ? '#fff' : '#666' },
           textStyle: { color: dark ? '#fff' : '#333' },
-          data: data.map(i => shortName(i.program)) // 👈 abreviar nombres en la leyenda
+          data: data.map(i => shortName(i.program))
         },
         series: [{
           type: 'pie',
@@ -44,7 +63,11 @@ export function renderProgramParticipantsPie(charts) {
           },
           labelLine: { length: 12, length2: 6 },
           labelLayout: { hideOverlap: true, moveOverlap: true },
-          data: data.map(i => ({ value: i.count, name: shortName(i.program) })) // 👈 abreviar nombres en las etiquetas
+          data: data.map(i => ({
+            value: i.count,
+            name: shortName(i.program),
+            fullName: i.program // 🔹 Guardamos el nombre completo también por si lo necesitas
+          }))
         }]
       });
     });
