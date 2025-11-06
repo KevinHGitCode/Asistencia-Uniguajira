@@ -15,6 +15,26 @@ export function renderProgramParticipantsPie(charts) {
   fetch('/api/statistics/participants-by-program')
     .then(res => res.json())
     .then(data => {
+      // 🔹 Calcular el total y los porcentajes
+      const total = data.reduce((sum, i) => sum + i.count, 0);
+      const grouped = [];
+      let smallSum = 0;
+
+      for (const i of data) {
+        const percent = (i.count / total) * 100;
+        // Agrupar programas con menos del 3% en "Otros"
+        if (percent < 3) {
+          smallSum += i.count;
+        } else {
+          grouped.push(i);
+        }
+      }
+
+      // 🔹 Agregar grupo "Otros" si aplica
+      if (smallSum > 0) {
+        grouped.push({ program: 'Otros', count: smallSum, isOther: true });
+      }
+
       charts.programParticipantsPie.setOption({
         ...common,
         title: { 
@@ -25,7 +45,6 @@ export function renderProgramParticipantsPie(charts) {
         tooltip: {
           trigger: 'item',
           formatter: params => {
-            // 🔹 Buscar el nombre completo según el nombre abreviado
             const fullItem = data.find(i => shortName(i.program) === params.name);
             const fullName = fullItem ? fullItem.program : params.name;
             return `
@@ -49,24 +68,26 @@ export function renderProgramParticipantsPie(charts) {
           pageIconColor: '#3b82f6',
           pageTextStyle: { color: dark ? '#fff' : '#666' },
           textStyle: { color: dark ? '#fff' : '#333' },
-          data: data.map(i => shortName(i.program))
+          data: grouped.map(i => shortName(i.program))
         },
         series: [{
           type: 'pie',
-          radius: ['35%', '60%'],
+          radius: ['0%', '55%'],
           center: ['40%', '50%'],
           avoidLabelOverlap: true,
           label: { 
             color: dark ? '#fff' : '#333', 
-            formatter: '{b}\n{d}%', 
+            formatter: '{b} - {d}%', 
             fontSize: 10 
           },
-          labelLine: { length: 12, length2: 6 },
+          labelLine: { length: 14, length2: 10 },
           labelLayout: { hideOverlap: true, moveOverlap: true },
-          data: data.map(i => ({
+          data: grouped.map(i => ({
             value: i.count,
             name: shortName(i.program),
-            fullName: i.program // 🔹 Guardamos el nombre completo también por si lo necesitas
+            fullName: i.program,
+            // 🎨 Forzar color gris si es "Otros"
+            itemStyle: i.isOther ? { color: '#9ca3af' } : undefined
           }))
         }]
       });
