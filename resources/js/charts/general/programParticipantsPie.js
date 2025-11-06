@@ -1,4 +1,5 @@
 import { getEnhancedOptions, isDarkMode } from '../utils/theme.js';
+import { shortName } from '../utils/shortName.js'; // 👈 nueva importación
 
 export function renderProgramParticipantsPie(charts) {
   const el = document.getElementById('chart_program_participants_pie');
@@ -15,7 +16,11 @@ export function renderProgramParticipantsPie(charts) {
     .then(data => {
       charts.programParticipantsPie.setOption({
         ...common,
-        title: { text: 'Participantes por Programa', left: 'center', textStyle: { color: dark ? '#fff' : '#333' } },
+        title: { 
+          text: 'Participantes por Programa', 
+          left: 'center', 
+          textStyle: { color: dark ? '#fff' : '#333' } 
+        },
         legend: {
           type: 'scroll',
           orient: 'vertical',
@@ -25,17 +30,21 @@ export function renderProgramParticipantsPie(charts) {
           pageIconColor: '#3b82f6',
           pageTextStyle: { color: dark ? '#fff' : '#666' },
           textStyle: { color: dark ? '#fff' : '#333' },
-          data: data.map(i => i.program)
+          data: data.map(i => shortName(i.program)) // 👈 abreviar nombres en la leyenda
         },
         series: [{
           type: 'pie',
           radius: ['35%', '60%'],
           center: ['40%', '50%'],
           avoidLabelOverlap: true,
-          label: { color: dark ? '#fff' : '#333', formatter: '{b}\n{d}%', fontSize: 10 },
+          label: { 
+            color: dark ? '#fff' : '#333', 
+            formatter: '{b}\n{d}%', 
+            fontSize: 10 
+          },
           labelLine: { length: 12, length2: 6 },
           labelLayout: { hideOverlap: true, moveOverlap: true },
-          data: data.map(i => ({ value: i.count, name: i.program }))
+          data: data.map(i => ({ value: i.count, name: shortName(i.program) })) // 👈 abreviar nombres en las etiquetas
         }]
       });
     });
