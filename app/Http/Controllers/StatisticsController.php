@@ -56,10 +56,11 @@ class StatisticsController extends Controller
             ->get();
     }
 
-    // Participantes por programa
+    // Participantes por programa (solo los que han asistido al menos una vez)
     public function participantsByProgram()
     {
         return Participant::join('programs', 'participants.program_id', '=', 'programs.id')
+            ->join('attendances', 'participants.id', '=', 'attendances.participant_id')
             ->select('programs.name as program', DB::raw('COUNT(DISTINCT participants.id) as count'))
             ->groupBy('programs.name')
             ->orderByDesc('count')

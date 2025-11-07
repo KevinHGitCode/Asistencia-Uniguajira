@@ -48,13 +48,13 @@
         </section>
 
         {{-- Gráficas: Tiempo --}}
-        <section class="mb-8">
+        {{-- <section class="mb-8">
             <h2 class="text-2xl font-semibold mb-4">Tiempo</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3 p-2">
                 @livewire('chart-container', ['id' => 'chart_events_time', 'class' => $chartStyles])
                 @livewire('chart-container', ['id' => 'chart_attendances_time', 'class' => $chartStyles])
             </div>
-        </section>
+        </section> --}}
 
         {{-- Gráficas: Tops --}}
         <section class="mb-8">
