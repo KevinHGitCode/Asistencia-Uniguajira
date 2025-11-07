@@ -5,9 +5,10 @@ import { renderTopParticipants } from './topParticipants.js';
 import { renderTopUsers } from './topUsers.js';
 import { renderEventsByRole } from './eventsByRole.js';
 import { renderEventsByUser } from './eventsByUser.js';
+import { renderEventsOverTime } from './eventsOverTime.js';
+import { renderAttendancesOverTime } from './attendancesOverTime.js';
 import { initStatisticsCounters } from './statisticsCounters.js';
-// import { renderEventsOverTime } from './eventsOverTime.js';
-// import { renderAttendancesOverTime } from './attendancesOverTime.js';
+import { updateFilters } from './filtersManager.js';
 
 window.createGeneralCharts = () => {
   const charts = {
@@ -25,15 +26,34 @@ window.createGeneralCharts = () => {
   // Renderizar gráficas
   renderProgramAttendancesBar(charts);
   renderProgramParticipantsPie(charts);
+  renderEventsOverTime(charts);
+  renderAttendancesOverTime(charts);
   renderTopEvents(charts);
   renderTopParticipants(charts);
   renderTopUsers(charts);
   renderEventsByRole(charts);
   renderEventsByUser(charts);
 
-  
-  // renderEventsOverTime(charts);
-  // renderAttendancesOverTime(charts);
+  // Escuchar cambios de filtros y recargar gráficos
+  window.addEventListener('statistics-filters-changed', (event) => {
+    const { filters } = event.detail;
+    updateFilters(filters);
+    
+    // Recargar todos los gráficos con los nuevos filtros
+    renderProgramAttendancesBar(charts);
+    renderProgramParticipantsPie(charts);
+    renderEventsOverTime(charts);
+    renderAttendancesOverTime(charts);
+    renderTopEvents(charts);
+    renderTopParticipants(charts);
+    renderTopUsers(charts);
+    renderEventsByRole(charts);
+    renderEventsByUser(charts);
+    
+    // Recargar contadores
+    initStatisticsCounters();
+  });
+
 };
 
 window.createGeneralCharts = createGeneralCharts;

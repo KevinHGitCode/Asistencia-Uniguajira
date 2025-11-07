@@ -1,6 +1,9 @@
 <x-layouts.app :title="__('Estadísticas Generales')">
     <h1 class="text-3xl font-bold mb-6">Estadísticas Generales</h1>
 
+    {{-- Filtros --}}
+    @livewire('statistics.statistics-filters')
+
     {{-- Sección: General --}}
     <section class="mb-8">
         <h2 class="text-2xl font-semibold mb-4">General</h2>
@@ -48,13 +51,13 @@
         </section>
 
         {{-- Gráficas: Tiempo --}}
-        {{-- <section class="mb-8">
+        <section class="mb-8">
             <h2 class="text-2xl font-semibold mb-4">Tiempo</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 p-2">
+            <div class="grid grid-cols-1 gap-3 p-2">
                 @livewire('chart-container', ['id' => 'chart_events_time', 'class' => $chartStyles])
                 @livewire('chart-container', ['id' => 'chart_attendances_time', 'class' => $chartStyles])
             </div>
-        </section> --}}
+        </section>
 
         {{-- Gráficas: Tops --}}
         <section class="mb-8">

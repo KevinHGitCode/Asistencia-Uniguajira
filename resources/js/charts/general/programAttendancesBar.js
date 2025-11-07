@@ -1,6 +1,7 @@
 // charts/general/programAttendancesBar.js
 import { getEnhancedOptions, isDarkMode } from '../utils/theme.js';
 import { shortName } from '../utils/shortName.js';
+import { getApiUrl } from './filtersManager.js';
 
 export function renderProgramAttendancesBar(charts) {
   const el = document.getElementById('chart_program_attendances_bar');
@@ -12,7 +13,7 @@ export function renderProgramAttendancesBar(charts) {
   const common = getEnhancedOptions();
   const dark = isDarkMode();
 
-  fetch('/api/statistics/attendances-by-program')
+  fetch(getApiUrl('/api/statistics/attendances-by-program'))
     .then(res => res.json())
     .then(data => {
       const abbreviated = data.map(i => ({

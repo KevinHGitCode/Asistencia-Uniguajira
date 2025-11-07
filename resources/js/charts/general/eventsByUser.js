@@ -1,5 +1,6 @@
 // charts/general/eventsByUser.js
 import { getEnhancedOptions, isDarkMode } from '../utils/theme.js';
+import { getApiUrl } from './filtersManager.js';
 
 export function renderEventsByUser(charts) {
   const el = document.getElementById('chart_events_by_user');
@@ -11,7 +12,7 @@ export function renderEventsByUser(charts) {
   const common = getEnhancedOptions();
   const dark = isDarkMode();
 
-  fetch('/api/statistics/events-by-user')
+  fetch(getApiUrl('/api/statistics/events-by-user'))
     .then(res => res.json())
     .then(data => {
       charts.eventsByUser.setOption({

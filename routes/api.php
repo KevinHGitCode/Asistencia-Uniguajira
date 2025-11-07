@@ -9,6 +9,7 @@ use App\Models\Participant;
 use App\Models\Program;
 use App\Models\Attendance;
 use App\Models\User;
+use App\Models\Dependency;
 use Illuminate\Support\Facades\DB;
 
 Route::get('/user', function (Request $request) {
@@ -151,3 +152,7 @@ Route::get('/users', function () {
     return User::all();
 });
 
+// Get all dependencies
+Route::get('/dependencies', function () {
+    return Dependency::all();
+});

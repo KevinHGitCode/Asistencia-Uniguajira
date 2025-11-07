@@ -1,5 +1,6 @@
 // charts/general/eventsByRole.js
 import { getEnhancedOptions, isDarkMode } from '../utils/theme.js';
+import { getApiUrl } from './filtersManager.js';
 
 export function renderEventsByRole(charts) {
   const el = document.getElementById('chart_events_by_role');
@@ -11,7 +12,7 @@ export function renderEventsByRole(charts) {
   const common = getEnhancedOptions();
   const dark = isDarkMode();
 
-  fetch('/api/statistics/events-by-role')
+  fetch(getApiUrl('/api/statistics/events-by-role'))
     .then(res => res.json())
     .then(data => {
       // Calcular el total y los porcentajes

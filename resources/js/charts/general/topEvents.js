@@ -1,4 +1,5 @@
 import { getEnhancedOptions, isDarkMode } from '../utils/theme.js';
+import { getApiUrl } from './filtersManager.js';
 
 export function renderTopEvents(charts) {
   const el = document.getElementById('chart_top_events');
@@ -10,7 +11,7 @@ export function renderTopEvents(charts) {
   const common = getEnhancedOptions();
   const dark = isDarkMode();
 
-  fetch('/api/statistics/top-events')
+  fetch(getApiUrl('/api/statistics/top-events'))
     .then(res => res.json())
     .then(data => {
       // Invertir el orden para que los que tienen más asistencias aparezcan primero (arriba)
