@@ -13,18 +13,26 @@ use \App\Http\Controllers\Lang\LanguageController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\AttendanceController;
 
+
+/**
+ * ================================================================
+ *  RUTAS PRINCIPALES DEL SISTEMA
+ * ================================================================
+ */
 Route::middleware('auth')->get('/', function () {
     return redirect()->route('dashboard');
 })->name('home');
-
-// Route::view('dashboard', 'dashboard')
-//     ->middleware(['auth', 'verified'])
-//     ->name('dashboard');
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
+
+/**
+ * ================================================================
+ *  RUTAS DE GESTIÓN DE EVENTOS
+ * ================================================================
+ */
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('eventos/nuevo', [EventController::class, 'create'])->name('events.new');
     Route::post('eventos/nuevo', [EventController::class, 'store'])->name('events.new.store');
@@ -35,10 +43,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('events.download');
 });
 
-    //----------------------------------------------------------------
+
+/**
+ * ================================================================
+ *  RUTAS DE REGISTRO Y CONFIRMACIÓN DE ASISTENCIA
+ * ================================================================
+ */
 
 // Ruta pública para mostrar confirmación de asistencia
-Route::get('/events/acceso/{slug}/confirmacion/{attendanceId}', [App\Http\Controllers\AttendanceController::class, 'confirmation'])
+Route::get('/events/acceso/{slug}/confirmacion/{attendanceId}', [AttendanceController::class, 'confirmation'])
     ->name('attendance.confirmation');
 
 // Ruta pública para acceder al evento
@@ -46,23 +59,15 @@ Route::get('/events/acceso/{slug}', [EventController::class, 'access'])
     ->name('events.access');
 
 // Ruta pública para registrar asistencia
-Route::post('/events/acceso/{slug}', [App\Http\Controllers\AttendanceController::class, 'store'])
-    ->name('attendance.store');
-
-    //----------------------------------------------------------------
-
-// Ruta pública para acceder al evento
-Route::get('/events/acceso/{slug}', [EventController::class, 'access'])
-    ->name('events.access');
-
-// Ruta pública para registrar asistencia
-Route::post('/events/acceso/{slug}', [App\Http\Controllers\AttendanceController::class, 'store'])
+Route::post('/events/acceso/{slug}', [AttendanceController::class, 'store'])
     ->name('attendance.store');
 
 
-
-Route::get('/events/acceso/{slug}', [EventController::class, 'access'])->name('events.access');
-
+/**
+ * ================================================================
+ *  RUTAS DE ESTADÍSTICAS
+ * ================================================================
+ */
 Route::view('estadisticas', 'statistics.statistics')
     ->middleware(['auth', 'verified'])
     ->name('statistics');
@@ -71,6 +76,12 @@ Route::view('graficos/tipos', 'statistics.charts.types')
     ->middleware(['auth', 'verified'])
     ->name('charts.types');
 
+
+/**
+ * ================================================================
+ *  RUTAS DE ADMINISTRACIÓN DE USUARIOS
+ * ================================================================
+ */
 Route::middleware(['auth', 'verified', 'role:admin'])
     ->prefix('usuarios')
     ->group(function () {
@@ -89,7 +100,11 @@ Route::middleware(['auth', 'verified', 'role:admin'])
         Route::get('/{id}', [UserController::class, 'show'])->name('user.show');
     });
 
-
+/**
+ * ================================================================
+ *  RUTAS DE CONFIGURACIÓN DE LA CUENTA
+ * ================================================================
+ */
 Route::middleware(['auth'])->group(function () {
     Route::redirect('settings', 'settings/profile');
 
@@ -102,6 +117,7 @@ Route::middleware(['auth'])->group(function () {
         ->name('settings.language.switch');
 });
 
+// TODO: Mover esta ruta a routes/api.php
 Route::middleware('auth')->get('/api/mis-eventos-json', function () {
     $now = now();
     $year = $now->year;

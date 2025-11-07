@@ -16,19 +16,25 @@ class StatisticsController extends Controller
         return Event::count();
     }
 
-    // Número de eventos por rol
+    // Número de eventos por rol de usuario (eventos creados por cada rol: admin o user)
     public function eventsByRole()
     {
-        return Participant::select('role', DB::raw('COUNT(*) as count'))
-            ->groupBy('role')
+        return DB::table('events')
+            ->join('users', 'events.user_id', '=', 'users.id')
+            ->select('users.role', DB::raw('COUNT(*) as count'))
+            ->groupBy('users.role')
+            ->orderByDesc('count')
             ->get();
     }
 
-    // Número de eventos por usuario
+    // Número de eventos por usuario (eventos creados por cada usuario)
     public function eventsByUser()
     {
-        return Event::select('user_id', DB::raw('COUNT(*) as count'))
-            ->groupBy('user_id')
+        return DB::table('events')
+            ->join('users', 'events.user_id', '=', 'users.id')
+            ->select('users.name', DB::raw('COUNT(*) as count'))
+            ->groupBy('users.id', 'users.name')
+            ->orderByDesc('count')
             ->get();
     }
 
@@ -56,10 +62,11 @@ class StatisticsController extends Controller
             ->get();
     }
 
-    // Participantes por programa
+    // Participantes por programa (solo los que han asistido al menos una vez)
     public function participantsByProgram()
     {
         return Participant::join('programs', 'participants.program_id', '=', 'programs.id')
+            ->join('attendances', 'participants.id', '=', 'attendances.participant_id')
             ->select('programs.name as program', DB::raw('COUNT(DISTINCT participants.id) as count'))
             ->groupBy('programs.name')
             ->orderByDesc('count')

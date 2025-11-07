@@ -48,18 +48,18 @@
         </section>
 
         {{-- Gráficas: Tiempo --}}
-        <section class="mb-8">
+        {{-- <section class="mb-8">
             <h2 class="text-2xl font-semibold mb-4">Tiempo</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3 p-2">
                 @livewire('chart-container', ['id' => 'chart_events_time', 'class' => $chartStyles])
                 @livewire('chart-container', ['id' => 'chart_attendances_time', 'class' => $chartStyles])
             </div>
-        </section>
+        </section> --}}
 
         {{-- Gráficas: Tops --}}
         <section class="mb-8">
             <h2 class="text-2xl font-semibold mb-4">Tops</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 p-2">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 p-2">
                 @livewire('chart-container', ['id' => 'chart_top_events', 'class' => $chartStyles])
                 @livewire('chart-container', ['id' => 'chart_top_participants', 'class' => $chartStyles])
                 @livewire('chart-container', ['id' => 'chart_top_users', 'class' => $chartStyles])
@@ -68,7 +68,7 @@
 
         {{-- Gráficas: Eventos por Usuarios --}}
         <section class="mb-8">
-            <h2 class="text-2xl font-semibold mb-4">Eventos por usuarios</h2>
+            <h2 class="text-2xl font-semibold mb-4">Eventos creados por usuarios</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3 p-2">
                 @livewire('chart-container', ['id' => 'chart_events_by_role', 'class' => $chartStyles])
                 @livewire('chart-container', ['id' => 'chart_events_by_user', 'class' => $chartStyles])
