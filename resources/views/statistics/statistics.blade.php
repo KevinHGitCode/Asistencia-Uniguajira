@@ -59,7 +59,7 @@
         {{-- Gráficas: Tops --}}
         <section class="mb-8">
             <h2 class="text-2xl font-semibold mb-4">Tops</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 p-2">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 p-2">
                 @livewire('chart-container', ['id' => 'chart_top_events', 'class' => $chartStyles])
                 @livewire('chart-container', ['id' => 'chart_top_participants', 'class' => $chartStyles])
                 @livewire('chart-container', ['id' => 'chart_top_users', 'class' => $chartStyles])
