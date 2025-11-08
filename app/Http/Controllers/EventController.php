@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
+use App\Models\Dependency;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -33,7 +34,8 @@ class EventController extends Controller
      */
     public function create()
     {
-        return view('events.new');
+        $dependencies = Dependency::orderBy('name')->get();
+        return view('events.new', compact('dependencies'));
     }
 
     /**
@@ -49,10 +51,20 @@ class EventController extends Controller
                 'start_time' => 'nullable|date_format:H:i',
                 'end_time' => 'nullable|date_format:H:i|after_or_equal:start_time',
                 'location' => 'required|string|max:255',
+                'dependency_id' => 'nullable|exists:dependencies,id',
             ]);
 
             $validated['user_id'] = Auth::id();
 
+            $user = Auth::user();
+            if ($user->role === 'admin') {
+                // Si es admin, usar la dependencia seleccionada en el formulario
+                // Si no seleccionó ninguna, dejar null
+                $validated['dependency_id'] = $request->input('dependency_id');
+            } else {
+                // Si es usuario normal, usar su dependencia
+                $validated['dependency_id'] = $user->dependency_id;
+            }
             // Generar un link único para el evento
             $slug = str_replace(' ', '-', strtolower($validated['title'])) . '-' . date('Ymd', strtotime($validated['date'])) . '-' . uniqid();
             $validated['link'] = $slug;
@@ -61,7 +73,7 @@ class EventController extends Controller
 
             // Redirigir para evitar reenvío del formulario
             return redirect()->route('events.new')->with('success', 'Evento creado exitosamente.')
-             ->with('event_link', route('events.access', ['slug' => $validated['link']]));
+            ->with('event_link', route('events.access', ['slug' => $validated['link']]));
         } catch (\Exception $e) {
             // Log del error para debugging
             Log::error('Error creating event: ' . $e->getMessage());
