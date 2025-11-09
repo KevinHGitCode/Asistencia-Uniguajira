@@ -138,9 +138,30 @@
     
     <div class="rounded-xl border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-800 p-6 shadow-sm">
 
-        <flux:heading class="text-xl font-semibold mb-4 tet-gray-800 dark:text-gray-100">
-            Eventos creados por {{ $user->name }} ({{ $eventsCount }})
-        </flux:heading>
+       <div class="flex items-center justify-between mb-4">
+            <flux:heading class="text-xl font-semibold text-gray-800 dark:text-gray-100">
+                @if($user->role === 'user' && $viewDependency)
+                    Eventos de la dependencia: {{ $user->dependency->name ?? 'N/A' }}
+                @else
+                    Eventos creados por {{ $user->name }}
+                @endif
+                ({{ $events->total() }})
+            </flux:heading>
+
+            @if($user->role === 'user' && $user->dependency)
+                @if($viewDependency)
+                    <a href="{{ route('users.information', $user->id) }}"
+                    class="px-4 py-2 text-sm font-medium bg-black text-white rounded-lg transition-all">
+                        Eventos Propios
+                    </a>
+                @else
+                    <a href="{{ route('users.information', ['id' => $user->id, 'dependency' => 1]) }}"
+                    class="px-4 py-2 text-sm font-medium bg-black text-white rounded-lg transition-all">
+                        Eventos De Dependencia
+                    </a>
+                @endif
+            @endif
+     </div>
 
         @if ($events->count() > 0)
               <!-- GRID de eventos -->

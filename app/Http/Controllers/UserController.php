@@ -79,31 +79,44 @@ class UserController extends Controller
     /**
      * Show the information view for the specified user.
      */
-    public function information(string $id)
+    public function information(Request $request, string $id)
     {
-        // Cargar la dependencia relacionada para mostrarla en la vista si aplica
-        $user = User::with('dependency')->findOrFail($id);
+         // Cargar la dependencia del usuario
+    $user = User::with('dependency')->findOrFail($id);
 
-        // Obtener eventos paginados
+    // Saber si el usuario quiere ver los eventos de su dependencia
+    $viewDependency = $request->boolean('dependency');
+
+    // Determinar qué eventos mostrar
+    if ($viewDependency && $user->dependency) {
+        // Eventos asociados a la dependencia del usuario
+        $events = $user->dependency->events()
+                    ->orderBy('date', 'desc')
+                    ->orderBy('created_at', 'desc')
+                    ->paginate(6);
+    } else {
+        // Eventos creados directamente por el usuario
         $events = $user->events()
-                  ->orderBy('date', 'desc')
-                  ->orderBy('created_at', 'desc')
-                  ->paginate(6); // <-- aquí limitamos a 6 por página
+                    ->orderBy('date', 'desc')
+                    ->orderBy('created_at', 'desc')
+                    ->paginate(6);
+    }
 
-        // Calcular estadísticas (usando todos los eventos, no solo la página actual)
-        $allEvents = $user->events()->get();
-        $eventsCount = $allEvents->count();
+    // Calcular estadísticas (solo sobre los eventos del usuario, no de dependencia)
+    $allEvents = $user->events()->get();
+    $eventsCount = $allEvents->count();
 
-        $now = now();
-        $upcomingEvents = $allEvents->where('date', '>=', $now->toDateString())->count();
-        $pastEvents     = $allEvents->where('date', '<', $now->toDateString())->count();
+    $now = now();
+    $upcomingEvents = $allEvents->where('date', '>=', $now->toDateString())->count();
+    $pastEvents = $allEvents->where('date', '<', $now->toDateString())->count();
 
-        return view('users.information', compact(
-          'user',
-          'events',       // paginados
-          'eventsCount',
-          'upcomingEvents',
-          'pastEvents'
+    return view('users.information', compact(
+        'user',
+        'events',
+        'eventsCount',
+        'upcomingEvents',
+        'pastEvents',
+        'viewDependency' 
         ));
     }
 
