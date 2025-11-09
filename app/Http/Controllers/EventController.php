@@ -18,15 +18,28 @@ class EventController extends Controller
      */
     public function index()
     {
-        // Obtener solo los eventos del usuario autenticado
-        // Ordenados por fecha más reciente primero
-        $events = Event::where('user_id', Auth::id())
+        $user = Auth::user();
+    
+    // Obtener solo los eventos del usuario autenticado
+    // Ordenados por fecha más reciente primero
+    $myEvents = Event::where('user_id', $user->id)
+        ->orderBy('date', 'desc')
+        ->orderBy('created_at', 'desc')
+        ->get();
+
+    // Obtener eventos de la dependencia del usuario (excluyendo los propios)
+    $dependencyEvents = collect();
+    
+    if ($user->dependency_id) {
+        $dependencyEvents = Event::where('dependency_id', $user->dependency_id)
+            ->where('user_id', '!=', $user->id) // Excluir eventos propios
             ->orderBy('date', 'desc')
             ->orderBy('created_at', 'desc')
             ->get();
+    }
 
-        // Pasar los eventos a la vista
-        return view('events.list', compact('events'));
+    // Pasar los eventos a la vista
+    return view('events.list', compact('myEvents', 'dependencyEvents'));
     }
 
     /**
@@ -91,13 +104,27 @@ class EventController extends Controller
      * Display the specified resource.
      */
     public function show(string $id)
-    {
-        $event = Event::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
+{
+    $user = Auth::user();
+    
+    // Permitir ver el evento si:
+    // 1. El usuario es el creador del evento
+    // 2. El evento pertenece a la misma dependencia del usuario
+    $event = Event::where('id', $id)
+        ->where(function($query) use ($user) {
+            $query->where('user_id', $user->id);
+            
+            // Si el usuario tiene dependencia, también puede ver eventos de su dependencia
+            if ($user->dependency_id) {
+                $query->orWhere('dependency_id', $user->dependency_id);
+            }
+        })
+        ->firstOrFail();
 
-        $asistenciasCount = Attendance::where('event_id', $event->id)->count();
+    $asistenciasCount = Attendance::where('event_id', $event->id)->count();
 
-        return view('events.show', compact('event', 'asistenciasCount'));
-    }
+    return view('events.show', compact('event', 'asistenciasCount'));
+}
 
     /**
      * Show the form for editing the specified resource.
