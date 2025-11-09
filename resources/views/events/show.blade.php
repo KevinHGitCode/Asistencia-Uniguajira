@@ -98,32 +98,77 @@
                     <div class="border border-neutral-200 dark:border-neutral-700 p-4 rounded-lg">
                         <h2 class="text-2xl font-semibold mb-4">Estadísticas del Evento</h2>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        @php
+                            // Combinar fecha y hora de inicio del evento
+                            $eventStartDateTime = \Carbon\Carbon::parse($event->date . ' ' . $event->start_time);
+                            $eventEndDateTime = \Carbon\Carbon::parse($event->date . ' ' . $event->end_time);
+                            $eventHasStarted = now()->greaterThanOrEqualTo($eventStartDateTime);
+                            $eventHasEnded = now()->greaterThan($eventEndDateTime);
+                        @endphp
 
-                            <!-- Gráfica circular - Programa -->
-                            <div>
-                                <h3 class="text-lg font-medium mb-2">Distribución por Programa</h3>
-                                <div id="chart_program_pie" class="relative aspect-video overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-700"></div>
+                        @if(!$eventHasStarted)
+                            {{-- El evento aún no ha iniciado --}}
+                            <div class="flex flex-col items-center justify-center py-12">
+                                <div class="text-center text-gray-500 dark:text-gray-400">
+                                    <svg class="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    <h3 class="text-xl font-semibold mb-2">El evento aún no ha iniciado</h3>
+                                    <p class="text-sm">Las estadísticas se mostrarán cuando el evento comience.</p>
+                                </div>
                             </div>
+                        @elseif($asistenciasCount > 0)
+                            {{-- El evento ha iniciado y hay asistentes --}}
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-                            <!-- Gráfica de barras - Programa -->
-                            <div>
-                                <h3 class="text-lg font-medium mb-2">Participación por Programa</h3>
-                                <div id="chart_program_bar" class="relative aspect-video overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-700"></div>
-                            </div>
+                                <!-- Gráfica circular - Programa -->
+                                <div>
+                                    <h3 class="text-lg font-medium mb-2">Distribución por Programa</h3>
+                                    <div id="chart_program_pie" class="relative aspect-video overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-700"></div>
+                                </div>
 
-                            <!-- Gráfica circular - Rol -->
-                            <div>
-                                <h3 class="text-lg font-medium mb-2">Distribución por Rol</h3>
-                                <div id="chart_role_pie" class="relative aspect-video overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-700"></div>
-                            </div>
+                                <!-- Gráfica de barras - Programa -->
+                                <div>
+                                    <h3 class="text-lg font-medium mb-2">Participación por Programa</h3>
+                                    <div id="chart_program_bar" class="relative aspect-video overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-700"></div>
+                                </div>
 
-                            <!-- Gráfica de barras - Rol -->
-                            <div>
-                                <h3 class="text-lg font-medium mb-2">Participación por Rol</h3>
-                                <div id="chart_role_bar" class="relative aspect-video overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-700"></div>
+                                <!-- Gráfica circular - Rol -->
+                                <div>
+                                    <h3 class="text-lg font-medium mb-2">Distribución por Rol</h3>
+                                    <div id="chart_role_pie" class="relative aspect-video overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-700"></div>
+                                </div>
+
+                                <!-- Gráfica de barras - Rol -->
+                                <div>
+                                    <h3 class="text-lg font-medium mb-2">Participación por Rol</h3>
+                                    <div id="chart_role_bar" class="relative aspect-video overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-700"></div>
+                                </div>
                             </div>
-                        </div>
+                        @else
+                            {{-- El evento ha iniciado/finalizado pero no hay asistentes --}}
+                            <div class="flex flex-col items-center justify-center py-12">
+                                <div class="text-center text-gray-500 dark:text-gray-400">
+                                    <svg class="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                                    </svg>
+                                    <h3 class="text-xl font-semibold mb-2">
+                                        @if($eventHasEnded)
+                                            No hay estadísticas que registrar
+                                        @else
+                                            Esperando asistentes
+                                        @endif
+                                    </h3>
+                                    <p class="text-sm">
+                                        @if($eventHasEnded)
+                                            El evento finalizó sin asistentes registrados.
+                                        @else
+                                            Las estadísticas aparecerán cuando se registren asistentes.
+                                        @endif
+                                    </p>
+                                </div>
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>
