@@ -4,6 +4,7 @@ use App\Http\Controllers\EventController;
 use App\Http\Controllers\StatisticsController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 use App\Models\Event;
 use App\Models\Participant;
 use App\Models\Program;
@@ -17,6 +18,13 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 
+
+/**
+ * ================================================================
+ *  RUTAS PARA LA GESTION DEL CALENDARIO
+ * ================================================================
+ */
+// Ruta para obtener eventos en formato JSON para el calendario
 Route::get('/eventos-json', function () {
     $now = now();
     $year = $now->year;
@@ -35,7 +43,32 @@ Route::get('/eventos-json', function () {
         ->get();
 });
 
+// Ruta para obtener eventos por fecha específica
 Route::get('/events/{date}', [EventController::class, 'getByDate']);
+
+// Ruta para obtener eventos del usuario autenticado en formato JSON para el calendario
+Route::middleware(['web', 'auth'])->get('/mis-eventos-json', function () {
+    $now = now();
+    $year = $now->year;
+
+    if ($now->month <= 6) {
+        $start = "$year-01-01";
+        $end = "$year-06-30";
+    } else {
+        $start = "$year-07-01";
+        $end = "$year-12-31";
+    }
+
+    return response()->json([
+        'auth_id' => Auth::id(),
+        'eventos' => Event::selectRaw('DATE_FORMAT(date, "%Y-%m-%d") as date, COUNT(*) as count')
+            ->where('user_id', Auth::id())
+            ->whereBetween('date', [$start, $end])
+            ->groupBy('date')
+            ->get()
+    ]);
+});
+
 
 
 

@@ -6,8 +6,6 @@ use App\Livewire\Settings\Password;
 use App\Livewire\Settings\Profile;
 use App\Livewire\Settings\Language;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Auth;
-use App\Models\Event;
 use App\Http\Controllers\UserController;
 use \App\Http\Controllers\Lang\LanguageController;
 use App\Http\Controllers\EventController;
@@ -117,28 +115,6 @@ Route::middleware(['auth'])->group(function () {
         ->name('settings.language.switch');
 });
 
-// TODO: Mover esta ruta a routes/api.php
-Route::middleware('auth')->get('/api/mis-eventos-json', function () {
-    $now = now();
-    $year = $now->year;
-
-    if ($now->month >= 1 && $now->month <= 6) {
-        $start = "$year-01-01";
-        $end = "$year-06-30";
-    } else {
-        $start = "$year-07-01";
-        $end = "$year-12-31";
-    }
-
-    return response()->json([
-        'auth_id' => Auth::id(),
-        'eventos' => Event::selectRaw('DATE_FORMAT(date, "%Y-%m-%d") as date, COUNT(*) as count')
-            ->where('user_id', Auth::id())
-            ->whereBetween('date', [$start, $end])
-            ->groupBy('date')
-            ->get()
-    ]);
-});
 
 
 require __DIR__ . '/auth.php';
