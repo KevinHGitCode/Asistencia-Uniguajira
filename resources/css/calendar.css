@@ -10,7 +10,7 @@
 
 /* Fondo de las fechas resaltadas */
 .highlight.ch-subdomain-bg {
-  fill: #1c4412 !important; /* Azul intenso */ /* Borde opcional */
+  fill: #2c499964 !important; /* Azul intenso */ /* Borde opcional */
   stroke-width: 1px;
 }
 
