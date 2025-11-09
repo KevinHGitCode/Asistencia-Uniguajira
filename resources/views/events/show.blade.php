@@ -24,14 +24,14 @@
                     <p class="text-lg mb-2"><strong>Hora de Fin:</strong> {{ $event->end_time }}</p>
                     <p class="text-lg mb-2"><strong>Ubicación:</strong> {{ $event->location ?? 'Sin ubicación' }}</p>
                     <p class="text-lg mb-2"><strong>Descripción:</strong> {{ $event->description ?? 'Sin descripción' }}</p>
-                    <p class="text-lg mb-2">
+                    {{-- <p class="text-lg mb-2">
                         <strong>Link del Evento:</strong>
                         <a href="{{ route('events.access', $event->link) }}" 
                             target="_blank" 
                             class="text-blue-600 dark:text-blue-400 underline hover:text-blue-800">
                             {{ route('events.access', $event->link) }}
                         </a>
-                    </p>
+                    </p> --}}
 
                     <a href="{{ route('events.download', $event->id) }}"
                         class="px-4 py-2 rounded-xl bg-green-600 font-medium shadow-md hover:bg-green-700 hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
@@ -40,13 +40,23 @@
 
                 </div>
 
-                {{-- Contenedor para el codigo QR --}}
+                {{-- Contenedor de los Enlaces del Evento--}}
                 <div class="border border-neutral-200 dark:border-neutral-700 p-4 rounded-lg">
-                    <h2 class="text-2xl font-semibold mb-2">Código QR del Evento</h2>
-                    <div class="flex items-center justify-center">
-                        <div class="flex items-center justify-center">
+                    
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-2xl font-semibold mb-2">Enlaces del Evento</h2>
+
+                       <button
+                            id="copy-link-button"
+                            data-link="{{ route('events.access', $event->link) }}"
+                            class="px-3 py-2 border-2 border-blue-300 rounded-md transition-all duration-300 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-400"
+                        >🔗 Copiar Enlace</button>
+                    </div>
+                    
+                    <div class="flex items-center justify-center mt-8">
+                        <div class="border border-neutral-200 dark:border-neutral-700 p-4 rounded-xl bg-white">
                             {!! QrCode::size(200)->generate(route('events.access', $event->link)) !!}
-                        </div>
+                        </div>  
                     </div>
                 </div>
                 
@@ -91,5 +101,6 @@
         </div>
 
     </div>
-
+    
+   
 </x-layouts.app>

@@ -12,7 +12,7 @@
 
         <p class="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Nuevo usuario</p>
 
-        <div class="border border-white rounded-lg p-6 bg-gray-800 dark:bg-black">
+        <div class="border border-white rounded-lg p-6  dark:bg-black">
 
             <form action="{{ route('users.store') }}" method="POST" class="flex flex-col gap-6">
                 @csrf
