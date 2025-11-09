@@ -162,13 +162,29 @@
 
             <!-- Botones de acción -->
             <div class="flex items-center gap-2 border-t border-zinc-200 dark:border-zinc-700 pt-4">
-                <a href="{{ route('events.download', $eventId) }}"
-                class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-                    <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                    </svg>
-                    Descargar PDF
-                </a>
+                @php
+                    $event = \App\Models\Event::find($eventId);
+                    $eventEndDateTime = \Carbon\Carbon::parse($event->date . ' ' . $event->end_time);
+                    $eventHasEnded = now()->greaterThan($eventEndDateTime);
+                @endphp
+
+                @if($eventHasEnded)
+                    <a href="{{ route('events.download', $eventId) }}"
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                        <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                        Descargar PDF
+                    </a>
+                @else
+                    <div class="inline-flex items-center gap-2 px-4 py-2 bg-gray-400 text-white rounded-lg opacity-60 cursor-not-allowed">
+                        <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                        Descargar PDF
+                    </div>
+                @endif
+
                 <div class="flex-1"></div>
                 <flux:button 
                     variant="primary" 
