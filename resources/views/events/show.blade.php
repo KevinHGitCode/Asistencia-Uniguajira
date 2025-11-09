@@ -12,53 +12,95 @@
 
         <div class="p-4 overflow-hidden rounded-xl">
 
-            <h1 class="text-3xl font-bold mb-4">Detalles del Evento</h1>   
+            {{-- Título con indicador de propiedad --}}
+            <div class="flex items-center justify-between mb-4">
+                <h1 class="text-3xl font-bold">Detalles del Evento</h1>
+                
+                @if($event->user_id === Auth::id())
+                    <span class="px-3 py-1 text-sm font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full">
+                        Tu Evento
+                    </span>
+                @else
+                    <span class="px-3 py-1 text-sm font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full">
+                        Evento de {{ $event->dependency->name ?? 'Dependencia' }}
+                    </span>
+                @endif
+            </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 
-                {{-- Contenedor para la informacion del evento --}}
+                {{-- Contenedor para la información del evento --}}
                 <div class="border border-neutral-200 dark:border-neutral-700 p-4 rounded-lg">
                     <p class="text-lg mb-2"><strong>Título:</strong> {{ $event->title }}</p>
+                    
+                    {{-- Mostrar creador solo si no es el usuario actual --}}
+                    @if($event->user_id !== Auth::id())
+                        <p class="text-lg mb-2"><strong>Creado por:</strong> {{ $event->user->name }}</p>
+                    @endif
+                    
                     <p class="text-lg mb-2"><strong>Fecha:</strong> {{ $event->date }}</p>
                     <p class="text-lg mb-2"><strong>Hora de Inicio:</strong> {{ $event->start_time }}</p>
                     <p class="text-lg mb-2"><strong>Hora de Fin:</strong> {{ $event->end_time }}</p>
                     <p class="text-lg mb-2"><strong>Ubicación:</strong> {{ $event->location ?? 'Sin ubicación' }}</p>
                     <p class="text-lg mb-2"><strong>Descripción:</strong> {{ $event->description ?? 'Sin descripción' }}</p>
-                    {{-- <p class="text-lg mb-2">
-                        <strong>Link del Evento:</strong>
-                        <a href="{{ route('events.access', $event->link) }}" 
-                            target="_blank" 
-                            class="text-blue-600 dark:text-blue-400 underline hover:text-blue-800">
-                            {{ route('events.access', $event->link) }}
-                        </a>
-                    </p> --}}
+                    
+                    {{-- Solo mostrar el link si el evento no ha terminado --}}
+                    @php
+                        $eventDateTime = \Carbon\Carbon::parse($event->date . ' ' . $event->end_time);
+                        $eventHasEnded = now()->greaterThan($eventDateTime);
+                    @endphp
+                    
+                    @if(!$eventHasEnded)
+                        <p class="text-lg mb-2">
+                            <strong>Link del Evento:</strong>
+                            <a href="{{ route('events.access', $event->link) }}" 
+                                target="_blank" 
+                                class="text-blue-600 dark:text-blue-400 underline hover:text-blue-800">
+                                {{ route('events.access', $event->link) }}
+                            </a>
+                        </p>
+                    @else
+                        <div class="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                            <p class="text-sm text-yellow-800 dark:text-yellow-200">
+                                <svg class="inline-block w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                Este evento ha finalizado
+                            </p>
+                        </div>
+                    @endif
 
                     <a href="{{ route('events.download', $event->id) }}"
-                        class="px-4 py-2 rounded-xl bg-green-600 font-medium shadow-md hover:bg-green-700 hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                        class="inline-block mt-4 px-4 py-2 rounded-xl bg-green-600 text-white font-medium shadow-md hover:bg-green-700 hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
                         Descargar listado de asistencia
                     </a>
 
                 </div>
 
-                {{-- Contenedor de los Enlaces del Evento--}}
-                <div class="border border-neutral-200 dark:border-neutral-700 p-4 rounded-lg">
-                    
-                    <div class="flex items-center justify-between mb-6">
-                        <h2 class="text-2xl font-semibold mb-2">Enlaces del Evento</h2>
-
-                       <button
-                            id="copy-link-button"
-                            data-link="{{ route('events.access', $event->link) }}"
-                            class="px-3 py-2 border-2 border-blue-300 rounded-md transition-all duration-300 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-400"
-                        >🔗 Copiar Enlace</button>
+                {{-- Contenedor para el código QR --}}
+                @if(!$eventHasEnded)
+                    <div class="border border-neutral-200 dark:border-neutral-700 p-4 rounded-lg">
+                        <h2 class="text-2xl font-semibold mb-2">Código QR del Evento</h2>
+                        <div class="flex items-center justify-center">
+                            <div class="flex items-center justify-center">
+                                {!! QrCode::size(200)->generate(route('events.access', $event->link)) !!}
+                            </div>
+                        </div>
                     </div>
-                    
-                    <div class="flex items-center justify-center mt-8">
-                        <div class="border border-neutral-200 dark:border-neutral-700 p-4 rounded-xl bg-white">
-                            {!! QrCode::size(200)->generate(route('events.access', $event->link)) !!}
-                        </div>  
+                @else
+                    <div class="border border-neutral-200 dark:border-neutral-700 p-4 rounded-lg">
+                        <h2 class="text-2xl font-semibold mb-2">Código QR del Evento</h2>
+                        <div class="flex items-center justify-center h-full">
+                            <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+                                <svg class="mx-auto h-16 w-16 mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <p class="text-lg font-medium">Evento finalizado</p>
+                                <p class="text-sm mt-1">El código QR ya no está disponible</p>
+                            </div>
+                        </div>
                     </div>
-                </div>
+                @endif
                 
                 <div class="md:col-span-2 flex flex-col gap-4">
                     {{-- Componente con modal de asistentes --}}
@@ -101,6 +143,5 @@
         </div>
 
     </div>
-    
-   
+
 </x-layouts.app>
