@@ -25,10 +25,25 @@
                     <p class="text-lg mb-2"><strong>Ubicación:</strong> {{ $event->location ?? 'Sin ubicación' }}</p>
                     <p class="text-lg mb-2"><strong>Descripción:</strong> {{ $event->description ?? 'Sin descripción' }}</p>
 
-                    <a href="{{ route('events.download', $event->id) }}"
-                        class="inline-block px-4 py-2 rounded-xl bg-green-600 text-white font-medium shadow-md hover:bg-green-700 hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
-                        Descargar listado de asistencia
-                    </a>
+                    @php
+                        // Combinar fecha y hora de finalización del evento
+                        $eventEndDateTime = \Carbon\Carbon::parse($event->date . ' ' . $event->end_time);
+                        $eventHasEnded = now()->greaterThan($eventEndDateTime);
+                    @endphp
+
+                    @if($eventHasEnded)
+                        <a href="{{ route('events.download', $event->id) }}"
+                            class="inline-block px-4 py-2 rounded-xl bg-green-600 text-white font-medium shadow-md hover:bg-green-700 hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                            Descargar listado de asistencia
+                        </a>
+                    @else
+                        <div class="inline-block px-4 py-2 rounded-xl bg-gray-400 text-white font-medium shadow-md opacity-60 cursor-not-allowed">
+                            Descargar listado de asistencia
+                        </div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                            El listado estará disponible cuando finalice el evento
+                        </p>
+                    @endif
 
                 </div>
 
