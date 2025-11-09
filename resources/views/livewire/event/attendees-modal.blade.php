@@ -22,7 +22,16 @@
         </div>
     </flux:modal.trigger>
 
-    <flux:modal name="attendees-modal-{{ $eventId }}" variant="flyout" class="w-full max-w-2xl">
+    <flux:modal name="attendees-modal-{{ $eventId }}" variant="flyout" class="w-full max-w-2xl" x-data x-init="
+        $nextTick(() => {
+            const closeButton = $el.querySelector('[data-flux-modal-close]');
+            if (closeButton) {
+                closeButton.addEventListener('click', () => {
+                    $dispatch('modal-close', { name: 'attendees-modal-{{ $eventId }}' });
+                });
+            }
+        });
+    ">
         <div class="space-y-6">
             <!-- Header -->
             <div class="border-b border-zinc-200 dark:border-zinc-700 pb-4">
@@ -161,9 +170,11 @@
                     Descargar PDF
                 </a>
                 <div class="flex-1"></div>
-                <flux:modal.close>
-                    <flux:button variant="primary">Cerrar</flux:button>
-                </flux:modal.close>
+                <flux:button 
+                    variant="primary" 
+                    x-on:click="$dispatch('modal-close', { name: 'attendees-modal-{{ $eventId }}' })">
+                    Cerrar
+                </flux:button>
             </div>
         </div>
     </flux:modal>
