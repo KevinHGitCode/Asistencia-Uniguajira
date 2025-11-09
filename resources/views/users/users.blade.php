@@ -17,7 +17,11 @@
         
         <div class="flex justi">
             <a>
-                <flux:button href="{{ route('user.form') }}" variant="primary" type="submit" class="border hover:scale-105 transition-transform"> Crear User</flux:button>
+                <flux:button 
+                href="{{ route('user.form') }}" 
+                variant="primary" 
+                type="submit" 
+                class="border hover:scale-105 transition-transform"> Crear User</flux:button>
             </a>
         </div>
 

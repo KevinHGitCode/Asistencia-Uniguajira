@@ -6,8 +6,8 @@
                  src="{{ Storage::url($user->avatar) }}" 
                  alt="{{ $user->name }}">
         @else
-            <div class="{{ $size }} rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center border-2 border-gray-200 dark:border-gray-600">
-                <span class="{{ $textSize }} font-bold uppercase text-gray-800 dark:text-white">
+            <div class="{{ $size }} rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center border-4 border-gray-200 dark:border-gray-600">
+                <span class="text-[12rem] md:text-[16rem] font-bold uppercase text-gray-800 dark:text-white leading-none">
                     {{ substr($user->name, 0, 1) }}
                 </span>
             </div>
