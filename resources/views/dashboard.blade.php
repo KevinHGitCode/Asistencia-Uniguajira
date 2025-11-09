@@ -55,13 +55,13 @@
                 <div class="flex items-center justify-center gap-8">
                     <!-- Tus eventos -->
                     <div class="flex items-center gap-2">
-                        <div class="w-4 h-4 rounded-sm" style="background-color: #2c499964;"></div>
+                        <div class="w-4 h-4 rounded-sm bg-[#e2a542] dark:bg-[#62a9b6]"></div>
                         <span class="text-sm text-gray-700 dark:text-gray-300">Tus eventos</span>
                     </div>
 
                     <!-- Eventos de otros -->
                     <div class="flex items-center gap-2">
-                        <div class="w-4 h-4 rounded-sm" style="background-color: #b6ccfe;"></div>
+                        <div class="w-4 h-4 rounded-sm" style="background-color: #cc5e50;"></div>
                         <span class="text-sm text-gray-700 dark:text-gray-300">Eventos de otros</span>
                     </div>
                 </div>

@@ -9,10 +9,21 @@
 }
 
 /* Fondo de las fechas resaltadas */
+/* 🎨 Modo claro */
 .highlight.ch-subdomain-bg {
-  fill: #2c499964 !important; /* Azul intenso */ /* Borde opcional */
-  stroke-width: 1px;
+  fill: #cc5e50 !important; /* Color para tema claro */
+  stroke-width: 0;
 }
+
+/* 🌙 Modo oscuro */
+.dark .highlight.ch-subdomain-bg {
+  fill: #cc5e50 !important; /* Color para tema oscuro */
+  stroke-width: 0;
+}
+
+
+
+/* fill: #2c499964 */
 
 /* Texto de las fechas resaltadas */
 .highlight.ch-subdomain-text {

@@ -113,8 +113,9 @@ export async function paintCalendar(forcedTheme = null) {
                     type: 'threshold',
                     domain: [1, 3, 5, 10],
                     range: isDarkTheme
-                        ? ['#22223b', '#4a4e69', '#9a8c98', '#f2e9e4', '#ffbe76']
-                        : ['#e3eafc', '#b6ccfe', '#7ea6f6', '#4f83cc', '#274690']
+                        ? ['#03090f', '#62a9b6', '#cc5e50', '#e2a542', '#f2e9e4'] // tonos más intensos para oscuro
+                        : ['#f2e9e4', '#e2a542', '#cc5e50', '#62a9b6', '#03090f'] // tonos más claros para fondo blanco
+
                 }
             }
         });
