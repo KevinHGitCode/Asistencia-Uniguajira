@@ -2,7 +2,7 @@
     <div>
         <h1 class="text-2xl font-bold mb-4"> Nuevo evento </h1>
 
-        <div class="border border-white rounded-lg p-6 dark:bg-black">
+        <div class="border border-zinc-500 rounded-lg p-6 dark:bg-zinc-900">
             <form action="{{ route('events.new.store') }}" method="POST" class="flex flex-col gap-6">
                 @csrf
 
