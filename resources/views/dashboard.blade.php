@@ -36,9 +36,9 @@
         <!-- Contenedor del calendario -->
         <div class="relative border border-neutral-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-xl shadow-md overflow-hidden">
             <!-- Header del calendario -->
-            <div class="px-6 py-4 border-b border-neutral-200 dark:border-neutral-700 bg-white dark:bg-zinc-900 text-center">
+            <div class="px-6 py-4 border-b border-neutral-200 dark:border-neutral-700 bg-zinc-50 dark:bg-zinc-900 text-center">
                 <h2 class="text-xl font-bold text-gray-900 dark:text-white">
-                    📅 Calendario de Eventos
+                    📅 Calendario Semestral de Eventos
                 </h2>
                 <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
                     Visualiza tu actividad de eventos a lo largo del año
@@ -51,18 +51,18 @@
             </div>
 
             <!-- Leyenda -->
-            <div class="px-6 py-4 border-t border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-zinc-900">
+            <div class="px-6 py-4 border-t border-neutral-200 dark:border-neutral-700 bg-zinc-50 dark:bg-zinc-900">
                 <div class="flex items-center justify-center gap-8">
                     <!-- Tus eventos -->
                     <div class="flex items-center gap-2">
                         <div class="w-4 h-4 rounded-sm bg-[#e2a542] dark:bg-[#62a9b6]"></div>
-                        <span class="text-sm text-gray-700 dark:text-gray-300">Tus eventos</span>
+                        <span class="text-sm text-gray-900 dark:text-gray-300">Tus eventos</span>
                     </div>
 
                     <!-- Eventos de otros -->
                     <div class="flex items-center gap-2">
                         <div class="w-4 h-4 rounded-sm" style="background-color: #cc5e50;"></div>
-                        <span class="text-sm text-gray-700 dark:text-gray-300">Eventos de otros</span>
+                        <span class="text-sm text-gray-900 dark:text-gray-300">Eventos de otros</span>
                     </div>
                 </div>
             </div>
