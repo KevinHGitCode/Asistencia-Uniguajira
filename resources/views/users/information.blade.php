@@ -1,6 +1,6 @@
 <x-layouts.app :title="__('Información del usuario')">
     
-    <nav class="text-sm text-gray-200 dark:text-black mb-6" aria-label="Breadcrumb">
+    <nav class="text-sm text-black dark:text-gray-200 mb-6" aria-label="Breadcrumb">
         <ol class="flex items-center space-x-2">
             <li><a href="{{ route('users.index') }}" class="hover:underline">Usuarios</a></li>
             <li><span class="mx-2">/</span></li>
@@ -74,7 +74,7 @@
 
             <li class="py-2 flex justify-between items-center">
                 <span class="text-sm">Rol:</span> 
-                <span class="font-bold text-base text-red-600 dark:text-red-400">{{ $user->role }}</span>
+                <span class="font-bold text-base text-black dark:text-gray-200">{{ $user->role }}</span>
             </li>
             @if($user->role === 'user')
                 <li class="py-2 flex justify-between items-center">
