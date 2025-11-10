@@ -1,44 +1,72 @@
-<div class="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-800 ">
+<div class="rounded-2xl border border-zinc-200 bg-white p-5 shadow-md hover:shadow-lg transition-shadow dark:border-zinc-700 dark:bg-zinc-800">
 
-    <div class="flex items-center gap-4">
-       <div>
-         @livewire('user.avatar', [
-          'user' => $user,
-          'size' => 'h-8 w-8',
-          'textSize' => 'text-sm',
-          'showUpload' => false
-         ], key('avatar-'.$user->id))
-     </div>
+    <div class="flex items-center gap-5">
+        {{-- Avatar --}}
+        <div class="shrink-0">
+            @livewire('user.avatar', [
+                'user' => $user,
+                'size' => 'h-10 w-10',
+                'textSize' => 'text-base',
+                'showUpload' => false
+            ], key('avatar-'.$user->id))
+        </div>
 
-        <div class="flex-1">
-            <flux:heading class="flex items-center gap-2 mb-1">
-                        {{ $title }}
-                        @if(isset($user->role) && ($user->role === 'admin'))
-                            <flux:badge color="lime">{{ $user->role }}</flux:badge>
-                        @endif
-            </flux:heading>
-            <p class="text-sm text-gray-600 dark:text-gray-400">
+        {{-- Información principal --}}
+        <div class="flex-1 min-w-0">
+            <div class="flex flex-wrap items-center gap-2 mb-1">
+                <flux:heading class="truncate text-base font-semibold text-zinc-800 dark:text-zinc-100">
+                    {{ $title }}
+                </flux:heading>
+
+                {{-- Rol --}}
+                @if(isset($user->role))
+                    <flux:badge color="{{ $user->role === 'admin' ? 'lime' : 'blue' }}">
+                        {{ __(ucfirst($user->role)) }}
+                    </flux:badge>
+                @endif
+
+                {{-- Dependencia: solo para usuarios normales --}}
+                @if(isset($user->role) && $user->role === 'user')
+                    <flux:badge color="violet">
+                        {{ $user->dependency->name ?? __('Not assigned') }}
+                    </flux:badge>
+                @endif
+            </div>
+
+            {{-- Email --}}
+            <p class="text-sm text-gray-600 dark:text-gray-400 truncate">
                 {{ $user->email }}
             </p>
-            @if(isset($user->role) && $user->role === 'user')
-                <p class="text-sm text-zinc-700 dark:text-zinc-300 font-medium mt-1"><span class="font-normal">{{ $user->dependency->name ?? 'N/A' }}</span></p>
-            @endif
-            <!-- Mostrar cantidad de eventos -->
-            <p class="text-xs text-blue-600 dark:text-blue-400">
-                {{ $user->events->count() }} evento(s) creado(s)
+
+            {{-- Contador de eventos --}}
+            <p class="text-xs text-blue-600 dark:text-blue-400 mt-2">
+                @php
+                    $count = $user->events->count();
+                @endphp
+
+                @if($count === 1)
+                    {{ __(':count event created', ['count' => $count]) }}
+                @else
+                    {{ __(':count events created', ['count' => $count]) }}
+                @endif
             </p>
         </div>
 
+        {{-- Botón de detalles --}}
         <div class="ml-auto">
-            {{-- botón detalles a la derecha --}}
             <a href="{{ route('users.information', ['id' => $user->id]) }}">
-                <flux:button square variant="ghost" size="sm" title="Ver información">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                <flux:button
+                    square
+                    variant="ghost"
+                    size="sm"
+                    title="{{ __('View information') }}"
+                    class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                 </flux:button>
             </a>
         </div>
     </div>
-
 </div>
