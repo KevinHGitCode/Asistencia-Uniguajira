@@ -41,13 +41,6 @@
   transition: fill 0.25s ease, stroke 0.25s ease, stroke-width 0.5s ease;
 }
 
-
-
-
-
-
-/* fill: #2c499964 */
-
 /* Texto de las fechas resaltadas */
 .highlight.ch-subdomain-text {
   fill: #ffffff !important; /* Blanco */
@@ -61,7 +54,7 @@
 /* Responsive subdominios */
 @media (max-width: 768px) {
     #cal-heatmap .ch-subdomain-text {
-        font-size: 10px !important;
+        font-size: 8px !important;
     }
 }
 @media (min-width: 769px) and (max-width: 1024px) {
@@ -71,7 +64,7 @@
 }
 @media (min-width: 1025px) {
     #cal-heatmap .ch-subdomain-text {
-        font-size: 12px !important;
+        font-size: 10px !important;
     }
 }
 
