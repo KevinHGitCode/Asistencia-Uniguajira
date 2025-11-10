@@ -1,13 +1,16 @@
 <x-layouts.app :title="__('Estadísticas Generales')">
-    <h1 class="text-3xl font-bold mb-6">Estadísticas Generales</h1>
+    <flux:heading size="xl" level="1" class="mb-3">Estadísticas Generales</flux:heading>
+    <flux:subheading size="lg" class="mb-6">
+        {{ __('Visualiza un resumen general de la actividad, usuarios y eventos del sistema.') }}
+    </flux:subheading>
 
     {{-- Filtros --}}
     @livewire('statistics.statistics-filters')
 
     {{-- Sección: General --}}
     <section class="mb-8">
-        <h2 class="text-2xl font-semibold mb-4">General</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-4">
+        <flux:heading size="lg" level="2" class="text-lg mb-2">General</flux:heading>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
             {{-- Area de contadores --}}
             <div class="flex items-center p-4 border rounded-lg bg-white dark:bg-neutral-800 shadow-md">
                 <x-icon name="calendar" class="w-6 h-6 text-blue-500 dark:text-blue-300 mr-3" />
@@ -41,8 +44,8 @@
 
         {{-- Gráficas: Programa --}}
         <section class="mb-8">
-            <h2 class="text-2xl font-semibold mb-4">Programa</h2>
-            <div class="grid grid-cols-1 gap-3 p-2">
+            <flux:heading size="lg" level="2" class="text-lg mb-2">Programa</flux:heading>
+            <div class="grid grid-cols-1 gap-3">
                 {{-- Asistencias por Programa --}}
                 @livewire('chart-container', ['id' => 'chart_program_attendances_bar', 'class' => $chartStyles])
                 {{-- Participantes por Programa --}}
@@ -51,18 +54,18 @@
         </section>
 
         {{-- Gráficas: Tiempo --}}
-        <section class="mb-8">
-            <h2 class="text-2xl font-semibold mb-4">Tiempo</h2>
-            <div class="grid grid-cols-1 gap-3 p-2">
+        {{-- <section class="mb-8">
+            <flux:heading size="lg" level="2" class="text-lg mb-2">Tiempo</flux:heading>
+            <div class="grid grid-cols-1 gap-3">
                 @livewire('chart-container', ['id' => 'chart_events_time', 'class' => $chartStyles])
                 @livewire('chart-container', ['id' => 'chart_attendances_time', 'class' => $chartStyles])
             </div>
-        </section>
+        </section> --}}
 
         {{-- Gráficas: Tops --}}
         <section class="mb-8">
-            <h2 class="text-2xl font-semibold mb-4">Tops</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 p-2">
+            <flux:heading size="lg" level="2" class="text-lg mb-2">Tops</flux:heading>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                 @livewire('chart-container', ['id' => 'chart_top_events', 'class' => $chartStyles])
                 @livewire('chart-container', ['id' => 'chart_top_participants', 'class' => $chartStyles])
                 @livewire('chart-container', ['id' => 'chart_top_users', 'class' => $chartStyles])
@@ -71,8 +74,8 @@
 
         {{-- Gráficas: Eventos por Usuarios --}}
         <section class="mb-8">
-            <h2 class="text-2xl font-semibold mb-4">Eventos creados por usuarios</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 p-2">
+            <flux:heading size="lg" level="2" class="text-lg mb-2">Eventos creados por usuarios</flux:heading>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                 @livewire('chart-container', ['id' => 'chart_events_by_role', 'class' => $chartStyles])
                 @livewire('chart-container', ['id' => 'chart_events_by_user', 'class' => $chartStyles])
             </div>

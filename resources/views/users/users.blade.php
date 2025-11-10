@@ -3,9 +3,9 @@
     <div class="flex h-full w-full flex-1 flex-col gap-4 rounded-xl">
 
         <div class="flex items-center justify-between">
-            <h1 class="text-2xl font-bold">
+            <flux:heading size="xl" level="1">
                 {{ __('Users list') }}
-            </h1>
+            </flux:heading>
 
             <flux:button
                 href="{{ route('user.form') }}"

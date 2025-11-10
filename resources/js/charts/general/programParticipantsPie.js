@@ -1,21 +1,34 @@
 // charts/general/programParticipantsPie.js
 import { getEnhancedOptions, isDarkMode } from '../utils/theme.js';
 import { shortName } from '../utils/shortName.js';
+import { getApiUrl } from './filtersManager.js';
+import { chartsManager } from '../utils/chartsManager.js';
 
 export function renderProgramParticipantsPie(charts) {
   const el = document.getElementById('chart_program_participants_pie');
   if (!el) return;
 
-  if (charts.programParticipantsPie) echarts.dispose(el);
-  charts.programParticipantsPie = echarts.init(el);
+  const chartId = 'programParticipantsPie';
+
+  // Limpiar instancia anterior si existe
+  if (charts[chartId]) {
+    echarts.dispose(el);
+    chartsManager.dispose(chartId);
+  }
+
+  // Crear nueva instancia
+  charts[chartId] = echarts.init(el);
+
+  // Registrar en el manager
+  chartsManager.register(chartId, charts[chartId]);
 
   const common = getEnhancedOptions();
   const dark = isDarkMode();
 
-  fetch('/api/statistics/participants-by-program')
+  fetch(getApiUrl('/api/statistics/participants-by-program'))
     .then(res => res.json())
     .then(data => {
-      // 🔹 Calcular el total y los porcentajes
+      // Calcular el total y los porcentajes
       const total = data.reduce((sum, i) => sum + i.count, 0);
       const grouped = [];
       let smallSum = 0;
@@ -30,17 +43,22 @@ export function renderProgramParticipantsPie(charts) {
         }
       }
 
-      // 🔹 Agregar grupo "Otros" si aplica
+      // Agregar grupo "Otros" si aplica
       if (smallSum > 0) {
         grouped.push({ program: 'Otros', count: smallSum, isOther: true });
       }
 
-      charts.programParticipantsPie.setOption({
+      charts[chartId].setOption({
         ...common,
-        title: { 
-          text: 'Participantes por Programa', 
-          left: 'center', 
-          textStyle: { color: dark ? '#fff' : '#333' } 
+        title: {
+          text: 'Participantes por Programa',
+          left: 'center',
+          top: 10,
+          textStyle: {
+            color: dark ? '#fff' : '#333',
+            fontSize: 16,
+            fontWeight: '600'
+          }
         },
         tooltip: {
           trigger: 'item',
@@ -72,13 +90,13 @@ export function renderProgramParticipantsPie(charts) {
         },
         series: [{
           type: 'pie',
-          radius: ['0%', '55%'],
+          radius: ['0.3%', '55%'],
           center: ['40%', '50%'],
           avoidLabelOverlap: true,
-          label: { 
-            color: dark ? '#fff' : '#333', 
-            formatter: '{b} - {d}%', 
-            fontSize: 10 
+          label: {
+            color: dark ? '#fff' : '#333',
+            formatter: '{b} - {d}%',
+            fontSize: 10
           },
           labelLine: { length: 14, length2: 10 },
           labelLayout: { hideOverlap: true, moveOverlap: true },
@@ -86,10 +104,18 @@ export function renderProgramParticipantsPie(charts) {
             value: i.count,
             name: shortName(i.program),
             fullName: i.program,
-            // 🎨 Forzar color gris si es "Otros"
-            itemStyle: i.isOther ? { color: '#9ca3af' } : undefined
+            // Forzar color gris si es "Otros"
+            itemStyle: {
+                // Esquinas redondeadas para todas las porciones
+                borderRadius: 3, // Puedes ajustar este valor (mayor = más redondeado)
+                // Forzar color gris si es "Otros", mantener color por defecto si no
+                color: i.isOther ? '#9ca3af' : undefined
+            }
           }))
         }]
       });
+    })
+    .catch(err => {
+      console.error('Error cargando participants-by-program:', err);
     });
 }

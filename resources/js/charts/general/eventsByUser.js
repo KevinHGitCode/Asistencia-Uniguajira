@@ -1,13 +1,25 @@
 // charts/general/eventsByUser.js
 import { getEnhancedOptions, isDarkMode } from '../utils/theme.js';
 import { getApiUrl } from './filtersManager.js';
+import { chartsManager } from '../utils/chartsManager.js';
 
 export function renderEventsByUser(charts) {
   const el = document.getElementById('chart_events_by_user');
   if (!el) return;
 
-  if (charts.eventsByUser) echarts.dispose(el);
-  charts.eventsByUser = echarts.init(el);
+  const chartId = 'eventsByUser';
+
+  // Limpiar instancia anterior si existe
+  if (charts[chartId]) {
+    echarts.dispose(el);
+    chartsManager.dispose(chartId);
+  }
+
+  // Crear nueva instancia
+  charts[chartId] = echarts.init(el);
+
+  // Registrar en el manager
+  chartsManager.register(chartId, charts[chartId]);
 
   const common = getEnhancedOptions();
   const dark = isDarkMode();
@@ -15,11 +27,11 @@ export function renderEventsByUser(charts) {
   fetch(getApiUrl('/api/statistics/events-by-user'))
     .then(res => res.json())
     .then(data => {
-      charts.eventsByUser.setOption({
+      charts[chartId].setOption({
         ...common,
-        title: { 
-          text: 'Eventos por Usuario', 
-          textStyle: { color: dark ? '#fff' : '#333' } 
+        title: {
+          text: 'Eventos por Usuario',
+          textStyle: { color: dark ? '#fff' : '#333' }
         },
         tooltip: {
           trigger: 'axis',
@@ -46,7 +58,7 @@ export function renderEventsByUser(charts) {
         xAxis: {
           type: 'category',
           data: data.map(i => i.name),
-          axisLabel: { 
+          axisLabel: {
             color: dark ? '#fff' : '#333',
             rotate: 30,
             fontSize: 10,
@@ -58,17 +70,25 @@ export function renderEventsByUser(charts) {
           type: 'value',
           axisLabel: { color: dark ? '#fff' : '#333' },
           axisLine: { lineStyle: { color: dark ? '#555' : '#ddd' } },
-          splitLine: { lineStyle: { color: dark ? '#333' : '#f0f0f0' } }
+          splitLine: {
+            lineStyle: {
+              color: dark ? '#333' : '#f0f0f0',
+              type: 'dashed'
+            }
+          }
         },
         series: [{
           type: 'bar',
           data: data.map(i => i.count),
           itemStyle: {
-            color: dark ? '#3b82f6' : '#60a5fa'
+            color: dark ? '#3b82f6' : '#60a5fa',
+            borderRadius: [4, 4, 0, 0] // Esquinas redondeadas en la parte superior
           },
           barMaxWidth: 25
         }]
       });
+    })
+    .catch(err => {
+      console.error('Error cargando events-by-user:', err);
     });
 }
-
