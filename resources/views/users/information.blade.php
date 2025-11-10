@@ -1,10 +1,10 @@
 <x-layouts.app :title="__('Información del usuario')">
     
-    <nav class="text-sm text-gray-400 dark:text-gray-500 mb-6" aria-label="Breadcrumb">
+    <nav class="text-sm text-gray-200 dark:text-black mb-6" aria-label="Breadcrumb">
         <ol class="flex items-center space-x-2">
             <li><a href="{{ route('users.index') }}" class="hover:underline">Usuarios</a></li>
             <li><span class="mx-2">/</span></li>
-            <li class="text-gray-300 dark:text-gray-200 font-medium">Información</li>
+            <li class="font-medium">Información</li>
         </ol>
     </nav>
 
@@ -14,8 +14,8 @@
     <div class="flex flex-col items-center md:items-start text-center md:text-left mb-4 md:mb-0">
         @livewire('user.avatar', [
             'user' => $user,
-            'size' => 'h-60 w-60 md:h-96 md:w-96',
-            'textSize' => 'text-[12rem] md:text-[16rem]',
+            'size' => 'h-48 w-48 md:h-56 md:w-56',
+            'textSize' => 'text-6xl md:text-7xl',
             'showUpload' => false
         ], key('avatar-'.$user->id))
     </div>

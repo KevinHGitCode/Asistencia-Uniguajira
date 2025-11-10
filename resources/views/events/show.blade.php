@@ -64,7 +64,7 @@
                             <button
                                 id="copy-link-button"
                                 data-link="{{ route('events.access', $event->link) }}"
-                                class="px-3 py-2 border-2 border-blue-300 rounded-md transition-all duration-300 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-400 text-sm font-medium"
+                                class="px-3 py-2 border-2 border-gray-200 dark:border-black dark:text-black rounded-md transition-all duration-300 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-400 text-sm font-medium"
                             >
                                 🔗 Copiar Enlace
                             </button>
