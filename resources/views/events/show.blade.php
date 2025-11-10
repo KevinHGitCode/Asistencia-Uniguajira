@@ -14,37 +14,69 @@
 
             <h1 class="text-3xl font-bold mb-4">Detalles del Evento</h1>   
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                
-                {{-- Contenedor para la informacion del evento --}}
-                <div class="border border-neutral-200 dark:border-neutral-700 p-4 rounded-lg">
-                    <p class="text-lg mb-2"><strong>Título:</strong> {{ $event->title }}</p>
-                    <p class="text-lg mb-2"><strong>Fecha:</strong> {{ $event->date }}</p>
-                    <p class="text-lg mb-2"><strong>Hora de Inicio:</strong> {{ $event->start_time }}</p>
-                    <p class="text-lg mb-2"><strong>Hora de Fin:</strong> {{ $event->end_time }}</p>
-                    <p class="text-lg mb-2"><strong>Ubicación:</strong> {{ $event->location ?? 'Sin ubicación' }}</p>
-                    <p class="text-lg mb-2"><strong>Descripción:</strong> {{ $event->description ?? 'Sin descripción' }}</p>
-
-                    @php
-                        // Combinar fecha y hora de finalización del evento
-                        $eventEndDateTime = \Carbon\Carbon::parse($event->date . ' ' . $event->end_time);
-                        $eventHasEnded = now()->greaterThan($eventEndDateTime);
-                    @endphp
-
-                    @if($eventHasEnded)
-                        <a href="{{ route('events.download', $event->id) }}"
-                            class="inline-block px-4 py-2 rounded-xl bg-green-600 text-white font-medium shadow-md hover:bg-green-700 hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
-                            Descargar listado de asistencia
-                        </a>
-                    @else
-                        <div class="inline-block px-4 py-2 rounded-xl bg-gray-400 text-white font-medium shadow-md opacity-60 cursor-not-allowed">
-                            Descargar listado de asistencia
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {{-- Información del evento --}}
+                <div class="border border-neutral-200 rounded-lg px-6 pt-10 bg-white dark:border-neutral-700 dark:bg-zinc-800">
+            
+                    <div class="space-y-3">
+                        {{-- Título --}}
+                        <div class="flex items-center justify-between border-b border-gray-300 dark:border-neutral-700 pb-2">
+                            <div class="flex items-center gap-2 text-black dark:text-white">
+                                <flux:icon name="bars-3-center-left" class="w-5 h-5 text-blue-500" />
+                                <span class="font-medium">Título:</span>
+                            </div>
+                            <span class="font-bold text-black dark:text-white text-right">{{ $event->title }}</span>
                         </div>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                            El listado estará disponible cuando finalice el evento
-                        </p>
-                    @endif
-
+                    
+                        {{-- Fecha --}}
+                        <div class="flex items-center justify-between border-b border-gray-300 dark:border-neutral-700 pb-2">
+                            <div class="flex items-center gap-2 text-black dark:text-white">
+                                <flux:icon name="calendar" class="w-5 h-5 text-blue-500" />
+                                <span class="font-medium">Fecha:</span>
+                            </div>
+                            <span class="font-bold text-black dark:text-white text-right">{{ \Carbon\Carbon::parse($event->date)->format('d/m/Y') }}</span>
+                        </div>
+                    
+                        {{-- Hora de inicio --}}
+                        <div class="flex items-center justify-between border-b border-gray-300 dark:border-neutral-700 pb-2">
+                            <div class="flex items-center gap-2 text-black dark:text-white">
+                                <flux:icon name="clock" class="w-5 h-5 text-blue-500" />
+                                <span class="font-medium">Hora de Inicio:</span>
+                            </div>
+                            <span class="font-bold text-black dark:text-white text-right">{{ \Carbon\Carbon::parse($event->start_time)->format('h:i A') }}</span>
+                        </div>
+                    
+                        {{-- Hora de fin --}}
+                        <div class="flex items-center justify-between border-b border-gray-300 dark:border-neutral-700 pb-2">
+                            <div class="flex items-center gap-2 text-black dark:text-white">
+                                <flux:icon name="clock" class="w-5 h-5 text-blue-500" />
+                                <span class="font-medium">Hora de Fin:</span>
+                            </div>
+                            <span class="font-bold text-black dark:text-white text-right">{{ \Carbon\Carbon::parse($event->end_time)->format('h:i A') }}</span>
+                        </div>
+                    
+                        {{-- Ubicación --}}
+                        <div class="flex items-center justify-between border-b border-gray-300 dark:border-neutral-700 pb-2">
+                            <div class="flex items-center gap-2 text-black dark:text-white">
+                                <flux:icon name="map-pin" class="w-5 h-5 text-blue-500" />
+                                <span class="font-medium">Ubicación:</span>
+                            </div>
+                            <span class="font-bold text-black dark:text-white text-right truncate max-w-[60%]">
+                                {{ $event->location ?? 'Sin ubicación' }}
+                            </span>
+                        </div>
+                    
+                        {{-- Descripción --}}
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2 text-black dark:text-white">
+                                <flux:icon name="book-open" class="w-5 h-5 text-blue-500" />
+                                <span class="font-medium">Descripción:</span>
+                            </div>
+                            <span class="font-bold text-black dark:text-white text-right truncate max-w-[60%]">
+                                {{ $event->description ?? 'Sin descripción' }}
+                            </span>
+                        </div>
+                    </div>
                 </div>
 
                 {{-- Contenedor de los Enlaces del Evento --}}
@@ -58,23 +90,25 @@
 
                     @if(!$eventHasEnded)
                         {{-- Mostrar enlaces solo si el evento NO ha terminado --}}
-                        <div class="flex items-center justify-between mb-6">
+                        <div class="flex items-center justify-center">
                             <h2 class="text-2xl font-semibold">Enlaces del Evento</h2>
-
-                            <button
-                                id="copy-link-button"
-                                data-link="{{ route('events.access', $event->link) }}"
-                                class="px-3 py-2 border-2 border-gray-200 dark:border-black dark:text-black rounded-md transition-all duration-300 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-400 text-sm font-medium"
-                            >
-                                🔗 Copiar Enlace
-                            </button>
                         </div>
                         
-                        <div class="flex items-center justify-center mt-8">
+                        <div class="flex items-center justify-center mt-8 mb-4">
                             <div class="border border-neutral-200 dark:border-neutral-700 p-4 rounded-xl bg-white">
                                 {!! QrCode::size(200)->generate(route('events.access', $event->link)) !!}
                             </div>  
                         </div>
+
+                        <div class="flex items-center justify-center">
+                            <button
+                                id="copy-link-button"
+                                data-link="{{ route('events.access', $event->link) }}"
+                                class="px-3 py-2 border-1 border-gray-200 dark:border-white dark:text-white rounded-md transition-all duration-300 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-400 text-sm font-medium">
+                                🔗 Copiar Enlace
+                            </button>
+                        </div>
+
                     @else
                         {{-- Mostrar mensaje cuando el evento ha terminado --}}
                         <div class="flex flex-col items-center justify-center h-full py-8">
