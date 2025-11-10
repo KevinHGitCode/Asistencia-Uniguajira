@@ -15,16 +15,24 @@ export function getResponsiveDimensions() {
         gutter = 3;
         console.log("📏 Modo: Pantalla muy grande");
     } 
-    else if (containerWidth >= 1000) {
-        cellSize = Math.min(Math.max(containerWidth / 55, 18), 32);
+    else if (containerWidth >= 1500) {
+        cellSize = Math.min(Math.max(containerWidth / 55, 20), 34);
+        gutter = Math.max(cellSize * 0.1, 2.5);
+        console.log("📏 Modo: Pantalla grande");
+    }
+    else if (containerWidth >= 940) { 
+        // Ajuste del tamaño de celda para mostrar los 6 meses completos
+        cellSize = Math.min(Math.max(containerWidth / 52, 14), 26);
         gutter = Math.max(cellSize * 0.1, 2);
-        console.log("📏 Modo: Pantalla mediana/grande");
-    } 
+        console.log("📏 Modo: Pantalla mediana (>= 940px)");
+    }
+
     else {
         cellSize = Math.min(containerWidth / 18, 30);
         gutter = Math.max(cellSize * 0.12, 1);
         console.log("📏 Modo: Pantalla pequeña");
     }
+
 
     const result = {
         cellSize: Math.floor(cellSize),
