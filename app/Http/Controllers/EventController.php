@@ -104,27 +104,26 @@ class EventController extends Controller
      * Display the specified resource.
      */
     public function show(string $id)
-{
-    $user = Auth::user();
-    
-    // Permitir ver el evento si:
-    // 1. El usuario es el creador del evento
-    // 2. El evento pertenece a la misma dependencia del usuario
-    $event = Event::where('id', $id)
-        ->where(function($query) use ($user) {
-            $query->where('user_id', $user->id);
-            
-            // Si el usuario tiene dependencia, también puede ver eventos de su dependencia
-            if ($user->dependency_id) {
-                $query->orWhere('dependency_id', $user->dependency_id);
-            }
-        })
-        ->firstOrFail();
+    {
+        $user = Auth::user();
+        $event = Event::findOrFail($id);
 
-    $asistenciasCount = Attendance::where('event_id', $event->id)->count();
+        // ✅ Si es admin, puede ver cualquier evento
+        if ($user->role === 'admin') {
+            $asistenciasCount = Attendance::where('event_id', $event->id)->count();
+            return view('events.show', compact('event', 'asistenciasCount'));
+        }
 
-    return view('events.show', compact('event', 'asistenciasCount'));
-}
+        // ✅ Si es creador del evento o pertenece a la misma dependencia
+        if ($event->user_id === $user->id || $event->dependency_id === $user->dependency_id) {
+            $asistenciasCount = Attendance::where('event_id', $event->id)->count();
+            return view('events.show', compact('event', 'asistenciasCount'));
+        }
+
+        // 🚫 Si no tiene permisos
+        abort(403, 'No tienes permiso para ver este evento.');
+    }
+
 
     /**
      * Show the form for editing the specified resource.
