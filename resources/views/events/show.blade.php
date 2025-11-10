@@ -16,7 +16,7 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {{-- Información del evento --}}
-                <div class="border border-neutral-200 rounded-lg px-6 pt-10 bg-white dark:border-neutral-700 dark:bg-zinc-800">
+                <div class="border border-neutral-200 rounded-lg px-6 pt-10 pb-10 bg-white dark:border-neutral-700 dark:bg-zinc-800">
             
                     <div class="space-y-3">
                         {{-- Título --}}
