@@ -186,15 +186,24 @@ class EventController extends Controller
         $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
         $pdf->useTemplate($tplIdx);
         $pdf->SetFont('Arial', 'B', 12);
+
+
+        // Dependencia del evento
+        $pdf->SetXY(78, 30.5);
+        $pdf->Cell(0, 8,
+            iconv('UTF-8', 'ISO-8859-1//TRANSLIT', mb_strtoupper($evento->dependency->name ?? 'SIN DEPENDENCIA', 'UTF-8')),
+            0, 0, 'L'
+        );
+
         // Título del evento
-        $pdf->SetXY(44, 39); // coordenadas exactas según tu formato
+        $pdf->SetXY(44, 38.5); // coordenadas exactas según tu formato
         $pdf->Cell(0,8,
-            iconv('UTF-8', 'ISO-8859-1//TRANSLIT', strtoupper($evento->title ?? 'SIN TÍTULO')),
+            iconv('UTF-8', 'ISO-8859-1//TRANSLIT', mb_strtoupper($evento->title ?? 'SIN TÍTULO', 'UTF-8')),
             0, 0, 'L'
         );
 
         // Fecha del evento
-        $pdf->SetXY(224, 31);
+        $pdf->SetXY(224, 30.5);
         $pdf->Cell(0,8,
             iconv('UTF-8', 'ISO-8859-1//TRANSLIT', Carbon::parse($evento->date)->format('d   m    Y')),
             0, 0, 'L'
@@ -217,15 +226,23 @@ class EventController extends Controller
                 $row = 0;
 
                 $pdf->SetFont('Arial', 'B', 12);
+
+                // Dependencia del evento
+                $pdf->SetXY(78, 30.5);
+                $pdf->Cell(0, 8,
+                    iconv('UTF-8', 'ISO-8859-1//TRANSLIT', mb_strtoupper($evento->dependency->name ?? 'SIN DEPENDENCIA', 'UTF-8')),
+                    0, 0, 'L'
+                );
+
                 // Título del evento
-                $pdf->SetXY(44, 39); // coordenadas exactas según tu formato
+                $pdf->SetXY(44, 38.5); // coordenadas exactas según tu formato
                 $pdf->Cell(0,8,
-                    iconv('UTF-8', 'ISO-8859-1//TRANSLIT', strtoupper($evento->title ?? 'SIN TÍTULO')),
+                    iconv('UTF-8', 'ISO-8859-1//TRANSLIT', mb_strtoupper($evento->title ?? 'SIN TÍTULO', 'UTF-8')),
                     0, 0, 'L'
                 );
 
                 // Fecha del evento
-                $pdf->SetXY(224, 31);
+                $pdf->SetXY(224, 30.5);
                 $pdf->Cell(0,8,
                     iconv('UTF-8', 'ISO-8859-1//TRANSLIT', Carbon::parse($evento->date)->format('d   m    Y')),
                     0, 0, 'L'
