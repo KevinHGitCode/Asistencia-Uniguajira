@@ -15,6 +15,7 @@ class EventSeeder extends Seeder
     {
         $faker = \Faker\Factory::create();
         $userIds = \App\Models\User::pluck('id')->toArray();
+        $dependencyIds = \App\Models\Dependency::pluck('id')->toArray();
         $rows = [];
 
         for ($i = 0; $i < self::NUM_EVENTS; $i++) {
@@ -25,6 +26,7 @@ class EventSeeder extends Seeder
 
             $rows[] = [
                 'title' => $faker->sentence(3),
+                'dependency_id' => $faker->randomElement($dependencyIds),
                 'description' => $faker->paragraph(),
                 'date' => $faker->dateTimeBetween('-6 months', '+3 months')->format('Y-m-d'),
                 'start_time' => $start,
