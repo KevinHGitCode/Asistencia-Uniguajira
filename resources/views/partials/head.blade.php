@@ -1,6 +1,12 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+@auth
+    <meta name="user-dependency-id" content="{{ auth()->user()->dependency_id }}">
+    <meta name="user-id" content="{{ auth()->user()->id }}">
+    <meta name="user-role" content="{{ auth()->user()->role }}">
+@endauth
+
 <title>{{ $title ?? config('app.name') }}</title>
 
 <!-- Iconos de la aplicación -->

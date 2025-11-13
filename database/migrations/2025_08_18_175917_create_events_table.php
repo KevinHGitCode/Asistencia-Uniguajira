@@ -17,6 +17,11 @@ return new class extends Migration {
             $table->string('location')->nullable(); // Nueva columna para la ubicación
             $table->text('link'); // Nueva columna para el enlace
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('dependency_id')
+                ->nullable()
+                ->constrained('dependencies')
+                ->onUpdate('cascade')
+                ->onDelete('set null');
             $table->timestamps();
         });
     }

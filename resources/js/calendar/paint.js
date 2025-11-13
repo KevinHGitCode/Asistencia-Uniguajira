@@ -1,4 +1,3 @@
-
 import { getResponsiveDimensions } from './dimensions.js';
 import { clearCalendarContainer, 
             fetchEventsAndPaintCalendar,
@@ -6,25 +5,21 @@ import { clearCalendarContainer,
             getSemesterInfo
         } from './utils.js';
 import { openModal } from './modal.js';
-// import CalHeatmap from 'cal-heatmap';
 
-// // Importar los estilos básicos
-// import 'cal-heatmap/cal-heatmap.css';
+function getTodayAsDate() {
+    const today = new Date();
+    const localISODate = new Date(today.getTime() - today.getTimezoneOffset() * 60000)
+        .toISOString()
+        .split('T')[0];
+    
+    return new Date(localISODate);
+}
 
-// // Importar plugins que necesites
-// import Legend from 'cal-heatmap/plugins/Legend';
-// import Tooltip from 'cal-heatmap/plugins/Tooltip';
-
-
-
-// --- INICIO: Soporte para repintar el calendario con Livewire ---
 let calInstance = null;
 let isCalendarInitialized = false;
-let isCalendarPainting = false; // Flag para prevenir múltiples ejecuciones simultáneas
-
+let isCalendarPainting = false;
 
 export async function paintCalendar(forcedTheme = null) {
-    // Prevenir múltiples ejecuciones simultáneas
     if (isCalendarPainting) {
         console.log('📅 Calendar already painting, skipping...');
         return;
@@ -40,7 +35,6 @@ export async function paintCalendar(forcedTheme = null) {
     console.log('📅 Starting calendar paint...');
 
     try {
-        // Destruir instancia previa si existe
         if (calInstance) {
             try {
                 calInstance.destroy();
@@ -57,14 +51,12 @@ export async function paintCalendar(forcedTheme = null) {
 
         const events = await fetchEventsAndPaintCalendar();
         const dimensions = getResponsiveDimensions();
-
-
         const myevents = await fetchMyEventsAndPaintCalendar();
         console.log(myevents);
 
         const highlightDates = myevents.map(e => new Date(e.date));
-
         const semesterInfo = getSemesterInfo();
+        const today = getTodayAsDate();
 
         calInstance = new CalHeatmap();
         await calInstance.paint({
@@ -86,10 +78,21 @@ export async function paintCalendar(forcedTheme = null) {
                 radius: Math.max(dimensions.cellSize * 0.1, 2),
                 label: 'D',
                 color: (timestamp, value, backgroundColor) => {
-                    if (isDarkTheme) {
+                    // Verificar si la celda tiene datos (value > 0) o está destacada
+                    const date = new Date(timestamp);
+                    const isHighlighted = highlightDates.some(d => 
+                        d.getFullYear() === date.getFullYear() &&
+                        d.getMonth() === date.getMonth() &&
+                        d.getDate() === date.getDate()
+                    ) || (date.getTime() === today.getTime());
+                    
+                    // Si tiene datos o está destacada, texto blanco
+                    if (value > 0 || isHighlighted) {
                         return 'white';
                     }
-                    return 'black';
+                    
+                    // Si no, usar el color según el tema
+                    return isDarkTheme ? 'white' : 'black';
                 }
             },
             data: {
@@ -100,7 +103,10 @@ export async function paintCalendar(forcedTheme = null) {
             },
             date: {
                 start: semesterInfo.startDate,
-                highlight: highlightDates, // Resaltar mis eventos,
+                highlight: [
+                    ...highlightDates,
+                    today
+                ],
                 locale: 'es',
                 timezone: 'America/Bogota'
             },
@@ -113,29 +119,62 @@ export async function paintCalendar(forcedTheme = null) {
                     type: 'threshold',
                     domain: [1, 3, 5, 10],
                     range: isDarkTheme
-                        ? ['#22223b', '#4a4e69', '#9a8c98', '#f2e9e4', '#ffbe76']
-                        : ['#e3eafc', '#b6ccfe', '#7ea6f6', '#4f83cc', '#274690']
+                        ? ['#03090f', '#62a9b6', '#cc5e50', '#e2a542', '#f2e9e4']
+                        : ['#03090f', '#62a9b6', '#cc5e50', '#e2a542', '#f2e9e4']
                 }
             }
         });
 
+        // 👉 Reemplaza el bloque anterior por este
+        setTimeout(() => {
+            const calContainer = document.getElementById('cal-heatmap');
+            const highlightRects = calContainer.querySelectorAll('rect.highlight');
+            console.log('🎯 Rectángulos highlight encontrados:', highlightRects.length);
+
+            // Fecha "hoy" en local midnight (para comparar a nivel día)
+            const todayLocal = today;
+            todayLocal.setHours(0, 0, 0, 0);
+
+            let marked = false;
+
+            // 1) Intento preferido: usar rect.__data__.t (timestamp en ms) si está disponible
+            highlightRects.forEach((rect, i) => {
+                const d = rect.__data__;
+                if (!d || typeof d.t !== 'number') return;
+
+                const rectDate = new Date(d.t); // d.t está en ms
+                const rectLocalMidnight = new Date(rectDate.getFullYear(), rectDate.getMonth(), rectDate.getDate());
+                
+                console.log(`Rect #${i} -> rectDate local: ${rectLocalMidnight.toISOString()}`);
+
+                if (rectLocalMidnight.getTime() === todayLocal.getTime()) {
+                    rect.classList.add('today-highlight');
+                    console.log('✅ Día actual encontrado y marcado en rect #' + i);
+                    marked = true;
+                }
+            });
+
+            if (!marked) {
+                console.warn('⚠️ No se encontró la celda del día de hoy entre los highlights.');
+            }
+        }, 150);
+
+
+
+        // Evento click
         calInstance.on('click', async (event, timestamp, value) => {
-            const date = new Date(timestamp).toISOString().split('T')[0]; // YYYY-MM-DD
-            
+            const date = new Date(timestamp).toISOString().split('T')[0];
             try {
                 const response = await fetch(`/api/events/${date}`);
                 const eventos = await response.json();
-
                 openModal(date, eventos);
             } catch (error) {
                 console.error('Error al obtener eventos:', error);
             }
         });
 
-
         isCalendarInitialized = true;
         console.log('📅 Calendar painted successfully');
-
         
 
     } catch (error) {

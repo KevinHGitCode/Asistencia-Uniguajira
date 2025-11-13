@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
+use App\Models\Dependency;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -17,15 +18,28 @@ class EventController extends Controller
      */
     public function index()
     {
-        // Obtener solo los eventos del usuario autenticado
-        // Ordenados por fecha más reciente primero
-        $events = Event::where('user_id', Auth::id())
+        $user = Auth::user();
+    
+    // Obtener solo los eventos del usuario autenticado
+    // Ordenados por fecha más reciente primero
+    $myEvents = Event::where('user_id', $user->id)
+        ->orderBy('date', 'desc')
+        ->orderBy('created_at', 'desc')
+        ->get();
+
+    // Obtener eventos de la dependencia del usuario (excluyendo los propios)
+    $dependencyEvents = collect();
+    
+    if ($user->dependency_id) {
+        $dependencyEvents = Event::where('dependency_id', $user->dependency_id)
+            ->where('user_id', '!=', $user->id) // Excluir eventos propios
             ->orderBy('date', 'desc')
             ->orderBy('created_at', 'desc')
             ->get();
+    }
 
-        // Pasar los eventos a la vista
-        return view('events.list', compact('events'));
+    // Pasar los eventos a la vista
+    return view('events.list', compact('myEvents', 'dependencyEvents'));
     }
 
     /**
@@ -33,7 +47,8 @@ class EventController extends Controller
      */
     public function create()
     {
-        return view('events.new');
+        $dependencies = Dependency::orderBy('name')->get();
+        return view('events.new', compact('dependencies'));
     }
 
     /**
@@ -49,10 +64,20 @@ class EventController extends Controller
                 'start_time' => 'nullable|date_format:H:i',
                 'end_time' => 'nullable|date_format:H:i|after_or_equal:start_time',
                 'location' => 'required|string|max:255',
+                'dependency_id' => 'nullable|exists:dependencies,id',
             ]);
 
             $validated['user_id'] = Auth::id();
 
+            $user = Auth::user();
+            if ($user->role === 'admin') {
+                // Si es admin, usar la dependencia seleccionada en el formulario
+                // Si no seleccionó ninguna, dejar null
+                $validated['dependency_id'] = $request->input('dependency_id');
+            } else {
+                // Si es usuario normal, usar su dependencia
+                $validated['dependency_id'] = $user->dependency_id;
+            }
             // Generar un link único para el evento
             $slug = str_replace(' ', '-', strtolower($validated['title'])) . '-' . date('Ymd', strtotime($validated['date'])) . '-' . uniqid();
             $validated['link'] = $slug;
@@ -61,7 +86,7 @@ class EventController extends Controller
 
             // Redirigir para evitar reenvío del formulario
             return redirect()->route('events.new')->with('success', 'Evento creado exitosamente.')
-             ->with('event_link', route('events.access', ['slug' => $validated['link']]));
+            ->with('event_link', route('events.access', ['slug' => $validated['link']]));
         } catch (\Exception $e) {
             // Log del error para debugging
             Log::error('Error creating event: ' . $e->getMessage());
@@ -80,12 +105,25 @@ class EventController extends Controller
      */
     public function show(string $id)
     {
-        $event = Event::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
+        $user = Auth::user();
+        $event = Event::findOrFail($id);
 
-        $asistenciasCount = Attendance::where('event_id', $event->id)->count();
+        // ✅ Si es admin, puede ver cualquier evento
+        if ($user->role === 'admin') {
+            $asistenciasCount = Attendance::where('event_id', $event->id)->count();
+            return view('events.show', compact('event', 'asistenciasCount'));
+        }
 
-        return view('events.show', compact('event', 'asistenciasCount'));
+        // ✅ Si es creador del evento o pertenece a la misma dependencia
+        if ($event->user_id === $user->id || $event->dependency_id === $user->dependency_id) {
+            $asistenciasCount = Attendance::where('event_id', $event->id)->count();
+            return view('events.show', compact('event', 'asistenciasCount'));
+        }
+
+        // 🚫 Si no tiene permisos
+        abort(403, 'No tienes permiso para ver este evento.');
     }
+
 
     /**
      * Show the form for editing the specified resource.
@@ -148,15 +186,24 @@ class EventController extends Controller
         $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
         $pdf->useTemplate($tplIdx);
         $pdf->SetFont('Arial', 'B', 12);
+
+
+        // Dependencia del evento
+        $pdf->SetXY(78, 30.5);
+        $pdf->Cell(0, 8,
+            iconv('UTF-8', 'ISO-8859-1//TRANSLIT', mb_strtoupper($evento->dependency->name ?? 'SIN DEPENDENCIA', 'UTF-8')),
+            0, 0, 'L'
+        );
+
         // Título del evento
-        $pdf->SetXY(44, 39); // coordenadas exactas según tu formato
+        $pdf->SetXY(44, 38.5); // coordenadas exactas según tu formato
         $pdf->Cell(0,8,
-            iconv('UTF-8', 'ISO-8859-1//TRANSLIT', strtoupper($evento->title ?? 'SIN TÍTULO')),
+            iconv('UTF-8', 'ISO-8859-1//TRANSLIT', mb_strtoupper($evento->title ?? 'SIN TÍTULO', 'UTF-8')),
             0, 0, 'L'
         );
 
         // Fecha del evento
-        $pdf->SetXY(224, 31);
+        $pdf->SetXY(224, 30.5);
         $pdf->Cell(0,8,
             iconv('UTF-8', 'ISO-8859-1//TRANSLIT', Carbon::parse($evento->date)->format('d   m    Y')),
             0, 0, 'L'
@@ -179,15 +226,23 @@ class EventController extends Controller
                 $row = 0;
 
                 $pdf->SetFont('Arial', 'B', 12);
+
+                // Dependencia del evento
+                $pdf->SetXY(78, 30.5);
+                $pdf->Cell(0, 8,
+                    iconv('UTF-8', 'ISO-8859-1//TRANSLIT', mb_strtoupper($evento->dependency->name ?? 'SIN DEPENDENCIA', 'UTF-8')),
+                    0, 0, 'L'
+                );
+
                 // Título del evento
-                $pdf->SetXY(44, 39); // coordenadas exactas según tu formato
+                $pdf->SetXY(44, 38.5); // coordenadas exactas según tu formato
                 $pdf->Cell(0,8,
-                    iconv('UTF-8', 'ISO-8859-1//TRANSLIT', strtoupper($evento->title ?? 'SIN TÍTULO')),
+                    iconv('UTF-8', 'ISO-8859-1//TRANSLIT', mb_strtoupper($evento->title ?? 'SIN TÍTULO', 'UTF-8')),
                     0, 0, 'L'
                 );
 
                 // Fecha del evento
-                $pdf->SetXY(224, 31);
+                $pdf->SetXY(224, 30.5);
                 $pdf->Cell(0,8,
                     iconv('UTF-8', 'ISO-8859-1//TRANSLIT', Carbon::parse($evento->date)->format('d   m    Y')),
                     0, 0, 'L'

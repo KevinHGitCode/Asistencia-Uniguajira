@@ -81,29 +81,38 @@ class UserController extends Controller
      */
     public function information(string $id)
     {
-        // Cargar la dependencia relacionada para mostrarla en la vista si aplica
+        // Cargar la dependencia del usuario
         $user = User::with('dependency')->findOrFail($id);
 
-        // Obtener eventos paginados
+        // Obtener eventos del usuario
         $events = $user->events()
-                  ->orderBy('date', 'desc')
-                  ->orderBy('created_at', 'desc')
-                  ->paginate(6); // <-- aquí limitamos a 6 por página
+                    ->orderBy('date', 'desc')
+                    ->orderBy('created_at', 'desc')
+                    ->get();
 
-        // Calcular estadísticas (usando todos los eventos, no solo la página actual)
-        $allEvents = $user->events()->get();
-        $eventsCount = $allEvents->count();
+        // Obtener eventos de la dependencia (excluyendo los del usuario)
+        $dependencyEvents = collect();
+        if ($user->dependency) {
+            $dependencyEvents = $user->dependency->events()
+                                ->where('user_id', '!=', $user->id)
+                                ->orderBy('date', 'desc')
+                                ->orderBy('created_at', 'desc')
+                                ->get();
+        }
 
+        // Calcular estadísticas
+        $eventsCount = $events->count();
         $now = now();
-        $upcomingEvents = $allEvents->where('date', '>=', $now->toDateString())->count();
-        $pastEvents     = $allEvents->where('date', '<', $now->toDateString())->count();
+        $upcomingEvents = $events->where('date', '>=', $now->toDateString())->count();
+        $pastEvents = $events->where('date', '<', $now->toDateString())->count();
 
         return view('users.information', compact(
-          'user',
-          'events',       // paginados
-          'eventsCount',
-          'upcomingEvents',
-          'pastEvents'
+            'user',
+            'events',
+            'dependencyEvents',
+            'eventsCount',
+            'upcomingEvents',
+            'pastEvents'
         ));
     }
 

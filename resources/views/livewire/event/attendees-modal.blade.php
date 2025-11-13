@@ -22,7 +22,16 @@
         </div>
     </flux:modal.trigger>
 
-    <flux:modal name="attendees-modal-{{ $eventId }}" variant="flyout" class="w-full max-w-2xl">
+    <flux:modal name="attendees-modal-{{ $eventId }}" variant="flyout" class="w-full max-w-2xl" x-data x-init="
+        $nextTick(() => {
+            const closeButton = $el.querySelector('[data-flux-modal-close]');
+            if (closeButton) {
+                closeButton.addEventListener('click', () => {
+                    $dispatch('modal-close', { name: 'attendees-modal-{{ $eventId }}' });
+                });
+            }
+        });
+    ">
         <div class="space-y-6">
             <!-- Header -->
             <div class="border-b border-zinc-200 dark:border-zinc-700 pb-4">
@@ -153,17 +162,35 @@
 
             <!-- Botones de acción -->
             <div class="flex items-center gap-2 border-t border-zinc-200 dark:border-zinc-700 pt-4">
-                <a href="{{ route('events.download', $eventId) }}"
-                class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-                    <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                    </svg>
-                    Descargar PDF
-                </a>
+                @php
+                    $event = \App\Models\Event::find($eventId);
+                    $eventEndDateTime = \Carbon\Carbon::parse($event->date . ' ' . $event->end_time);
+                    $eventHasEnded = now()->greaterThan($eventEndDateTime);
+                @endphp
+
+                @if($eventHasEnded)
+                    <a href="{{ route('events.download', $eventId) }}"
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                        <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                        Descargar PDF
+                    </a>
+                @else
+                    <div class="inline-flex items-center gap-2 px-4 py-2 bg-gray-400 text-white rounded-lg opacity-60 cursor-not-allowed">
+                        <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                        Descargar PDF
+                    </div>
+                @endif
+
                 <div class="flex-1"></div>
-                <flux:modal.close>
-                    <flux:button variant="primary">Cerrar</flux:button>
-                </flux:modal.close>
+                <flux:button 
+                    variant="primary" 
+                    x-on:click="$dispatch('modal-close', { name: 'attendees-modal-{{ $eventId }}' })">
+                    Cerrar
+                </flux:button>
             </div>
         </div>
     </flux:modal>

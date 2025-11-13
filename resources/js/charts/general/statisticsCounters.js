@@ -1,6 +1,8 @@
 // statisticsCounters.js
 // Actualiza los contadores de estadísticas cada 3 minutos
 
+import { getApiUrl } from './filtersManager.js';
+
 let countersInterval = null;
 
 /**
@@ -48,11 +50,11 @@ function updateStatisticsCounters() {
     animate();
   };
 
-  // Obtener datos de la API
+  // Obtener datos de la API con filtros aplicados
   Promise.all([
-    fetch('/api/statistics/total-events').then(res => res.json()),
-    fetch('/api/statistics/total-attendances').then(res => res.json()),
-    fetch('/api/statistics/total-participants').then(res => res.json())
+    fetch(getApiUrl('/api/statistics/total-events')).then(res => res.json()),
+    fetch(getApiUrl('/api/statistics/total-attendances')).then(res => res.json()),
+    fetch('/api/statistics/total-participants').then(res => res.json()) // Participantes no se filtra por fecha
   ])
     .then(([events, attendances, participants]) => {
       updateCounter('total-events', events);

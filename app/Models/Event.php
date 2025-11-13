@@ -20,6 +20,7 @@ class Event extends Model
         'location', // ubicación del evento
         'link', // enlace del evento
         'user_id', // Agregar user_id al fillable
+        'dependency_id', // Agregar dependency_id al fillable
     ];
 
     public function user()

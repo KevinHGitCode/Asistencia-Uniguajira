@@ -29,13 +29,13 @@
                     wire:navigate>{{ __('Statistics') }}</flux:navlist.item>
 
                 <flux:navlist.item icon="chart-bar" :href="route('charts.types')" class="hover:scale-103 transition-transform" :current="request()->routeIs('charts.types')"
-                    wire:navigate>{{ __('Tipos de graficos') }}</flux:navlist.item>
+                    wire:navigate>{{ __('Chart Types') }}</flux:navlist.item>
 
                 @if(auth()->user()->role === 'admin')
                     <flux:navlist.item icon="users" :href="route('users.index')" class="hover:scale-103 transition-transform" :current="request()->routeIs('users.index')"
                         wire:navigate>{{ __('Users') }}</flux:navlist.item>
                 @endif
-                    
+
             </flux:navlist.group>
         </flux:navlist>
 
@@ -99,7 +99,7 @@
         <flux:spacer />
 
         <flux:dropdown position="top" align="end">
-           
+
         <flux:profile
             avatar="{{ auth()->user()->avatar ? asset('storage/' . auth()->user()->avatar) : null }}"
             icon-trailing="chevron-down"

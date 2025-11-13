@@ -2,7 +2,7 @@
 <div id="calendarModal"
     class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm transition items-center justify-center hidden">
     <div
-        class="modal-content bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl w-full max-w-3xl mx-4 max-h-[90vh] flex flex-col animate-fadeIn overflow-hidden">
+        class="modal-content bg-zinc-50 dark:bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-3xl mx-4 max-h-[90vh] flex flex-col animate-fadeIn overflow-hidden">
 
         <!-- Header -->
         <div class="flex items-center justify-between p-6 bg-gray-50/80 dark:bg-neutral-800/40">
