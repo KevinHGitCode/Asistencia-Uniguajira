@@ -88,7 +88,7 @@ class UserController extends Controller
         $events = $user->events()
                     ->orderBy('date', 'desc')
                     ->orderBy('created_at', 'desc')
-                    ->get();
+                    ->paginate(6);
 
         // Obtener eventos de la dependencia (excluyendo los del usuario)
         $dependencyEvents = collect();
@@ -97,7 +97,9 @@ class UserController extends Controller
                                 ->where('user_id', '!=', $user->id)
                                 ->orderBy('date', 'desc')
                                 ->orderBy('created_at', 'desc')
-                                ->get();
+                                ->paginate(6);
+        }else{
+            $dependencyevents= new \Illuminate\Pagination\LengthAwarePaginator([], 0, 6); 
         }
 
         // Calcular estadísticas
