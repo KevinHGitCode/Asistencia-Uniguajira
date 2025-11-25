@@ -14,13 +14,14 @@ class Event extends Model
     protected $fillable = [
         'title',
         'description',
-        'date', // fecha del evento
-        'start_time', // hora de inicio
-        'end_time', // hora de finalización
-        'location', // ubicación del evento
-        'link', // enlace del evento
-        'user_id', // Agregar user_id al fillable
-        'dependency_id', // Agregar dependency_id al fillable
+        'date',
+        'start_time',
+        'end_time',
+        'location',
+        'link',
+        'user_id',
+        'dependency_id',
+        'area_id', // agregar solo si existe en la migración
     ];
 
     public function user()
@@ -44,4 +45,8 @@ class Event extends Model
         return $this->belongsTo(Dependency::class);
     }
 
+    public function area()
+    {
+        return $this->belongsTo(Area::class);
+    }
 }

@@ -11,15 +11,18 @@ class Dependency extends Model
 
     protected $fillable = ['name'];
 
-    public function users() 
+    // Muchos a muchos: una dependencia puede tener varios usuarios,
+    // y un usuario puede estar en varias dependencias.
+    public function users()
     {
-        return $this->hasMany(User::class);
+        return $this->belongsToMany(User::class, 'dependency_user')
+                    ->withTimestamps();
     }
 
+
+    // Una dependencia tiene muchos eventos
     public function events()
     {
         return $this->hasMany(Event::class);
     }
-
-
 }
