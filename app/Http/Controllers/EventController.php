@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
+use App\Models\Area;
 use App\Models\Event;
 use App\Models\Dependency;
 use Illuminate\Http\Request;
@@ -18,37 +20,66 @@ class EventController extends Controller
      */
     public function index()
     {
+        /** @var User $user */
         $user = Auth::user();
-    
-    // Obtener solo los eventos del usuario autenticado
-    // Ordenados por fecha más reciente primero
-    $myEvents = Event::where('user_id', $user->id)
-        ->orderBy('date', 'desc')
-        ->orderBy('created_at', 'desc')
-        ->get();
-
-    // Obtener eventos de la dependencia del usuario (excluyendo los propios)
-    $dependencyEvents = collect();
-    
-    if ($user->dependency_id) {
-        $dependencyEvents = Event::where('dependency_id', $user->dependency_id)
-            ->where('user_id', '!=', $user->id) // Excluir eventos propios
+        
+        // Eventos propios (con relaciones)
+        $myEvents = Event::with(['dependency', 'area', 'user'])
+            ->where('user_id', $user->id)
             ->orderBy('date', 'desc')
             ->orderBy('created_at', 'desc')
             ->get();
+
+        // Eventos de las dependencias del usuario (excluyendo los propios)
+        $dependencyEvents = collect();
+
+        if ($user->dependencies()->exists()) {
+
+            $dependencyIds = $user->dependencies()->pluck('dependencies.id');
+
+            $dependencyEvents = Event::with(['dependency', 'area', 'user'])
+                ->whereIn('dependency_id', $dependencyIds)
+                ->where('user_id', '!=', $user->id)
+                ->orderBy('date', 'desc')
+                ->orderBy('created_at', 'desc')
+                ->get();
+        }
+
+        return view('events.list', compact('myEvents', 'dependencyEvents'));
     }
 
-    // Pasar los eventos a la vista
-    return view('events.list', compact('myEvents', 'dependencyEvents'));
-    }
 
     /**
      * Show the form for creating a new resource.
      */
     public function create()
     {
-        $dependencies = Dependency::orderBy('name')->get();
-        return view('events.new', compact('dependencies'));
+        $user = request()->user();
+
+        if ($user->role === 'admin') {
+            $dependencies = Dependency::orderBy('name')->get();
+        } else {
+            $dependencies = $user->dependencies()
+                ->orderBy('name')
+                ->get();
+        }
+
+        $selectedDependency = null;
+        $areas = collect();
+
+        if ($user->role !== 'admin' && $dependencies->count() === 1) {
+            $selectedDependency = $dependencies->first()->id;
+
+            $areas = Area::where('dependency_id', $selectedDependency)
+                ->orderBy('name')
+                ->get();
+        }
+
+        return view('events.new', compact(
+            'dependencies',
+            'selectedDependency',
+            'areas'
+        ));
     }
 
     /**
@@ -57,6 +88,11 @@ class EventController extends Controller
     public function store(Request $request)
     {
         try {
+
+            /** @var User $user */
+            $user = Auth::user();
+
+
             $validated = $request->validate([
                 'title' => 'required|string|max:255',
                 'description' => 'nullable|string',
@@ -65,38 +101,96 @@ class EventController extends Controller
                 'end_time' => 'nullable|date_format:H:i|after_or_equal:start_time',
                 'location' => 'required|string|max:255',
                 'dependency_id' => 'nullable|exists:dependencies,id',
+                'area_id' => 'nullable|exists:areas,id',
             ]);
 
-            $validated['user_id'] = Auth::id();
+            /*
+            |--------------------------------------------------------------------------
+            | Seguridad dependencia
+            |--------------------------------------------------------------------------
+            */
 
-            $user = Auth::user();
             if ($user->role === 'admin') {
-                // Si es admin, usar la dependencia seleccionada en el formulario
-                // Si no seleccionó ninguna, dejar null
+
+                // Admin puede dejarla null o elegir cualquiera
                 $validated['dependency_id'] = $request->input('dependency_id');
+
             } else {
-                // Si es usuario normal, usar su dependencia
-                $validated['dependency_id'] = $user->dependency_id;
+
+                // Usuario normal: verificar que la dependencia enviada
+                // realmente le pertenezca
+                $allowedDependencies = $user->dependencies->pluck('id')->toArray();
+
+                if (
+                    !$request->filled('dependency_id') ||
+                    !in_array($request->input('dependency_id'), $allowedDependencies)
+                ) {
+                    return back()
+                        ->withInput()
+                        ->withErrors(['dependency_id' => 'Dependencia no válida.']);
+                }
+
+                $validated['dependency_id'] = $request->input('dependency_id');
             }
-            // Generar un link único para el evento
-            $slug = str_replace(' ', '-', strtolower($validated['title'])) . '-' . date('Ymd', strtotime($validated['date'])) . '-' . uniqid();
+
+            /*
+            |--------------------------------------------------------------------------
+            | Seguridad área (si existe)
+            |--------------------------------------------------------------------------
+            */
+
+            if ($request->filled('area_id')) {
+
+                $area = Area::where('id', $request->area_id)
+                    ->where('dependency_id', $validated['dependency_id'])
+                    ->first();
+
+                if (!$area) {
+                    return back()
+                        ->withInput()
+                        ->withErrors(['area_id' => 'Área no válida para la dependencia seleccionada.']);
+                }
+
+                $validated['area_id'] = $area->id;
+
+            } else {
+                $validated['area_id'] = null;
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Datos adicionales
+            |--------------------------------------------------------------------------
+            */
+
+            $validated['user_id'] = $user->id;
+
+            $slug = str_replace(' ', '-', strtolower($validated['title']))
+                . '-' . date('Ymd', strtotime($validated['date']))
+                . '-' . uniqid();
+
             $validated['link'] = $slug;
 
             Event::create($validated);
 
-            // Redirigir para evitar reenvío del formulario
-            return redirect()->route('events.new')->with('success', 'Evento creado exitosamente.')
-            ->with('event_link', route('events.access', ['slug' => $validated['link']]));
+            return redirect()
+                ->route('events.new')
+                ->with('success', 'Evento creado exitosamente.')
+                ->with('event_link', route('events.access', ['slug' => $validated['link']]));
+
         } catch (\Exception $e) {
-            // Log del error para debugging
+
             Log::error('Error creating event: ' . $e->getMessage());
 
-            $errorMsg = 'Hubo un error al crear el evento. Por favor, inténtalo de nuevo.';
+            $errorMsg = 'Hubo un error al crear el evento.';
+
             if (app()->environment() !== 'production') {
                 $errorMsg .= ' Detalles: ' . $e->getMessage();
             }
-            // Mantener los datos del formulario con withInput()
-            return back()->withInput()->withErrors(['error' => $errorMsg]);
+
+            return back()
+                ->withInput()
+                ->withErrors(['error' => $errorMsg]);
         }
     }
 

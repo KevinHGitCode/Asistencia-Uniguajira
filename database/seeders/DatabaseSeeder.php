@@ -54,15 +54,15 @@ class DatabaseSeeder extends Seeder
 
         // Usuarios con dependencia (MANY TO MANY)
         $kevinUser = User::factory()->create([
-            'name' => 'kevin',
+            'name' => 'kevin User',
             'email' => 'kevin.user@example.com',
             'password' => bcrypt('12345678'),
             'role' => 'user',
         ]);
 
-        $kevinUser->dependencies()->attach(
-            Dependency::where('name', 'Bienestar Universitario')->first()->id
-        );
+        $kevinUser->dependencies()->sync([
+            Dependency::where('name', 'Bienestar Universitario')->first()->id,
+        ]);
 
         $user = User::factory()->create([
             'name' => 'user',
@@ -71,11 +71,14 @@ class DatabaseSeeder extends Seeder
             'role' => 'user',
         ]);
 
-        $user->dependencies()->attach(
-            Dependency::where('name', 'Gestión Documental')->first()->id
-        );
+        $user->dependencies()->sync([
+            Dependency::where('name', 'Gestión Documental')->first()->id,
+            Dependency::where('name', 'Gestión Administrativa y Financiera')->first()->id,
+        ]);
+
 
         // Otros seeders
+        $this->call(AreasSeeder::class);
         $this->call(EventSeeder::class);
         $this->call(ProgramSeeder::class);
         $this->call(ParticipantSeeder::class);

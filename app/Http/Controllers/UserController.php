@@ -86,11 +86,12 @@ class UserController extends Controller
      */
     public function information(string $id)
     {
-        $user = User::with(['dependencies', 'events'])
+        $user = User::with(['dependencies'])
             ->findOrFail($id);
 
-        // Eventos propios
+        // Eventos propios (con dependency y area)
         $events = $user->events()
+            ->with(['dependency', 'area', 'user'])
             ->orderBy('date', 'desc')
             ->orderBy('created_at', 'desc')
             ->paginate(6);
@@ -99,9 +100,11 @@ class UserController extends Controller
         $dependencyEvents = [];
 
         foreach ($user->dependencies as $dependency) {
+
             $dependencyEvents[$dependency->id] = [
                 'dependency' => $dependency,
-                'events' => Event::where('dependency_id', $dependency->id)
+                'events' => Event::with(['dependency', 'area', 'user'])
+                    ->where('dependency_id', $dependency->id)
                     ->where('user_id', '!=', $user->id)
                     ->orderBy('date', 'desc')
                     ->orderBy('created_at', 'desc')
@@ -109,16 +112,17 @@ class UserController extends Controller
             ];
         }
 
-        // Estadísticas
-        $eventsCount = $user->events->count();
-        $now = now();
+        // Estadísticas (mejor usar queries en vez de colección)
+        $eventsCount = $user->events()->count();
 
-        $upcomingEvents = $user->events
-            ->where('date', '>=', $now->toDateString())
+        $now = now()->toDateString();
+
+        $upcomingEvents = $user->events()
+            ->where('date', '>=', $now)
             ->count();
 
-        $pastEvents = $user->events
-            ->where('date', '<', $now->toDateString())
+        $pastEvents = $user->events()
+            ->where('date', '<', $now)
             ->count();
 
         return view('users.information', compact(

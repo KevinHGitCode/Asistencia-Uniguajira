@@ -109,6 +109,20 @@
                                         </div>
                                     @endif
                                 </div>
+
+                                @if($event->dependency)
+                                    <div class="flex items-center text-xs mt-2">
+                                        <span class="px-2 py-1 bg-violet-100 dark:bg-violet-900 text-violet-800 dark:text-violet-200 rounded">
+                                            {{ $event->dependency->name }}
+                                        </span>
+
+                                        @if($event->area)
+                                            <span class="ml-2 px-2 py-1 bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 rounded">
+                                                {{ $event->area->name }}
+                                            </span>
+                                        @endif
+                                    </div>
+                                @endif
                                 
                                 @if($event->description)
                                     <p class="mt-3 text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
@@ -194,6 +208,20 @@
                                         </div>
                                     @endif
                                 </div>
+
+                                @if($event->dependency)
+                                    <div class="flex items-center text-xs mt-2">
+                                        <span class="px-2 py-1 bg-violet-100 dark:bg-violet-900 text-violet-800 dark:text-violet-200 rounded">
+                                            {{ $event->dependency->name }}
+                                        </span>
+
+                                        @if($event->area)
+                                            <span class="ml-2 px-2 py-1 bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 rounded">
+                                                {{ $event->area->name }}
+                                            </span>
+                                        @endif
+                                    </div>
+                                @endif
                                 
                                 @if($event->description)
                                     <p class="mt-3 text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
@@ -279,6 +307,20 @@
                                         </div>
                                     @endif
                                 </div>
+
+                                @if($event->dependency)
+                                    <div class="flex items-center text-xs mt-2">
+                                        <span class="px-2 py-1 bg-violet-100 dark:bg-violet-900 text-violet-800 dark:text-violet-200 rounded">
+                                            {{ $event->dependency->name }}
+                                        </span>
+
+                                        @if($event->area)
+                                            <span class="ml-2 px-2 py-1 bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 rounded">
+                                                {{ $event->area->name }}
+                                            </span>
+                                        @endif
+                                    </div>
+                                @endif
                                 
                                 @if($event->description)
                                     <p class="mt-3 text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
@@ -365,6 +407,20 @@
                                             </div>
                                         @endif
                                     </div>
+
+                                    @if($event->dependency)
+                                        <div class="flex items-center text-xs mt-2">
+                                            <span class="px-2 py-1 bg-violet-100 dark:bg-violet-900 text-violet-800 dark:text-violet-200 rounded">
+                                                {{ $event->dependency->name }}
+                                            </span>
+
+                                            @if($event->area)
+                                                <span class="ml-2 px-2 py-1 bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 rounded">
+                                                    {{ $event->area->name }}
+                                                </span>
+                                            @endif
+                                        </div>
+                                    @endif
                                     
                                     @if($event->description)
                                         <p class="mt-3 text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
