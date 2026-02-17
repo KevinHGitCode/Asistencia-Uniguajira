@@ -22,53 +22,41 @@
                     $showDependencySelect = auth()->user()->role === 'admin' || (!isset($selectedDependency) && $dependencies->count() > 1);
                 @endphp
 
+                {{-- DEPENDENCY --}}
                 @if($showDependencySelect)
-                    <div>
-                        <flux:select id="dependencySelect" name="dependency_id" :label="__('Dependencia del evento')"
-                            placeholder="Selecciona una dependencia" >
+                    <div class="flex flex-col gap-1">
+                        <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                            Dependencia del evento
+                        </label>
+                        <select id="dependencySelect" name="dependency_id"
+                            class="w-full rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                             @if(auth()->user()->role === 'admin')
                                 <option value="">Ninguna</option>
                             @endif
-
                             @foreach ($dependencies as $dependency)
                                 <option value="{{ $dependency->id }}"
-                                    {{ (old('dependency_id') == $dependency->id) ? 'selected' : '' }}>
+                                    {{ old('dependency_id') == $dependency->id ? 'selected' : '' }}>
                                     {{ $dependency->name }}
                                 </option>
                             @endforeach
-                        </flux:select>
-
-                        <p class="text-sm text-gray-500 mt-1">Si no seleccionas una dependencia y eres administrador, el evento no estará asociado a ninguna.</p>
+                        </select>
+                        <p class="text-sm text-gray-500">Si no seleccionas una dependencia y eres administrador, el evento no estará asociado a ninguna.</p>
                     </div>
-                @else
-                    {{-- Usuario normal con una sola dependencia: poner hidden input --}}
-                    <input type="hidden" name="dependency_id" id="dependencyHidden" value="{{ $selectedDependency }}">
-                @endif
+                    @else
+                        <input type="hidden" name="dependency_id" id="dependencyHidden" value="{{ $selectedDependency }}">
+                    @endif
 
-                {{-- AREA: siempre mostrar el control (pero puede estar disabled)
-                     Si dependency no existe o no tiene areas -> disabled --}}
-                <div>
-                    <flux:select
-                        id="areaSelect"
-                        name="area_id"
-                        :label="__('Área (opcional)')"
-                        :disabled="$areas->isEmpty()"
-                    >
-                        <option value="">
-                            {{ __('Selecciona un área (opcional)') }}
-                        </option>
-
-                        @foreach($areas as $area)
-                            <option value="{{ $area->id }}">
-                                {{ $area->name }}
-                            </option>
-                        @endforeach
-                    </flux:select>
-
-                    <p class="text-sm text-gray-500 mt-1">
-                        El área es opcional; solo se puede seleccionar cuando la dependencia tenga áreas.
-                    </p>
-                </div>
+                    {{-- AREA --}}
+                    <div class="flex flex-col gap-1">
+                        <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                            Área (opcional)
+                        </label>
+                        <select id="areaSelect" name="area_id" disabled
+                            class="w-full rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <option value="">Selecciona un área (opcional)</option>
+                        </select>
+                        <p class="text-sm text-gray-500">El área es opcional; solo se puede seleccionar cuando la dependencia tenga áreas.</p>
+                    </div>
 
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -106,68 +94,49 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
 
-        const dependencySelect = document.querySelector('#dependencySelect select');
-        const dependencyHidden = document.getElementById('dependencyHidden');
-        const areaSelect = document.querySelector('#areaSelect select');
+            const dependencySelect = document.getElementById('dependencySelect');
+            const dependencyHidden = document.getElementById('dependencyHidden');
+            const areaSelect = document.getElementById('areaSelect');
 
-        function clearDisableArea() {
-            areaSelect.innerHTML = '<option value="">Selecciona un área (opcional)</option>';
-            areaSelect.disabled = true;
-        }
-
-        async function loadAreasFor(dependencyId) {
-
-            if (!dependencyId || dependencyId === 'null' || dependencyId === '0') {
-                clearDisableArea();
-                return;
+            function clearDisableArea() {
+                areaSelect.innerHTML = '<option value="">Selecciona un área (opcional)</option>';
+                areaSelect.disabled = true;
             }
 
-            try {
-                const response = await fetch(`/dependencies/${dependencyId}/areas`);
-
-                if (!response.ok) {
+            async function loadAreasFor(dependencyId) {
+                if (!dependencyId || dependencyId === '' || dependencyId === '0') {
                     clearDisableArea();
                     return;
                 }
 
-                const areas = await response.json();
+                try {
+                    const response = await fetch(`/dependencies/${dependencyId}/areas`);
+                    if (!response.ok) { clearDisableArea(); return; }
 
-                if (!areas.length) {
+                    const areas = await response.json();
+                    if (!areas.length) { clearDisableArea(); return; }
+
+                    let options = '<option value="">Selecciona un área (opcional)</option>';
+                    areas.forEach(area => {
+                        options += `<option value="${area.id}">${area.name}</option>`;
+                    });
+
+                    areaSelect.innerHTML = options;
+                    areaSelect.disabled = false;
+
+                } catch (e) {
                     clearDisableArea();
-                    return;
                 }
-
-                let options = '<option value="">Selecciona un área (opcional)</option>';
-
-                areas.forEach(area => {
-                    options += `<option value="${area.id}">${area.name}</option>`;
-                });
-
-                areaSelect.innerHTML = options;
-                areaSelect.disabled = false;
-
-            } catch (error) {
-                clearDisableArea();
             }
-        }
 
-        // Inicial
-        const initialDependency =
-            dependencyHidden?.value ||
-            dependencySelect?.value;
+            // Carga inicial
+            const initialDependency = dependencyHidden?.value || dependencySelect?.value;
+            if (initialDependency) {
+                loadAreasFor(initialDependency);
+            }
 
-        if (initialDependency) {
-            loadAreasFor(initialDependency);
-        } else {
-            clearDisableArea();
-        }
-
-        // Cambio dinámico
-        dependencySelect?.addEventListener('change', function (e) {
-            loadAreasFor(e.target.value);
+            // Cambio dinámico
+            dependencySelect?.addEventListener('change', e => loadAreasFor(e.target.value));
         });
-
-    });
-
     </script>
 </x-layouts.app>

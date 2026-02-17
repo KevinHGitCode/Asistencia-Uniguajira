@@ -41,6 +41,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('events.download');
 });
 
+Route::middleware(['auth'])
+    ->get('/dependencies/{dependency}/areas', [EventController::class, 'areas'])
+    ->name('dependencies.areas');
+
+
 
 /**
  * ================================================================

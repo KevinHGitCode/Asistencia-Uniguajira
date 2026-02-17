@@ -65,6 +65,29 @@
                                 {{ $event->location ?? 'Sin ubicación' }}
                             </span>
                         </div>
+
+                        {{-- Dependencia --}}
+                        <div class="flex items-center justify-between border-b border-gray-300 dark:border-neutral-700 pb-2">
+                            <div class="flex items-center gap-2 text-black dark:text-white">
+                                <flux:icon name="building-office" class="w-5 h-5 text-blue-500" />
+                                <span class="font-medium">Dependencia:</span>
+                            </div>
+                            <span class="font-bold text-black dark:text-white text-right truncate max-w-[60%]">
+                                {{ $event->dependency?->name ?? 'Sin dependencia' }}
+                            </span>
+                        </div>
+
+                        {{-- Área --}}
+                        <div class="flex items-center justify-between border-b border-gray-300 dark:border-neutral-700 pb-2">
+                            <div class="flex items-center gap-2 text-black dark:text-white">
+                                <flux:icon name="squares-2x2" class="w-5 h-5 text-blue-500" />
+                                <span class="font-medium">Área:</span>
+                            </div>
+                            <span class="font-bold text-black dark:text-white text-right truncate max-w-[60%]">
+                                {{ $event->area?->name ?? 'Sin área' }}
+                            </span>
+                        </div>
+
                     
                         {{-- Descripción --}}
                         <div class="flex items-center justify-between">

@@ -199,24 +199,31 @@ class EventController extends Controller
      */
     public function show(string $id)
     {
+        /** @var User $user */
         $user = Auth::user();
-        $event = Event::findOrFail($id);
 
-        // ✅ Si es admin, puede ver cualquier evento
-        if ($user->role === 'admin') {
-            $asistenciasCount = Attendance::where('event_id', $event->id)->count();
-            return view('events.show', compact('event', 'asistenciasCount'));
+        $event = Event::with(['dependency', 'area', 'user'])
+            ->findOrFail($id);
+
+        $asistenciasCount = Attendance::where('event_id', $event->id)->count();
+
+        // ✔ Verificar si pertenece a la dependencia del evento
+        $perteneceDependencia = $user->dependencies()
+            ->where('dependencies.id', $event->dependency_id)
+            ->exists();
+
+        $tienePermiso =
+            $user->role === 'admin' ||
+            $event->user_id === $user->id ||
+            $perteneceDependencia;
+
+        if (!$tienePermiso) {
+            abort(403, 'No tienes permiso para ver este evento.');
         }
 
-        // ✅ Si es creador del evento o pertenece a la misma dependencia
-        if ($event->user_id === $user->id || $event->dependency_id === $user->dependency_id) {
-            $asistenciasCount = Attendance::where('event_id', $event->id)->count();
-            return view('events.show', compact('event', 'asistenciasCount'));
-        }
-
-        // 🚫 Si no tiene permisos
-        abort(403, 'No tienes permiso para ver este evento.');
+        return view('events.show', compact('event', 'asistenciasCount'));
     }
+
 
 
     /**
@@ -247,6 +254,15 @@ class EventController extends Controller
     {
         //
     }
+
+    public function areas(Dependency $dependency)
+    {
+        return $dependency->areas()
+            ->select('id', 'name')
+            ->orderBy('name')
+            ->get();
+    }
+
 
     public function getByDate($date)
     {
