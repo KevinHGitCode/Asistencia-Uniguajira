@@ -25,4 +25,10 @@ class Dependency extends Model
     {
         return $this->hasMany(Event::class);
     }
+
+    public function areas()
+    {
+        return $this->hasMany(Area::class);
+    }
+
 }

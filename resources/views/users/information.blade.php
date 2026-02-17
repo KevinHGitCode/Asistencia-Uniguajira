@@ -74,9 +74,18 @@
                         <span class="font-bold text-base text-black dark:text-gray-200">{{ $user->role }}</span>
                     </li>
                     @if($user->role === 'user')
-                        <li class="py-2 flex justify-between items-center">
-                            <span class="text-sm">Dependencia:</span> 
-                            <span class="font-bold text-base text-gray-900 dark:text-white">{{ $user->dependency->name ?? 'N/A' }}</span>
+                        <li class="py-2">
+                            <span class="text-sm">Dependencias:</span>
+
+                            <div class="mt-2 flex flex-wrap gap-2">
+                                @forelse($user->dependencies as $dependency)
+                                    <span class="px-2 py-1 text-xs bg-violet-100 dark:bg-violet-900 text-violet-800 dark:text-violet-200 rounded">
+                                        {{ $dependency->name }}
+                                    </span>
+                                @empty
+                                    <span class="text-sm text-gray-500">N/A</span>
+                                @endforelse
+                            </div>
                         </li>
                     @endif
                 </ul>
@@ -184,89 +193,62 @@
     </div>
 
     {{-- Contenedor de eventos de la dependencia --}}
-    @if($user->dependency)
+    @foreach($dependencyEvents as $group)
+
         <div class="mt-6 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-6 shadow-sm">
+            
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
-                    <svg class="inline-block w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                    </svg>
-                    Eventos de {{ $user->dependency->name }}
+                    Eventos de {{ $group['dependency']->name }}
                 </h2>
+
                 <span class="px-3 py-1 text-sm font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full">
-                    {{ $dependencyEvents->count() }} {{ $dependencyEvents->count() === 1 ? 'evento' : 'eventos' }}
+                    {{ $group['events']->total() }}
+                    {{ $group['events']->total() === 1 ? 'evento' : 'eventos' }}
                 </span>
             </div>
 
-            @if ($dependencyEvents->total()==0)
-                <div class="text-center py-8 text-gray-500 dark:text-gray-400">
-                    <svg class="mx-auto h-12 w-12 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <p class="text-lg font-medium">No hay eventos de la dependencia</p>
-                    <p class="text-sm mt-1">Otros usuarios de {{ $user->dependency->name }} aún no han creado eventos</p>
-                </div>
-            @else
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            @if ($group['events']->total() === 0)
 
-                    @foreach ($dependencyEvents as $event)
+                <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+                    No hay eventos en esta dependencia.
+                </div>
+
+            @else
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    @foreach ($group['events'] as $event)
+
                         <a href="{{ route('events.show', $event->id) }}"
-                            class="block p-4 rounded-lg border border-neutral-200 dark:border-neutral-600 hover:border-green-500 dark:hover:border-green-400 hover:shadow-lg transition-all duration-200 bg-white dark:bg-neutral-900">
+                        class="block p-4 rounded-lg border border-neutral-200 dark:border-neutral-600 hover:border-green-500 dark:hover:border-green-400 hover:shadow-lg transition-all duration-200 bg-white dark:bg-neutral-900">
                             
-                            <div class="flex items-start justify-between mb-2">
-                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white line-clamp-1">
-                                    {{ $event->title }}
-                                </h3>
-                                <span class="ml-2 flex-shrink-0 px-2 py-1 text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded">
-                                    Dependencia
-                                </span>
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                                {{ $event->title }}
+                            </h3>
+
+                            <div class="text-sm text-gray-600 dark:text-gray-300">
+                                {{ \Carbon\Carbon::parse($event->date)->format('d/m/Y') }}
                             </div>
-                            
-                            <div class="mb-2 text-xs text-gray-500 dark:text-gray-400">
+
+                            <div class="text-xs text-gray-500 dark:text-gray-400 mt-2">
                                 Creado por: {{ $event->user->name }}
                             </div>
-                            
-                            <div class="space-y-2 text-sm text-gray-600 dark:text-gray-300">
-                                <div class="flex items-center">
-                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                    </svg>
-                                    <span>{{ \Carbon\Carbon::parse($event->date)->format('d/m/Y') }}</span>
-                                </div>
-                                
-                                @if($event->start_time)
-                                    <div class="flex items-center">
-                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                        <span>{{ \Carbon\Carbon::parse($event->start_time)->format('h:i A') }}</span>
-                                    </div>
-                                @endif
-                                
-                                @if($event->location)
-                                    <div class="flex items-center">
-                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        </svg>
-                                        <span class="line-clamp-1">{{ $event->location }}</span>
-                                    </div>
-                                @endif
-                            </div>
-                            
-                            @if($event->description)
-                                <p class="mt-3 text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
-                                    {{ $event->description }}
-                                </p>
-                            @endif
+
                         </a>
+
                     @endforeach
                 </div>
-                {{ $dependencyEvents->links() }}
+
+                <div class="mt-4">
+                    {{ $group['events']->links() }}
+                </div>
 
             @endif
+
         </div>
-    @endif
+
+    @endforeach
+
 
     <div>
         <div class="flex justify-end mt-8">

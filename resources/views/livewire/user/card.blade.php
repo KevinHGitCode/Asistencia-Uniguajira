@@ -27,9 +27,17 @@
 
                 {{-- Dependencia: solo para usuarios normales --}}
                 @if(isset($user->role) && $user->role === 'user')
-                    <flux:badge color="violet">
-                        {{ $user->dependency->name ?? __('Not assigned') }}
-                    </flux:badge>
+                    @if($user->dependencies->isNotEmpty())
+                        @foreach ($user->dependencies as $dependency)
+                            <flux:badge color="violet">
+                                {{ $dependency->name }}
+                            </flux:badge>
+                        @endforeach
+                    @else
+                        <flux:badge color="gray">
+                            {{ __('Not assigned') }}
+                        </flux:badge>
+                    @endif
                 @endif
             </div>
 
@@ -40,14 +48,10 @@
 
             {{-- Contador de eventos --}}
             <p class="text-xs text-blue-600 dark:text-blue-400 mt-2">
-                @php
-                    $count = $user->events->count();
-                @endphp
-
-                @if($count === 1)
-                    {{ __(':count event created', ['count' => $count]) }}
+                @if($user->events_count === 1)
+                    {{ __(':count event created', ['count' => $user->events_count]) }}
                 @else
-                    {{ __(':count events created', ['count' => $count]) }}
+                    {{ __(':count events created', ['count' => $user->events_count]) }}
                 @endif
             </p>
         </div>

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Dependency;
+use App\Models\Event;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
@@ -17,7 +18,11 @@ class UserController extends Controller
     public function index()
     {
         // obtener usuarios con su dependencia relacionada
-        $users = User::with('dependency')->get();
+        $users = User::with('dependencies')
+                    ->withCount(['dependencies', 'events'])
+                    ->get();
+
+
         return view('users.users', compact('users'));
     }
 
@@ -81,32 +86,40 @@ class UserController extends Controller
      */
     public function information(string $id)
     {
-        // Cargar la dependencia del usuario
-        $user = User::with('dependency')->findOrFail($id);
+        $user = User::with(['dependencies', 'events'])
+            ->findOrFail($id);
 
-        // Obtener eventos del usuario
+        // Eventos propios
         $events = $user->events()
+            ->orderBy('date', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->paginate(6);
+
+        // Eventos agrupados por dependencia
+        $dependencyEvents = [];
+
+        foreach ($user->dependencies as $dependency) {
+            $dependencyEvents[$dependency->id] = [
+                'dependency' => $dependency,
+                'events' => Event::where('dependency_id', $dependency->id)
+                    ->where('user_id', '!=', $user->id)
                     ->orderBy('date', 'desc')
                     ->orderBy('created_at', 'desc')
-                    ->paginate(6);
-
-        // Obtener eventos de la dependencia (excluyendo los del usuario)
-        $dependencyEvents = collect();
-        if ($user->dependency) {
-            $dependencyEvents = $user->dependency->events()
-                                ->where('user_id', '!=', $user->id)
-                                ->orderBy('date', 'desc')
-                                ->orderBy('created_at', 'desc')
-                                ->paginate(6);
-        }else{
-            $dependencyevents= new \Illuminate\Pagination\LengthAwarePaginator([], 0, 6); 
+                    ->paginate(6, ['*'], 'page_'.$dependency->id)
+            ];
         }
 
-        // Calcular estadísticas
-        $eventsCount = $events->count();
+        // Estadísticas
+        $eventsCount = $user->events->count();
         $now = now();
-        $upcomingEvents = $events->where('date', '>=', $now->toDateString())->count();
-        $pastEvents = $events->where('date', '<', $now->toDateString())->count();
+
+        $upcomingEvents = $user->events
+            ->where('date', '>=', $now->toDateString())
+            ->count();
+
+        $pastEvents = $user->events
+            ->where('date', '<', $now->toDateString())
+            ->count();
 
         return view('users.information', compact(
             'user',
@@ -117,6 +130,7 @@ class UserController extends Controller
             'pastEvents'
         ));
     }
+
 
     /**
      * Update the specified resource in storage.
