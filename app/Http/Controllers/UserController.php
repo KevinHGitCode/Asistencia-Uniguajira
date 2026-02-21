@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Dependency;
+use App\Models\Event;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
@@ -17,7 +18,11 @@ class UserController extends Controller
     public function index()
     {
         // obtener usuarios con su dependencia relacionada
-        $users = User::with('dependency')->get();
+        $users = User::with('dependencies')
+                    ->withCount(['dependencies', 'events'])
+                    ->get();
+
+
         return view('users.users', compact('users'));
     }
 
@@ -81,30 +86,44 @@ class UserController extends Controller
      */
     public function information(string $id)
     {
-        // Cargar la dependencia del usuario
-        $user = User::with('dependency')->findOrFail($id);
+        $user = User::with(['dependencies'])
+            ->findOrFail($id);
 
-        // Obtener eventos del usuario
+        // Eventos propios (con dependency y area)
         $events = $user->events()
+            ->with(['dependency', 'area', 'user'])
+            ->orderBy('date', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->paginate(6);
+
+        // Eventos agrupados por dependencia
+        $dependencyEvents = [];
+
+        foreach ($user->dependencies as $dependency) {
+
+            $dependencyEvents[$dependency->id] = [
+                'dependency' => $dependency,
+                'events' => Event::with(['dependency', 'area', 'user'])
+                    ->where('dependency_id', $dependency->id)
+                    ->where('user_id', '!=', $user->id)
                     ->orderBy('date', 'desc')
                     ->orderBy('created_at', 'desc')
-                    ->get();
-
-        // Obtener eventos de la dependencia (excluyendo los del usuario)
-        $dependencyEvents = collect();
-        if ($user->dependency) {
-            $dependencyEvents = $user->dependency->events()
-                                ->where('user_id', '!=', $user->id)
-                                ->orderBy('date', 'desc')
-                                ->orderBy('created_at', 'desc')
-                                ->get();
+                    ->paginate(6, ['*'], 'page_'.$dependency->id)
+            ];
         }
 
-        // Calcular estadísticas
-        $eventsCount = $events->count();
-        $now = now();
-        $upcomingEvents = $events->where('date', '>=', $now->toDateString())->count();
-        $pastEvents = $events->where('date', '<', $now->toDateString())->count();
+        // Estadísticas (mejor usar queries en vez de colección)
+        $eventsCount = $user->events()->count();
+
+        $now = now()->toDateString();
+
+        $upcomingEvents = $user->events()
+            ->where('date', '>=', $now)
+            ->count();
+
+        $pastEvents = $user->events()
+            ->where('date', '<', $now)
+            ->count();
 
         return view('users.information', compact(
             'user',
@@ -115,6 +134,7 @@ class UserController extends Controller
             'pastEvents'
         ));
     }
+
 
     /**
      * Update the specified resource in storage.

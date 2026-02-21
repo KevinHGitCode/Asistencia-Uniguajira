@@ -36,6 +36,11 @@
                         wire:navigate>{{ __('Users') }}</flux:navlist.item>
                 @endif
 
+                @if(auth()->user()->role === 'admin')
+                    <flux:navlist.item icon="cog" :href="route('administracion.index')" class="hover:scale-103 transition-transform" :current="request()->routeIs('administracion.index')"
+                        wire:navigate>{{ __('Administration') }}</flux:navlist.item>
+                @endif
+
             </flux:navlist.group>
         </flux:navlist>
 

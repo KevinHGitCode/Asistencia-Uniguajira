@@ -14,14 +14,26 @@ return new class extends Migration {
             $table->date('date');
             $table->time('start_time')->nullable();
             $table->time('end_time')->nullable();
-            $table->string('location')->nullable(); // Nueva columna para la ubicación
-            $table->text('link'); // Nueva columna para el enlace
+            $table->string('location')->nullable();
+            $table->text('link');
+
+            // Usuario dueño del evento
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
+
+            // Dependencia del evento (siempre debe existir)
             $table->foreignId('dependency_id')
                 ->nullable()
                 ->constrained('dependencies')
                 ->onUpdate('cascade')
                 ->onDelete('set null');
+
+            // Área opcional (solo cuando la dependencia tiene áreas)
+            $table->foreignId('area_id')
+                ->nullable()
+                ->constrained('areas')
+                ->onUpdate('cascade')
+                ->onDelete('set null');
+
             $table->timestamps();
         });
     }

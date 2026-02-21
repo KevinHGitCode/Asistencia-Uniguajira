@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\Dependency;
 use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -14,9 +13,10 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-
+        // Cargar dependencias primero
         $this->call(DependenciesSeeder::class);
 
+        // Admins sin dependencia
         User::factory()->create([
             'name' => 'carlos',
             'email' => 'carlos@example.com',
@@ -39,14 +39,6 @@ class DatabaseSeeder extends Seeder
         ]);
 
         User::factory()->create([
-            'name' => 'kevin',
-            'email' => 'kevin.user@example.com',
-            'password' => bcrypt('12345678'),
-            'role' => 'user',
-            'dependency_id' => Dependency::where('name', 'Bienestar Universitario')->first()->id,
-        ]);
-
-        User::factory()->create([
             'name' => 'daniel',
             'email' => 'daniel@example.com',
             'password' => bcrypt('12345678'),
@@ -60,14 +52,33 @@ class DatabaseSeeder extends Seeder
             'role' => 'admin',
         ]);
 
-        User::factory()->create([
+        // Usuarios con dependencia (MANY TO MANY)
+        $kevinUser = User::factory()->create([
+            'name' => 'kevin User',
+            'email' => 'kevin.user@example.com',
+            'password' => bcrypt('12345678'),
+            'role' => 'user',
+        ]);
+
+        $kevinUser->dependencies()->sync([
+            Dependency::where('name', 'Bienestar Universitario')->first()->id,
+        ]);
+
+        $user = User::factory()->create([
             'name' => 'user',
             'email' => 'user@example.com',
             'password' => bcrypt('12345678'),
             'role' => 'user',
-            'dependency_id' => Dependency::where('name', 'Gestión Documental')->first()->id,
         ]);
 
+        $user->dependencies()->sync([
+            Dependency::where('name', 'Gestión Documental')->first()->id,
+            Dependency::where('name', 'Gestión Administrativa y Financiera')->first()->id,
+        ]);
+
+
+        // Otros seeders
+        $this->call(AreasSeeder::class);
         $this->call(EventSeeder::class);
         $this->call(ProgramSeeder::class);
         $this->call(ParticipantSeeder::class);

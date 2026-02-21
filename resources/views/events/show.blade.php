@@ -65,6 +65,29 @@
                                 {{ $event->location ?? 'Sin ubicación' }}
                             </span>
                         </div>
+
+                        {{-- Dependencia --}}
+                        <div class="flex items-center justify-between border-b border-gray-300 dark:border-neutral-700 pb-2">
+                            <div class="flex items-center gap-2 text-black dark:text-white">
+                                <flux:icon name="building-office" class="w-5 h-5 text-blue-500" />
+                                <span class="font-medium">Dependencia:</span>
+                            </div>
+                            <span class="font-bold text-black dark:text-white text-right truncate max-w-[60%]">
+                                {{ $event->dependency?->name ?? 'Sin dependencia' }}
+                            </span>
+                        </div>
+
+                        {{-- Área --}}
+                        <div class="flex items-center justify-between border-b border-gray-300 dark:border-neutral-700 pb-2">
+                            <div class="flex items-center gap-2 text-black dark:text-white">
+                                <flux:icon name="squares-2x2" class="w-5 h-5 text-blue-500" />
+                                <span class="font-medium">Área:</span>
+                            </div>
+                            <span class="font-bold text-black dark:text-white text-right truncate max-w-[60%]">
+                                {{ $event->area?->name ?? 'Sin área' }}
+                            </span>
+                        </div>
+
                     
                         {{-- Descripción --}}
                         <div class="flex items-center justify-between">
@@ -100,7 +123,7 @@
                             </div>  
                         </div>
 
-                        <div class="flex items-center justify-center">
+                        <div wire:ignore class="flex items-center justify-center">
                             <button
                                 id="copy-link-button"
                                 data-link="{{ route('events.access', $event->link) }}"
@@ -108,6 +131,7 @@
                                 🔗 Copiar Enlace
                             </button>
                         </div>
+
 
                     @else
                         {{-- Mostrar mensaje cuando el evento ha terminado --}}
@@ -214,31 +238,50 @@
     {{-- Script para copiar el enlace al portapapeles --}}
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const copyButton = document.getElementById('copy-link-button');
-            
-            if (copyButton) {
-                copyButton.addEventListener('click', function() {
-                    const link = this.getAttribute('data-link');
-                    
-                    // Copiar al portapapeles
+            const button = document.getElementById('copy-link-button');
+            if (!button) return;
+
+            button.addEventListener('click', function() {
+                const link = button.getAttribute('data-link');
+                
+                if (navigator.clipboard && window.isSecureContext) {
                     navigator.clipboard.writeText(link).then(() => {
-                        // Cambiar el texto del botón temporalmente
-                        const originalText = this.innerHTML;
-                        this.innerHTML = '✓ Copiado';
-                        this.classList.add('bg-green-100', 'dark:bg-green-900', 'border-green-400');
-                        
-                        // Restaurar después de 2 segundos
-                        setTimeout(() => {
-                            this.innerHTML = originalText;
-                            this.classList.remove('bg-green-100', 'dark:bg-green-900', 'border-green-400');
-                        }, 2000);
-                    }).catch(err => {
-                        console.error('Error al copiar:', err);
-                        alert('No se pudo copiar el enlace');
+                        showCopied(button);
+                    }).catch(() => {
+                        fallbackCopy(link, button);
                     });
-                });
-            }
+                } else {
+                    fallbackCopy(link, button);
+                }
+            });
         });
+
+        function fallbackCopy(text, button) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showCopied(button);
+            } catch (err) {
+                alert('No se pudo copiar: ' + text);
+            }
+            document.body.removeChild(textarea);
+        }
+
+        function showCopied(button) {
+            const originalText = button.innerHTML;
+            button.innerHTML = '✓ Copiado';
+            button.classList.add('bg-green-100', 'dark:bg-green-900', 'border-green-400');
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.classList.remove('bg-green-100', 'dark:bg-green-900', 'border-green-400');
+            }, 2000);
+        }
     </script>
+
     
 </x-layouts.app>
