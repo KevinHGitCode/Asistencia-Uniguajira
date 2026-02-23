@@ -34,23 +34,23 @@
         <div class="space-y-6">
             
             @php
-                // Separar eventos propios por estado
                 $now = now();
+                
                 $myEventsInProgress = $myEvents->filter(function($event) use ($now) {
                     $startDateTime = \Carbon\Carbon::parse($event->date . ' ' . $event->start_time);
                     $endDateTime = \Carbon\Carbon::parse($event->date . ' ' . $event->end_time);
                     return $now->greaterThanOrEqualTo($startDateTime) && $now->lessThanOrEqualTo($endDateTime);
-                });
-                
+                })->sortBy(fn($e) => $e->date . ' ' . $e->start_time);
+
                 $myEventsUpcoming = $myEvents->filter(function($event) use ($now) {
                     $startDateTime = \Carbon\Carbon::parse($event->date . ' ' . $event->start_time);
                     return $now->lessThan($startDateTime);
-                });
-                
+                })->sortBy(fn($e) => $e->date . ' ' . $e->start_time);
+
                 $myEventsFinished = $myEvents->filter(function($event) use ($now) {
                     $endDateTime = \Carbon\Carbon::parse($event->date . ' ' . $event->end_time);
                     return $now->greaterThan($endDateTime);
-                });
+                })->sortByDesc(fn($e) => $e->date . ' ' . $e->end_time);
             @endphp
     
     {{-- *
@@ -59,7 +59,7 @@
     * =============================================
     * --}}
     
-            <div class="relative flex w-full flex-1 flex-col gap-4 p-6 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800">
+            <div class="relative flex w-full flex-1 flex-col gap-4 p-6 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-zinc-50 dark:bg-zinc-900">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
                         <svg class="inline-block w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -84,19 +84,19 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         @foreach($myEventsInProgress as $event)
                             <a href="{{ route('events.show', $event->id) }}" 
-                               class="block p-4 rounded-2xl border border-neutral-200 dark:border-neutral-600 hover:border-[#e2a542] hover:shadow-lg transition-all duration-200 bg-white dark:bg-neutral-900">
+                               class="block p-4 rounded-2xl border border-neutral-200 dark:border-neutral-600 hover:border-[#e2a542] hover:shadow-lg transition-all duration-200 bg-white dark:bg-zinc-800">
                                 <div class="flex items-start justify-between mb-2">
                                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white line-clamp-1">
                                         {{ $event->title }}
                                     </h3>
-                                    <div class="ml-2 flex flex-col gap-1">
+                                    {{-- <div class="ml-2 flex flex-col gap-1">
                                         <span class="flex-shrink-0 px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded">
                                             Propio
                                         </span>
                                         <span class="flex-shrink-0 px-2 py-1 text-xs font-medium bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 rounded">
                                             En proceso
                                         </span>
-                                    </div>
+                                    </div> --}}
                                 </div>
                                 
                                 <div class="space-y-2 text-sm text-gray-600 dark:text-gray-300">
@@ -158,7 +158,7 @@
     * =============================================
     * --}}
     
-            <div class="relative flex w-full flex-1 flex-col gap-4 p-6 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800">
+            <div class="relative flex w-full flex-1 flex-col gap-4 p-6 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-zinc-50 dark:bg-zinc-900">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
                         <svg class="inline-block w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -183,19 +183,19 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         @foreach($myEventsUpcoming as $event)
                             <a href="{{ route('events.show', $event->id) }}" 
-                               class="block p-4 rounded-2xl border border-neutral-200 dark:border-neutral-600 hover:border-[#e2a542] hover:shadow-lg transition-all duration-200 bg-white dark:bg-neutral-900">
+                               class="block p-4 rounded-2xl border border-neutral-200 dark:border-neutral-600 hover:border-[#e2a542] hover:shadow-lg transition-all duration-200 bg-white dark:bg-zinc-800">
                                 <div class="flex items-start justify-between mb-2">
                                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white line-clamp-1">
                                         {{ $event->title }}
                                     </h3>
-                                    <div class="ml-2 flex flex-col gap-1">
+                                    {{-- <div class="ml-2 flex flex-col gap-1">
                                         <span class="flex-shrink-0 px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded">
                                             Propio
                                         </span>
                                         <span class="flex-shrink-0 px-2 py-1 text-xs font-medium bg-cyan-100 dark:bg-cyan-900 text-cyan-800 dark:text-cyan-200 rounded">
                                             Próximo
                                         </span>
-                                    </div>
+                                    </div> --}}
                                 </div>
                                 
                                 <div class="space-y-2 text-sm text-gray-600 dark:text-gray-300">
@@ -257,7 +257,7 @@
     * =============================================
     * --}}
     
-            <div class="relative flex w-full flex-1 flex-col gap-4 p-6 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800">
+            <div class="relative flex w-full flex-1 flex-col gap-4 p-6 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-zinc-50 dark:bg-zinc-900">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
                         <svg class="inline-block w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -282,19 +282,19 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         @foreach($myEventsFinished as $event)
                             <a href="{{ route('events.show', $event->id) }}" 
-                               class="block p-4 rounded-2xl border border-neutral-200 dark:border-neutral-600 hover:border-[#e2a542] hover:shadow-lg transition-all duration-200 bg-white dark:bg-neutral-900">
+                               class="block p-4 rounded-2xl border border-neutral-200 dark:border-neutral-600 hover:border-[#e2a542] hover:shadow-lg transition-all duration-200 bg-white dark:bg-zinc-800">
                                 <div class="flex items-start justify-between mb-2">
                                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white line-clamp-1">
                                         {{ $event->title }}
                                     </h3>
-                                    <div class="ml-2 flex flex-col gap-1">
+                                    {{-- <div class="ml-2 flex flex-col gap-1">
                                         <span class="flex-shrink-0 px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded">
                                             Propio
                                         </span>
                                         <span class="flex-shrink-0 px-2 py-1 text-xs font-medium bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 rounded">
                                             Finalizado
                                         </span>
-                                    </div>
+                                    </div> --}}
                                 </div>
                                 
                                 <div class="space-y-2 text-sm text-gray-600 dark:text-gray-300">
@@ -357,7 +357,7 @@
     * --}}
     
             @if(Auth::user()->dependencies()->exists())
-                <div class="relative flex w-full flex-1 flex-col gap-4 p-6 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800">
+                <div class="relative flex w-full flex-1 flex-col gap-4 p-6 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-zinc-50 dark:bg-zinc-900">
                     <div class="flex items-center justify-between mb-4">
                         <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
                             <svg class="inline-block w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -380,9 +380,9 @@
                         </div>
                     @else
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            @foreach($dependencyEvents as $event)
+                            @foreach($dependencyEvents->sortByDesc(fn($e) => $e->date . ' ' . $e->start_time) as $event)
                                 <a href="{{ route('events.show', $event->id) }}"
-                                    class="block p-4 rounded-2xl border border-neutral-200 dark:border-neutral-600 hover:border-[#e2a542] hover:shadow-lg transition-all duration-200 bg-white dark:bg-neutral-900">
+                                    class="block p-4 rounded-2xl border border-neutral-200 dark:border-neutral-600 hover:border-[#e2a542] hover:shadow-lg transition-all duration-200 bg-white dark:bg-zinc-800">
                                     
                                     <div class="flex items-start justify-between mb-2">
                                         <h3 class="text-lg font-semibold text-gray-900 dark:text-white line-clamp-1">

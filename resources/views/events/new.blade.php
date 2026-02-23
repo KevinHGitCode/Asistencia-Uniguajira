@@ -2,7 +2,7 @@
     <div>
         <h1 class="text-2xl font-bold mb-4"> Nuevo evento </h1>
 
-        <div class="border border-zinc-500 rounded-lg p-6 dark:bg-zinc-900">
+        <div class="border border-zinc-500 rounded-lg p-6 bg-zinc-50 dark:bg-zinc-900">
             <form id="event-form" action="{{ route('events.new.store') }}" method="POST" class="flex flex-col gap-6">
                 @csrf
 
@@ -22,35 +22,19 @@
 
                 {{-- CASO 1 y 2: Admin o usuario con varias dependencias → mostrar select --}}
                 @if($showDependencySelect)
-                    <div class="flex flex-col gap-1">
-                        <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                            Dependencia del evento
-                        </label>
-                        <select id="dependencySelect" name="dependency_id"
-                            class="w-full rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <flux:select id="dependencySelect" name="dependency_id" label="Dependencia del evento" placeholder="{{ $isAdmin ? '— Ninguna —' : 'Selecciona una dependencia' }}">
+                        @foreach ($dependencies as $dependency)
+                            <flux:select.option value="{{ $dependency->id }}" :selected="old('dependency_id') == $dependency->id">
+                                {{ $dependency->name }}
+                            </flux:select.option>
+                        @endforeach
+                    </flux:select>
 
-                            @if($isAdmin)
-                                {{-- Admin: puede dejar sin dependencia --}}
-                                <option value="">— Ninguna —</option>
-                            @else
-                                {{-- Usuario con varias: forzar a elegir --}}
-                                <option value="">Selecciona una dependencia</option>
-                            @endif
-
-                            @foreach ($dependencies as $dependency)
-                                <option value="{{ $dependency->id }}"
-                                    {{ old('dependency_id') == $dependency->id ? 'selected' : '' }}>
-                                    {{ $dependency->name }}
-                                </option>
-                            @endforeach
-                        </select>
-
-                        @if($isAdmin)
-                            <p class="text-sm text-gray-500 mt-1">
-                                Si no seleccionas una dependencia, el evento no estará asociado a ninguna.
-                            </p>
-                        @endif
-                    </div>
+                    @if($isAdmin)
+                        <p class="-mt-4 text-sm text-gray-500">
+                            Si no seleccionas una dependencia, el evento no estará asociado a ninguna.
+                        </p>
+                    @endif
 
                 {{-- CASO 3: Usuario con una sola dependencia → campo oculto --}}
                 @else
@@ -59,32 +43,18 @@
                 @endif
 
                 {{-- ÁREA --}}
-                {{-- 
-                    Caso 1 y 2: disabled hasta que se elija dependencia (JS lo habilita)
-                    Caso 3:     se carga desde el controlador, habilitado si hay áreas
-                --}}
-                <div class="flex flex-col gap-1">
-                    <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                        Área <span class="text-gray-400">(opcional)</span>
-                    </label>
-                    <select id="areaSelect" name="area_id"
-                        {{ ($showDependencySelect || $areas->isEmpty()) ? 'disabled' : '' }}
-                        class="w-full rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed">
-
-                        <option value="">Selecciona un área (opcional)</option>
-
-                        {{-- Caso 3: áreas precargadas desde el controlador --}}
-                        @foreach($areas as $area)
-                            <option value="{{ $area->id }}"
-                                {{ old('area_id') == $area->id ? 'selected' : '' }}>
-                                {{ $area->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                    <p class="text-sm text-gray-500 mt-1">
-                        El área es opcional; solo se puede seleccionar cuando la dependencia tenga áreas.
-                    </p>
-                </div>
+                <flux:select id="areaSelect" name="area_id" label="Área (opcional)"
+                    placeholder="Selecciona un área (opcional)"
+                    :disabled="$showDependencySelect || $areas->isEmpty()">
+                    @foreach($areas as $area)
+                        <flux:select.option value="{{ $area->id }}" :selected="old('area_id') == $area->id">
+                            {{ $area->name }}
+                        </flux:select.option>
+                    @endforeach
+                </flux:select>
+                <p class="-mt-4 text-sm text-gray-500">
+                    El área es opcional; solo se puede seleccionar cuando la dependencia tenga áreas.
+                </p>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <flux:input name="date" :label="__('Fecha del evento')" type="date" required :value="old('date')" />
@@ -108,7 +78,7 @@
                     </flux:button>
 
                     @if (session()->has('success'))
-                        <div class="bg-green-300 border border-green-400 text-green-700 px-4 py-3 rounded">
+                        <div class="bg-green-900 text-white px-4 py-3 rounded">
                             <p>{{ session('success') }}</p>
                         </div>
                     @endif
