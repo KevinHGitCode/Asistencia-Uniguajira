@@ -36,7 +36,7 @@ export function openModal(fecha, eventos) {
             const dataAttr = isClickable ? `data-event-id="${e.id}"` : '';
             
             return `
-                <div class="p-4 mb-4 rounded-xl bg-zinc-50 dark:bg-zinc-800 shadow-lg ${clickableClass}" ${dataAttr}>
+                <div class="p-4 mb-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800 shadow-lg ${clickableClass}" ${dataAttr}>
                     
                     <!-- Encabezado: título y botón "Ver" -->
                     <div class="flex justify-between items-start mb-1">

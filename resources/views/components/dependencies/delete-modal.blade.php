@@ -17,7 +17,7 @@
              x-transition:leave="transition ease-in duration-150"
              x-transition:leave-start="opacity-100 scale-100"
              x-transition:leave-end="opacity-0 scale-95"
-             class="relative w-full max-w-sm bg-white dark:bg-zinc-900 rounded-xl shadow-xl border border-neutral-200 dark:border-zinc-700 z-10 p-6 flex flex-col gap-4">
+             class="relative w-full max-w-sm bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-neutral-200 dark:border-zinc-700 z-10 p-6 flex flex-col gap-4">
 
             <div class="flex items-center justify-center w-12 h-12 rounded-full bg-red-50 dark:bg-red-900/30 mx-auto">
                 <flux:icon.exclamation-triangle class="size-6 text-red-500" />

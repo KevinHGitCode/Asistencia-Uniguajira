@@ -1,4 +1,4 @@
-<div class="rounded-2xl border border-zinc-200 bg-white p-5 shadow-md hover:shadow-lg transition-shadow dark:border-zinc-700 dark:bg-zinc-800">
+<div class="block p-5 rounded-2xl border border-neutral-200 dark:border-neutral-600 hover:border-[#e2a542] hover:shadow-lg transition-all duration-200 bg-white dark:bg-zinc-800">
 
     <div class="flex items-center gap-5">
         {{-- Avatar --}}
@@ -20,7 +20,7 @@
 
                 {{-- Rol --}}
                 @if(isset($user->role))
-                    <flux:badge color="{{ $user->role === 'admin' ? 'lime' : 'blue' }}">
+                    <flux:badge class="!bg-[#e2a542] !text-white" :color="null">
                         {{ __(ucfirst($user->role)) }}
                     </flux:badge>
                 @endif
@@ -29,7 +29,7 @@
                 @if(isset($user->role) && $user->role === 'user')
                     @if($user->dependencies->isNotEmpty())
                         @foreach ($user->dependencies as $dependency)
-                            <flux:badge color="violet">
+                            <flux:badge class="!bg-[#cc5e50] !text-white" :color="null">
                                 {{ $dependency->name }}
                             </flux:badge>
                         @endforeach
@@ -64,7 +64,7 @@
                     variant="ghost"
                     size="sm"
                     title="{{ __('View information') }}"
-                    class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                    class="hover:text-[#e2a542] transition-colors hover:cursor-pointer">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />

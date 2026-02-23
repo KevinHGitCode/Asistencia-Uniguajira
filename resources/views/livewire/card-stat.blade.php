@@ -5,7 +5,7 @@
         </h3>
         
         @isset($icon)
-            <div class="p-2 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 shrink-0">
+            <div class="p-2 rounded-2xl bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 shrink-0">
                 <div class="text-blue-600 dark:text-blue-400">
                     {{ $icon }}
                 </div>

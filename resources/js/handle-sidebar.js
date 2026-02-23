@@ -8,17 +8,33 @@ function handleRouteChange(routeName) {
     console.log(`👉 Navegando a: ${routeName}`);
 
     switch (routeName) {
+        // case 'dashboard':
+        //     if (window._dashboardCalendarTimeout) {
+        //         clearTimeout(window._dashboardCalendarTimeout);
+        //     }
+        //     window._dashboardCalendarTimeout = setTimeout(() => {
+        //         if (typeof window.paintCalendar !== 'function') {
+        //             import('./calendar/paint.js').then((module) => module.paintCalendar());
+        //         } else {
+        //             window.paintCalendar();
+        //         }
+        //     }, 100);
+        //     break;
+
         case 'dashboard':
             if (window._dashboardCalendarTimeout) {
                 clearTimeout(window._dashboardCalendarTimeout);
             }
-            window._dashboardCalendarTimeout = setTimeout(() => {
-                if (typeof window.paintCalendar !== 'function') {
-                    import('./calendar/paint.js').then((module) => module.paintCalendar());
-                } else {
-                    window.paintCalendar();
-                }
+
+            window._dashboardCalendarTimeout = setTimeout(async () => {
+                const { paintCalendar } = await import('./calendar/paint.js');
+                const { initCalendarObservers } = await import('./calendar/observers.js');
+
+                const isDarkTheme = document.documentElement.classList.contains('dark');
+                paintCalendar(isDarkTheme);
+                initCalendarObservers();
             }, 100);
+
             break;
 
         case 'tipos':

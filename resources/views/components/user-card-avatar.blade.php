@@ -1,4 +1,4 @@
-<div class="relative overflow-hidden rounded-xl border border-gray-700 p-6 hover:bg-gray-750 transition-colors">
+<div class="relative overflow-hidden rounded-2xl border border-gray-700 p-6 hover:bg-gray-750 transition-colors">
     <div class="flex items-center gap-4">
         <!-- Avatar usando el componente Livewire -->
         @livewire('user.avatar', [

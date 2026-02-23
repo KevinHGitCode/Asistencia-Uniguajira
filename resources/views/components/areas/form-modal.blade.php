@@ -17,7 +17,7 @@
              x-transition:leave="transition ease-in duration-150"
              x-transition:leave-start="opacity-100 scale-100"
              x-transition:leave-end="opacity-0 scale-95"
-             class="relative w-full max-w-md bg-white dark:bg-zinc-900 rounded-xl shadow-xl border border-neutral-200 dark:border-zinc-700 z-10">
+             class="relative w-full max-w-md bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-neutral-200 dark:border-zinc-700 z-10">
 
             <div class="flex items-center justify-between px-6 py-4 border-b border-neutral-200 dark:border-zinc-700">
                 <h3 class="text-base font-semibold text-gray-900 dark:text-white"

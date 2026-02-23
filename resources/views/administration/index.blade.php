@@ -17,7 +17,7 @@
 
             {{-- Card: Dependencias --}}
             <a href="{{ route('dependencies.index') }}"
-               class="group relative flex flex-col gap-4 p-5 sm:p-6 rounded-xl border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 overflow-hidden">
+               class="group relative flex flex-col gap-4 p-5 sm:p-6 rounded-2xl border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 overflow-hidden">
 
                 {{-- Ícono --}}
                 <div class="flex items-center justify-between">
@@ -43,7 +43,7 @@
 
             {{-- Card: Áreas --}}
             <a href="{{ route('areas.index') }}"
-               class="group relative flex flex-col gap-4 p-5 sm:p-6 rounded-xl border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 overflow-hidden">
+               class="group relative flex flex-col gap-4 p-5 sm:p-6 rounded-2xl border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 overflow-hidden">
 
                 <div class="flex items-center justify-between">
                     <div class="flex items-center justify-center w-12 h-12 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform duration-200">
@@ -65,7 +65,7 @@
             </a>
 
             {{-- Card placeholder: Próximamente --}}
-            <div class="relative flex flex-col gap-4 p-5 sm:p-6 rounded-xl border border-dashed border-neutral-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900/50 opacity-60 cursor-not-allowed">
+            <div class="relative flex flex-col gap-4 p-5 sm:p-6 rounded-2xl border border-dashed border-neutral-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900/50 opacity-60 cursor-not-allowed">
 
                 <div class="flex items-center justify-between">
                     <div class="flex items-center justify-center w-12 h-12 rounded-lg bg-gray-100 dark:bg-zinc-800 text-gray-400 dark:text-zinc-500">
@@ -89,7 +89,7 @@
         </div>
 
         {{-- Sección informativa / tips --}}
-        <div class="mt-2 border border-neutral-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-xl shadow-sm overflow-hidden">
+        <div class="mt-2 border border-neutral-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm overflow-hidden">
             <div class="px-4 sm:px-6 py-4 border-b border-neutral-200 dark:border-neutral-700 bg-zinc-50 dark:bg-zinc-900">
                 <h2 class="text-base sm:text-lg font-bold text-gray-900 dark:text-white">
                     💡 Guía rápida
