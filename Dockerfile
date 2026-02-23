@@ -27,10 +27,10 @@ RUN mkdir -p storage/framework/{sessions,views,cache} bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
 # Instalar dependencias de PHP (sin ejecutar scripts artisan en build)
-#RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
 
 ## opcion para ejecutar las migraciones solo una vez, permanecer comentado
-RUN composer install --optimize-autoloader --no-interaction --no-scripts
+##RUN composer install --optimize-autoloader --no-interaction --no-scripts
 
 # Compilar assets con Node (modo producción)
 RUN npm ci --silent && npm run build
@@ -47,7 +47,8 @@ RUN apk add --no-cache libzip-dev \
 RUN apk add --no-cache nginx bash
 
 # Crear carpetas necesarias y limpiar configuraciones duplicadas
-RUN mkdir -p /run/nginx /var/www/html/storage /var/www/html/bootstrap/cache \
+RUN mkdir -p /run/nginx /var/www/html/storage /var/www/html/storage/framework/{sessions,views,cache} /var/www/html/bootstrap/cache \
+    && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache || true \
     && rm -f /etc/nginx/conf.d/* || true
 
 # Copiar configuración de Nginx
