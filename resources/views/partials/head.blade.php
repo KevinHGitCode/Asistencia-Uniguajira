@@ -29,5 +29,5 @@
 
 
 
-@vite(['resources/css/app.css', 'resources/js/app.js', 'resources/css/calendar.css', 'resources/js/calendar/index.js'])
+@vite(['resources/css/app.css', 'resources/js/app.js'])
 @fluxAppearance

@@ -121,8 +121,8 @@
         JS solo aplica a Casos 1 y 2 (cuando existe #dependencySelect).
         Caso 3 no necesita JS: las áreas vienen precargadas del controlador.
     --}}
-    @if($showDependencySelect)
+    {{-- @if($showDependencySelect)
         @vite('resources/js/events/events-create.js')
-    @endif
+    @endif --}}
 
 </x-layouts.app>
