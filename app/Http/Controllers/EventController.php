@@ -46,7 +46,9 @@ class EventController extends Controller
                 ->get();
         }
 
-        return view('events.list', compact('myEvents', 'dependencyEvents'));
+        $dependenciesNames = $user->dependencies->pluck('name')->join(' - ');
+
+        return view('events.list', compact('myEvents', 'dependencyEvents', 'dependenciesNames'));
     }
 
 

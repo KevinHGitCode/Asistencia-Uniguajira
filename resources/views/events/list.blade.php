@@ -13,6 +13,23 @@
                 <li class="font-bold text-gray-900 dark:text-white">Eventos</li>
             </ol>
         </nav>
+
+        <!-- Leyenda -->
+        <div class="relative flex w-full flex-1 flex-col gap-4 p-6 mb-4 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-zinc-50 dark:bg-zinc-900">
+            <div class="flex items-center justify-center gap-4 sm:gap-8 flex-wrap">
+                <!-- Tus eventos -->
+                <div class="flex items-center gap-2">
+                    <div class="w-4 h-4 rounded-sm bg-[#cc5e50]"></div>
+                    <span class="text-xs sm:text-sm text-black dark:text-white">Dependencias</span>
+                </div>
+
+                <!-- Eventos de otros -->
+                <div class="flex items-center gap-2">
+                    <div class="w-4 h-4 rounded-sm bg-[#62a9b6]"></div>
+                    <span class="text-xs sm:text-sm text-black dark:text-white">Areas</span>
+                </div>
+            </div>
+        </div>
     
         <div class="space-y-6">
             
@@ -50,7 +67,7 @@
                         </svg>
                         Eventos en Proceso
                     </h2>
-                    <span class="px-3 py-1 text-sm font-medium bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 rounded-full">
+                    <span class="px-3 py-1 text-sm font-medium bg-[#e2a542] text-white rounded-2xl">
                         {{ $myEventsInProgress->count() }} {{ $myEventsInProgress->count() === 1 ? 'evento' : 'eventos' }}
                     </span>
                 </div>
@@ -67,7 +84,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         @foreach($myEventsInProgress as $event)
                             <a href="{{ route('events.show', $event->id) }}" 
-                               class="block p-4 rounded-lg border border-neutral-200 dark:border-neutral-600 hover:border-yellow-500 dark:hover:border-yellow-400 hover:shadow-lg transition-all duration-200 bg-white dark:bg-neutral-900">
+                               class="block p-4 rounded-2xl border border-neutral-200 dark:border-neutral-600 hover:border-[#e2a542] hover:shadow-lg transition-all duration-200 bg-white dark:bg-neutral-900">
                                 <div class="flex items-start justify-between mb-2">
                                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white line-clamp-1">
                                         {{ $event->title }}
@@ -112,12 +129,12 @@
 
                                 @if($event->dependency)
                                     <div class="flex items-center text-xs mt-2">
-                                        <span class="px-2 py-1 bg-violet-100 dark:bg-violet-900 text-violet-800 dark:text-violet-200 rounded">
+                                        <span class="px-2 py-1 bg-[#cc5e50] text-white rounded">
                                             {{ $event->dependency->name }}
                                         </span>
 
                                         @if($event->area)
-                                            <span class="ml-2 px-2 py-1 bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 rounded">
+                                            <span class="ml-2 px-2 py-1 bg-[#62a9b6] text-white rounded">
                                                 {{ $event->area->name }}
                                             </span>
                                         @endif
@@ -149,7 +166,7 @@
                         </svg>
                         Eventos Próximos
                     </h2>
-                    <span class="px-3 py-1 text-sm font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full">
+                    <span class="px-3 py-1 text-sm font-medium bg-[#e2a542] text-white rounded-2xl">
                         {{ $myEventsUpcoming->count() }} {{ $myEventsUpcoming->count() === 1 ? 'evento' : 'eventos' }}
                     </span>
                 </div>
@@ -166,7 +183,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         @foreach($myEventsUpcoming as $event)
                             <a href="{{ route('events.show', $event->id) }}" 
-                               class="block p-4 rounded-lg border border-neutral-200 dark:border-neutral-600 hover:border-blue-500 dark:hover:border-blue-400 hover:shadow-lg transition-all duration-200 bg-white dark:bg-neutral-900">
+                               class="block p-4 rounded-2xl border border-neutral-200 dark:border-neutral-600 hover:border-[#e2a542] hover:shadow-lg transition-all duration-200 bg-white dark:bg-neutral-900">
                                 <div class="flex items-start justify-between mb-2">
                                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white line-clamp-1">
                                         {{ $event->title }}
@@ -211,12 +228,12 @@
 
                                 @if($event->dependency)
                                     <div class="flex items-center text-xs mt-2">
-                                        <span class="px-2 py-1 bg-violet-100 dark:bg-violet-900 text-violet-800 dark:text-violet-200 rounded">
+                                        <span class="px-2 py-1 bg-[#cc5e50] text-white rounded">
                                             {{ $event->dependency->name }}
                                         </span>
 
                                         @if($event->area)
-                                            <span class="ml-2 px-2 py-1 bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 rounded">
+                                            <span class="ml-2 px-2 py-1 bg-[#62a9b6] text-white rounded">
                                                 {{ $event->area->name }}
                                             </span>
                                         @endif
@@ -248,7 +265,7 @@
                         </svg>
                         Eventos Finalizados
                     </h2>
-                    <span class="px-3 py-1 text-sm font-medium bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 rounded-full">
+                    <span class="px-3 py-1 text-sm font-medium bg-[#e2a542] text-white rounded-2xl">
                         {{ $myEventsFinished->count() }} {{ $myEventsFinished->count() === 1 ? 'evento' : 'eventos' }}
                     </span>
                 </div>
@@ -265,7 +282,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         @foreach($myEventsFinished as $event)
                             <a href="{{ route('events.show', $event->id) }}" 
-                               class="block p-4 rounded-lg border border-neutral-200 dark:border-neutral-600 hover:border-gray-500 dark:hover:border-gray-400 hover:shadow-lg transition-all duration-200 bg-white dark:bg-neutral-900">
+                               class="block p-4 rounded-2xl border border-neutral-200 dark:border-neutral-600 hover:border-[#e2a542] hover:shadow-lg transition-all duration-200 bg-white dark:bg-neutral-900">
                                 <div class="flex items-start justify-between mb-2">
                                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white line-clamp-1">
                                         {{ $event->title }}
@@ -310,12 +327,12 @@
 
                                 @if($event->dependency)
                                     <div class="flex items-center text-xs mt-2">
-                                        <span class="px-2 py-1 bg-violet-100 dark:bg-violet-900 text-violet-800 dark:text-violet-200 rounded">
+                                        <span class="px-2 py-1 bg-[#cc5e50] text-white rounded">
                                             {{ $event->dependency->name }}
                                         </span>
 
                                         @if($event->area)
-                                            <span class="ml-2 px-2 py-1 bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 rounded">
+                                            <span class="ml-2 px-2 py-1 bg-[#62a9b6] text-white rounded">
                                                 {{ $event->area->name }}
                                             </span>
                                         @endif
@@ -339,16 +356,16 @@
     * =============================================
     * --}}
     
-            @if(Auth::user()->dependency_id)
+            @if(Auth::user()->dependencies()->exists())
                 <div class="relative flex w-full flex-1 flex-col gap-4 p-6 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800">
                     <div class="flex items-center justify-between mb-4">
                         <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
                             <svg class="inline-block w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                             </svg>
-                            Eventos de {{ Auth::user()->dependency->name ?? 'mi Dependencia' }}
+                            Eventos de -> {{ $dependenciesNames ?: 'mis dependencias' }}
                         </h2>
-                        <span class="px-3 py-1 text-sm font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full">
+                        <span class="px-3 py-1 text-sm font-medium bg-[#e2a542] text-white rounded-2xl">
                             {{ $dependencyEvents->count() }} {{ $dependencyEvents->count() === 1 ? 'evento' : 'eventos' }}
                         </span>
                     </div>
@@ -365,13 +382,13 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             @foreach($dependencyEvents as $event)
                                 <a href="{{ route('events.show', $event->id) }}"
-                                    class="block p-4 rounded-lg border border-neutral-200 dark:border-neutral-600 hover:border-green-500 dark:hover:border-green-400 hover:shadow-lg transition-all duration-200 bg-white dark:bg-neutral-900">
+                                    class="block p-4 rounded-2xl border border-neutral-200 dark:border-neutral-600 hover:border-[#e2a542] hover:shadow-lg transition-all duration-200 bg-white dark:bg-neutral-900">
                                     
                                     <div class="flex items-start justify-between mb-2">
                                         <h3 class="text-lg font-semibold text-gray-900 dark:text-white line-clamp-1">
                                             {{ $event->title }}
                                         </h3>
-                                        <span class="ml-2 flex-shrink-0 px-2 py-1 text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded">
+                                        <span class="ml-2 flex-shrink-0 px-2 py-1 text-xs font-medium bg-green-900 text-white rounded">
                                             Dependencia
                                         </span>
                                     </div>
@@ -410,12 +427,12 @@
 
                                     @if($event->dependency)
                                         <div class="flex items-center text-xs mt-2">
-                                            <span class="px-2 py-1 bg-violet-100 dark:bg-violet-900 text-violet-800 dark:text-violet-200 rounded">
+                                            <span class="px-2 py-1 bg-[#cc5e50] text-white rounded">
                                                 {{ $event->dependency->name }}
                                             </span>
 
                                             @if($event->area)
-                                                <span class="ml-2 px-2 py-1 bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 rounded">
+                                                <span class="ml-2 px-2 py-1 bg-[#62a9b6] text-white rounded">
                                                     {{ $event->area->name }}
                                                 </span>
                                             @endif
