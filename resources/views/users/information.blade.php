@@ -8,7 +8,7 @@
         </ol>
     </nav>
 
-    <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 p-6 shadow-sm">
+    <div class="rounded-2xl border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 p-6 shadow-sm">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8 p-6 dark:bg-black-800">
 
             <div class="flex flex-col items-center md:items-start text-center md:text-left mb-4 md:mb-0">
@@ -94,7 +94,7 @@
     </div>
 
     {{-- Contenedor de eventos propios --}}
-    <div class="mt-6 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-6 shadow-sm">
+    <div class="mt-6 rounded-2xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-6 shadow-sm">
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
                 <svg class="inline-block w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -210,7 +210,7 @@
     {{-- Contenedor de eventos de la dependencia --}}
     @foreach($dependencyEvents as $group)
 
-        <div class="mt-6 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-6 shadow-sm">
+        <div class="mt-6 rounded-2xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-6 shadow-sm">
             
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-2xl font-bold text-gray-900 dark:text-white">

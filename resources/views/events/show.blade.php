@@ -8,9 +8,9 @@
         </ol>
     </nav>
 
-    <div class="relative flex w-full mb-3 flex-1 flex-col gap-4 p-1 rounded-xl border border-neutral-200 dark:border-neutral-700">
+    <div class="relative flex w-full mb-3 flex-1 flex-col gap-4 p-1 rounded-2xl border border-neutral-200 dark:border-neutral-700">
 
-        <div class="p-4 overflow-hidden rounded-xl">
+        <div class="p-4 overflow-hidden rounded-2xl">
 
             <h1 class="text-3xl font-bold mb-4">Detalles del Evento</h1>   
 
@@ -118,7 +118,7 @@
                         </div>
                         
                         <div class="flex items-center justify-center mt-8 mb-4">
-                            <div class="border border-neutral-200 dark:border-neutral-700 p-4 rounded-xl bg-white">
+                            <div class="border border-neutral-200 dark:border-neutral-700 p-4 rounded-2xl bg-white">
                                 {!! QrCode::size(200)->generate(route('events.access', $event->link)) !!}
                             </div>  
                         </div>
@@ -182,25 +182,25 @@
                                 <!-- Gráfica circular - Programa -->
                                 <div>
                                     <h3 class="text-lg font-medium mb-2">Distribución por Programa</h3>
-                                    <div id="chart_program_pie" class="relative aspect-video overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-700"></div>
+                                    <div id="chart_program_pie" class="relative aspect-video overflow-hidden rounded-2xl border border-neutral-200 dark:border-neutral-700"></div>
                                 </div>
 
                                 <!-- Gráfica de barras - Programa -->
                                 <div>
                                     <h3 class="text-lg font-medium mb-2">Participación por Programa</h3>
-                                    <div id="chart_program_bar" class="relative aspect-video overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-700"></div>
+                                    <div id="chart_program_bar" class="relative aspect-video overflow-hidden rounded-2xl border border-neutral-200 dark:border-neutral-700"></div>
                                 </div>
 
                                 <!-- Gráfica circular - Rol -->
                                 <div>
                                     <h3 class="text-lg font-medium mb-2">Distribución por Rol</h3>
-                                    <div id="chart_role_pie" class="relative aspect-video overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-700"></div>
+                                    <div id="chart_role_pie" class="relative aspect-video overflow-hidden rounded-2xl border border-neutral-200 dark:border-neutral-700"></div>
                                 </div>
 
                                 <!-- Gráfica de barras - Rol -->
                                 <div>
                                     <h3 class="text-lg font-medium mb-2">Participación por Rol</h3>
-                                    <div id="chart_role_bar" class="relative aspect-video overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-700"></div>
+                                    <div id="chart_role_bar" class="relative aspect-video overflow-hidden rounded-2xl border border-neutral-200 dark:border-neutral-700"></div>
                                 </div>
                             </div>
                         @else

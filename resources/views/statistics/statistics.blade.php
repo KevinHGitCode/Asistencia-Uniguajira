@@ -39,7 +39,7 @@
     {{-- Sección: Graficas y estadisticas --}}
     <section class="mb-8">
         @php
-            $chartStyles = "relative aspect-video overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-700";
+            $chartStyles = "relative aspect-video overflow-hidden rounded-2xl border border-neutral-200 dark:border-neutral-700";
         @endphp
 
         {{-- Gráficas: Programa --}}

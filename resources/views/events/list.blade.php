@@ -15,7 +15,7 @@
         </nav>
 
         <!-- Leyenda -->
-        <div class="relative flex w-full flex-1 flex-col gap-4 p-6 mb-4 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-zinc-50 dark:bg-zinc-900">
+        <div class="relative flex w-full flex-1 flex-col gap-4 p-6 mb-4 rounded-2xl border border-neutral-200 dark:border-neutral-700 bg-zinc-50 dark:bg-zinc-900">
             <div class="flex items-center justify-center gap-4 sm:gap-8 flex-wrap">
                 <!-- Tus eventos -->
                 <div class="flex items-center gap-2">
@@ -59,7 +59,7 @@
     * =============================================
     * --}}
     
-            <div class="relative flex w-full flex-1 flex-col gap-4 p-6 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-zinc-50 dark:bg-zinc-900">
+            <div class="relative flex w-full flex-1 flex-col gap-4 p-6 rounded-2xl border border-neutral-200 dark:border-neutral-700 bg-zinc-50 dark:bg-zinc-900">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
                         <svg class="inline-block w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -158,7 +158,7 @@
     * =============================================
     * --}}
     
-            <div class="relative flex w-full flex-1 flex-col gap-4 p-6 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-zinc-50 dark:bg-zinc-900">
+            <div class="relative flex w-full flex-1 flex-col gap-4 p-6 rounded-2xl border border-neutral-200 dark:border-neutral-700 bg-zinc-50 dark:bg-zinc-900">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
                         <svg class="inline-block w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -257,7 +257,7 @@
     * =============================================
     * --}}
     
-            <div class="relative flex w-full flex-1 flex-col gap-4 p-6 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-zinc-50 dark:bg-zinc-900">
+            <div class="relative flex w-full flex-1 flex-col gap-4 p-6 rounded-2xl border border-neutral-200 dark:border-neutral-700 bg-zinc-50 dark:bg-zinc-900">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
                         <svg class="inline-block w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -357,7 +357,7 @@
     * --}}
     
             @if(Auth::user()->dependencies()->exists())
-                <div class="relative flex w-full flex-1 flex-col gap-4 p-6 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-zinc-50 dark:bg-zinc-900">
+                <div class="relative flex w-full flex-1 flex-col gap-4 p-6 rounded-2xl border border-neutral-200 dark:border-neutral-700 bg-zinc-50 dark:bg-zinc-900">
                     <div class="flex items-center justify-between mb-4">
                         <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
                             <svg class="inline-block w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
