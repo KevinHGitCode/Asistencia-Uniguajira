@@ -59,8 +59,8 @@ export const LABEL_MAX_CHARS = {
 // PIE_INNER: '0%' = torta sólida | '>0%' = dona con hueco
 // PIE_OUTER: radio exterior (100% = llena el contenedor)
 // ---------------------------------------------------------------------------
-export const PIE_INNER_RADIUS = '0%';
-export const PIE_OUTER_RADIUS = '65%';
+export const PIE_INNER_RADIUS = '45%';  // '0%' = torta sólida | '>0%' = dona
+export const PIE_OUTER_RADIUS = '68%';
 
 // ---------------------------------------------------------------------------
 // ANIMACIONES

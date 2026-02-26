@@ -12,7 +12,27 @@ import { ProgramParticipantsPie } from './charts/ProgramParticipantsPie.jsx';
 import { TopHorizontalBar }       from './charts/TopHorizontalBar.jsx';
 import { EventsByRoleChart }      from './charts/EventsByRoleChart.jsx';
 
-import { CHART_HEIGHTS, CHART_GRID_COLS } from './config.js';
+import { CHART_HEIGHTS, CHART_GRID_COLS, CHART_DENSITY } from './config.js';
+
+// ---------------------------------------------------------------------------
+// Descripciones de cada gráfico (se muestran en el modal "Sobre este gráfico")
+// ---------------------------------------------------------------------------
+
+const DESCRIPTIONS = {
+  programAttendances: `Compara el número total de asistencias registradas en cada programa académico durante el período seleccionado. Permite identificar qué programas concentran la mayor actividad.`,
+
+  programParticipants: `Muestra cómo se distribuyen los participantes únicos entre los diferentes programas. Los segmentos con menos del ${CHART_DENSITY.pieMinPercent}% del total se agrupan automáticamente en la categoría "Otros".`,
+
+  topEvents: `Ranking de los eventos que han reunido más asistentes en el período. Ayuda a identificar qué actividades generan mayor convocatoria y tienen más impacto.`,
+
+  topParticipants: `Lista los participantes que han asistido a más eventos durante el período, ordenados de mayor a menor. Útil para reconocer a los asistentes más comprometidos o frecuentes.`,
+
+  topUsers: `Muestra los usuarios del sistema que han registrado más asistencias durante el período. Refleja quiénes gestionan con mayor intensidad sus eventos.`,
+
+  eventsByRole: `Compara la cantidad de eventos creados según el tipo de cuenta: Administrador vs. Usuario regular. Muestra cómo se distribuye la gestión de eventos entre los diferentes roles del sistema.`,
+
+  eventsByUser: `Ranking de los usuarios que más eventos han creado en el período seleccionado. Identifica a los miembros más activos en la creación y organización de actividades.`,
+};
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -32,11 +52,6 @@ function defaultFilters() {
   return { dateFrom: monthAgo(), dateTo: today() };
 }
 
-/**
- * Devuelve las clases de columna Tailwind según la configuración del gráfico.
- * 'full' → ocupa las 2 columnas del grid en md
- * 'half' → ocupa 1 columna (media en md)
- */
 function colClass(key) {
   return CHART_GRID_COLS[key] === 'full' ? 'col-span-1 md:col-span-2' : 'col-span-1';
 }
@@ -49,12 +64,9 @@ export default function StatisticsApp() {
   const isDark = useTheme();
   const { state, fetchAll } = useStatistics();
 
-  // Filtros "pendientes" (lo que el usuario está editando) y
-  // filtros "aplicados" (lo que actualmente está en la API).
-  const [applied, setApplied]   = useState(defaultFilters);
-  const [pending, setPending]   = useState(defaultFilters);
+  const [applied, setApplied] = useState(defaultFilters);
+  const [pending, setPending] = useState(defaultFilters);
 
-  // Cargar datos cuando cambian los filtros aplicados.
   useEffect(() => {
     fetchAll(applied);
   }, [applied, fetchAll]);
@@ -87,14 +99,13 @@ export default function StatisticsApp() {
 
       {/* ══ Sección: Programa ══ */}
       <section className="mb-8">
-        <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-3">
-          Programa
-        </h2>
+        <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-3">Programa</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
           <div className={colClass('programAttendances')}>
             <ChartCard
               title="Asistencias por Programa"
+              description={DESCRIPTIONS.programAttendances}
               height={CHART_HEIGHTS.bar}
               loading={loading}
               isEmpty={!loading && charts.attendancesByProgram.length === 0}
@@ -108,6 +119,7 @@ export default function StatisticsApp() {
           <div className={colClass('programParticipants')}>
             <ChartCard
               title="Participantes por Programa"
+              description={DESCRIPTIONS.programParticipants}
               height={CHART_HEIGHTS.pie}
               loading={loading}
               isEmpty={!loading && charts.participantsByProgram.length === 0}
@@ -123,59 +135,48 @@ export default function StatisticsApp() {
 
       {/* ══ Sección: Tops ══ */}
       <section className="mb-8">
-        <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-3">
-          Tops
-        </h2>
+        <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-3">Tops</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
           <div className={colClass('topEvents')}>
             <ChartCard
               title="Eventos con más asistencias"
+              description={DESCRIPTIONS.topEvents}
               height={CHART_HEIGHTS.horizontalBar}
               loading={loading}
               isEmpty={!loading && charts.topEvents.length === 0}
               data={charts.topEvents}
               isDark={isDark}
             >
-              <TopHorizontalBar
-                data={charts.topEvents}
-                isDark={isDark}
-                valueLabel="asistencias"
-              />
+              <TopHorizontalBar data={charts.topEvents} isDark={isDark} valueLabel="asistencias" />
             </ChartCard>
           </div>
 
           <div className={colClass('topParticipants')}>
             <ChartCard
               title="Participantes más frecuentes"
+              description={DESCRIPTIONS.topParticipants}
               height={CHART_HEIGHTS.horizontalBar}
               loading={loading}
               isEmpty={!loading && charts.topParticipants.length === 0}
               data={charts.topParticipants}
               isDark={isDark}
             >
-              <TopHorizontalBar
-                data={charts.topParticipants}
-                isDark={isDark}
-                valueLabel="asistencias"
-              />
+              <TopHorizontalBar data={charts.topParticipants} isDark={isDark} valueLabel="asistencias" />
             </ChartCard>
           </div>
 
           <div className={colClass('topUsers')}>
             <ChartCard
               title="Usuarios con más actividad"
+              description={DESCRIPTIONS.topUsers}
               height={CHART_HEIGHTS.horizontalBar}
               loading={loading}
               isEmpty={!loading && charts.topUsers.length === 0}
               data={charts.topUsers}
               isDark={isDark}
             >
-              <TopHorizontalBar
-                data={charts.topUsers}
-                isDark={isDark}
-                valueLabel="asistencias generadas"
-              />
+              <TopHorizontalBar data={charts.topUsers} isDark={isDark} valueLabel="asistencias generadas" />
             </ChartCard>
           </div>
 
@@ -192,6 +193,7 @@ export default function StatisticsApp() {
           <div className={colClass('eventsByRole')}>
             <ChartCard
               title="Por Rol"
+              description={DESCRIPTIONS.eventsByRole}
               height={CHART_HEIGHTS.role}
               loading={loading}
               isEmpty={!loading && charts.eventsByRole.length === 0}
@@ -205,17 +207,14 @@ export default function StatisticsApp() {
           <div className={colClass('eventsByUser')}>
             <ChartCard
               title="Por Usuario"
+              description={DESCRIPTIONS.eventsByUser}
               height={CHART_HEIGHTS.role}
               loading={loading}
               isEmpty={!loading && charts.eventsByUser.length === 0}
               data={charts.eventsByUser}
               isDark={isDark}
             >
-              <TopHorizontalBar
-                data={charts.eventsByUser}
-                isDark={isDark}
-                valueLabel="eventos"
-              />
+              <TopHorizontalBar data={charts.eventsByUser} isDark={isDark} valueLabel="eventos" />
             </ChartCard>
           </div>
 
