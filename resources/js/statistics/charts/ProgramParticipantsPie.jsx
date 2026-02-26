@@ -11,7 +11,7 @@ import {
 } from '../config.js';
 
 const RADIAN           = Math.PI / 180;
-const LEGEND_PAGE_SIZE = 7; // items per page in the right legend
+const LEGEND_PAGE_SIZE = 10; // items per page in the right legend
 
 // ── "Otros" grouping ──────────────────────────────────────────────────────────
 
@@ -34,25 +34,23 @@ function groupSmallSlices(raw, minPercent) {
 // (right half would overlap the vertical legend).
 
 function OuterLabel(props) {
-  const { cx, cy, midAngle, outerRadius, percent, theme } = props;
+  const { cx, cy, midAngle, outerRadius, percent, payload, theme } = props;
   if (percent < CHART_DENSITY.pieMinPercent / 100) return null;
 
-  const r = outerRadius + 14;
+  const r = outerRadius + 20;
   const x = cx + r * Math.cos(-midAngle * RADIAN);
   const y = cy + r * Math.sin(-midAngle * RADIAN);
 
   // Right side → would overlap the legend panel
   if (x > cx) return null;
 
+  const name = truncate(payload?.name ?? '', 16);
+  const pct  = `${(percent * 100).toFixed(1)}%`;
+
   return (
-    <text
-      x={x} y={y}
-      textAnchor="end"
-      dominantBaseline="central"
-      fontSize={11}
-      fill={theme.muted}
-    >
-      {`${(percent * 100).toFixed(1)}%`}
+    <text x={x} y={y} textAnchor="end" fontSize={11} fill={theme.muted}>
+      <tspan x={x} dy="-6">{name}</tspan>
+      <tspan x={x} dy="14" fontWeight={600}>{pct}</tspan>
     </text>
   );
 }
