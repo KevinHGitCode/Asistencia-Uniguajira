@@ -84,6 +84,7 @@ php artisan migrate --seed
 - **PDF de asistencias:** generado con FPDI/TFPDF en `EventController::descargarAsistencia()`
 - **Eventos:** filtrado por `user_id` (propios) y `dependency_id` (de la dependencia del usuario)
 - **Slugs de eventos:** usados para URLs públicas de registro de asistencia
+- **Branch:** trabajar siempre en develop
 
 ## Directorios importantes
 

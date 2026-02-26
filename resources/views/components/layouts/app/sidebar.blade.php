@@ -28,8 +28,9 @@
                 <flux:navlist.item icon="chart-bar" :href="route('statistics')" class="hover:scale-103 transition-transform" :current="request()->routeIs('statistics')"
                     wire:navigate>{{ __('Statistics') }}</flux:navlist.item>
 
-                <flux:navlist.item icon="chart-bar" :href="route('charts.types')" class="hover:scale-103 transition-transform" :current="request()->routeIs('charts.types')"
-                    wire:navigate>{{ __('Chart Types') }}</flux:navlist.item>
+                {{-- Tipos de grafico Echrats --}}
+                {{-- <flux:navlist.item icon="chart-bar" :href="route('charts.types')" class="hover:scale-103 transition-transform" :current="request()->routeIs('charts.types')"
+                    wire:navigate>{{ __('Chart Types') }}</flux:navlist.item> --}}
 
                 @if(auth()->user()->role === 'admin')
                     <flux:navlist.item icon="users" :href="route('users.index')" class="hover:scale-103 transition-transform" :current="request()->routeIs('users.index')"
