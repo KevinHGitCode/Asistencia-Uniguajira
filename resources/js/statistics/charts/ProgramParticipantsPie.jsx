@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
-  PieChart, Pie, Cell, Tooltip, Legend, Label, ResponsiveContainer,
+  PieChart, Pie, Cell, Tooltip, Label, ResponsiveContainer,
 } from 'recharts';
 import {
   getColors, getTheme, getTooltipStyle, truncate,
@@ -10,12 +10,11 @@ import {
   PIE_INNER_RADIUS, PIE_OUTER_RADIUS, LABEL_MAX_CHARS,
 } from '../config.js';
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+const RADIAN           = Math.PI / 180;
+const LEGEND_PAGE_SIZE = 7; // items per page in the right legend
 
-/**
- * Group slices whose share is below `minPercent` into a single "Otros" entry.
- * If there is only 1 small slice, it's kept as-is (no point in grouping one item).
- */
+// ── "Otros" grouping ──────────────────────────────────────────────────────────
+
 function groupSmallSlices(raw, minPercent) {
   const total = raw.reduce((s, d) => s + (d.value ?? 0), 0);
   if (total === 0 || minPercent <= 0) return raw;
@@ -30,6 +29,63 @@ function groupSmallSlices(raw, minPercent) {
   return [...main, { name: `Otros (${small.length})`, value: othersVal }];
 }
 
+// ── Outer percentage label ────────────────────────────────────────────────────
+// Only rendered for large slices AND only on the left half of the pie
+// (right half would overlap the vertical legend).
+
+function OuterLabel(props) {
+  const { cx, cy, midAngle, outerRadius, percent, theme } = props;
+  if (percent < CHART_DENSITY.pieMinPercent / 100) return null;
+
+  const r = outerRadius + 14;
+  const x = cx + r * Math.cos(-midAngle * RADIAN);
+  const y = cy + r * Math.sin(-midAngle * RADIAN);
+
+  // Right side → would overlap the legend panel
+  if (x > cx) return null;
+
+  return (
+    <text
+      x={x} y={y}
+      textAnchor="end"
+      dominantBaseline="central"
+      fontSize={11}
+      fill={theme.muted}
+    >
+      {`${(percent * 100).toFixed(1)}%`}
+    </text>
+  );
+}
+
+// ── Center label (total in the donut hole) ────────────────────────────────────
+
+function CenterLabel({ viewBox, total, theme }) {
+  const { cx, cy } = viewBox;
+  return (
+    <>
+      <text
+        x={cx} y={cy - 8}
+        textAnchor="middle"
+        dominantBaseline="central"
+        fontSize={21}
+        fontWeight={700}
+        fill={theme.text}
+      >
+        {total.toLocaleString('es-CO')}
+      </text>
+      <text
+        x={cx} y={cy + 13}
+        textAnchor="middle"
+        dominantBaseline="central"
+        fontSize={11}
+        fill={theme.muted}
+      >
+        participantes
+      </text>
+    </>
+  );
+}
+
 // ── Custom tooltip ────────────────────────────────────────────────────────────
 
 function CustomTooltip({ active, payload, total, isDark }) {
@@ -42,152 +98,146 @@ function CustomTooltip({ active, payload, total, isDark }) {
         {item.name}
       </p>
       <p style={{ color: item.payload.fill }}>
-        {item.value.toLocaleString('es-CO')} participantes
+        Participantes: {item.value.toLocaleString('es-CO')}
       </p>
       <p style={{ color: t.muted, fontSize: 12 }}>
-        {total > 0 ? ((item.value / total) * 100).toFixed(1) : 0}% del total
+        Porcentaje: {total > 0 ? ((item.value / total) * 100).toFixed(1) : 0}%
       </p>
     </div>
   );
 }
 
-// ── Legend formatter ──────────────────────────────────────────────────────────
+// ── Vertical legend with pagination ──────────────────────────────────────────
 
-function LegendFormatter(value, _entry, isDark) {
-  const t = getTheme(isDark);
+function VerticalLegend({ chartData, colors, isDark }) {
+  const [page, setPage] = useState(0);
+  const theme = getTheme(isDark);
+  const pages = Math.ceil(chartData.length / LEGEND_PAGE_SIZE);
+  const start = page * LEGEND_PAGE_SIZE;
+  const items = chartData.slice(start, start + LEGEND_PAGE_SIZE);
+
   return (
-    <span style={{ color: t.text, fontSize: 12 }}>
-      {truncate(value, LABEL_MAX_CHARS.legend)}
-    </span>
+    <div className="flex flex-col h-full justify-center gap-1 pl-2 pr-1">
+      {/* Legend items */}
+      <div className="flex flex-col gap-1.5 flex-1 justify-center min-h-0">
+        {items.map((item, i) => {
+          const color = colors[(start + i) % colors.length];
+          return (
+            <div key={item.name} className="flex items-start gap-2 min-w-0">
+              <div
+                className="shrink-0 rounded-full mt-[3px]"
+                style={{ width: 8, height: 8, backgroundColor: color }}
+              />
+              <span
+                className="text-[11px] leading-tight min-w-0 break-words"
+                style={{ color: theme.text }}
+                title={item.name}
+              >
+                {truncate(item.name, LABEL_MAX_CHARS.legend)}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Pagination controls */}
+      {pages > 1 && (
+        <div className="flex items-center justify-center gap-2 pt-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => setPage(p => Math.max(0, p - 1))}
+            disabled={page === 0}
+            className="w-5 h-5 flex items-center justify-center rounded text-[10px] transition-opacity disabled:opacity-25 hover:opacity-70"
+            style={{ color: theme.muted }}
+          >
+            ▲
+          </button>
+          <span className="text-[11px] tabular-nums" style={{ color: theme.muted }}>
+            {page + 1}/{pages}
+          </span>
+          <button
+            type="button"
+            onClick={() => setPage(p => Math.min(pages - 1, p + 1))}
+            disabled={page === pages - 1}
+            className="w-5 h-5 flex items-center justify-center rounded text-[10px] transition-opacity disabled:opacity-25 hover:opacity-70"
+            style={{ color: theme.muted }}
+          >
+            ▼
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
 
-// ── Outer label (shown only when few slices) ──────────────────────────────────
-
-function renderLabel({ cx, cy, midAngle, outerRadius, percent, theme }) {
-  if (percent < CHART_DENSITY.pieMinPercent / 100) return null;
-
-  const RADIAN = Math.PI / 180;
-  const r = outerRadius * 1.17;
-  const x = cx + r * Math.cos(-midAngle * RADIAN);
-  const y = cy + r * Math.sin(-midAngle * RADIAN);
-
-  return (
-    <text
-      x={x} y={y}
-      textAnchor={x > cx ? 'start' : 'end'}
-      dominantBaseline="central"
-      fontSize={11}
-      fill={theme.muted}
-    >
-      {`${(percent * 100).toFixed(1)}%`}
-    </text>
-  );
-}
-
-// ── Center label (donut only) ─────────────────────────────────────────────────
-
-function CenterLabel({ viewBox, total, theme }) {
-  const { cx, cy } = viewBox;
-  return (
-    <>
-      <text
-        x={cx} y={cy - 7}
-        textAnchor="middle"
-        dominantBaseline="central"
-        fontSize={22}
-        fontWeight={700}
-        fill={theme.text}
-      >
-        {total.toLocaleString('es-CO')}
-      </text>
-      <text
-        x={cx} y={cy + 14}
-        textAnchor="middle"
-        dominantBaseline="central"
-        fontSize={11}
-        fill={theme.muted}
-      >
-        participantes
-      </text>
-    </>
-  );
-}
-
-// ── Component ─────────────────────────────────────────────────────────────────
+// ── Main component ────────────────────────────────────────────────────────────
 
 /**
  * Pie / donut chart — Participantes por Programa.
  *
+ * Layout:
+ *  - Left (~62%): donut chart with center total + outer % labels on big left-side slices
+ *  - Right (~38%): vertical paginated legend
+ *
  * Features:
- *  - Slices below `pieMinPercent` are grouped into "Otros (n)".
- *  - Outer % labels are hidden when there are more than `pieHideLabelAt` slices.
- *  - When inner radius > 0 (donut), shows the total in the centre.
+ *  - Slices below pieMinPercent% → grouped into "Otros (n)"
+ *  - Inner radius > 0% → shows total participantes in the donut center
  */
 export function ProgramParticipantsPie({ data, isDark }) {
-  const theme    = getTheme(isDark);
-  const colors   = getColors(isDark);
-
-  // Group small slices → "Otros"
-  const chartData  = groupSmallSlices(data, CHART_DENSITY.pieMinPercent);
-  const total      = chartData.reduce((s, d) => s + (d.value ?? 0), 0);
-  const isDonut    = PIE_INNER_RADIUS !== '0%';
-  const showOuter  = chartData.length <= CHART_DENSITY.pieHideLabelAt;
+  const theme     = getTheme(isDark);
+  const colors    = getColors(isDark);
+  const chartData = groupSmallSlices(data, CHART_DENSITY.pieMinPercent);
+  const total     = chartData.reduce((s, d) => s + (d.value ?? 0), 0);
+  const isDonut   = PIE_INNER_RADIUS !== '0%';
 
   return (
-    <div className="w-full h-full">
-      <ResponsiveContainer width="100%" height="100%">
-        <PieChart>
-          <Pie
-            data={chartData}
-            dataKey="value"
-            nameKey="name"
-            cx="50%"
-            cy="47%"
-            innerRadius={PIE_INNER_RADIUS}
-            outerRadius={PIE_OUTER_RADIUS}
-            paddingAngle={chartData.length > 1 ? 2 : 0}
-            labelLine={showOuter && !isDonut}
-            label={showOuter && !isDonut
-              ? (props) => renderLabel({ ...props, theme })
-              : false
-            }
-            isAnimationActive={CHART_ANIMATION}
-            animationDuration={CHART_ANIMATION_DURATION}
-            animationEasing="ease-out"
-          >
-            {chartData.map((_, i) => (
-              <Cell
-                key={i}
-                fill={colors[i % colors.length]}
-                stroke={isDark ? '#18181b' : '#ffffff'}
-                strokeWidth={2}
-              />
-            ))}
+    <div className="w-full h-full flex items-center">
+      {/* ── Pie / donut ── */}
+      <div className="h-full min-w-0" style={{ flex: '0 0 62%' }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={chartData}
+              dataKey="value"
+              nameKey="name"
+              cx="50%"
+              cy="50%"
+              innerRadius={PIE_INNER_RADIUS}
+              outerRadius={PIE_OUTER_RADIUS}
+              paddingAngle={chartData.length > 1 ? 2 : 0}
+              labelLine={false}
+              label={(props) => <OuterLabel {...props} theme={theme} />}
+              isAnimationActive={CHART_ANIMATION}
+              animationDuration={CHART_ANIMATION_DURATION}
+              animationEasing="ease-out"
+            >
+              {chartData.map((_, i) => (
+                <Cell
+                  key={i}
+                  fill={colors[i % colors.length]}
+                  stroke={isDark ? '#18181b' : '#ffffff'}
+                  strokeWidth={2}
+                />
+              ))}
 
-            {/* Center total — only for donut */}
-            {isDonut && (
-              <Label
-                content={(props) => (
-                  <CenterLabel {...props} total={total} theme={theme} />
-                )}
-              />
-            )}
-          </Pie>
+              {isDonut && (
+                <Label
+                  content={(props) => (
+                    <CenterLabel {...props} total={total} theme={theme} />
+                  )}
+                />
+              )}
+            </Pie>
 
-          <Tooltip content={<CustomTooltip total={total} isDark={isDark} />} />
+            <Tooltip content={<CustomTooltip total={total} isDark={isDark} />} />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
 
-          <Legend
-            layout="horizontal"
-            verticalAlign="bottom"
-            align="center"
-            iconType="circle"
-            iconSize={8}
-            formatter={(value) => LegendFormatter(value, null, isDark)}
-            wrapperStyle={{ paddingTop: 14, fontSize: 12 }}
-          />
-        </PieChart>
-      </ResponsiveContainer>
+      {/* ── Right legend ── */}
+      <div className="h-full min-w-0" style={{ flex: '0 0 38%' }}>
+        <VerticalLegend chartData={chartData} colors={colors} isDark={isDark} />
+      </div>
     </div>
   );
 }
