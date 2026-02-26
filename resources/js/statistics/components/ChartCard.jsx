@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
+import { ChartToolbar } from './ChartToolbar.jsx';
+import { ChartModal }   from './ChartModal.jsx';
 
 function LoadingSpinner() {
   return (
@@ -35,28 +37,60 @@ function EmptyState() {
  * Tarjeta contenedora para un gráfico.
  *
  * Props:
- *  - title   : string  — etiqueta superior (opcional)
+ *  - title   : string  — etiqueta superior
  *  - height  : number  — altura del área del gráfico en px (default: 340)
  *  - loading : bool
  *  - isEmpty : bool
+ *  - data    : array of { name, value } — used by toolbar/modal
+ *  - isDark  : bool
  *  - children: nodo React (el componente de gráfico)
  */
-export function ChartCard({ title, height = 340, loading = false, isEmpty = false, children }) {
-  return (
-    <div className="flex flex-col bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-neutral-700 rounded-2xl shadow-sm overflow-hidden">
-      {title && (
-        <div className="px-5 pt-5 pb-0 shrink-0">
-          <p className="text-[11px] font-semibold tracking-widest uppercase text-gray-400 dark:text-zinc-500">
-            {title}
-          </p>
-        </div>
-      )}
+export function ChartCard({ title, height = 340, loading = false, isEmpty = false, data = [], isDark = false, children }) {
+  const chartRef = useRef(null);
+  const [modal, setModal] = useState(null); // null | 'data' | 'info'
 
-      <div style={{ height }} className="relative px-2 pb-3 pt-2">
-        {loading  ? <LoadingSpinner /> :
-         isEmpty  ? <EmptyState />    :
-                    children}
+  const hasData = !loading && !isEmpty && data.length > 0;
+
+  return (
+    <>
+      <div className="flex flex-col bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-neutral-700 rounded-2xl shadow-sm overflow-hidden">
+        {/* Title */}
+        {title && (
+          <div className="px-5 pt-5 pb-2 shrink-0">
+            <p className="text-[11px] font-semibold tracking-widest uppercase text-gray-400 dark:text-zinc-500">
+              {title}
+            </p>
+          </div>
+        )}
+
+        {/* Toolbar — only when there is data */}
+        {hasData && (
+          <ChartToolbar
+            chartRef={chartRef}
+            title={title}
+            isDark={isDark}
+            data={data}
+            modal={modal}
+            onModal={setModal}
+          />
+        )}
+
+        {/* Chart area */}
+        <div ref={chartRef} style={{ height }} className="relative px-2 pb-3 pt-1">
+          {loading  ? <LoadingSpinner /> :
+           isEmpty  ? <EmptyState />    :
+                      children}
+        </div>
       </div>
-    </div>
+
+      {/* Modal — rendered via portal outside the card */}
+      <ChartModal
+        isOpen={modal !== null}
+        mode={modal}
+        title={title ?? ''}
+        data={data}
+        onClose={() => setModal(null)}
+      />
+    </>
   );
 }

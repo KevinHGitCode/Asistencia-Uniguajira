@@ -98,6 +98,8 @@ export default function StatisticsApp() {
               height={CHART_HEIGHTS.bar}
               loading={loading}
               isEmpty={!loading && charts.attendancesByProgram.length === 0}
+              data={charts.attendancesByProgram}
+              isDark={isDark}
             >
               <ProgramAttendancesBar data={charts.attendancesByProgram} isDark={isDark} />
             </ChartCard>
@@ -109,6 +111,8 @@ export default function StatisticsApp() {
               height={CHART_HEIGHTS.pie}
               loading={loading}
               isEmpty={!loading && charts.participantsByProgram.length === 0}
+              data={charts.participantsByProgram}
+              isDark={isDark}
             >
               <ProgramParticipantsPie data={charts.participantsByProgram} isDark={isDark} />
             </ChartCard>
@@ -130,6 +134,8 @@ export default function StatisticsApp() {
               height={CHART_HEIGHTS.horizontalBar}
               loading={loading}
               isEmpty={!loading && charts.topEvents.length === 0}
+              data={charts.topEvents}
+              isDark={isDark}
             >
               <TopHorizontalBar
                 data={charts.topEvents}
@@ -145,6 +151,8 @@ export default function StatisticsApp() {
               height={CHART_HEIGHTS.horizontalBar}
               loading={loading}
               isEmpty={!loading && charts.topParticipants.length === 0}
+              data={charts.topParticipants}
+              isDark={isDark}
             >
               <TopHorizontalBar
                 data={charts.topParticipants}
@@ -160,6 +168,8 @@ export default function StatisticsApp() {
               height={CHART_HEIGHTS.horizontalBar}
               loading={loading}
               isEmpty={!loading && charts.topUsers.length === 0}
+              data={charts.topUsers}
+              isDark={isDark}
             >
               <TopHorizontalBar
                 data={charts.topUsers}
@@ -185,6 +195,8 @@ export default function StatisticsApp() {
               height={CHART_HEIGHTS.role}
               loading={loading}
               isEmpty={!loading && charts.eventsByRole.length === 0}
+              data={charts.eventsByRole}
+              isDark={isDark}
             >
               <EventsByRoleChart data={charts.eventsByRole} isDark={isDark} />
             </ChartCard>
@@ -196,6 +208,8 @@ export default function StatisticsApp() {
               height={CHART_HEIGHTS.role}
               loading={loading}
               isEmpty={!loading && charts.eventsByUser.length === 0}
+              data={charts.eventsByUser}
+              isDark={isDark}
             >
               <TopHorizontalBar
                 data={charts.eventsByUser}
