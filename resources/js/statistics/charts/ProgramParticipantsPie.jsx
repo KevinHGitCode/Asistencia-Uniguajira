@@ -37,21 +37,36 @@ function OuterLabel(props) {
   const { cx, cy, midAngle, outerRadius, percent, payload, theme } = props;
   if (percent < CHART_DENSITY.pieMinPercent / 100) return null;
 
-  const r = outerRadius + 20;
-  const x = cx + r * Math.cos(-midAngle * RADIAN);
-  const y = cy + r * Math.sin(-midAngle * RADIAN);
+  const sin    = Math.sin(-midAngle * RADIAN);
+  const cos    = Math.cos(-midAngle * RADIAN);
+  const isLeft = cos < 0;
 
-  // Right side → would overlap the legend panel
-  if (x > cx) return null;
+  // Two-segment line: radial leg → horizontal elbow
+  const x1 = cx + (outerRadius + 4)  * cos; // start at slice edge
+  const y1 = cy + (outerRadius + 4)  * sin;
+  const x2 = cx + (outerRadius + 18) * cos; // end of radial leg
+  const y2 = cy + (outerRadius + 18) * sin;
+  const x3 = x2 + (isLeft ? -8 : 8);        // elbow tip
 
-  const name = truncate(payload?.name ?? '', 16);
-  const pct  = `${(percent * 100).toFixed(1)}%`;
+  const textX  = isLeft ? x3 - 3 : x3 + 3;
+  const anchor = isLeft ? 'end' : 'start';
+  const name   = truncate(payload?.name ?? '', 16);
+  const pct    = `${(percent * 100).toFixed(1)}%`;
 
   return (
-    <text x={x} y={y} textAnchor="end" fontSize={11} fill={theme.muted}>
-      <tspan x={x} dy="-6">{name}</tspan>
-      <tspan x={x} dy="14" fontWeight={600}>{pct}</tspan>
-    </text>
+    <g>
+      <polyline
+        points={`${x1},${y1} ${x2},${y2} ${x3},${y2}`}
+        fill="none"
+        stroke={theme.axis}
+        strokeWidth={1}
+        strokeLinejoin="round"
+      />
+      <text x={textX} y={y2} textAnchor={anchor} fontSize={11} fill={theme.muted}>
+        <tspan x={textX} dy="-7">{name}</tspan>
+        <tspan x={textX} dy="14" fontWeight={600} fill={theme.text}>{pct}</tspan>
+      </text>
+    </g>
   );
 }
 
