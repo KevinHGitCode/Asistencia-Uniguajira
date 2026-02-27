@@ -13,6 +13,7 @@ export default defineConfig({
                 'resources/css/app.css',
                 'resources/js/app.js',
                 'resources/js/statistics/index.jsx',
+                'resources/js/events/index.jsx',
             ],
             refresh: true,
         }),

@@ -44,9 +44,9 @@ function OuterLabel(props) {
   // Two-segment line: radial leg → horizontal elbow
   const x1 = cx + (outerRadius + 4)  * cos; // start at slice edge
   const y1 = cy + (outerRadius + 4)  * sin;
-  const x2 = cx + (outerRadius + 18) * cos; // end of radial leg
-  const y2 = cy + (outerRadius + 18) * sin;
-  const x3 = x2 + (isLeft ? -8 : 8);        // elbow tip
+  const x2 = cx + (outerRadius + 27) * cos; // end of radial leg
+  const y2 = cy + (outerRadius + 27) * sin;
+  const x3 = x2 + (isLeft ? -12 : 12);        // elbow tip
 
   const textX  = isLeft ? x3 - 3 : x3 + 3;
   const anchor = isLeft ? 'end' : 'start';

@@ -38,9 +38,9 @@ export const CHART_GRID_COLS = {
 // ---------------------------------------------------------------------------
 export const CHART_DENSITY = {
   barRotateAt:    7,    // Ítems en barra → rotar etiquetas del eje X
-  barTinyAt:      13,   // Ítems en barra → reducir tamaño de fuente a mínimo
+  barTinyAt:      12,   // Ítems en barra → reducir tamaño de fuente a mínimo
   pieHideLabelAt: 9,    // Ítems en torta → ocultar etiquetas externas (solo %)
-  pieMinPercent:  2.5,  // % mínimo para mostrar etiqueta en la torta
+  pieMinPercent:  3,  // % mínimo para mostrar etiqueta en la torta
   horizontalMax:  10,   // Máximo de filas visibles en barras horizontales
 };
 
@@ -59,7 +59,7 @@ export const LABEL_MAX_CHARS = {
 // PIE_INNER: '0%' = torta sólida | '>0%' = dona con hueco
 // PIE_OUTER: radio exterior (100% = llena el contenedor)
 // ---------------------------------------------------------------------------
-export const PIE_INNER_RADIUS = '45%';  // '0%' = torta sólida | '>0%' = dona
+export const PIE_INNER_RADIUS = '35%';  // '0%' = torta sólida | '>0%' = dona
 export const PIE_OUTER_RADIUS = '68%';
 
 // ---------------------------------------------------------------------------

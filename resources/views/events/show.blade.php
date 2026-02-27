@@ -177,32 +177,9 @@
                             </div>
                         @elseif($asistenciasCount > 0)
                             {{-- El evento ha iniciado y hay asistentes --}}
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-                                <!-- Gráfica circular - Programa -->
-                                <div>
-                                    <h3 class="text-lg font-medium mb-2">Distribución por Programa</h3>
-                                    <div id="chart_program_pie" class="relative aspect-video overflow-hidden rounded-2xl border border-neutral-200 dark:border-neutral-700"></div>
-                                </div>
-
-                                <!-- Gráfica de barras - Programa -->
-                                <div>
-                                    <h3 class="text-lg font-medium mb-2">Participación por Programa</h3>
-                                    <div id="chart_program_bar" class="relative aspect-video overflow-hidden rounded-2xl border border-neutral-200 dark:border-neutral-700"></div>
-                                </div>
-
-                                <!-- Gráfica circular - Rol -->
-                                <div>
-                                    <h3 class="text-lg font-medium mb-2">Distribución por Rol</h3>
-                                    <div id="chart_role_pie" class="relative aspect-video overflow-hidden rounded-2xl border border-neutral-200 dark:border-neutral-700"></div>
-                                </div>
-
-                                <!-- Gráfica de barras - Rol -->
-                                <div>
-                                    <h3 class="text-lg font-medium mb-2">Participación por Rol</h3>
-                                    <div id="chart_role_bar" class="relative aspect-video overflow-hidden rounded-2xl border border-neutral-200 dark:border-neutral-700"></div>
-                                </div>
-                            </div>
+                            {{-- Punto de montaje de la app React de gráficos de eventos --}}
+                            <div id="event-charts-react-root" data-event-id="{{ $event->id }}"></div>
+                            @vite(['resources/js/events/index.jsx'])
                         @else
                             {{-- El evento ha iniciado/finalizado pero no hay asistentes --}}
                             <div class="flex flex-col items-center justify-center py-12">
