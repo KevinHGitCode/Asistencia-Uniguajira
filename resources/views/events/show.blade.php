@@ -8,7 +8,7 @@
         </ol>
     </nav>
 
-    <div class="relative flex w-full mb-3 flex-1 flex-col gap-4 p-1 rounded-2xl border border-neutral-200 dark:border-neutral-700">
+    <div class="relative flex w-full mb-3 flex-1 flex-col gap-4 p-1 rounded-2xl border border-neutral-200 dark:border-neutral-700 bg-zinc-50 dark:bg-zinc-900">
 
         <div class="p-4 overflow-hidden rounded-2xl">
 
@@ -103,7 +103,7 @@
                 </div>
 
                 {{-- Contenedor de los Enlaces del Evento --}}
-                <div class="border border-neutral-200 dark:border-neutral-700 p-4 rounded-lg">
+                <div class="border border-neutral-200 dark:border-neutral-700 p-4 bg-white dark:bg-zinc-800 rounded-lg">
                     
                     @php
                         // Combinar fecha y hora de finalización del evento
@@ -153,7 +153,7 @@
                     @livewire('event.attendees-modal', ['eventId' => $event->id])
                     
                     {{-- Contenedor para las estadísticas --}}
-                    <div class="border border-neutral-200 dark:border-neutral-700 p-4 rounded-lg">
+                    <div class="border bg-white dark:bg-zinc-800 border-neutral-200 dark:border-neutral-700 p-4 rounded-lg">
                         <h2 class="text-2xl font-semibold mb-4">Estadísticas del Evento</h2>
 
                         @php
