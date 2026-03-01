@@ -32,7 +32,7 @@
             </div>
 
             <form
-                :action="'{{ url('administracion/areas/delete') }}/' + deleteId"
+                :action="'{{ route('areas.delete', '__id__') }}'.replace('__id__', deleteId)"
                 method="POST"
                 class="flex gap-3">
                 @csrf

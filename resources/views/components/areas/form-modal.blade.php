@@ -30,7 +30,7 @@
 
             <form
                 :action="editingId
-                    ? '{{ url('administracion/areas/edit') }}/' + editingId
+                    ? '{{ route('areas.update', '__id__') }}'.replace('__id__', editingId)
                     : '{{ route('areas.store') }}'"
                 method="POST"
                 class="px-6 py-5 flex flex-col gap-4">

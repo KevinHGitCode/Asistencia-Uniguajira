@@ -37,7 +37,8 @@ class DependencyController extends Controller
         $request->validate([
             'name' => 'required|string|max:255|unique:dependencies,name',
         ], [
-            'name.unique' => 'Ya existe una dependencia con ese nombre.',
+            'name.required'         => 'El nombre de la dependencia es obligatorio.',
+            'name.unique'           => 'Ya existe una dependencia con ese nombre.',
         ]);
 
         Dependency::create([
@@ -70,6 +71,9 @@ class DependencyController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255|unique:dependencies,name,' . $dependency->id,
+        ], [
+            'name.required'         => 'El nombre de la dependencia es obligatorio.',
+            'name.unique'           => 'Ya existe una dependencia con ese nombre.',
         ]);
 
         $dependency->update([

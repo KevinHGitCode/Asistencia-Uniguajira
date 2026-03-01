@@ -40,6 +40,12 @@
         </div>
     @endif
 
+    @if ($errors->has('name'))
+        <div class="mb-3 px-4 py-3 rounded-lg bg-red-100 border border-red-300 text-red-700 text-sm">
+            {{ $errors->first('name') }}
+        </div>
+    @endif
+
     {{-- Tabla --}}
     <div class="border border-neutral-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm overflow-hidden">
 
