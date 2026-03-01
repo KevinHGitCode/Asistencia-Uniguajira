@@ -31,7 +31,7 @@
             {{-- El action cambia dinámicamente según si es crear o editar --}}
             <form
                 :action="editingId
-                    ? '{{ url('administracion/dependencies/edit') }}/' + editingId
+                    ? '{{ route('dependencies.update', '__id__') }}'.replace('__id__', editingId)
                     : '{{ route('dependencies.store') }}'"
                 method="POST"
                 class="px-6 py-5 flex flex-col gap-4">

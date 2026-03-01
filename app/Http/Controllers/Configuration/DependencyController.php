@@ -34,7 +34,17 @@ class DependencyController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'name' => 'required|string|max:255|unique:dependencies,name',
+        ], [
+            'name.unique' => 'Ya existe una dependencia con ese nombre.',
+        ]);
+
+        Dependency::create([
+            'name' => $request->name,
+        ]);
+
+        return redirect()->route('dependencies.index')->with('success', 'Dependencia creada exitosamente.');
     }
 
     /**
@@ -58,7 +68,15 @@ class DependencyController extends Controller
      */
     public function update(Request $request, Dependency $dependency)
     {
-        //
+        $request->validate([
+            'name' => 'required|string|max:255|unique:dependencies,name,' . $dependency->id,
+        ]);
+
+        $dependency->update([
+            'name' => $request->name,
+        ]);
+
+        return redirect()->route('dependencies.index')->with('success', 'Dependencia actualizada exitosamente.');
     }
 
     /**
@@ -66,6 +84,8 @@ class DependencyController extends Controller
      */
     public function destroy(Dependency $dependency)
     {
-        //
+        $dependency->delete();
+
+        return redirect()->route('dependencies.index')->with('success', 'Dependencia eliminada exitosamente.');
     }
 }

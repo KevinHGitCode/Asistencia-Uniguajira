@@ -121,7 +121,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])
         Route::get('/dependencies', [DependencyController::class, 'index'])->name('dependencies.index');
         Route::get('/dependencies/create', [DependencyController::class, 'create'])->name('dependencies.create');
         Route::post('/dependencies', [DependencyController::class, 'store'])->name('dependencies.store');
-        Route::get('/dependencies/edit/{dependency}', [DependencyController::class, 'edit'])->name('dependencies.edit');
+        // Route::get('/dependencies/edit/{dependency}', [DependencyController::class, 'edit'])->name('dependencies.edit');
         Route::post('/dependencies/edit/{dependency}', [DependencyController::class, 'update'])->name('dependencies.update');
         Route::post('/dependencies/delete/{dependency}', [DependencyController::class, 'destroy'])->name('dependencies.delete');
 
