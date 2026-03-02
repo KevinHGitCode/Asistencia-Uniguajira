@@ -13,6 +13,7 @@ use App\Models\Attendance;
 use Carbon\Carbon;
 use setasign\Fpdi\Tfpdf\Fpdi;
 use App\Services\AttendancePdfService;
+use App\Services\EventService;
 
 class EventController extends Controller
 {
@@ -88,112 +89,30 @@ class EventController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request, EventService $eventService)
     {
         try {
-
-            /** @var User $user */
-            $user = Auth::user();
-
-
             $validated = $request->validate([
-                'title' => 'required|string|max:255',
-                'description' => 'nullable|string',
-                'date' => 'required|date',
-                'start_time' => 'nullable|date_format:H:i',
-                'end_time' => 'nullable|date_format:H:i|after_or_equal:start_time',
-                'location' => 'required|string|max:255',
+                'title'         => 'required|string|max:255',
+                'description'   => 'nullable|string',
+                'date'          => 'required|date',
+                'start_time'    => 'nullable|date_format:H:i',
+                'end_time'      => 'nullable|date_format:H:i|after_or_equal:start_time',
+                'location'      => 'required|string|max:255',
                 'dependency_id' => 'nullable|exists:dependencies,id',
-                'area_id' => 'nullable|exists:areas,id',
+                'area_id'       => 'nullable|exists:areas,id',
             ]);
 
-            /*
-            |--------------------------------------------------------------------------
-            | Seguridad dependencia
-            |--------------------------------------------------------------------------
-            */
-
-            if ($user->role === 'admin') {
-
-                // Admin puede dejarla null o elegir cualquiera
-                $validated['dependency_id'] = $request->input('dependency_id');
-
-            } else {
-
-                // Usuario normal: verificar que la dependencia enviada
-                // realmente le pertenezca
-                $allowedDependencies = $user->dependencies->pluck('id')->toArray();
-
-                if (
-                    !$request->filled('dependency_id') ||
-                    !in_array($request->input('dependency_id'), $allowedDependencies)
-                ) {
-                    return back()
-                        ->withInput()
-                        ->withErrors(['dependency_id' => 'Dependencia no válida.']);
-                }
-
-                $validated['dependency_id'] = $request->input('dependency_id');
-            }
-
-            /*
-            |--------------------------------------------------------------------------
-            | Seguridad área (si existe)
-            |--------------------------------------------------------------------------
-            */
-
-            if ($request->filled('area_id')) {
-
-                $area = Area::where('id', $request->area_id)
-                    ->where('dependency_id', $validated['dependency_id'])
-                    ->first();
-
-                if (!$area) {
-                    return back()
-                        ->withInput()
-                        ->withErrors(['area_id' => 'Área no válida para la dependencia seleccionada.']);
-                }
-
-                $validated['area_id'] = $area->id;
-
-            } else {
-                $validated['area_id'] = null;
-            }
-
-            /*
-            |--------------------------------------------------------------------------
-            | Datos adicionales
-            |--------------------------------------------------------------------------
-            */
-
-            $validated['user_id'] = $user->id;
-
-            $slug = str_replace(' ', '-', strtolower($validated['title']))
-                . '-' . date('Ymd', strtotime($validated['date']))
-                . '-' . uniqid();
-
-            $validated['link'] = $slug;
-
-            Event::create($validated);
+            $event = $eventService->create($validated, Auth::user());
 
             return redirect()
                 ->route('events.new')
                 ->with('success', 'Evento creado exitosamente.')
-                ->with('event_link', route('events.access', ['slug' => $validated['link']]));
+                ->with('event_link', route('events.access', ['slug' => $event->link]));
 
         } catch (\Exception $e) {
-
             Log::error('Error creating event: ' . $e->getMessage());
-
-            $errorMsg = 'Hubo un error al crear el evento.';
-
-            if (app()->environment() !== 'production') {
-                $errorMsg .= ' Detalles: ' . $e->getMessage();
-            }
-
-            return back()
-                ->withInput()
-                ->withErrors(['error' => $errorMsg]);
+            return back()->withInput()->withErrors(['error' => 'Hubo un error al crear el evento.']);
         }
     }
 

@@ -1,4 +1,5 @@
 export function openModal(fecha, eventos) {
+    window.selectedCalendarDate = fecha;
     const modal = document.getElementById('calendarModal');
     const modalTitle = document.getElementById('calendarModalTitle');
     const modalContent = document.getElementById('calendarModalBody');

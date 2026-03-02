@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Attendance;
+use App\Models\Dependency;
 use Illuminate\Http\Request;
 use App\Models\Event;
 use App\Models\Participant;
@@ -33,6 +34,9 @@ class DashboardController extends Controller
             })->distinct('participant_id')->count('participant_id');
         }
 
-        return view('dashboard', compact('username', 'eventosCount', 'asistenciasCount', 'participantesCount'));
+        $dependencies = Dependency::orderBy('name')->pluck('name', 'id')->toArray();
+        $roles = ['admin' => 'Administrador', 'user' => 'Usuario'];
+
+        return view('dashboard', compact('username', 'eventosCount', 'asistenciasCount', 'participantesCount', 'dependencies', 'roles'));
     }
 }

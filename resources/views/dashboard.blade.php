@@ -42,9 +42,11 @@
         <div class="relative border border-neutral-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-2xl shadow-md overflow-hidden">
             <!-- Header del calendario -->
             <div class="px-4 sm:px-6 py-4 border-b border-neutral-200 dark:border-neutral-700 bg-zinc-50 dark:bg-zinc-900 text-center">
-                <h2 class="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
-                    📅 Calendario Semestral de Eventos
+                <h2 class="flex items-center justify-center gap-2 text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
+                    <flux:icon.calendar-check class="size-6 text-[#e2a542]" />
+                    <span>Calendario Semestral de Eventos</span>
                 </h2>
+
                 <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
                     Visualiza tu actividad de eventos a lo largo del año
                 </p>
@@ -79,4 +81,6 @@
             </div>
         </div>
     </div>
+
+    @livewire('event.create-event-modal')
 </x-layouts.app>
