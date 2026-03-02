@@ -22,8 +22,11 @@ class UserController extends Controller
                     ->withCount(['dependencies', 'events'])
                     ->get();
 
+        $dependencies = Dependency::orderBy('name')->pluck('name', 'id')->toArray();
+        $roles = ['admin' => 'Administrador', 'user' => 'Usuario'];
 
-        return view('users.users', compact('users'));
+
+        return view('users.users', compact('users', 'dependencies', 'roles'));
     }
 
     /**

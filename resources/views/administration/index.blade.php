@@ -5,7 +5,10 @@
         {{-- Header --}}
         <div class="mb-2">
             <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                ⚙️ Módulo de Configuración
+                <div class="flex items-center gap-2">
+                    <flux:icon.cog class="size-16" />
+                    <span class="text-gray-700 dark:text-gray-200">Módulo de Configuración</span>
+                </div>
             </h1>
             <p class="text-sm sm:text-base text-gray-600 dark:text-gray-400">
                 Administra las dependencias, áreas y otros recursos del sistema
@@ -21,8 +24,8 @@
 
                 {{-- Ícono --}}
                 <div class="flex items-center justify-between">
-                    <div class="flex items-center justify-center w-12 h-12 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform duration-200">
-                        <flux:icon.building-office-2 class="size-6" />
+                    <div class="flex items-center justify-center w-12 h-12 rounded-lg group-hover:scale-110 transition-transform duration-200">
+                        <flux:icon name="building-office" class="size-16 text-[#cc5e50]" />
                     </div>
                     <flux:icon.chevron-right class="size-5 text-gray-400 dark:text-gray-500 group-hover:translate-x-1 transition-transform duration-200" />
                 </div>
@@ -38,7 +41,7 @@
                 </div>
 
                 {{-- Indicador de color al hover --}}
-                <div class="absolute bottom-0 left-0 w-0 h-0.5 rounded-b-xl bg-blue-500 group-hover:w-full transition-all duration-300"></div>
+                <div class="absolute bottom-0 left-0 w-0 h-0.5 rounded-b-xl bg-[#cc5e50] group-hover:w-full transition-all duration-300"></div>
             </a>
 
             {{-- Card: Áreas --}}
@@ -46,8 +49,8 @@
                class="group relative flex flex-col gap-4 p-5 sm:p-6 rounded-2xl border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 overflow-hidden">
 
                 <div class="flex items-center justify-between">
-                    <div class="flex items-center justify-center w-12 h-12 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform duration-200">
-                        <flux:icon.squares-2x2 class="size-6" />
+                    <div class="flex items-center justify-center w-12 h-12 rounded-lg group-hover:scale-110 transition-transform duration-200">
+                        <flux:icon.squares-2x2 class="size-16 text-[#62a9b6]" />
                     </div>
                     <flux:icon.chevron-right class="size-5 text-gray-400 dark:text-gray-500 group-hover:translate-x-1 transition-transform duration-200" />
                 </div>
@@ -61,7 +64,7 @@
                     </p>
                 </div>
 
-                <div class="absolute bottom-0 left-0 w-0 h-0.5 rounded-b-xl bg-emerald-500 group-hover:w-full transition-all duration-300"></div>
+                <div class="absolute bottom-0 left-0 w-0 h-0.5 rounded-b-xl bg-[#62a9b6] group-hover:w-full transition-all duration-300"></div>
             </a>
 
             {{-- Card placeholder: Próximamente --}}
@@ -98,11 +101,11 @@
             <div class="px-4 sm:px-6 py-5 bg-white dark:bg-zinc-800">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400">
                     <div class="flex items-start gap-3">
-                        <flux:icon.information-circle class="size-5 text-blue-500 mt-0.5 shrink-0" />
+                        <flux:icon.information-circle class="size-5 text-[#cc5e50] mt-0.5 shrink-0" />
                         <span>Las <strong class="text-gray-800 dark:text-gray-200">dependencias</strong> representan las unidades organizativas principales del sistema.</span>
                     </div>
                     <div class="flex items-start gap-3">
-                        <flux:icon.information-circle class="size-5 text-emerald-500 mt-0.5 shrink-0" />
+                        <flux:icon.information-circle class="size-5 text-[#62a9b6] mt-0.5 shrink-0" />
                         <span>Las <strong class="text-gray-800 dark:text-gray-200">áreas</strong> se agrupan dentro de una dependencia para organizar mejor los participantes.</span>
                     </div>
                 </div>

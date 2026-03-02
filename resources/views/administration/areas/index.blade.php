@@ -12,15 +12,16 @@
                 <flux:icon.chevron-right class="size-3" />
                 <span class="text-gray-700 dark:text-gray-200">Áreas</span>
             </div>
-            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-                🗂️ Áreas
+            <h1 class="flex items-center gap-2 text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+                <flux:icon.squares-2x2 class="size-16 text-[#62a9b6]" />
+                <span>Áreas</span>
             </h1>
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
                 {{ $areas->count() }} {{ Str::plural('área', $areas->count()) }} registrada{{ $areas->count() !== 1 ? 's' : '' }}
             </p>
         </div>
         <button @click="openCreate()"
-            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium transition-colors shadow-sm self-start sm:self-auto">
+            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#62a9b6] text-sm font-medium transition-colors shadow-sm self-start sm:self-auto">
             <flux:icon.plus class="size-4" />
             Nueva Área
         </button>
@@ -81,15 +82,15 @@
                             </td>
                             <td class="px-4 sm:px-6 py-4">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
-                                        <flux:icon.squares-2x2 class="size-4 text-emerald-500 dark:text-emerald-400" />
+                                    <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0">
+                                        <flux:icon.squares-2x2 class="size-6 text-[#62a9b6]" />
                                     </div>
                                     <span class="font-medium text-gray-900 dark:text-white">{{ $area->name }}</span>
                                 </div>
                             </td>
                             <td class="px-4 sm:px-6 py-4 hidden sm:table-cell">
                                 @if($area->dependency)
-                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-[#cc5e50]">
                                         <flux:icon.building-office-2 class="size-3" />
                                         {{ $area->dependency->name }}
                                     </span>
@@ -98,7 +99,7 @@
                                 @endif
                             </td>
                             <td class="px-4 sm:px-6 py-4 text-center hidden sm:table-cell">
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[#e2a542]">
                                     {{ $area->events_count ?? 0 }}
                                 </span>
                             </td>

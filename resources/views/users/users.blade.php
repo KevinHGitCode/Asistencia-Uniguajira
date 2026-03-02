@@ -7,14 +7,20 @@
                     {{ __('Users list') }}
                 </flux:heading>
 
-                <flux:button
-                    href="{{ route('user.form') }}"
-                    variant="primary"
-                    type="submit"
-                    class="border hover:scale-105 transition-transform">
-                    {{ __('Add User') }}
-                </flux:button>
+                <flux:modal.trigger name="create-user-modal">
+                    <flux:button
+                        variant="primary"
+                        class="border hover:scale-105 transition-transform">
+                        {{ __('Add User') }}
+                    </flux:button>
+                </flux:modal.trigger>
             </div>
+
+            @if(session('success'))
+                <div class="mb-4 rounded-lg bg-green-100 border border-green-400 text-green-700 px-4 py-3 text-sm">
+                    {{ session('success') }}
+                </div>
+            @endif
 
             <div class="relative h-full flex-1 overflow-hidden rounded-2xl border bg-zinc-50 dark:bg-zinc-900 border-neutral-200 dark:border-neutral-700">
                 <div class=" inset-0 overflow-auto p-4 md:grid md:grid-cols-2 gap-4">
@@ -44,5 +50,7 @@
             </div>
         </div>
     </div>
+
+    @livewire('user.create-user-modal', ['dependencies' => $dependencies, 'roles' => $roles])
 
 </x-layouts.app>

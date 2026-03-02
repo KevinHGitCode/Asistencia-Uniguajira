@@ -12,15 +12,16 @@
                 <flux:icon.chevron-right class="size-3" />
                 <span class="text-gray-700 dark:text-gray-200">Dependencias</span>
             </div>
-            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-                🏢 Dependencias
+            <h1 class="flex items-center gap-2 text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+                <flux:icon name="building-office" class="size-16 text-[#cc5e50]" />
+                <span>Dependencias</span>
             </h1>
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
                 {{ $dependencies->count() }} {{ Str::plural('dependencia', $dependencies->count()) }} registrada{{ $dependencies->count() !== 1 ? 's' : '' }}
             </p>
         </div>
         <button @click="openCreate()"
-            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors shadow-sm self-start sm:self-auto">
+            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#cc5e50] text-white text-sm font-medium transition-colors shadow-sm self-start sm:self-auto">
             <flux:icon.plus class="size-4" />
             Nueva Dependencia
         </button>
@@ -81,19 +82,19 @@
                             </td>
                             <td class="px-4 sm:px-6 py-4">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
-                                        <flux:icon.building-office-2 class="size-4 text-blue-500 dark:text-blue-400" />
+                                    <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0">
+                                        <flux:icon.building-office-2 class="size-6 text-[#cc5e50]" />
                                     </div>
                                     <span class="font-medium text-gray-900 dark:text-white">{{ $dependency->name }}</span>
                                 </div>
                             </td>
                             <td class="px-4 sm:px-6 py-4 text-center hidden sm:table-cell">
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-white bg-[#62a9b6]">
                                     {{ $dependency->areas_count ?? 0 }}
                                 </span>
                             </td>
                             <td class="px-4 sm:px-6 py-4 text-center hidden sm:table-cell">
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-white bg-[#e2a542]">
                                     {{ $dependency->events_count ?? 0 }}
                                 </span>
                             </td>
