@@ -21,7 +21,7 @@ import { CHART_HEIGHTS, CHART_GRID_COLS, CHART_DENSITY } from './config.js';
 const DESCRIPTIONS = {
   programAttendances: `Compara el número total de asistencias registradas en cada programa académico durante el período seleccionado. Permite identificar qué programas concentran la mayor actividad.`,
 
-  programParticipants: `Muestra cómo se distribuyen los participantes únicos entre los diferentes programas. Los segmentos con menos del ${CHART_DENSITY.pieMinPercent}% del total se agrupan automáticamente en la categoría "Otros".`,
+  programParticipants: `Muestra cómo se distribuyen los participantes únicos entre los diferentes programas. Todos los programas que representen ${CHART_DENSITY.pieMinPercent}% o menos del total se agrupan automáticamente en la categoría "Otros".`,
 
   topEvents: `Ranking de los eventos que han reunido más asistentes en el período. Ayuda a identificar qué actividades generan mayor convocatoria y tienen más impacto.`,
 

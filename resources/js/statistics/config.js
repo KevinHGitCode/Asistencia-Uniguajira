@@ -40,7 +40,7 @@ export const CHART_DENSITY = {
   barRotateAt:    7,    // Ítems en barra → rotar etiquetas del eje X
   barTinyAt:      12,   // Ítems en barra → reducir tamaño de fuente a mínimo
   pieHideLabelAt: 9,    // Ítems en torta → ocultar etiquetas externas (solo %)
-  pieMinPercent:  3,  // % mínimo para mostrar etiqueta en la torta
+  pieMinPercent:  5,  // % mínimo para mostrar etiqueta en la torta
   horizontalMax:  10,   // Máximo de filas visibles en barras horizontales
 };
 

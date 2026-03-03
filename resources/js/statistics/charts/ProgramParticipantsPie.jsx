@@ -12,6 +12,7 @@ import {
 
 const RADIAN           = Math.PI / 180;
 const LEGEND_PAGE_SIZE = 10; // items per page in the right legend
+const OTHERS_COLOR     = { light: '#9ca3af', dark: '#6b7280' };
 
 // ── "Otros" grouping ──────────────────────────────────────────────────────────
 
@@ -20,13 +21,18 @@ function groupSmallSlices(raw, minPercent) {
   if (total === 0 || minPercent <= 0) return raw;
 
   const threshold = total * (minPercent / 100);
-  const main      = raw.filter(d => (d.value ?? 0) >= threshold);
-  const small     = raw.filter(d => (d.value ?? 0) <  threshold);
+  const main      = raw.filter(d => (d.value ?? 0) > threshold);
+  const small     = raw.filter(d => (d.value ?? 0) <= threshold);
 
-  if (small.length <= 1) return raw;
+  if (small.length === 0) return raw;
 
   const othersVal = small.reduce((s, d) => s + (d.value ?? 0), 0);
-  return [...main, { name: `Otros (${small.length})`, value: othersVal }];
+  return [...main, { name: `Otros (${small.length})`, value: othersVal, isOthers: true }];
+}
+
+function getSliceColor(item, index, colors, isDark) {
+  if (item?.isOthers) return isDark ? OTHERS_COLOR.dark : OTHERS_COLOR.light;
+  return colors[index % colors.length];
 }
 
 // ── Outer percentage label ────────────────────────────────────────────────────
@@ -122,7 +128,7 @@ function CustomTooltip({ active, payload, total, isDark }) {
 
 // ── Vertical legend with pagination ──────────────────────────────────────────
 
-function VerticalLegend({ chartData, colors, isDark }) {
+function VerticalLegend({ chartData, isDark }) {
   const [page, setPage] = useState(0);
   const theme = getTheme(isDark);
   const pages = Math.ceil(chartData.length / LEGEND_PAGE_SIZE);
@@ -133,8 +139,8 @@ function VerticalLegend({ chartData, colors, isDark }) {
     <div className="flex flex-col h-full justify-center gap-1 pl-2 pr-1">
       {/* Legend items */}
       <div className="flex flex-col gap-1.5 flex-1 justify-center min-h-0">
-        {items.map((item, i) => {
-          const color = colors[(start + i) % colors.length];
+        {items.map((item) => {
+          const color = item.fill;
           return (
             <div key={item.name} className="flex items-start gap-2 min-w-0">
               <div
@@ -193,13 +199,16 @@ function VerticalLegend({ chartData, colors, isDark }) {
  *  - Right (~38%): vertical paginated legend
  *
  * Features:
- *  - Slices below pieMinPercent% → grouped into "Otros (n)"
+ *  - Slices <= pieMinPercent% → grouped into "Otros (n)"
  *  - Inner radius > 0% → shows total participantes in the donut center
  */
 export function ProgramParticipantsPie({ data, isDark }) {
   const theme     = getTheme(isDark);
   const colors    = getColors(isDark);
-  const chartData = groupSmallSlices(data, CHART_DENSITY.pieMinPercent);
+  const chartData = groupSmallSlices(data, CHART_DENSITY.pieMinPercent).map((item, i) => ({
+    ...item,
+    fill: getSliceColor(item, i, colors, isDark),
+  }));
   const total     = chartData.reduce((s, d) => s + (d.value ?? 0), 0);
   const isDonut   = PIE_INNER_RADIUS !== '0%';
 
@@ -224,10 +233,10 @@ export function ProgramParticipantsPie({ data, isDark }) {
               animationDuration={CHART_ANIMATION_DURATION}
               animationEasing="ease-out"
             >
-              {chartData.map((_, i) => (
+              {chartData.map((item, i) => (
                 <Cell
                   key={i}
-                  fill={colors[i % colors.length]}
+                  fill={item.fill}
                   stroke={isDark ? '#18181b' : '#ffffff'}
                   strokeWidth={2}
                 />
@@ -249,7 +258,7 @@ export function ProgramParticipantsPie({ data, isDark }) {
 
       {/* ── Right legend ── */}
       <div className="h-full min-w-0" style={{ flex: '0 0 38%' }}>
-        <VerticalLegend chartData={chartData} colors={colors} isDark={isDark} />
+        <VerticalLegend chartData={chartData} isDark={isDark} />
       </div>
     </div>
   );
