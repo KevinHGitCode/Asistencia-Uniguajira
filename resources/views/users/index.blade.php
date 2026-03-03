@@ -22,10 +22,14 @@
                 </div>
             @endif
 
-            <div class="relative h-full flex-1 overflow-hidden rounded-2xl border bg-zinc-50 dark:bg-zinc-900 border-neutral-200 dark:border-neutral-700">
-                <div class="overflow-auto p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="relative h-full flex-1 rounded-2xl border bg-zinc-50 dark:bg-zinc-900 border-neutral-200 dark:border-neutral-700">
+                <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                     @foreach ($users as $user)
-                        @livewire('user.card', ['title' => $user->name, 'user' => $user], key($user->id))
+                        @livewire('user.card', [
+                            'title' => $user->name,
+                            'user' => $user,
+                            'showDependenciesUpward' => $loop->last,
+                        ], key($user->id))
                     @endforeach
                 </div>
             </div>
@@ -33,7 +37,7 @@
     </div>
     
     <!-- Leyenda -->
-    <div class="relative flex w-full flex-1 flex-col gap-4 p-6 mb-4 rounded-2xl border border-neutral-200 dark:border-neutral-700 bg-zinc-50 dark:bg-zinc-900">
+    <div class="z-10 flex w-full flex-1 flex-col gap-4 p-6 mb-4 rounded-2xl border border-neutral-200 dark:border-neutral-700 bg-zinc-50 dark:bg-zinc-900">
         <div class="flex items-center justify-center gap-4 sm:gap-8 flex-wrap">
             <div class="flex items-center gap-2">
                 <div class="w-4 h-4 rounded-sm bg-[#e2a542]"></div>

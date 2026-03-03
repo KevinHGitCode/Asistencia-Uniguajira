@@ -26,7 +26,7 @@ class UserController extends Controller
         $roles = ['admin' => 'Administrador', 'user' => 'Usuario'];
 
 
-        return view('users.users', compact('users', 'dependencies', 'roles'));
+        return view('users.index', compact('users', 'dependencies', 'roles'));
     }
 
     /**

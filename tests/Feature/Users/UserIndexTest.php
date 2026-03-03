@@ -37,7 +37,7 @@ class UserIndexTest extends TestCase
         $this->actingAs($admin)
             ->get(route('users.index'))
             ->assertOk()
-            ->assertViewIs('users.users');
+            ->assertViewIs('users.index');
     }
 
     // ─────────────────────────────────────────────

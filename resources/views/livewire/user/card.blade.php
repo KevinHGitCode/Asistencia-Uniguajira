@@ -28,11 +28,35 @@
                 {{-- Dependencia: solo para usuarios normales --}}
                 @if(isset($user->role) && $user->role === 'user')
                     @if($user->dependencies->isNotEmpty())
-                        @foreach ($user->dependencies as $dependency)
-                            <flux:badge class="!bg-[#cc5e50] !text-white" :color="null">
-                                {{ $dependency->name }}
-                            </flux:badge>
-                        @endforeach
+                        @php
+                            $dependencyNames = $user->dependencies->pluck('name')->values();
+                            $primaryDependency = $dependencyNames->first();
+                            $extraDependencies = $dependencyNames->slice(1);
+                        @endphp
+
+                        <flux:badge class="!bg-[#cc5e50] !text-white max-w-[18rem] truncate" :color="null" :title="$primaryDependency">
+                            {{ $primaryDependency }}
+                        </flux:badge>
+
+                        @if($extraDependencies->isNotEmpty())
+                            <div class="relative group/dependencies">
+                                <button
+                                    type="button"
+                                    class="inline-flex items-center rounded-full bg-[#cc5e50] px-2 py-0.5 text-xs font-semibold text-white hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-[#cc5e50]/40"
+                                    aria-label="Mostrar dependencias adicionales">
+                                    +{{ $extraDependencies->count() }}
+                                </button>
+
+                                <div class="pointer-events-none absolute left-0 z-10 hidden min-w-56 max-w-xs rounded-lg border border-neutral-200 bg-white p-3 text-xs text-zinc-700 shadow-lg dark:border-neutral-700 dark:bg-zinc-900 dark:text-zinc-200 group-hover/dependencies:block group-focus-within/dependencies:block {{ $showDependenciesUpward ? 'bottom-full mb-2' : 'top-full mt-2' }}">
+                                    <p class="mb-2 font-semibold">Dependencias</p>
+                                    <ul class="space-y-1">
+                                        @foreach ($dependencyNames as $dependencyName)
+                                            <li class="truncate" title="{{ $dependencyName }}">{{ $dependencyName }}</li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            </div>
+                        @endif
                     @else
                         <flux:badge color="gray">
                             {{ __('Not assigned') }}
