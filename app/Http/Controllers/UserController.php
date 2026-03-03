@@ -138,6 +138,16 @@ class UserController extends Controller
         ));
     }
 
+    /**
+     * Show the form for editing the specified user.
+     */
+    public function edit(string $id)
+    {
+        $user = User::findOrFail($id);
+
+        return view('users.edit', compact('user'));
+    }
+
 
     /**
      * Update the specified resource in storage.
