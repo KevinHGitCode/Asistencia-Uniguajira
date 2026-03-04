@@ -15,8 +15,10 @@ class UserController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
+        $search = trim((string) $request->query('q', ''));
+
         // obtener usuarios con su dependencia relacionada
         $users = User::with('dependencies')
                     ->withCount(['dependencies', 'events'])
@@ -26,7 +28,7 @@ class UserController extends Controller
         $roles = ['admin' => 'Administrador', 'user' => 'Usuario'];
 
 
-        return view('users.index', compact('users', 'dependencies', 'roles'));
+        return view('users.index', compact('users', 'dependencies', 'roles', 'search'));
     }
 
     /**

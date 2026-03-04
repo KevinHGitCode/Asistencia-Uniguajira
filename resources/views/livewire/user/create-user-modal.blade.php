@@ -92,17 +92,6 @@
                     placeholder="Contraseña segura" 
                 />
 
-                {{-- ERRORES GENERALES --}}
-                @if ($errors->any())
-                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-sm">
-                        <ul class="list-disc list-inside">
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
-
                 {{-- BOTONES --}}
                 <div class="flex items-center gap-3 border-t border-zinc-200 dark:border-zinc-700 pt-4">
                     <flux:button variant="primary" type="submit" wire:loading.attr="disabled">
