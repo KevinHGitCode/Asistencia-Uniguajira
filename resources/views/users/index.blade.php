@@ -9,7 +9,9 @@
             </div>
 
             @if(session('success'))
-                <div class="rounded-lg bg-green-100 border border-green-400 text-green-700 px-4 py-3 text-sm">
+                <div
+                    id="users-success-alert"
+                    class="rounded-lg bg-green-100 border border-green-400 text-green-700 px-4 py-3 text-sm transition-opacity duration-500">
                     {{ session('success') }}
                 </div>
             @endif

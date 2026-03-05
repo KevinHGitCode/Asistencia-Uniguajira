@@ -1,5 +1,10 @@
 <div>
-    <flux:modal name="create-user-modal" variant="flyout" class="w-full max-w-lg bg-zinc-50 dark:bg-zinc-900" x-data x-init="
+    <flux:modal
+        name="create-user-modal"
+        variant="flyout"
+        class="w-full max-w-lg bg-zinc-50 dark:bg-zinc-900 [&::backdrop]:bg-black/40 [&::backdrop]:backdrop-blur-[2px]"
+        x-data
+        x-init="
         $nextTick(() => {
             const closeButton = $el.querySelector('[data-flux-modal-close]');
             if (closeButton) {

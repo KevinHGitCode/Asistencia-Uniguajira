@@ -22,7 +22,7 @@
         </div>
     </flux:modal.trigger>
 
-    <flux:modal name="attendees-modal-{{ $eventId }}" variant="flyout" class="w-full max-w-2xl" x-data x-init="
+    <flux:modal name="attendees-modal-{{ $eventId }}" variant="flyout" class="w-full max-w-2xl bg-zinc-50 dark:bg-zinc-900 [&::backdrop]:bg-black/40 [&::backdrop]:backdrop-blur-[2px]" x-data x-init="
         $nextTick(() => {
             const closeButton = $el.querySelector('[data-flux-modal-close]');
             if (closeButton) {
@@ -49,7 +49,7 @@
             <!-- Lista de Asistentes -->
             <div class="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
                 @forelse($attendees as $index => $attendance)
-                    <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-4 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+                    <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-4 hover:bg-zinc-50 dark:hover:bg-zinc-900 bg-white dark:bg-zinc-800 transition-colors">
                         <div class="flex items-start justify-between">
                             <div class="flex items-start gap-3 flex-1">
                                 <!-- Número de orden -->

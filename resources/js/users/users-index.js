@@ -118,3 +118,15 @@ if (document.readyState !== 'loading') {
 
 // Soporte wire:navigate de Livewire 3 (SPA)
 document.addEventListener('livewire:navigated', initUsersIndex);
+
+document.addEventListener('DOMContentLoaded', function () {
+    var alertBox = document.getElementById('users-success-alert');
+    if (!alertBox) return;
+
+    setTimeout(function () {
+        alertBox.classList.add('opacity-0');
+        setTimeout(function () {
+            alertBox.remove();
+        }, 500);
+    }, 5000);
+});
