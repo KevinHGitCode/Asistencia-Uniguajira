@@ -118,6 +118,9 @@ Route::prefix('statistics')->controller(StatisticsController::class)->group(func
     Route::get('/top-events', 'topEvents');
     Route::get('/top-participants', 'topParticipants');
     Route::get('/top-users', 'topUsers');
+    Route::get('/participants-by-role',  'participantsByRole');
+    Route::get('/participants-by-sex',   'participantsBySex');
+    Route::get('/participants-by-group', 'participantsByGroup');
 });
 
 /**

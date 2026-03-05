@@ -163,6 +163,57 @@ export function downloadCSV(data, title) {
   URL.revokeObjectURL(a.href);
 }
 
+// ── Excel download (.xls via HTML table) ──────────────────────────────────────
+
+export function downloadExcel(data, title) {
+  const total = data.reduce((s, r) => s + (r.value ?? 0), 0);
+  const header = ['Nombre', 'Valor', 'Porcentaje'];
+  const rows   = [
+    ...data.map(r => [
+      r.name,
+      r.value ?? 0,
+      total > 0 ? ((r.value / total) * 100).toFixed(1) + '%' : '0%',
+    ]),
+    ['Total', total, '100%'],
+  ];
+
+  const esc = (v) => String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  let html = `<html xmlns:o='urn:schemas-microsoft-com:office:office' `
+           + `xmlns:x='urn:schemas-microsoft-com:office:excel' `
+           + `xmlns='http://www.w3.org/TR/REC-html40'>`
+           + `<head><meta charset='utf-8'></head><body><table>`;
+
+  html += '<tr>' + header.map(h => `<th><b>${esc(h)}</b></th>`).join('') + '</tr>';
+  for (const row of rows) {
+    html += '<tr>' + row.map(c => `<td>${esc(c)}</td>`).join('') + '</tr>';
+  }
+  html += '</table></body></html>';
+
+  const blob = new Blob(['\uFEFF' + html], { type: 'application/vnd.ms-excel;charset=utf-8' });
+  const a    = document.createElement('a');
+  a.href     = URL.createObjectURL(blob);
+  a.download = `${title || 'datos'}.xls`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// ── Copy table to clipboard (tab-separated, pasteable into spreadsheets) ───────
+
+export function copyTableText(data) {
+  const total = data.reduce((s, r) => s + (r.value ?? 0), 0);
+  const rows  = [
+    ['Nombre', 'Valor', 'Porcentaje'],
+    ...data.map(r => [
+      r.name,
+      r.value ?? 0,
+      total > 0 ? ((r.value / total) * 100).toFixed(1) + '%' : '0%',
+    ]),
+    ['Total', total, '100%'],
+  ];
+  return navigator.clipboard.writeText(rows.map(r => r.join('\t')).join('\n'));
+}
+
 // ── Icon button ───────────────────────────────────────────────────────────────
 
 function IconBtn({ onClick, tooltip, children, active = false, state = 'idle', disabled = false }) {

@@ -192,20 +192,21 @@ function VerticalLegend({ chartData, isDark }) {
 // ── Main component ────────────────────────────────────────────────────────────
 
 /**
- * Pie / donut chart — Participantes por Programa.
+ * Pie / donut chart — reutilizable para cualquier distribución.
+ *
+ * Props adicionales:
+ *  - showOuterLabels : bool (default true)  — muestra/oculta las líneas y etiquetas exteriores
+ *  - groupOthers     : bool (default true)  — agrupa slices pequeños en "Otros (n)"
  *
  * Layout:
  *  - Left (~62%): donut chart with center total + outer % labels on big left-side slices
  *  - Right (~38%): vertical paginated legend
- *
- * Features:
- *  - Slices <= pieMinPercent% → grouped into "Otros (n)"
- *  - Inner radius > 0% → shows total participantes in the donut center
  */
-export function ProgramParticipantsPie({ data, isDark }) {
+export function ProgramParticipantsPie({ data, isDark, showOuterLabels = true, groupOthers = true }) {
   const theme     = getTheme(isDark);
   const colors    = getColors(isDark);
-  const chartData = groupSmallSlices(data, CHART_DENSITY.pieMinPercent).map((item, i) => ({
+  // groupOthers=false → pasamos minPercent=0, lo que hace que groupSmallSlices devuelva raw
+  const chartData = groupSmallSlices(data, groupOthers ? CHART_DENSITY.pieMinPercent : 0).map((item, i) => ({
     ...item,
     fill: getSliceColor(item, i, colors, isDark),
   }));
@@ -228,7 +229,7 @@ export function ProgramParticipantsPie({ data, isDark }) {
               outerRadius={PIE_OUTER_RADIUS}
               paddingAngle={chartData.length > 1 ? 2 : 0}
               labelLine={false}
-              label={(props) => <OuterLabel {...props} theme={theme} />}
+              label={showOuterLabels ? (props) => <OuterLabel {...props} theme={theme} /> : false}
               isAnimationActive={CHART_ANIMATION}
               animationDuration={CHART_ANIMATION_DURATION}
               animationEasing="ease-out"

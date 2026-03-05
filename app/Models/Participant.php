@@ -14,6 +14,8 @@ class Participant extends Model
         'email',
         'role',
         'affiliation',
+        'sexo',
+        'grupo_priorizado',
         'program_id',
     ];
 

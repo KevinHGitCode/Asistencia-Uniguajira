@@ -1,11 +1,23 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { downloadCSV } from './ChartToolbar.jsx';
+import { downloadExcel, copyTableText } from './ChartToolbar.jsx';
 
 // ── DataView ──────────────────────────────────────────────────────────────────
 
 function DataView({ data, title }) {
+  const [copyState, setCopyState] = useState('idle'); // idle | ok | err
   const total = data.reduce((s, r) => s + (r.value ?? 0), 0);
+
+  const handleCopyTable = useCallback(async () => {
+    try {
+      await copyTableText(data);
+      setCopyState('ok');
+    } catch {
+      setCopyState('err');
+    } finally {
+      setTimeout(() => setCopyState('idle'), 2500);
+    }
+  }, [data]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -44,18 +56,55 @@ function DataView({ data, title }) {
         </table>
       </div>
 
-      <button
-        type="button"
-        onClick={() => downloadCSV(data, title)}
-        className="self-start inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors border border-emerald-200 dark:border-emerald-800"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-          <polyline points="7 10 12 15 17 10" />
-          <line x1="12" y1="15" x2="12" y2="3" />
-        </svg>
-        Descargar CSV
-      </button>
+      {/* Actions row */}
+      <div className="flex items-center gap-2 flex-wrap">
+
+        {/* Copy table */}
+        <button
+          type="button"
+          onClick={handleCopyTable}
+          className={[
+            'inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border',
+            copyState === 'ok'
+              ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
+              : copyState === 'err'
+              ? 'bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800'
+              : 'bg-gray-50 dark:bg-zinc-800 text-gray-600 dark:text-zinc-300 border-gray-200 dark:border-zinc-700 hover:bg-gray-100 dark:hover:bg-zinc-700',
+          ].join(' ')}
+        >
+          {copyState === 'ok' ? (
+            <>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              Copiado
+            </>
+          ) : (
+            <>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+              </svg>
+              Copiar tabla
+            </>
+          )}
+        </button>
+
+        {/* Download Excel */}
+        <button
+          type="button"
+          onClick={() => downloadExcel(data, title)}
+          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors border border-emerald-200 dark:border-emerald-800"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          Descargar Excel
+        </button>
+
+      </div>
     </div>
   );
 }
@@ -87,7 +136,7 @@ function InfoView({ description }) {
 
       {/* Hint */}
       <p className="text-xs text-gray-400 dark:text-zinc-500 border-t border-gray-100 dark:border-zinc-800 pt-3">
-        Usa el botón <strong className="font-medium">Datos</strong> para ver los valores exactos y descargarlos en CSV.
+        Usa el botón <strong className="font-medium">Datos</strong> para ver los valores exactos, copiarlos o descargarlos en Excel.
       </p>
     </div>
   );

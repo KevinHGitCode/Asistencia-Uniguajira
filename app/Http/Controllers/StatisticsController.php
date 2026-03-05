@@ -294,6 +294,78 @@ class StatisticsController extends Controller
             ->get();
     }
 
+    // Participantes por estamento (rol: Estudiante / Docente)
+    public function participantsByRole(Request $request)
+    {
+        $filters = $this->getFilters($request);
+
+        $query = DB::table('participants')
+            ->join('attendances', 'participants.id', '=', 'attendances.participant_id')
+            ->join('events',      'attendances.event_id', '=', 'events.id');
+
+        if (!empty($filters['dateFrom'])) {
+            $query->where('events.date', '>=', $filters['dateFrom']);
+        }
+        if (!empty($filters['dateTo'])) {
+            $query->where('events.date', '<=', $filters['dateTo']);
+        }
+
+        return $query->select('participants.role as label', DB::raw('COUNT(DISTINCT participants.id) as count'))
+            ->groupBy('participants.role')
+            ->orderByDesc('count')
+            ->get();
+    }
+
+    // Participantes por sexo
+    public function participantsBySex(Request $request)
+    {
+        $filters = $this->getFilters($request);
+
+        $query = DB::table('participants')
+            ->join('attendances', 'participants.id', '=', 'attendances.participant_id')
+            ->join('events',      'attendances.event_id', '=', 'events.id');
+
+        if (!empty($filters['dateFrom'])) {
+            $query->where('events.date', '>=', $filters['dateFrom']);
+        }
+        if (!empty($filters['dateTo'])) {
+            $query->where('events.date', '<=', $filters['dateTo']);
+        }
+
+        return $query->select(
+                DB::raw("COALESCE(participants.sexo, 'Sin datos') as label"),
+                DB::raw('COUNT(DISTINCT participants.id) as count')
+            )
+            ->groupBy('participants.sexo')
+            ->orderByDesc('count')
+            ->get();
+    }
+
+    // Participantes por grupo priorizado
+    public function participantsByGroup(Request $request)
+    {
+        $filters = $this->getFilters($request);
+
+        $query = DB::table('participants')
+            ->join('attendances', 'participants.id', '=', 'attendances.participant_id')
+            ->join('events',      'attendances.event_id', '=', 'events.id');
+
+        if (!empty($filters['dateFrom'])) {
+            $query->where('events.date', '>=', $filters['dateFrom']);
+        }
+        if (!empty($filters['dateTo'])) {
+            $query->where('events.date', '<=', $filters['dateTo']);
+        }
+
+        return $query->select(
+                DB::raw("COALESCE(participants.grupo_priorizado, 'Sin datos') as label"),
+                DB::raw('COUNT(DISTINCT participants.id) as count')
+            )
+            ->groupBy('participants.grupo_priorizado')
+            ->orderByDesc('count')
+            ->get();
+    }
+
     // Usuarios con más asistencias
     public function topUsers(Request $request)
     {
