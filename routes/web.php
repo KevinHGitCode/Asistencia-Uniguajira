@@ -73,14 +73,13 @@ Route::post('/events/acceso/{slug}', [AttendanceController::class, 'store'])
  *  RUTAS DE ESTADÍSTICAS
  * ================================================================
  */
-Route::view('estadisticas', 'statistics.statistics')
-    ->middleware(['auth', 'verified'])
-    ->name('statistics');
-
-// Tipos de graficos Echarts
-// Route::view('graficos/tipos', 'statistics.charts.types')
-//     ->middleware(['auth', 'verified'])
-//     ->name('charts.types');
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::view('estadisticas',               'statistics.statistics')    ->name('statistics');
+    Route::view('estadisticas/asistencias',   'statistics.asistencias')   ->name('statistics.asistencias');
+    Route::view('estadisticas/participantes', 'statistics.participantes') ->name('statistics.participantes');
+    Route::view('estadisticas/eventos',       'statistics.eventos')       ->name('statistics.eventos');
+    Route::view('estadisticas/usuarios',      'statistics.usuarios')      ->name('statistics.usuarios');
+});
 
 
 /**

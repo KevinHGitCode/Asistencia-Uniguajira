@@ -25,8 +25,68 @@
                 <flux:navlist.item icon="numbered-list" :href="route('events.list')" class="hover:scale-103 transition-transform" :current="request()->routeIs('events.list')"
                     wire:navigate>{{ __('Event list') }}</flux:navlist.item>
 
-                <flux:navlist.item icon="chart-bar" :href="route('statistics')" class="hover:scale-103 transition-transform" :current="request()->routeIs('statistics')"
-                    wire:navigate>{{ __('Statistics') }}</flux:navlist.item>
+                {{-- Estadísticas: enlace al overview + lista colapsable de sub-módulos --}}
+                <style>[x-cloak]{display:none!important}</style>
+                <div x-data="{ open: @js(request()->routeIs('statistics*')) }" class="my-px">
+
+                    {{-- Fila: enlace overview + botón toggle --}}
+                    <div class="flex items-center">
+                        <a href="{{ route('statistics') }}" wire:navigate
+                           @class([
+                               'h-10 lg:h-8 flex flex-1 min-w-0 items-center gap-3 rounded-lg pl-3 pr-1 text-sm font-medium leading-none border transition-colors duration-150 hover:scale-103',
+                               'text-zinc-500 dark:text-white/80 border-transparent hover:text-zinc-800 hover:bg-zinc-800/5 dark:hover:text-white dark:hover:bg-white/[7%]' => !request()->routeIs('statistics'),
+                               'text-[--color-accent-content] bg-white dark:bg-white/[7%] border-zinc-200 dark:border-transparent' => request()->routeIs('statistics'),
+                           ])>
+                            <flux:icon.chart-bar class="size-4! shrink-0" />
+                            <span class="truncate">{{ __('Statistics') }}</span>
+                        </a>
+
+                        {{-- Botón chevron --}}
+                        <button
+                            type="button"
+                            @click="open = !open"
+                            class="h-8 w-7 flex shrink-0 items-center justify-center rounded-lg text-zinc-500 dark:text-white/80 hover:text-zinc-800 hover:bg-zinc-800/5 dark:hover:text-white dark:hover:bg-white/[7%] transition-colors"
+                            :aria-expanded="open.toString()"
+                        >
+                            <span class="block transition-transform duration-200"
+                                  x-bind:class="open ? 'rotate-90' : ''">
+                                <flux:icon.chevron-right class="size-3.5!" />
+                            </span>
+                        </button>
+                    </div>
+
+                    {{-- Sub-ítems --}}
+                    <div
+                        x-cloak
+                        x-show="open"
+                        x-transition:enter="transition ease-out duration-150"
+                        x-transition:enter-start="opacity-0 -translate-y-1"
+                        x-transition:enter-end="opacity-100 translate-y-0"
+                        x-transition:leave="transition ease-in duration-100"
+                        x-transition:leave-start="opacity-100 translate-y-0"
+                        x-transition:leave-end="opacity-0 -translate-y-1"
+                        class="relative mt-0.5 flex flex-col gap-[2px] pl-6"
+                    >
+                        {{-- Línea vertical decorativa --}}
+                        <div class="absolute inset-y-1 left-[11px] w-px rounded-full bg-zinc-200 dark:bg-white/20"></div>
+
+                        <flux:navlist.item :href="route('statistics.asistencias')" :current="request()->routeIs('statistics.asistencias')" wire:navigate>
+                            {{ __('Por Asistencias') }}
+                        </flux:navlist.item>
+
+                        <flux:navlist.item :href="route('statistics.participantes')" :current="request()->routeIs('statistics.participantes')" wire:navigate>
+                            {{ __('Por Participantes') }}
+                        </flux:navlist.item>
+
+                        <span class="h-10 lg:h-8 flex items-center px-3 text-sm font-medium leading-none text-zinc-400 dark:text-zinc-600 opacity-60 cursor-not-allowed select-none">
+                            {{ __('Compara Eventos') }}
+                        </span>
+
+                        <flux:navlist.item :href="route('statistics.usuarios')" :current="request()->routeIs('statistics.usuarios')" wire:navigate>
+                            {{ __('Por Usuarios') }}
+                        </flux:navlist.item>
+                    </div>
+                </div>
 
                 {{-- Tipos de grafico Echrats --}}
                 {{-- <flux:navlist.item icon="chart-bar" :href="route('charts.types')" class="hover:scale-103 transition-transform" :current="request()->routeIs('charts.types')"
