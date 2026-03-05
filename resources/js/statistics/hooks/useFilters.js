@@ -19,23 +19,27 @@ export function defaultFilters() {
 }
 
 // ---------------------------------------------------------------------------
-// Hook compartido de filtros de fecha
-// Gestiona estado "pendiente" (en el panel) vs "aplicado" (disparando fetch).
+// Hook de filtros — estado único, auto-aplica al cambiar
+// (no más pending/applied separados)
 // ---------------------------------------------------------------------------
 
 export function useFilters() {
-  const [applied, setApplied] = useState(defaultFilters);
-  const [pending, setPending] = useState(defaultFilters);
+  const [filters, setFilters] = useState(defaultFilters);
 
-  const handleApply = useCallback(() => {
-    setApplied({ ...pending });
-  }, [pending]);
-
-  const handleClear = useCallback(() => {
-    const def = defaultFilters();
-    setPending(def);
-    setApplied(def);
+  /** Actualiza un campo (dateFrom | dateTo) — el useEffect del app re-fetcha automáticamente. */
+  const updateFilter = useCallback((field, value) => {
+    setFilters(prev => ({ ...prev, [field]: value }));
   }, []);
 
-  return { applied, pending, setPending, handleApply, handleClear };
+  /** Limpia un campo individual dejándolo vacío (sin límite de fecha). */
+  const clearFilter = useCallback((field) => {
+    setFilters(prev => ({ ...prev, [field]: '' }));
+  }, []);
+
+  /** Restablece ambos campos al rango por defecto (último mes). */
+  const clearAll = useCallback(() => {
+    setFilters(defaultFilters());
+  }, []);
+
+  return { filters, updateFilter, clearFilter, clearAll };
 }

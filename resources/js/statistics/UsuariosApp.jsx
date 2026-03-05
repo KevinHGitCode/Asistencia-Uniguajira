@@ -44,11 +44,11 @@ const CalendarIcon = () => (
 export default function UsuariosApp() {
   const isDark = useTheme();
   const { state, fetchAll } = useUsuariosStats();
-  const { applied, pending, setPending, handleApply, handleClear } = useFilters();
+  const { filters, updateFilter, clearFilter } = useFilters();
 
   useEffect(() => {
-    fetchAll(applied);
-  }, [applied, fetchAll]);
+    fetchAll(filters);
+  }, [filters, fetchAll]);
 
   const { counters, charts, loading } = state;
 
@@ -56,10 +56,9 @@ export default function UsuariosApp() {
     <div>
       {/* ── Filtros ── */}
       <FiltersPanel
-        filters={pending}
-        onChange={setPending}
-        onApply={handleApply}
-        onClear={handleClear}
+        filters={filters}
+        onUpdate={updateFilter}
+        onClear={clearFilter}
         loading={loading}
       />
 

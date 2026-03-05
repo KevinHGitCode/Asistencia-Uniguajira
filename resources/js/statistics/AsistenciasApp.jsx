@@ -34,11 +34,11 @@ function colClass(key) {
 export default function AsistenciasApp() {
   const isDark = useTheme();
   const { state, fetchAll } = useAsistenciasStats();
-  const { applied, pending, setPending, handleApply, handleClear } = useFilters();
+  const { filters, updateFilter, clearFilter } = useFilters();
 
   useEffect(() => {
-    fetchAll(applied);
-  }, [applied, fetchAll]);
+    fetchAll(filters);
+  }, [filters, fetchAll]);
 
   const { counters, charts, loading } = state;
 
@@ -46,10 +46,9 @@ export default function AsistenciasApp() {
     <div>
       {/* ── Filtros ── */}
       <FiltersPanel
-        filters={pending}
-        onChange={setPending}
-        onApply={handleApply}
-        onClear={handleClear}
+        filters={filters}
+        onUpdate={updateFilter}
+        onClear={clearFilter}
         loading={loading}
       />
 
