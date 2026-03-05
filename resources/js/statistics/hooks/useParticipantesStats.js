@@ -1,5 +1,12 @@
 import { useState, useCallback, useRef } from 'react';
 
+function buildQS(filters) {
+  const p = new URLSearchParams();
+  if (filters.dateFrom) p.append('dateFrom', filters.dateFrom);
+  if (filters.dateTo)   p.append('dateTo',   filters.dateTo);
+  return p.toString();
+}
+
 const EMPTY = {
   counters: { participants: null },
   charts: {
@@ -11,16 +18,20 @@ const EMPTY = {
 
 /**
  * Datos para el módulo "Por Participantes".
- * Ninguno de estos endpoints soporta filtros de fecha.
+ * Ambos endpoints soportan filtros de fecha (filtran por eventos.date).
+ * Solo cuentan/muestran participantes con al menos una asistencia.
  */
 export function useParticipantesStats() {
   const [state, setState] = useState(EMPTY);
   const abortRef = useRef(null);
 
-  const fetchAll = useCallback(async () => {
+  const fetchAll = useCallback(async (filters) => {
     if (abortRef.current) abortRef.current.abort();
     abortRef.current = new AbortController();
     const { signal } = abortRef.current;
+
+    const qs  = buildQS(filters);
+    const url = (path) => `/api/statistics${path}${qs ? '?' + qs : ''}`;
 
     setState(prev => ({ ...prev, loading: true, error: null }));
 
@@ -29,8 +40,8 @@ export function useParticipantesStats() {
         totalParticipants,
         participantsByProgram,
       ] = await Promise.all([
-        fetch('/api/statistics/total-participants',   { signal }).then(r => r.json()),
-        fetch('/api/statistics/participants-by-program', { signal }).then(r => r.json()),
+        fetch(url('/total-participants'),       { signal }).then(r => r.json()),
+        fetch(url('/participants-by-program'),  { signal }).then(r => r.json()),
       ]);
 
       setState({

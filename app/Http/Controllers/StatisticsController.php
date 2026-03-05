@@ -120,10 +120,32 @@ class StatisticsController extends Controller
         return $query->count();
     }
 
-    // Número total de participantes
-    public function totalParticipants()
+    // Número total de participantes (solo los que tienen al menos una asistencia)
+    public function totalParticipants(Request $request)
     {
-        return Participant::count();
+        $filters = $this->getFilters($request);
+
+        $hasDateFilter = !empty($filters['dateFrom']) || !empty($filters['dateTo']);
+
+        if ($hasDateFilter) {
+            // Con filtros de fecha: participantes distintos que asistieron a eventos
+            // cuya fecha esté dentro del rango solicitado
+            $query = DB::table('participants')
+                ->join('attendances', 'participants.id', '=', 'attendances.participant_id')
+                ->join('events',      'attendances.event_id', '=', 'events.id');
+
+            if (!empty($filters['dateFrom'])) {
+                $query->where('events.date', '>=', $filters['dateFrom']);
+            }
+            if (!empty($filters['dateTo'])) {
+                $query->where('events.date', '<=', $filters['dateTo']);
+            }
+
+            return $query->distinct()->count('participants.id');
+        }
+
+        // Sin filtros de fecha: solo los que tienen al menos una asistencia
+        return Participant::whereHas('attendances')->count();
     }
 
     // Asistencias por programa
@@ -155,12 +177,24 @@ class StatisticsController extends Controller
             ->get();
     }
 
-    // Participantes por programa (solo los que han asistido al menos una vez)
-    public function participantsByProgram()
+    // Participantes por programa (solo los que han asistido al menos una vez, filtrable por fecha)
+    public function participantsByProgram(Request $request)
     {
-        return Participant::join('programs', 'participants.program_id', '=', 'programs.id')
-            ->join('attendances', 'participants.id', '=', 'attendances.participant_id')
-            ->select('programs.name as program', DB::raw('COUNT(DISTINCT participants.id) as count'))
+        $filters = $this->getFilters($request);
+
+        $query = DB::table('participants')
+            ->join('programs',    'participants.program_id', '=', 'programs.id')
+            ->join('attendances', 'participants.id',         '=', 'attendances.participant_id')
+            ->join('events',      'attendances.event_id',    '=', 'events.id');
+
+        if (!empty($filters['dateFrom'])) {
+            $query->where('events.date', '>=', $filters['dateFrom']);
+        }
+        if (!empty($filters['dateTo'])) {
+            $query->where('events.date', '<=', $filters['dateTo']);
+        }
+
+        return $query->select('programs.name as program', DB::raw('COUNT(DISTINCT participants.id) as count'))
             ->groupBy('programs.name')
             ->orderByDesc('count')
             ->get();

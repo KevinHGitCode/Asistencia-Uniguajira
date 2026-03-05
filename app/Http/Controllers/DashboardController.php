@@ -20,7 +20,8 @@ class DashboardController extends Controller
             // Super Admin → Totales generales
             $eventosCount = Event::count();
             $asistenciasCount = Attendance::count();
-            $participantesCount = Participant::count();
+            // Solo participantes que tienen al menos una asistencia registrada
+            $participantesCount = Participant::whereHas('attendances')->count();
         } else {
             // Usuario (organizador) → solo sus eventos
             $eventosCount = Event::where('user_id', $user->id)->count();
