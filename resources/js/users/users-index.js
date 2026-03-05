@@ -1,7 +1,13 @@
 
-document.addEventListener('DOMContentLoaded', () => {
+function initUsersIndex() {
     const input = document.getElementById('users-search-input');
-    if (!input) return;
+    if (!input) return; // No estamos en la página de usuarios
+
+    // Previene doble-inicialización: DOMContentLoaded + livewire:navigated
+    // disparan en la misma carga. La segunda vez es un DOM nuevo (SPA), así que
+    // no tendrá el atributo y se inicializará normalmente.
+    if (input.dataset.initialized) return;
+    input.dataset.initialized = 'true';
 
     const desktopRows = Array.from(document.querySelectorAll('tr[data-user-search]'));
     const mobileCards = Array.from(document.querySelectorAll('div[data-user-search]'));
@@ -101,4 +107,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     applyFilter();
-});
+}
+
+// Carga inicial: soporte para DOM ya listo y carga normal
+if (document.readyState !== 'loading') {
+    initUsersIndex();
+} else {
+    document.addEventListener('DOMContentLoaded', initUsersIndex);
+}
+
+// Soporte wire:navigate de Livewire 3 (SPA)
+document.addEventListener('livewire:navigated', initUsersIndex);
