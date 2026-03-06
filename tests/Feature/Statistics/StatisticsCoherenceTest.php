@@ -170,7 +170,7 @@ class StatisticsCoherenceTest extends TestCase
         $q = http_build_query($this->wideFilter());
 
         // Total
-        $this->getJson("/api/statistics/total-participants?$q")->assertJson(0);
+        $this->assertEquals(0, $this->getJson("/api/statistics/total-participants?$q")->json());
 
         // by-program: no debe aparecer el programa
         $byProg = collect($this->getJson("/api/statistics/participants-by-program?$q")->json());

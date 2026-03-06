@@ -37,34 +37,34 @@ class StatisticsParticipantesTest extends TestCase
     {
         $this->createScenario();
 
-        $this->getJson('/api/statistics/total-participants')
-            ->assertOk()
-            ->assertJson(self::ALL_PARTICIPANTS);
+        $response = $this->getJson('/api/statistics/total-participants');
+        $response->assertOk();
+        $this->assertEquals(self::ALL_PARTICIPANTS, $response->json());
     }
 
     public function test_total_participants_con_filtro_amplio(): void
     {
         $this->createScenario();
 
-        $this->getJson('/api/statistics/total-participants?' . http_build_query($this->wideFilter()))
-            ->assertOk()
-            ->assertJson(self::WIDE_PARTICIPANTS);
+        $response = $this->getJson('/api/statistics/total-participants?' . http_build_query($this->wideFilter()));
+        $response->assertOk();
+        $this->assertEquals(self::WIDE_PARTICIPANTS, $response->json());
     }
 
     public function test_total_participants_con_filtro_estricto(): void
     {
         $this->createScenario();
 
-        $this->getJson('/api/statistics/total-participants?' . http_build_query($this->narrowFilter()))
-            ->assertOk()
-            ->assertJson(self::NARROW_PARTICIPANTS);
+        $response = $this->getJson('/api/statistics/total-participants?' . http_build_query($this->narrowFilter()));
+        $response->assertOk();
+        $this->assertEquals(self::NARROW_PARTICIPANTS, $response->json());
     }
 
     public function test_total_participants_cero_sin_datos(): void
     {
-        $this->getJson('/api/statistics/total-participants')
-            ->assertOk()
-            ->assertJson(0);
+        $response = $this->getJson('/api/statistics/total-participants');
+        $response->assertOk();
+        $this->assertEquals(0, $response->json());
     }
 
     public function test_participante_sin_asistencias_no_cuenta(): void
@@ -73,9 +73,9 @@ class StatisticsParticipantesTest extends TestCase
         $prog = Program::factory()->create();
         Participant::factory()->create(['program_id' => $prog->id]);
 
-        $this->getJson('/api/statistics/total-participants')
-            ->assertOk()
-            ->assertJson(0);
+        $response = $this->getJson('/api/statistics/total-participants');
+        $response->assertOk();
+        $this->assertEquals(0, $response->json());
     }
 
     public function test_misma_persona_multiples_eventos_cuenta_una_sola_vez(): void
@@ -91,9 +91,9 @@ class StatisticsParticipantesTest extends TestCase
             Attendance::create(['event_id' => $event->id, 'participant_id' => $alice->id]);
         }
 
-        $this->getJson('/api/statistics/total-participants?' . http_build_query($this->wideFilter()))
-            ->assertOk()
-            ->assertJson(1); // Solo Alice — cuenta una vez
+        $response = $this->getJson('/api/statistics/total-participants?' . http_build_query($this->wideFilter()));
+        $response->assertOk();
+        $this->assertEquals(1, $response->json()); // Solo Alice — cuenta una vez
     }
 
     // ─────────────────────────────────────────────
