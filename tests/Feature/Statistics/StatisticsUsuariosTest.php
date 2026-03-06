@@ -76,25 +76,25 @@ class StatisticsUsuariosTest extends TestCase
     {
         $this->createScenario(); // crea 3 eventos
 
-        $this->getJson('/api/statistics/total-events')
-            ->assertOk()
-            ->assertJson(3);
+        $response = $this->getJson('/api/statistics/total-events');
+        $response->assertOk();
+        $this->assertEquals(3, $response->json());
     }
 
     public function test_total_events_con_filtro_de_fechas(): void
     {
         $this->createScenario();
 
-        $this->getJson('/api/statistics/total-events?' . http_build_query($this->wideFilter()))
-            ->assertOk()
-            ->assertJson(self::WIDE_EVENTS); // 2 eventos dentro del periodo
+        $response = $this->getJson('/api/statistics/total-events?' . http_build_query($this->wideFilter()));
+        $response->assertOk();
+        $this->assertEquals(self::WIDE_EVENTS, $response->json()); // 2 eventos dentro del periodo
     }
 
     public function test_total_events_cero_sin_datos(): void
     {
-        $this->getJson('/api/statistics/total-events')
-            ->assertOk()
-            ->assertJson(0);
+        $response = $this->getJson('/api/statistics/total-events');
+        $response->assertOk();
+        $this->assertEquals(0, $response->json());
     }
 
     // ─────────────────────────────────────────────

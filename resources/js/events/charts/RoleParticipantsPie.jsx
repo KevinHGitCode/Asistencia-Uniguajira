@@ -57,7 +57,7 @@ function CenterLabel({ viewBox, total, theme }) {
 
 // ── Custom tooltip ────────────────────────────────────────────────────────────
 
-function CustomTooltip({ active, payload, total, isDark }) {
+function CustomTooltip({ active, payload, total, isDark, valueLabel = 'Participantes' }) {
   if (!active || !payload?.length) return null;
   const t = getTheme(isDark);
   const item = payload[0];
@@ -67,7 +67,7 @@ function CustomTooltip({ active, payload, total, isDark }) {
         {item.name}
       </p>
       <p style={{ color: item.payload.fill }}>
-        Participantes: {formatNumber(item.value)}
+        {valueLabel}: {formatNumber(item.value)}
       </p>
       <p style={{ color: t.muted, fontSize: 12 }}>
         Porcentaje: {total > 0 ? ((item.value / total) * 100).toFixed(1) : 0}%
@@ -136,7 +136,7 @@ function ResponsiveLegend({ chartData, colors, isDark }) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export function RoleParticipantsPie({ data, isDark }) {
+export function RoleParticipantsPie({ data, isDark, valueLabel = 'Participantes' }) {
   const theme = getTheme(isDark);
   const colors = getColors(isDark);
   const chartData = groupSmallSlices(data, CHART_DENSITY.pieMinPercent);
@@ -178,7 +178,7 @@ export function RoleParticipantsPie({ data, isDark }) {
             )}
           </Pie>
 
-          <Tooltip content={<CustomTooltip total={total} isDark={isDark} />} />
+          <Tooltip content={<CustomTooltip total={total} isDark={isDark} valueLabel={valueLabel} />} />
         </PieChart>
       </ResponsiveContainer>
 

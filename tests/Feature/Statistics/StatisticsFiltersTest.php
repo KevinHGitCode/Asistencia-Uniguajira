@@ -49,7 +49,7 @@ class StatisticsFiltersTest extends TestCase
 
         // Solo dateFrom: incluye desde 2026-01-01 hasta el presente (y futuro)
         $response = $this->getJson('/api/statistics/total-attendances?dateFrom=' . self::WIDE_DATE_FROM);
-        $response->assertJson(self::WIDE_ATTENDANCES);
+        $this->assertEquals(self::WIDE_ATTENDANCES, $response->json());
     }
 
     // ─────────────────────────────────────────────
@@ -60,12 +60,12 @@ class StatisticsFiltersTest extends TestCase
     {
         $this->createScenario();
 
-        // Solo hasta 2026-01-31: solo Evento1 entra
+        // Solo hasta 2026-01-31: entran eventOld (2025-11-01) y Evento1 (2026-01-10)
         $response = $this->getJson('/api/statistics/total-attendances?dateTo=2026-01-31');
         $response->assertOk();
 
-        // Alice + Bob asistieron al Evento1 = 2 asistencias
-        $this->assertEquals(2, $response->json());
+        // Alice asistió a eventOld + event1 = 2; Bob asistió a event1 = 1 → total 3
+        $this->assertEquals(3, $response->json());
     }
 
     public function test_dateTo_sin_dateFrom_incluye_todo_lo_anterior(): void
@@ -76,7 +76,7 @@ class StatisticsFiltersTest extends TestCase
         $response = $this->getJson('/api/statistics/total-attendances?dateTo=' . self::WIDE_DATE_TO);
 
         // Incluye eventOld + event1 + event2 = 5 asistencias
-        $response->assertJson(self::ALL_ATTENDANCES);
+        $this->assertEquals(self::ALL_ATTENDANCES, $response->json());
     }
 
     // ─────────────────────────────────────────────
@@ -137,11 +137,11 @@ class StatisticsFiltersTest extends TestCase
     {
         $this->createScenario();
 
-        $this->getJson('/api/statistics/total-attendances')
-            ->assertJson(self::ALL_ATTENDANCES);
+        $attResponse  = $this->getJson('/api/statistics/total-attendances');
+        $partResponse = $this->getJson('/api/statistics/total-participants');
 
-        $this->getJson('/api/statistics/total-participants')
-            ->assertJson(self::ALL_PARTICIPANTS);
+        $this->assertEquals(self::ALL_ATTENDANCES,  $attResponse->json());
+        $this->assertEquals(self::ALL_PARTICIPANTS, $partResponse->json());
     }
 
     // ─────────────────────────────────────────────
@@ -153,11 +153,11 @@ class StatisticsFiltersTest extends TestCase
         $this->createScenario();
 
         // Rango en el futuro lejano donde no hay eventos
-        $this->getJson('/api/statistics/total-attendances?dateFrom=2099-01-01&dateTo=2099-12-31')
-            ->assertJson(0);
+        $attResponse  = $this->getJson('/api/statistics/total-attendances?dateFrom=2099-01-01&dateTo=2099-12-31');
+        $partResponse = $this->getJson('/api/statistics/total-participants?dateFrom=2099-01-01&dateTo=2099-12-31');
 
-        $this->getJson('/api/statistics/total-participants?dateFrom=2099-01-01&dateTo=2099-12-31')
-            ->assertJson(0);
+        $this->assertEquals(0, $attResponse->json());
+        $this->assertEquals(0, $partResponse->json());
     }
 
     public function test_rango_sin_datos_by_program_retorna_array_vacio(): void

@@ -18,7 +18,8 @@ class EventFactory extends Factory
             'date' => $this->faker->dateTimeBetween('-6 months', '+3 months'),
             'start_time' => $this->faker->time('H:i:s'),
             'end_time' => $this->faker->time('H:i:s'),
-            'location' => $this->faker->city(), // ubicación aleatoria
+            'location' => $this->faker->city(),
+            'link' => $this->faker->url(),
             'user_id' => User::inRandomOrder()->first()->id ?? User::factory(),
         ];
     }
