@@ -5,7 +5,7 @@ import {
 import { getColors, getTheme, getTooltipStyle, truncate, formatNumber } from './utils.js';
 import { CHART_ANIMATION, CHART_ANIMATION_DURATION } from './config.js';
 
-function CustomTooltip({ active, payload, isDark }) {
+function CustomTooltip({ active, payload, isDark, valueLabel = 'Participantes' }) {
   if (!active || !payload?.length) return null;
   const theme = getTheme(isDark);
   const item = payload[0];
@@ -15,13 +15,13 @@ function CustomTooltip({ active, payload, isDark }) {
         {item.payload.name}
       </p>
       <p style={{ color: item.fill }}>
-        Participantes: {formatNumber(item.value)}
+        {valueLabel}: {formatNumber(item.value)}
       </p>
     </div>
   );
 }
 
-export function ProgramParticipantsBar({ data, isDark }) {
+export function ProgramParticipantsBar({ data, isDark, valueLabel = 'Participantes' }) {
   const theme = getTheme(isDark);
   const colors = getColors(isDark);
   const barColor = colors[0];
@@ -37,7 +37,7 @@ export function ProgramParticipantsBar({ data, isDark }) {
       >
         <CartesianGrid strokeDasharray="3 3" stroke={theme.axis} />
         <YAxis stroke={theme.muted} tick={{ fontSize: 10, fill: theme.text }} />
-        <Tooltip content={<CustomTooltip isDark={isDark} />} />
+        <Tooltip content={<CustomTooltip isDark={isDark} valueLabel={valueLabel} />} />
         <Bar
           dataKey="value"
           fill={barColor}

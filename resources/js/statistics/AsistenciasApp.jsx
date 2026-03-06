@@ -141,7 +141,7 @@ export default function AsistenciasApp() {
             data={demo.byRole}
             isDark={isDark}
           >
-            <ProgramParticipantsPie data={demo.byRole} isDark={isDark} showOuterLabels={false} groupOthers={false} />
+            <ProgramParticipantsPie data={demo.byRole} isDark={isDark} showOuterLabels={false} groupOthers={false} valueLabel="Asistencias" />
           </ChartCard>
 
           {/* Por Sexo */}
@@ -154,7 +154,7 @@ export default function AsistenciasApp() {
             data={demo.bySex}
             isDark={isDark}
           >
-            <ProgramParticipantsPie data={demo.bySex} isDark={isDark} showOuterLabels={false} groupOthers={false} />
+            <ProgramParticipantsPie data={demo.bySex} isDark={isDark} showOuterLabels={false} groupOthers={false} valueLabel="Asistencias" />
           </ChartCard>
 
           {/* Por Grupo Priorizado */}
@@ -167,7 +167,7 @@ export default function AsistenciasApp() {
             data={demo.byGroup}
             isDark={isDark}
           >
-            <ProgramParticipantsPie data={demo.byGroup} isDark={isDark} showOuterLabels={false} groupOthers={false} />
+            <ProgramParticipantsPie data={demo.byGroup} isDark={isDark} showOuterLabels={false} groupOthers={false} valueLabel="Asistencias" />
           </ChartCard>
 
         </div>

@@ -78,7 +78,7 @@ function OuterLabel(props) {
 
 // ── Center label (total in the donut hole) ────────────────────────────────────
 
-function CenterLabel({ viewBox, total, theme }) {
+function CenterLabel({ viewBox, total, theme, centerLabel = 'participantes' }) {
   const { cx, cy } = viewBox;
   return (
     <>
@@ -99,7 +99,7 @@ function CenterLabel({ viewBox, total, theme }) {
         fontSize={11}
         fill={theme.muted}
       >
-        participantes
+        {centerLabel.toLowerCase()}
       </text>
     </>
   );
@@ -107,7 +107,7 @@ function CenterLabel({ viewBox, total, theme }) {
 
 // ── Custom tooltip ────────────────────────────────────────────────────────────
 
-function CustomTooltip({ active, payload, total, isDark }) {
+function CustomTooltip({ active, payload, total, isDark, valueLabel = 'Participantes' }) {
   if (!active || !payload?.length) return null;
   const t    = getTheme(isDark);
   const item = payload[0];
@@ -117,7 +117,7 @@ function CustomTooltip({ active, payload, total, isDark }) {
         {item.name}
       </p>
       <p style={{ color: item.payload.fill }}>
-        Participantes: {item.value.toLocaleString('es-CO')}
+        {valueLabel}: {item.value.toLocaleString('es-CO')}
       </p>
       <p style={{ color: t.muted, fontSize: 12 }}>
         Porcentaje: {total > 0 ? ((item.value / total) * 100).toFixed(1) : 0}%
@@ -202,7 +202,7 @@ function VerticalLegend({ chartData, isDark }) {
  *  - Left (~62%): donut chart with center total + outer % labels on big left-side slices
  *  - Right (~38%): vertical paginated legend
  */
-export function ProgramParticipantsPie({ data, isDark, showOuterLabels = true, groupOthers = true }) {
+export function ProgramParticipantsPie({ data, isDark, showOuterLabels = true, groupOthers = true, valueLabel = 'Participantes' }) {
   const theme     = getTheme(isDark);
   const colors    = getColors(isDark);
   // groupOthers=false → pasamos minPercent=0, lo que hace que groupSmallSlices devuelva raw
@@ -246,13 +246,13 @@ export function ProgramParticipantsPie({ data, isDark, showOuterLabels = true, g
               {isDonut && (
                 <Label
                   content={(props) => (
-                    <CenterLabel {...props} total={total} theme={theme} />
+                    <CenterLabel {...props} total={total} theme={theme} centerLabel={valueLabel} />
                   )}
                 />
               )}
             </Pie>
 
-            <Tooltip content={<CustomTooltip total={total} isDark={isDark} />} />
+            <Tooltip content={<CustomTooltip total={total} isDark={isDark} valueLabel={valueLabel} />} />
           </PieChart>
         </ResponsiveContainer>
       </div>
