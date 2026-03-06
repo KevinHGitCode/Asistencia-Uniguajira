@@ -121,6 +121,33 @@ export async function captureAsImage(containerEl, title, isDark) {
         svgH,
       );
 
+      // HTML legend items marked with data-legend-dot / data-legend-label
+      const dots   = containerEl.querySelectorAll('[data-legend-dot]');
+      const labels = containerEl.querySelectorAll('[data-legend-label]');
+      if (dots.length > 0) {
+        ctx.save();
+        ctx.font         = '11px system-ui, sans-serif';
+        ctx.textBaseline = 'middle';
+        dots.forEach((dot, i) => {
+          const dRect = dot.getBoundingClientRect();
+          const cx = PADDING + Math.round(dRect.left - containerRect.left + dRect.width  / 2);
+          const cy = PADDING + TITLE_H + Math.round(dRect.top  - containerRect.top  + dRect.height / 2);
+          ctx.fillStyle = dot.dataset.legendDot;
+          ctx.beginPath();
+          ctx.arc(cx, cy, Math.max(1, Math.round(dRect.width / 2)), 0, Math.PI * 2);
+          ctx.fill();
+          const labelEl = labels[i];
+          if (labelEl) {
+            const lRect = labelEl.getBoundingClientRect();
+            const lx = PADDING + Math.round(lRect.left - containerRect.left);
+            const ly = PADDING + TITLE_H + Math.round(lRect.top - containerRect.top + lRect.height / 2);
+            ctx.fillStyle = isDark ? '#9ca3af' : '#374151';
+            ctx.fillText(labelEl.textContent.trim(), lx, ly);
+          }
+        });
+        ctx.restore();
+      }
+
       canvas.toBlob(async (blob) => {
         if (!blob) { reject(new Error('Canvas vacío')); return; }
         try {

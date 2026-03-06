@@ -27,7 +27,18 @@
 
                 {{-- Estadísticas: enlace al overview + lista colapsable de sub-módulos --}}
                 <style>[x-cloak]{display:none!important}</style>
-                <div x-data="{ open: @js(request()->routeIs('statistics*')) }" class="my-px">
+                <div x-data="{
+                    open: false,
+                    ready: false,
+                    init() {
+                        if (@js(request()->routeIs('statistics*'))) {
+                            this.open = true;
+                        } else {
+                            this.open = localStorage.getItem('sidebar-stats-open') === 'true';
+                        }
+                        this.$nextTick(() => { this.ready = true; });
+                    }
+                }" x-effect="localStorage.setItem('sidebar-stats-open', open)" class="my-px">
 
                     {{-- Fila: enlace overview + botón toggle --}}
                     <div class="flex items-center">
@@ -48,8 +59,8 @@
                             class="h-8 w-7 flex shrink-0 items-center justify-center rounded-lg text-zinc-500 dark:text-white/80 hover:text-zinc-800 hover:bg-zinc-800/5 dark:hover:text-white dark:hover:bg-white/[7%] transition-colors"
                             :aria-expanded="open.toString()"
                         >
-                            <span class="block transition-transform duration-200"
-                                  x-bind:class="open ? 'rotate-90' : ''">
+                            <span class="block"
+                                  :class="[open ? 'rotate-90' : '', ready ? 'transition-transform duration-200' : '']">
                                 <flux:icon.chevron-right class="size-3.5!" />
                             </span>
                         </button>

@@ -145,10 +145,12 @@ function VerticalLegend({ chartData, isDark }) {
             <div key={item.name} className="flex items-start gap-2 min-w-0">
               <div
                 className="shrink-0 rounded-full mt-[3px]"
+                data-legend-dot={color}
                 style={{ width: 8, height: 8, backgroundColor: color }}
               />
               <span
                 className="text-[11px] leading-tight min-w-0 break-words"
+                data-legend-label=""
                 style={{ color: theme.text }}
                 title={item.name}
               >
