@@ -294,6 +294,82 @@ class StatisticsController extends Controller
             ->get();
     }
 
+    // ── Demográficos por ASISTENCIAS (cuentan registros, no personas únicas) ─────
+
+    // Asistencias por estamento del participante
+    public function attendancesByRole(Request $request)
+    {
+        $filters = $this->getFilters($request);
+
+        $query = DB::table('attendances')
+            ->join('participants', 'attendances.participant_id', '=', 'participants.id')
+            ->join('events',       'attendances.event_id',       '=', 'events.id');
+
+        if (!empty($filters['dateFrom'])) {
+            $query->where('events.date', '>=', $filters['dateFrom']);
+        }
+        if (!empty($filters['dateTo'])) {
+            $query->where('events.date', '<=', $filters['dateTo']);
+        }
+
+        return $query->select('participants.role as label', DB::raw('COUNT(*) as count'))
+            ->groupBy('participants.role')
+            ->orderByDesc('count')
+            ->get();
+    }
+
+    // Asistencias por sexo del participante
+    public function attendancesBySex(Request $request)
+    {
+        $filters = $this->getFilters($request);
+
+        $query = DB::table('attendances')
+            ->join('participants', 'attendances.participant_id', '=', 'participants.id')
+            ->join('events',       'attendances.event_id',       '=', 'events.id');
+
+        if (!empty($filters['dateFrom'])) {
+            $query->where('events.date', '>=', $filters['dateFrom']);
+        }
+        if (!empty($filters['dateTo'])) {
+            $query->where('events.date', '<=', $filters['dateTo']);
+        }
+
+        return $query->select(
+                DB::raw("COALESCE(participants.sexo, 'Sin datos') as label"),
+                DB::raw('COUNT(*) as count')
+            )
+            ->groupBy('participants.sexo')
+            ->orderByDesc('count')
+            ->get();
+    }
+
+    // Asistencias por grupo priorizado del participante
+    public function attendancesByGroup(Request $request)
+    {
+        $filters = $this->getFilters($request);
+
+        $query = DB::table('attendances')
+            ->join('participants', 'attendances.participant_id', '=', 'participants.id')
+            ->join('events',       'attendances.event_id',       '=', 'events.id');
+
+        if (!empty($filters['dateFrom'])) {
+            $query->where('events.date', '>=', $filters['dateFrom']);
+        }
+        if (!empty($filters['dateTo'])) {
+            $query->where('events.date', '<=', $filters['dateTo']);
+        }
+
+        return $query->select(
+                DB::raw("COALESCE(participants.grupo_priorizado, 'Sin datos') as label"),
+                DB::raw('COUNT(*) as count')
+            )
+            ->groupBy('participants.grupo_priorizado')
+            ->orderByDesc('count')
+            ->get();
+    }
+
+    // ── Demográficos por PARTICIPANTES (cuentan personas únicas) ─────────────
+
     // Participantes por estamento (rol: Estudiante / Docente)
     public function participantsByRole(Request $request)
     {

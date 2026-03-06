@@ -2,10 +2,11 @@ import React, { useEffect } from 'react';
 
 import { useTheme }              from './hooks/useTheme.js';
 import { useParticipantesStats } from './hooks/useParticipantesStats.js';
+import { useDemografiaStats }    from './hooks/useDemografiaStats.js';
 import { useFilters }            from './hooks/useFilters.js';
 
-import { FiltersPanel }          from './components/FiltersPanel.jsx';
-import { ChartCard }             from './components/ChartCard.jsx';
+import { FiltersPanel }           from './components/FiltersPanel.jsx';
+import { ChartCard }              from './components/ChartCard.jsx';
 import { ProgramParticipantsPie } from './charts/ProgramParticipantsPie.jsx';
 
 import { CHART_HEIGHTS, CHART_DENSITY } from './config.js';
@@ -16,6 +17,9 @@ import { CHART_HEIGHTS, CHART_DENSITY } from './config.js';
 
 const DESCRIPTIONS = {
   programParticipants: `Muestra cómo se distribuyen los participantes únicos entre los diferentes programas. Todos los programas que representen ${CHART_DENSITY.pieMinPercent}% o menos del total se agrupan automáticamente en la categoría "Otros".`,
+  byRole:  `Distribución de los participantes únicos por estamento (Estudiante / Docente) en el período seleccionado. Solo se cuentan participantes con al menos una asistencia.`,
+  bySex:   `Distribución de los participantes únicos por sexo (Masculino, Femenino, Otro) en el período seleccionado. Solo se cuentan participantes con al menos una asistencia.`,
+  byGroup: `Distribución de los participantes únicos según su grupo poblacional priorizado (Indígena, Afrodescendiente, Raizal, Palenquero, Rom, Ninguno, etc.) en el período seleccionado.`,
 };
 
 // ---------------------------------------------------------------------------
@@ -56,23 +60,29 @@ function ParticipantCounter({ value, loading }) {
 
 export default function ParticipantesApp() {
   const isDark = useTheme();
-  const { state, fetchAll } = useParticipantesStats();
-  const { filters, updateFilter, clearFilter } = useFilters();
+  const { state, fetchAll }                              = useParticipantesStats();
+  const { state: demoState, fetchAll: fetchDemografia }  = useDemografiaStats();
+  const { filters, updateFilter, clearFilter }           = useFilters();
 
   useEffect(() => {
     fetchAll(filters);
   }, [filters, fetchAll]);
 
-  const { counters, charts, loading } = state;
+  useEffect(() => {
+    fetchDemografia(filters);
+  }, [filters, fetchDemografia]);
+
+  const { counters, charts, loading }       = state;
+  const { charts: demo, loading: demoLoad } = demoState;
 
   return (
     <div>
-      {/* ── Filtros (mismo componente que los otros módulos) ── */}
+      {/* ── Filtros ── */}
       <FiltersPanel
         filters={filters}
         onUpdate={updateFilter}
         onClear={clearFilter}
-        loading={loading}
+        loading={loading || demoLoad}
       />
 
       {/* ── Contador de participantes únicos ── */}
@@ -96,6 +106,52 @@ export default function ParticipantesApp() {
         >
           <ProgramParticipantsPie data={charts.participantsByProgram} isDark={isDark} />
         </ChartCard>
+      </section>
+
+      {/* ══ Perfil Demográfico ══ */}
+      <section className="mb-8">
+        <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-3">
+          Perfil Demográfico
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+          <ChartCard
+            title="Por Estamento"
+            description={DESCRIPTIONS.byRole}
+            height={CHART_HEIGHTS.role}
+            loading={demoLoad}
+            isEmpty={!demoLoad && demo.byRole.length === 0}
+            data={demo.byRole}
+            isDark={isDark}
+          >
+            <ProgramParticipantsPie data={demo.byRole} isDark={isDark} showOuterLabels={false} groupOthers={false} />
+          </ChartCard>
+
+          <ChartCard
+            title="Por Sexo"
+            description={DESCRIPTIONS.bySex}
+            height={CHART_HEIGHTS.role}
+            loading={demoLoad}
+            isEmpty={!demoLoad && demo.bySex.length === 0}
+            data={demo.bySex}
+            isDark={isDark}
+          >
+            <ProgramParticipantsPie data={demo.bySex} isDark={isDark} showOuterLabels={false} groupOthers={false} />
+          </ChartCard>
+
+          <ChartCard
+            title="Por Grupo Priorizado"
+            description={DESCRIPTIONS.byGroup}
+            height={CHART_HEIGHTS.role}
+            loading={demoLoad}
+            isEmpty={!demoLoad && demo.byGroup.length === 0}
+            data={demo.byGroup}
+            isDark={isDark}
+          >
+            <ProgramParticipantsPie data={demo.byGroup} isDark={isDark} showOuterLabels={false} groupOthers={false} />
+          </ChartCard>
+
+        </div>
       </section>
     </div>
   );

@@ -21,11 +21,11 @@ import { CHART_HEIGHTS, CHART_GRID_COLS } from './config.js';
 
 const DESCRIPTIONS = {
   programAttendances: `Compara el número total de asistencias registradas en cada programa académico durante el período seleccionado. Permite identificar qué programas concentran la mayor actividad.`,
-  topEvents: `Ranking de los eventos que han reunido más asistentes en el período. Ayuda a identificar qué actividades generan mayor convocatoria y tienen más impacto.`,
-  topParticipants: `Lista los participantes que han asistido a más eventos durante el período, ordenados de mayor a menor. Útil para reconocer a los asistentes más comprometidos o frecuentes.`,
-  byRole: `Distribución de los participantes únicos según su estamento: Estudiante o Docente. Solo se cuentan participantes con al menos una asistencia en el período.`,
-  bySex: `Distribución de los participantes únicos por sexo (Masculino, Femenino, Otro). Solo se cuentan participantes con al menos una asistencia en el período seleccionado.`,
-  byGroup: `Distribución de los participantes únicos según su grupo poblacional priorizado (Indígena, Afrodescendiente, Raizal, Palenquero, Rom, Ninguno, etc.). Solo se cuentan asistentes del período.`,
+  topEvents: `Ranking de los 5 eventos que han reunido más asistentes en el período. Ayuda a identificar qué actividades generan mayor convocatoria y tienen más impacto.`,
+  topParticipants: `Lista los 5 participantes que han asistido a más eventos durante el período, ordenados de mayor a menor. Útil para reconocer a los asistentes más comprometidos o frecuentes.`,
+  byRole:  `Distribución de las asistencias registradas según el estamento del participante (Estudiante / Docente). Un mismo participante puede sumar varias asistencias si asistió a múltiples eventos.`,
+  bySex:   `Distribución de las asistencias registradas según el sexo del participante (Masculino, Femenino, Otro). Refleja el volumen de asistencia, no personas únicas.`,
+  byGroup: `Distribución de las asistencias registradas según el grupo poblacional priorizado del participante (Indígena, Afrodescendiente, Raizal, Palenquero, Rom, Ninguno, etc.).`,
 };
 
 function colClass(key) {
@@ -39,7 +39,7 @@ function colClass(key) {
 export default function AsistenciasApp() {
   const isDark = useTheme();
   const { state, fetchAll }                   = useAsistenciasStats();
-  const { state: demoState, fetchAll: fetchDemografia } = useDemografiaStats();
+  const { state: demoState, fetchAll: fetchDemografia } = useDemografiaStats({ mode: 'attendances' });
   const { filters, updateFilter, clearFilter } = useFilters();
 
   useEffect(() => {

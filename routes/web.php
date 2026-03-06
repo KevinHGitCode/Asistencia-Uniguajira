@@ -78,7 +78,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::view('estadisticas/asistencias',   'statistics.asistencias')   ->name('statistics.asistencias');
     Route::view('estadisticas/participantes', 'statistics.participantes') ->name('statistics.participantes');
     Route::view('estadisticas/eventos',       'statistics.eventos')       ->name('statistics.eventos');
-    Route::view('estadisticas/usuarios',      'statistics.usuarios')      ->name('statistics.usuarios');
+});
+
+Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
+    Route::view('estadisticas/usuarios', 'statistics.usuarios')->name('statistics.usuarios');
 });
 
 

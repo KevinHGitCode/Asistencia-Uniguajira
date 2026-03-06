@@ -99,6 +99,34 @@ Route::get('/statistics/event/{event}/roles', function ($event) {
         ->get();
 });
 
+// Distribución por sexo de un evento específico
+Route::get('/statistics/event/{event}/sex', function ($event) {
+    return DB::table('attendances')
+        ->join('participants', 'attendances.participant_id', '=', 'participants.id')
+        ->select(
+            DB::raw("COALESCE(participants.sexo, 'Sin datos') as label"),
+            DB::raw('COUNT(*) as count')
+        )
+        ->where('attendances.event_id', $event)
+        ->groupBy('participants.sexo')
+        ->orderByDesc('count')
+        ->get();
+});
+
+// Distribución por grupo priorizado de un evento específico
+Route::get('/statistics/event/{event}/group', function ($event) {
+    return DB::table('attendances')
+        ->join('participants', 'attendances.participant_id', '=', 'participants.id')
+        ->select(
+            DB::raw("COALESCE(participants.grupo_priorizado, 'Sin datos') as label"),
+            DB::raw('COUNT(*) as count')
+        )
+        ->where('attendances.event_id', $event)
+        ->groupBy('participants.grupo_priorizado')
+        ->orderByDesc('count')
+        ->get();
+});
+
 /**
  * =============================================
  * RUTAS PARA LAS ESTADÍSTICAS GENERALES
@@ -118,6 +146,9 @@ Route::prefix('statistics')->controller(StatisticsController::class)->group(func
     Route::get('/top-events', 'topEvents');
     Route::get('/top-participants', 'topParticipants');
     Route::get('/top-users', 'topUsers');
+    Route::get('/attendances-by-role',   'attendancesByRole');
+    Route::get('/attendances-by-sex',    'attendancesBySex');
+    Route::get('/attendances-by-group',  'attendancesByGroup');
     Route::get('/participants-by-role',  'participantsByRole');
     Route::get('/participants-by-sex',   'participantsBySex');
     Route::get('/participants-by-group', 'participantsByGroup');

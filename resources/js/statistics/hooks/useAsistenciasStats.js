@@ -48,10 +48,10 @@ export function useAsistenciasStats() {
       ] = await Promise.all([
         fetch(url('/total-events'),                            { signal }).then(r => r.json()),
         fetch(url('/total-attendances'),                       { signal }).then(r => r.json()),
-        fetch('/api/statistics/total-participants',            { signal }).then(r => r.json()),
+        fetch(url('/total-participants'),                       { signal }).then(r => r.json()),
         fetch(url('/attendances-by-program'),                  { signal }).then(r => r.json()),
         fetch(url('/top-events'),                              { signal }).then(r => r.json()),
-        fetch('/api/statistics/top-participants',              { signal }).then(r => r.json()),
+        fetch(url('/top-participants'),                        { signal }).then(r => r.json()),
       ]);
 
       setState({
