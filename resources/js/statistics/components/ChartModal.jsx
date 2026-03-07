@@ -4,20 +4,30 @@ import { downloadExcel, copyTableText } from './ChartToolbar.jsx';
 
 // ── DataView ──────────────────────────────────────────────────────────────────
 
-function DataView({ data, title }) {
+function DataView({ data, title, valueLabel = 'Valor', excelData = null, excelColumns = null }) {
   const [copyState, setCopyState] = useState('idle'); // idle | ok | err
-  const total = data.reduce((s, r) => s + (r.value ?? 0), 0);
+
+  const useMulti = excelData && excelColumns && excelColumns.length > 0;
+
+  // Totals for simple mode
+  const simpleTotal = !useMulti ? data.reduce((s, r) => s + (r.value ?? 0), 0) : 0;
+
+  // Totals for multi-column mode
+  const colTotals   = useMulti ? excelColumns.map(c => excelData.reduce((s, r) => s + (r[c] ?? 0), 0)) : [];
+  const grandTotal  = colTotals.reduce((s, v) => s + v, 0);
 
   const handleCopyTable = useCallback(async () => {
     try {
-      await copyTableText(data);
+      await copyTableText(data, valueLabel, excelData, excelColumns);
       setCopyState('ok');
     } catch {
       setCopyState('err');
     } finally {
       setTimeout(() => setCopyState('idle'), 2500);
     }
-  }, [data]);
+  }, [data, valueLabel, excelData, excelColumns]);
+
+  const thCls = 'px-4 py-2.5 font-semibold text-gray-500 dark:text-zinc-400 text-right whitespace-nowrap';
 
   return (
     <div className="flex flex-col gap-4">
@@ -26,31 +36,71 @@ function DataView({ data, title }) {
           <thead>
             <tr className="bg-gray-50 dark:bg-zinc-800/80 text-left">
               <th className="px-4 py-2.5 font-semibold text-gray-500 dark:text-zinc-400 w-full">Nombre</th>
-              <th className="px-4 py-2.5 font-semibold text-gray-500 dark:text-zinc-400 text-right whitespace-nowrap">Valor</th>
-              <th className="px-4 py-2.5 font-semibold text-gray-500 dark:text-zinc-400 text-right whitespace-nowrap">%</th>
+              {useMulti
+                ? excelColumns.map(c => (
+                    <th key={c} className={thCls}>{c}</th>
+                  ))
+                : <th className={thCls}>{valueLabel}</th>
+              }
+              {useMulti
+                ? <th className={thCls}>Total</th>
+                : <th className={thCls}>%</th>
+              }
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
-            {data.map((row, i) => {
-              const pct = total > 0 ? ((row.value / total) * 100).toFixed(1) : '0.0';
-              return (
-                <tr key={i} className="hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors">
-                  <td className="px-4 py-2 text-gray-700 dark:text-zinc-300">{row.name}</td>
-                  <td className="px-4 py-2 text-right font-mono text-gray-800 dark:text-zinc-200">
-                    {(row.value ?? 0).toLocaleString('es-CO')}
-                  </td>
-                  <td className="px-4 py-2 text-right text-gray-500 dark:text-zinc-400">{pct}%</td>
-                </tr>
-              );
-            })}
+            {useMulti
+              ? excelData.map((row, i) => {
+                  const rowTotal = excelColumns.reduce((s, c) => s + (row[c] ?? 0), 0);
+                  return (
+                    <tr key={i} className="hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors">
+                      <td className="px-4 py-2 text-gray-700 dark:text-zinc-300">{row.name}</td>
+                      {excelColumns.map(c => (
+                        <td key={c} className="px-4 py-2 text-right font-mono text-gray-800 dark:text-zinc-200">
+                          {(row[c] ?? 0).toLocaleString('es-CO')}
+                        </td>
+                      ))}
+                      <td className="px-4 py-2 text-right font-mono font-semibold text-gray-800 dark:text-zinc-200">
+                        {rowTotal.toLocaleString('es-CO')}
+                      </td>
+                    </tr>
+                  );
+                })
+              : data.map((row, i) => {
+                  const pct = simpleTotal > 0 ? ((row.value / simpleTotal) * 100).toFixed(1) : '0.0';
+                  return (
+                    <tr key={i} className="hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors">
+                      <td className="px-4 py-2 text-gray-700 dark:text-zinc-300">{row.name}</td>
+                      <td className="px-4 py-2 text-right font-mono text-gray-800 dark:text-zinc-200">
+                        {(row.value ?? 0).toLocaleString('es-CO')}
+                      </td>
+                      <td className="px-4 py-2 text-right text-gray-500 dark:text-zinc-400">{pct}%</td>
+                    </tr>
+                  );
+                })
+            }
           </tbody>
           <tfoot>
             <tr className="bg-gray-50 dark:bg-zinc-800/80 border-t-2 border-gray-200 dark:border-zinc-700">
               <td className="px-4 py-2 font-semibold text-gray-700 dark:text-zinc-300">Total</td>
-              <td className="px-4 py-2 text-right font-mono font-semibold text-gray-800 dark:text-zinc-200">
-                {total.toLocaleString('es-CO')}
-              </td>
-              <td className="px-4 py-2 text-right text-gray-500 dark:text-zinc-400">100%</td>
+              {useMulti
+                ? <>
+                    {colTotals.map((v, i) => (
+                      <td key={i} className="px-4 py-2 text-right font-mono font-semibold text-gray-800 dark:text-zinc-200">
+                        {v.toLocaleString('es-CO')}
+                      </td>
+                    ))}
+                    <td className="px-4 py-2 text-right font-mono font-semibold text-gray-800 dark:text-zinc-200">
+                      {grandTotal.toLocaleString('es-CO')}
+                    </td>
+                  </>
+                : <>
+                    <td className="px-4 py-2 text-right font-mono font-semibold text-gray-800 dark:text-zinc-200">
+                      {simpleTotal.toLocaleString('es-CO')}
+                    </td>
+                    <td className="px-4 py-2 text-right text-gray-500 dark:text-zinc-400">100%</td>
+                  </>
+              }
             </tr>
           </tfoot>
         </table>
@@ -93,7 +143,7 @@ function DataView({ data, title }) {
         {/* Download Excel */}
         <button
           type="button"
-          onClick={() => downloadExcel(data, title)}
+          onClick={() => downloadExcel(data, title, valueLabel, excelData, excelColumns)}
           className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors border border-emerald-200 dark:border-emerald-800"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
@@ -146,14 +196,17 @@ function InfoView({ description }) {
 
 /**
  * Props:
- *  - isOpen      : bool
- *  - mode        : 'data' | 'info'
- *  - title       : string
- *  - description : string — chart description shown in 'info' mode
- *  - data        : array of { name, value }
- *  - onClose     : () => void
+ *  - isOpen       : bool
+ *  - mode         : 'data' | 'info'
+ *  - title        : string
+ *  - description  : string — chart description shown in 'info' mode
+ *  - data         : array of { name, value }
+ *  - valueLabel   : string — etiqueta de la columna de valor
+ *  - excelData    : array|null — filas pivotadas para exportación multi-columna
+ *  - excelColumns : array|null — categorías para exportación multi-columna
+ *  - onClose      : () => void
  */
-export function ChartModal({ isOpen, mode, title, description, data = [], onClose }) {
+export function ChartModal({ isOpen, mode, title, description, data = [], valueLabel = 'Valor', excelData = null, excelColumns = null, onClose }) {
   const handleKey = useCallback((e) => {
     if (e.key === 'Escape') onClose();
   }, [onClose]);
@@ -209,7 +262,7 @@ export function ChartModal({ isOpen, mode, title, description, data = [], onClos
         {/* Body */}
         <div className="overflow-y-auto p-5">
           {mode === 'data'
-            ? <DataView data={data} title={title} />
+            ? <DataView data={data} title={title} valueLabel={valueLabel} excelData={excelData} excelColumns={excelColumns} />
             : <InfoView description={description} />
           }
         </div>

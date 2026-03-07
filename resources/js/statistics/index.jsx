@@ -1,17 +1,19 @@
 import { createRoot } from 'react-dom/client';
 
-import AsistenciasApp   from './AsistenciasApp.jsx';
-import ParticipantesApp from './ParticipantesApp.jsx';
-import UsuariosApp      from './UsuariosApp.jsx';
+import AsistenciasApp    from './AsistenciasApp.jsx';
+import ParticipantesApp  from './ParticipantesApp.jsx';
+import UsuariosApp       from './UsuariosApp.jsx';
+import ComparaEventosApp from './ComparaEventosApp.jsx';
 
 /**
  * Mapa módulo → componente.
  * El valor de data-module en el div#statistics-react-root determina qué app montar.
  */
 const APPS = {
-  asistencias:   AsistenciasApp,
-  participantes: ParticipantesApp,
-  usuarios:      UsuariosApp,
+  asistencias:       AsistenciasApp,
+  participantes:     ParticipantesApp,
+  usuarios:          UsuariosApp,
+  'compara-eventos': ComparaEventosApp,
 };
 
 let root = null;

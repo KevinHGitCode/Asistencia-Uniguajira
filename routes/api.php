@@ -129,6 +129,83 @@ Route::get('/statistics/event/{event}/group', function ($event) {
 
 /**
  * =============================================
+ * RUTAS PARA COMPARAR EVENTOS
+ * =============================================
+ */
+
+// Lista de eventos disponibles para comparar (admin ve todos; usuario ve solo los suyos)
+Route::middleware(['web', 'auth'])->get('/statistics/compare/events', function (Request $request) {
+    $user    = Auth::user();
+    $isAdmin = $user->role === 'admin';
+
+    $query = DB::table('events')
+        ->leftJoin('attendances', 'events.id', '=', 'attendances.event_id')
+        ->select(
+            'events.id',
+            'events.title',
+            DB::raw('DATE(events.date) as date'),
+            DB::raw('COUNT(attendances.id) as attendances_count')
+        )
+        ->groupBy('events.id', 'events.title', 'events.date')
+        ->orderByDesc('events.date');
+
+    if (!$isAdmin) {
+        $query->where('events.user_id', $user->id);
+    }
+
+    $dateFrom = $request->get('dateFrom');
+    $dateTo   = $request->get('dateTo');
+    if ($dateFrom) $query->where('events.date', '>=', $dateFrom);
+    if ($dateTo)   $query->where('events.date', '<=', $dateTo);
+
+    return $query->get();
+});
+
+// Datos comparativos para los eventos seleccionados (asistencias + demografía)
+Route::get('/statistics/compare/data', function (Request $request) {
+    $eventIds = array_filter((array) $request->get('eventIds', []));
+
+    if (empty($eventIds)) {
+        return ['attendances' => [], 'byRole' => [], 'bySex' => [], 'byGroup' => []];
+    }
+
+    $attendances = DB::table('events')
+        ->leftJoin('attendances', 'events.id', '=', 'attendances.event_id')
+        ->select(
+            'events.id',
+            'events.title',
+            DB::raw('DATE(events.date) as date'),
+            DB::raw('COUNT(attendances.id) as count')
+        )
+        ->whereIn('events.id', $eventIds)
+        ->groupBy('events.id', 'events.title', 'events.date')
+        ->orderBy('events.date')
+        ->get();
+
+    $demo = fn (string $col) => DB::table('attendances')
+        ->join('participants', 'attendances.participant_id', '=', 'participants.id')
+        ->join('events', 'attendances.event_id', '=', 'events.id')
+        ->select(
+            'events.id as event_id',
+            'events.title as event_title',
+            DB::raw("COALESCE({$col}, 'Sin datos') as label"),
+            DB::raw('COUNT(*) as count')
+        )
+        ->whereIn('attendances.event_id', $eventIds)
+        ->groupBy('events.id', 'events.title', $col)
+        ->orderBy('events.date')
+        ->get();
+
+    return [
+        'attendances' => $attendances,
+        'byRole'      => $demo('participants.role'),
+        'bySex'       => $demo('participants.sexo'),
+        'byGroup'     => $demo('participants.grupo_priorizado'),
+    ];
+});
+
+/**
+ * =============================================
  * RUTAS PARA LAS ESTADÍSTICAS GENERALES
  * =============================================
  */

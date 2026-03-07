@@ -89,9 +89,9 @@
                             {{ __('Por Participantes') }}
                         </flux:navlist.item>
 
-                        <span class="h-10 lg:h-8 flex items-center px-3 text-sm font-medium leading-none text-zinc-400 dark:text-zinc-600 opacity-60 cursor-not-allowed select-none">
+                        <flux:navlist.item :href="route('statistics.compara-eventos')" :current="request()->routeIs('statistics.compara-eventos')" wire:navigate>
                             {{ __('Compara Eventos') }}
-                        </span>
+                        </flux:navlist.item>
 
                         <flux:navlist.item :href="route('statistics.usuarios')" :current="request()->routeIs('statistics.usuarios')" wire:navigate>
                             {{ __('Por Usuarios') }}

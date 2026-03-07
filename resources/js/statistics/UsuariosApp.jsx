@@ -97,6 +97,7 @@ export default function UsuariosApp() {
               isEmpty={!loading && charts.eventsByRole.length === 0}
               data={charts.eventsByRole}
               isDark={isDark}
+              valueLabel="Eventos"
             >
               <EventsByRoleChart data={charts.eventsByRole} isDark={isDark} />
             </ChartCard>
@@ -111,6 +112,7 @@ export default function UsuariosApp() {
               isEmpty={!loading && charts.eventsByUser.length === 0}
               data={charts.eventsByUser}
               isDark={isDark}
+              valueLabel="Eventos"
             >
               <TopHorizontalBar data={charts.eventsByUser} isDark={isDark} valueLabel="eventos" />
             </ChartCard>
@@ -133,6 +135,7 @@ export default function UsuariosApp() {
               isEmpty={!loading && charts.topUsers.length === 0}
               data={charts.topUsers}
               isDark={isDark}
+              valueLabel="Asistencias"
             >
               <TopHorizontalBar data={charts.topUsers} isDark={isDark} valueLabel="asistencias generadas" />
             </ChartCard>

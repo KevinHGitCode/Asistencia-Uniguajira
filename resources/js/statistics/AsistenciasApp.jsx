@@ -4,10 +4,12 @@ import { useTheme }            from './hooks/useTheme.js';
 import { useAsistenciasStats } from './hooks/useAsistenciasStats.js';
 import { useDemografiaStats }  from './hooks/useDemografiaStats.js';
 import { useFilters }          from './hooks/useFilters.js';
+import { useEventFilter }      from './hooks/useEventFilter.js';
 
 import { FiltersPanel }          from './components/FiltersPanel.jsx';
 import { StatCounters }          from './components/StatCounters.jsx';
 import { ChartCard }             from './components/ChartCard.jsx';
+import { EventFilterButton, EventFilterPanel } from './components/EventFilterPanel.jsx';
 
 import { ProgramAttendancesBar } from './charts/ProgramAttendancesBar.jsx';
 import { ProgramParticipantsPie } from './charts/ProgramParticipantsPie.jsx';
@@ -41,14 +43,15 @@ export default function AsistenciasApp() {
   const { state, fetchAll }                   = useAsistenciasStats();
   const { state: demoState, fetchAll: fetchDemografia } = useDemografiaStats({ mode: 'attendances' });
   const { filters, updateFilter, clearFilter } = useFilters();
+  const evFilter = useEventFilter(filters);
 
   useEffect(() => {
-    fetchAll(filters);
-  }, [filters, fetchAll]);
+    fetchAll(filters, evFilter.effectiveEventIds);
+  }, [filters, evFilter.effectiveEventIds, fetchAll]);
 
   useEffect(() => {
-    fetchDemografia(filters);
-  }, [filters, fetchDemografia]);
+    fetchDemografia(filters, evFilter.effectiveEventIds);
+  }, [filters, evFilter.effectiveEventIds, fetchDemografia]);
 
   const { counters, charts, loading }       = state;
   const { charts: demo, loading: demoLoad } = demoState;
@@ -61,7 +64,32 @@ export default function AsistenciasApp() {
         onUpdate={updateFilter}
         onClear={clearFilter}
         loading={loading || demoLoad}
+        actions={
+          <EventFilterButton
+            open={evFilter.open}
+            onToggle={() => evFilter.setOpen(o => !o)}
+            isFiltered={evFilter.isFiltered}
+            filteredCount={evFilter.filteredCount}
+            totalCount={evFilter.totalCount}
+            loading={evFilter.evLoading}
+          />
+        }
       />
+
+      {/* ── Selector de eventos (expandible) ── */}
+      {evFilter.open && (
+        <EventFilterPanel
+          events={evFilter.events}
+          loading={evFilter.evLoading}
+          checkedIds={evFilter.checkedIds}
+          onToggle={evFilter.toggle}
+          onSelectAll={evFilter.selectAll}
+          onClearAll={evFilter.clearAll}
+          isFiltered={evFilter.isFiltered}
+          filteredCount={evFilter.filteredCount}
+          totalCount={evFilter.totalCount}
+        />
+      )}
 
       {/* ── Contadores ── */}
       <StatCounters counters={counters} loading={loading} />
@@ -81,6 +109,7 @@ export default function AsistenciasApp() {
               isEmpty={!loading && charts.attendancesByProgram.length === 0}
               data={charts.attendancesByProgram}
               isDark={isDark}
+              valueLabel="Asistencias"
             >
               <ProgramAttendancesBar data={charts.attendancesByProgram} isDark={isDark} />
             </ChartCard>
@@ -103,6 +132,7 @@ export default function AsistenciasApp() {
               isEmpty={!loading && charts.topEvents.length === 0}
               data={charts.topEvents}
               isDark={isDark}
+              valueLabel="Asistencias"
             >
               <TopHorizontalBar data={charts.topEvents} isDark={isDark} valueLabel="asistencias" />
             </ChartCard>
@@ -117,6 +147,7 @@ export default function AsistenciasApp() {
               isEmpty={!loading && charts.topParticipants.length === 0}
               data={charts.topParticipants}
               isDark={isDark}
+              valueLabel="Asistencias"
             >
               <TopHorizontalBar data={charts.topParticipants} isDark={isDark} valueLabel="asistencias" />
             </ChartCard>
@@ -140,6 +171,7 @@ export default function AsistenciasApp() {
             isEmpty={!demoLoad && demo.byRole.length === 0}
             data={demo.byRole}
             isDark={isDark}
+            valueLabel="Asistencias"
           >
             <ProgramParticipantsPie data={demo.byRole} isDark={isDark} showOuterLabels={false} groupOthers={false} valueLabel="Asistencias" />
           </ChartCard>
@@ -153,6 +185,7 @@ export default function AsistenciasApp() {
             isEmpty={!demoLoad && demo.bySex.length === 0}
             data={demo.bySex}
             isDark={isDark}
+            valueLabel="Asistencias"
           >
             <ProgramParticipantsPie data={demo.bySex} isDark={isDark} showOuterLabels={false} groupOthers={false} valueLabel="Asistencias" />
           </ChartCard>
@@ -166,6 +199,7 @@ export default function AsistenciasApp() {
             isEmpty={!demoLoad && demo.byGroup.length === 0}
             data={demo.byGroup}
             isDark={isDark}
+            valueLabel="Asistencias"
           >
             <ProgramParticipantsPie data={demo.byGroup} isDark={isDark} showOuterLabels={false} groupOthers={false} valueLabel="Asistencias" />
           </ChartCard>

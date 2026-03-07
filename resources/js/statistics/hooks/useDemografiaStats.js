@@ -1,9 +1,12 @@
 import { useState, useCallback, useRef } from 'react';
 
-function buildQS(filters) {
+function buildQS(filters, eventIds = null) {
   const p = new URLSearchParams();
   if (filters.dateFrom) p.append('dateFrom', filters.dateFrom);
   if (filters.dateTo)   p.append('dateTo',   filters.dateTo);
+  if (Array.isArray(eventIds)) {
+    eventIds.forEach(id => p.append('eventIds[]', id));
+  }
   return p.toString();
 }
 
@@ -34,12 +37,12 @@ export function useDemografiaStats({ mode = 'participants' } = {}) {
   // El prefijo determina qué endpoints se llaman (attendances-by-* vs participants-by-*)
   const prefix = mode === 'attendances' ? 'attendances' : 'participants';
 
-  const fetchAll = useCallback(async (filters) => {
+  const fetchAll = useCallback(async (filters, eventIds = null) => {
     if (abortRef.current) abortRef.current.abort();
     abortRef.current = new AbortController();
     const { signal } = abortRef.current;
 
-    const qs  = buildQS(filters);
+    const qs  = buildQS(filters, eventIds);
     const url = (path) => `/api/statistics${path}${qs ? '?' + qs : ''}`;
 
     setState(prev => ({ ...prev, loading: true, error: null }));

@@ -74,10 +74,11 @@ Route::post('/events/acceso/{slug}', [AttendanceController::class, 'store'])
  * ================================================================
  */
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::view('estadisticas',               'statistics.statistics')    ->name('statistics');
-    Route::view('estadisticas/asistencias',   'statistics.asistencias')   ->name('statistics.asistencias');
-    Route::view('estadisticas/participantes', 'statistics.participantes') ->name('statistics.participantes');
-    Route::view('estadisticas/eventos',       'statistics.eventos')       ->name('statistics.eventos');
+    Route::view('estadisticas',                   'statistics.statistics')       ->name('statistics');
+    Route::view('estadisticas/asistencias',       'statistics.asistencias')      ->name('statistics.asistencias');
+    Route::view('estadisticas/participantes',     'statistics.participantes')    ->name('statistics.participantes');
+    Route::view('estadisticas/eventos',           'statistics.eventos')          ->name('statistics.eventos');
+    Route::view('estadisticas/compara-eventos',   'statistics.compara-eventos')  ->name('statistics.compara-eventos');
 });
 
 Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {

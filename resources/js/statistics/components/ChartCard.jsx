@@ -25,23 +25,29 @@ function EmptyState() {
  * Tarjeta contenedora para un gráfico.
  *
  * Props:
- *  - title       : string  — etiqueta superior
- *  - description : string  — descripción que explica qué muestra el gráfico
- *  - height      : number  — altura del área del gráfico en px (default: 340)
- *  - loading     : bool
- *  - isEmpty     : bool
- *  - data        : array of { name, value }
- *  - isDark      : bool
- *  - children    : nodo React
+ *  - title        : string  — etiqueta superior
+ *  - description  : string  — descripción que explica qué muestra el gráfico
+ *  - height       : number  — altura del área del gráfico en px (default: 340)
+ *  - loading      : bool
+ *  - isEmpty      : bool
+ *  - data         : array of { name, value }
+ *  - isDark       : bool
+ *  - valueLabel   : string  — nombre de la columna de valor en la tabla de datos (ej: "Asistencias")
+ *  - excelData    : array|null — filas pivotadas para exportación multi-columna
+ *  - excelColumns : array|null — categorías para exportación multi-columna
+ *  - children     : nodo React
  */
 export function ChartCard({
   title,
   description,
-  height = 340,
-  loading  = false,
-  isEmpty  = false,
-  data     = [],
-  isDark   = false,
+  height      = 340,
+  loading     = false,
+  isEmpty     = false,
+  data        = [],
+  isDark      = false,
+  valueLabel  = 'Valor',
+  excelData   = null,
+  excelColumns = null,
   children,
 }) {
   const chartRef = useRef(null);
@@ -87,6 +93,9 @@ export function ChartCard({
         title={title ?? ''}
         description={description}
         data={data}
+        valueLabel={valueLabel}
+        excelData={excelData}
+        excelColumns={excelColumns}
         onClose={() => setModal(null)}
       />
     </>

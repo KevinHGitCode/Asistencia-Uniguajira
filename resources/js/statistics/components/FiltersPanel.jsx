@@ -57,9 +57,10 @@ function DateField({ label, value, onChange, onClear }) {
 //  - onUpdate    : (field, value) => void  — auto-aplica al cambiar
 //  - onClear     : (field) => void         — limpia campo individual
 //  - loading     : bool
+//  - actions     : ReactNode|null          — slot para botones extra (p.ej. filtro de eventos)
 // ---------------------------------------------------------------------------
 
-export function FiltersPanel({ filters, onUpdate, onClear, loading }) {
+export function FiltersPanel({ filters, onUpdate, onClear, loading, actions = null }) {
   return (
     <div className="mb-4 p-3 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-sm">
       <div className="flex flex-wrap items-end gap-3">
@@ -77,6 +78,13 @@ export function FiltersPanel({ filters, onUpdate, onClear, loading }) {
           onChange={v => onUpdate('dateTo', v)}
           onClear={() => onClear('dateTo')}
         />
+
+        {/* Slot para acciones extra (p.ej. filtro de eventos) */}
+        {actions && (
+          <div className="self-end pb-0.5">
+            {actions}
+          </div>
+        )}
 
         {/* Indicador de carga sutil */}
         <div

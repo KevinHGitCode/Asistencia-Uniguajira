@@ -4,10 +4,12 @@ import { useTheme }              from './hooks/useTheme.js';
 import { useParticipantesStats } from './hooks/useParticipantesStats.js';
 import { useDemografiaStats }    from './hooks/useDemografiaStats.js';
 import { useFilters }            from './hooks/useFilters.js';
+import { useEventFilter }        from './hooks/useEventFilter.js';
 
 import { FiltersPanel }           from './components/FiltersPanel.jsx';
 import { ChartCard }              from './components/ChartCard.jsx';
 import { ProgramParticipantsPie } from './charts/ProgramParticipantsPie.jsx';
+import { EventFilterButton, EventFilterPanel } from './components/EventFilterPanel.jsx';
 
 import { CHART_HEIGHTS, CHART_DENSITY } from './config.js';
 
@@ -63,14 +65,15 @@ export default function ParticipantesApp() {
   const { state, fetchAll }                              = useParticipantesStats();
   const { state: demoState, fetchAll: fetchDemografia }  = useDemografiaStats();
   const { filters, updateFilter, clearFilter }           = useFilters();
+  const evFilter = useEventFilter(filters);
 
   useEffect(() => {
-    fetchAll(filters);
-  }, [filters, fetchAll]);
+    fetchAll(filters, evFilter.effectiveEventIds);
+  }, [filters, evFilter.effectiveEventIds, fetchAll]);
 
   useEffect(() => {
-    fetchDemografia(filters);
-  }, [filters, fetchDemografia]);
+    fetchDemografia(filters, evFilter.effectiveEventIds);
+  }, [filters, evFilter.effectiveEventIds, fetchDemografia]);
 
   const { counters, charts, loading }       = state;
   const { charts: demo, loading: demoLoad } = demoState;
@@ -83,7 +86,32 @@ export default function ParticipantesApp() {
         onUpdate={updateFilter}
         onClear={clearFilter}
         loading={loading || demoLoad}
+        actions={
+          <EventFilterButton
+            open={evFilter.open}
+            onToggle={() => evFilter.setOpen(o => !o)}
+            isFiltered={evFilter.isFiltered}
+            filteredCount={evFilter.filteredCount}
+            totalCount={evFilter.totalCount}
+            loading={evFilter.evLoading}
+          />
+        }
       />
+
+      {/* ── Selector de eventos (expandible) ── */}
+      {evFilter.open && (
+        <EventFilterPanel
+          events={evFilter.events}
+          loading={evFilter.evLoading}
+          checkedIds={evFilter.checkedIds}
+          onToggle={evFilter.toggle}
+          onSelectAll={evFilter.selectAll}
+          onClearAll={evFilter.clearAll}
+          isFiltered={evFilter.isFiltered}
+          filteredCount={evFilter.filteredCount}
+          totalCount={evFilter.totalCount}
+        />
+      )}
 
       {/* ── Contador de participantes únicos ── */}
       <section className="mb-5">
@@ -103,6 +131,7 @@ export default function ParticipantesApp() {
           isEmpty={!loading && charts.participantsByProgram.length === 0}
           data={charts.participantsByProgram}
           isDark={isDark}
+          valueLabel="Participantes"
         >
           <ProgramParticipantsPie data={charts.participantsByProgram} isDark={isDark} />
         </ChartCard>
@@ -123,6 +152,7 @@ export default function ParticipantesApp() {
             isEmpty={!demoLoad && demo.byRole.length === 0}
             data={demo.byRole}
             isDark={isDark}
+            valueLabel="Participantes"
           >
             <ProgramParticipantsPie data={demo.byRole} isDark={isDark} showOuterLabels={false} groupOthers={false} />
           </ChartCard>
@@ -135,6 +165,7 @@ export default function ParticipantesApp() {
             isEmpty={!demoLoad && demo.bySex.length === 0}
             data={demo.bySex}
             isDark={isDark}
+            valueLabel="Participantes"
           >
             <ProgramParticipantsPie data={demo.bySex} isDark={isDark} showOuterLabels={false} groupOthers={false} />
           </ChartCard>
@@ -147,6 +178,7 @@ export default function ParticipantesApp() {
             isEmpty={!demoLoad && demo.byGroup.length === 0}
             data={demo.byGroup}
             isDark={isDark}
+            valueLabel="Participantes"
           >
             <ProgramParticipantsPie data={demo.byGroup} isDark={isDark} showOuterLabels={false} groupOthers={false} />
           </ChartCard>

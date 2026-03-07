@@ -170,10 +170,10 @@ export async function captureAsImage(containerEl, title, isDark) {
 
 // ── CSV download ──────────────────────────────────────────────────────────────
 
-export function downloadCSV(data, title) {
+export function downloadCSV(data, title, valueLabel = 'Valor') {
   const total = data.reduce((s, r) => s + (r.value ?? 0), 0);
   const rows  = [
-    ['Nombre', 'Valor', 'Porcentaje'],
+    ['Nombre', valueLabel, 'Porcentaje'],
     ...data.map(r => [
       r.name,
       r.value ?? 0,
@@ -192,19 +192,47 @@ export function downloadCSV(data, title) {
 
 // ── Excel download (.xls via HTML table) ──────────────────────────────────────
 
-export function downloadExcel(data, title) {
-  const total = data.reduce((s, r) => s + (r.value ?? 0), 0);
-  const header = ['Nombre', 'Valor', 'Porcentaje'];
-  const rows   = [
-    ...data.map(r => [
-      r.name,
-      r.value ?? 0,
-      total > 0 ? ((r.value / total) * 100).toFixed(1) + '%' : '0%',
-    ]),
-    ['Total', total, '100%'],
-  ];
-
+/**
+ * @param {Array}        data         – [{ name, value }] siempre requerido
+ * @param {string}       title        – nombre del archivo
+ * @param {string}       valueLabel   – etiqueta de la columna de valor (modo simple)
+ * @param {Array|null}   excelData    – filas en formato pivotado [{ name, Cat1, Cat2 }]
+ * @param {Array|null}   excelColumns – categorías en orden ['Cat1','Cat2',...]
+ *
+ * Cuando excelData + excelColumns están presentes, genera una tabla multi-columna:
+ *   Nombre | Cat1 | Cat2 | … | Total
+ * De lo contrario usa el modo simple:
+ *   Nombre | valueLabel | Porcentaje
+ */
+export function downloadExcel(data, title, valueLabel = 'Valor', excelData = null, excelColumns = null) {
+  const useMulti = excelData && excelColumns && excelColumns.length > 0;
   const esc = (v) => String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  let header, rows;
+
+  if (useMulti) {
+    header = ['Nombre', ...excelColumns, 'Total'];
+    const colTotals = excelColumns.map(c => excelData.reduce((s, r) => s + (r[c] ?? 0), 0));
+    const grandTotal = colTotals.reduce((s, v) => s + v, 0);
+    rows = [
+      ...excelData.map(row => {
+        const rowTotal = excelColumns.reduce((s, c) => s + (row[c] ?? 0), 0);
+        return [row.name, ...excelColumns.map(c => row[c] ?? 0), rowTotal];
+      }),
+      ['Total', ...colTotals, grandTotal],
+    ];
+  } else {
+    const total = data.reduce((s, r) => s + (r.value ?? 0), 0);
+    header = ['Nombre', valueLabel, 'Porcentaje'];
+    rows = [
+      ...data.map(r => [
+        r.name,
+        r.value ?? 0,
+        total > 0 ? ((r.value / total) * 100).toFixed(1) + '%' : '0%',
+      ]),
+      ['Total', total, '100%'],
+    ];
+  }
 
   let html = `<html xmlns:o='urn:schemas-microsoft-com:office:office' `
            + `xmlns:x='urn:schemas-microsoft-com:office:excel' `
@@ -227,17 +255,34 @@ export function downloadExcel(data, title) {
 
 // ── Copy table to clipboard (tab-separated, pasteable into spreadsheets) ───────
 
-export function copyTableText(data) {
-  const total = data.reduce((s, r) => s + (r.value ?? 0), 0);
-  const rows  = [
-    ['Nombre', 'Valor', 'Porcentaje'],
-    ...data.map(r => [
-      r.name,
-      r.value ?? 0,
-      total > 0 ? ((r.value / total) * 100).toFixed(1) + '%' : '0%',
-    ]),
-    ['Total', total, '100%'],
-  ];
+export function copyTableText(data, valueLabel = 'Valor', excelData = null, excelColumns = null) {
+  const useMulti = excelData && excelColumns && excelColumns.length > 0;
+  let rows;
+
+  if (useMulti) {
+    const colTotals = excelColumns.map(c => excelData.reduce((s, r) => s + (r[c] ?? 0), 0));
+    const grandTotal = colTotals.reduce((s, v) => s + v, 0);
+    rows = [
+      ['Nombre', ...excelColumns, 'Total'],
+      ...excelData.map(row => {
+        const rowTotal = excelColumns.reduce((s, c) => s + (row[c] ?? 0), 0);
+        return [row.name, ...excelColumns.map(c => row[c] ?? 0), rowTotal];
+      }),
+      ['Total', ...colTotals, grandTotal],
+    ];
+  } else {
+    const total = data.reduce((s, r) => s + (r.value ?? 0), 0);
+    rows = [
+      ['Nombre', valueLabel, 'Porcentaje'],
+      ...data.map(r => [
+        r.name,
+        r.value ?? 0,
+        total > 0 ? ((r.value / total) * 100).toFixed(1) + '%' : '0%',
+      ]),
+      ['Total', total, '100%'],
+    ];
+  }
+
   return navigator.clipboard.writeText(rows.map(r => r.join('\t')).join('\n'));
 }
 

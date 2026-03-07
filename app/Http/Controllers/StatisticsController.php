@@ -18,7 +18,7 @@ class StatisticsController extends Controller
     {
         $filters = $this->getFilters($request);
         $query = Event::query();
-        
+
         if (!empty($filters['dateFrom'])) {
             $query->where('date', '>=', $filters['dateFrom']);
         }
@@ -33,7 +33,8 @@ class StatisticsController extends Controller
                 $q->whereIn('dependency_id', $filters['dependencyIds']);
             });
         }
-        
+        $this->applyEventIds($query, $filters, 'id');
+
         return $query->count();
     }
 
@@ -94,29 +95,31 @@ class StatisticsController extends Controller
     {
         $filters = $this->getFilters($request);
         $query = Attendance::query();
-        
-        $hasFilters = !empty($filters['dateFrom']) || !empty($filters['dateTo']) 
-            || (!empty($filters['userIds']) && is_array($filters['userIds']) && count($filters['userIds']) > 0)
-            || (!empty($filters['dependencyIds']) && is_array($filters['dependencyIds']) && count($filters['dependencyIds']) > 0);
-        
+
+        $hasFilters = !empty($filters['dateFrom']) || !empty($filters['dateTo'])
+            || (!empty($filters['userIds'])       && count($filters['userIds']) > 0)
+            || (!empty($filters['dependencyIds']) && count($filters['dependencyIds']) > 0)
+            || !empty($filters['eventIds']);
+
         if ($hasFilters) {
             $query->join('events', 'attendances.event_id', '=', 'events.id');
-            
+
             if (!empty($filters['dateFrom'])) {
                 $query->where('events.date', '>=', $filters['dateFrom']);
             }
             if (!empty($filters['dateTo'])) {
                 $query->where('events.date', '<=', $filters['dateTo']);
             }
-            if (!empty($filters['userIds']) && is_array($filters['userIds']) && count($filters['userIds']) > 0) {
+            if (!empty($filters['userIds']) && count($filters['userIds']) > 0) {
                 $query->whereIn('events.user_id', $filters['userIds']);
             }
-            if (!empty($filters['dependencyIds']) && is_array($filters['dependencyIds']) && count($filters['dependencyIds']) > 0) {
+            if (!empty($filters['dependencyIds']) && count($filters['dependencyIds']) > 0) {
                 $query->join('users', 'events.user_id', '=', 'users.id')
                     ->whereIn('users.dependency_id', $filters['dependencyIds']);
             }
+            $this->applyEventIds($query, $filters);
         }
-        
+
         return $query->count();
     }
 
@@ -125,11 +128,10 @@ class StatisticsController extends Controller
     {
         $filters = $this->getFilters($request);
 
-        $hasDateFilter = !empty($filters['dateFrom']) || !empty($filters['dateTo']);
+        $hasFilter = !empty($filters['dateFrom']) || !empty($filters['dateTo'])
+            || !empty($filters['eventIds']);
 
-        if ($hasDateFilter) {
-            // Con filtros de fecha: participantes distintos que asistieron a eventos
-            // cuya fecha esté dentro del rango solicitado
+        if ($hasFilter) {
             $query = DB::table('participants')
                 ->join('attendances', 'participants.id', '=', 'attendances.participant_id')
                 ->join('events',      'attendances.event_id', '=', 'events.id');
@@ -140,11 +142,12 @@ class StatisticsController extends Controller
             if (!empty($filters['dateTo'])) {
                 $query->where('events.date', '<=', $filters['dateTo']);
             }
+            $this->applyEventIds($query, $filters);
 
             return $query->distinct()->count('participants.id');
         }
 
-        // Sin filtros de fecha: solo los que tienen al menos una asistencia
+        // Sin filtros: solo los que tienen al menos una asistencia
         return Participant::whereHas('attendances')->count();
     }
 
@@ -156,21 +159,22 @@ class StatisticsController extends Controller
             ->join('participants', 'attendances.participant_id', '=', 'participants.id')
             ->join('programs', 'participants.program_id', '=', 'programs.id')
             ->join('events', 'attendances.event_id', '=', 'events.id');
-        
+
         if (!empty($filters['dateFrom'])) {
             $query->where('events.date', '>=', $filters['dateFrom']);
         }
         if (!empty($filters['dateTo'])) {
             $query->where('events.date', '<=', $filters['dateTo']);
         }
-        if (!empty($filters['userIds']) && is_array($filters['userIds']) && count($filters['userIds']) > 0) {
+        if (!empty($filters['userIds']) && count($filters['userIds']) > 0) {
             $query->whereIn('events.user_id', $filters['userIds']);
         }
-        if (!empty($filters['dependencyIds']) && is_array($filters['dependencyIds']) && count($filters['dependencyIds']) > 0) {
+        if (!empty($filters['dependencyIds']) && count($filters['dependencyIds']) > 0) {
             $query->join('users', 'events.user_id', '=', 'users.id')
                 ->whereIn('users.dependency_id', $filters['dependencyIds']);
         }
-        
+        $this->applyEventIds($query, $filters);
+
         return $query->select('programs.name as program', DB::raw('COUNT(*) as count'))
             ->groupBy('programs.name')
             ->orderByDesc('count')
@@ -193,6 +197,7 @@ class StatisticsController extends Controller
         if (!empty($filters['dateTo'])) {
             $query->where('events.date', '<=', $filters['dateTo']);
         }
+        $this->applyEventIds($query, $filters);
 
         return $query->select('programs.name as program', DB::raw('COUNT(DISTINCT participants.id) as count'))
             ->groupBy('programs.name')
@@ -274,7 +279,8 @@ class StatisticsController extends Controller
             $query->join('users', 'events.user_id', '=', 'users.id')
                 ->whereIn('users.dependency_id', $filters['dependencyIds']);
         }
-        
+        $this->applyEventIds($query, $filters);
+
         return $query->select('events.title', DB::raw('COUNT(*) as count'))
             ->groupBy('events.title')
             ->orderByDesc('count')
@@ -283,11 +289,23 @@ class StatisticsController extends Controller
     }
 
     // Participantes con más asistencias
-    public function topParticipants()
+    public function topParticipants(Request $request)
     {
-        return DB::table('attendances')
+        $filters = $this->getFilters($request);
+
+        $query = DB::table('attendances')
             ->join('participants', 'attendances.participant_id', '=', 'participants.id')
-            ->select(DB::raw("CONCAT(participants.first_name, ' ', participants.last_name) as name"), DB::raw('COUNT(*) as count'))
+            ->join('events', 'attendances.event_id', '=', 'events.id');
+
+        if (!empty($filters['dateFrom'])) {
+            $query->where('events.date', '>=', $filters['dateFrom']);
+        }
+        if (!empty($filters['dateTo'])) {
+            $query->where('events.date', '<=', $filters['dateTo']);
+        }
+        $this->applyEventIds($query, $filters);
+
+        return $query->select(DB::raw("CONCAT(participants.first_name, ' ', participants.last_name) as name"), DB::raw('COUNT(*) as count'))
             ->groupBy('participants.id', 'participants.first_name', 'participants.last_name')
             ->orderByDesc('count')
             ->limit(5)
@@ -311,6 +329,7 @@ class StatisticsController extends Controller
         if (!empty($filters['dateTo'])) {
             $query->where('events.date', '<=', $filters['dateTo']);
         }
+        $this->applyEventIds($query, $filters);
 
         return $query->select('participants.role as label', DB::raw('COUNT(*) as count'))
             ->groupBy('participants.role')
@@ -333,6 +352,7 @@ class StatisticsController extends Controller
         if (!empty($filters['dateTo'])) {
             $query->where('events.date', '<=', $filters['dateTo']);
         }
+        $this->applyEventIds($query, $filters);
 
         return $query->select(
                 DB::raw("COALESCE(participants.sexo, 'Sin datos') as label"),
@@ -358,6 +378,7 @@ class StatisticsController extends Controller
         if (!empty($filters['dateTo'])) {
             $query->where('events.date', '<=', $filters['dateTo']);
         }
+        $this->applyEventIds($query, $filters);
 
         return $query->select(
                 DB::raw("COALESCE(participants.grupo_priorizado, 'Sin datos') as label"),
@@ -385,6 +406,7 @@ class StatisticsController extends Controller
         if (!empty($filters['dateTo'])) {
             $query->where('events.date', '<=', $filters['dateTo']);
         }
+        $this->applyEventIds($query, $filters);
 
         return $query->select('participants.role as label', DB::raw('COUNT(DISTINCT participants.id) as count'))
             ->groupBy('participants.role')
@@ -407,6 +429,7 @@ class StatisticsController extends Controller
         if (!empty($filters['dateTo'])) {
             $query->where('events.date', '<=', $filters['dateTo']);
         }
+        $this->applyEventIds($query, $filters);
 
         return $query->select(
                 DB::raw("COALESCE(participants.sexo, 'Sin datos') as label"),
@@ -432,6 +455,7 @@ class StatisticsController extends Controller
         if (!empty($filters['dateTo'])) {
             $query->where('events.date', '<=', $filters['dateTo']);
         }
+        $this->applyEventIds($query, $filters);
 
         return $query->select(
                 DB::raw("COALESCE(participants.grupo_priorizado, 'Sin datos') as label"),
