@@ -64,20 +64,20 @@ export default function UsuariosApp() {
 
       {/* ── Contador de eventos ── */}
       <section className="mb-6">
-        <div className="flex items-center gap-4 p-5 bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-neutral-700 rounded-2xl shadow-sm max-w-xs">
-          <div className="p-3 rounded-xl bg-violet-100 dark:bg-violet-900/30">
+        <div className="flex items-center gap-3 px-4 py-3 bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-neutral-700 rounded-2xl shadow-sm max-w-xs">
+          <div className="p-2 rounded-lg bg-violet-100 dark:bg-violet-900/30 shrink-0">
             <span className="text-violet-600 dark:text-violet-400">
               <CalendarIcon />
             </span>
           </div>
           <div>
-            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 leading-tight">
+            <p className="text-lg font-bold text-gray-900 dark:text-gray-100 leading-tight">
               {loading
-                ? <span className="block w-20 h-7 bg-gray-200 dark:bg-zinc-700 rounded-md animate-pulse" />
+                ? <span className="block w-14 h-5 bg-gray-200 dark:bg-zinc-700 rounded-md animate-pulse" />
                 : (counters.events ?? 0).toLocaleString('es-CO')
               }
             </p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Eventos en el período</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Eventos en el período</p>
           </div>
         </div>
       </section>

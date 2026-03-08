@@ -211,6 +211,10 @@ Route::get('/statistics/compare/data', function (Request $request) {
  */
 
 Route::prefix('statistics')->controller(StatisticsController::class)->group(function () {
+    // ── Endpoints de resumen (1 request por módulo) ──────────────────────────
+    Route::get('/asistencias-summary',   'asistenciasSummary');
+    Route::get('/participantes-summary', 'participantesSummary');
+
     Route::get('/total-events', 'totalEvents');
     Route::get('/events-by-role', 'eventsByRole');
     Route::get('/events-by-user', 'eventsByUser');

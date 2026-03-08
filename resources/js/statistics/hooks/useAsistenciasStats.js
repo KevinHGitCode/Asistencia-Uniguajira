@@ -16,6 +16,9 @@ const EMPTY = {
     attendancesByProgram: [],
     topEvents:            [],
     topParticipants:      [],
+    byRole:               [],
+    bySex:                [],
+    byGroup:              [],
   },
   loading: true,
   error:   null,
@@ -23,8 +26,8 @@ const EMPTY = {
 
 /**
  * Datos para el módulo "Por Asistencias".
- * Endpoints con filtros: totalEvents, totalAttendances, attendancesByProgram, topEvents.
- * Sin filtros:           totalParticipants, topParticipants.
+ * Un único request a /api/statistics/asistencias-summary devuelve
+ * contadores + gráficos + demográficos.
  */
 export function useAsistenciasStats() {
   const [state, setState] = useState(EMPTY);
@@ -35,38 +38,28 @@ export function useAsistenciasStats() {
     abortRef.current = new AbortController();
     const { signal } = abortRef.current;
 
-    const qs  = buildQS(filters, eventIds);
-    const url = (path) => `/api/statistics${path}${qs ? '?' + qs : ''}`;
-
+    const qs = buildQS(filters, eventIds);
     setState(prev => ({ ...prev, loading: true, error: null }));
 
     try {
-      const [
-        totalEvents,
-        totalAttendances,
-        totalParticipants,
-        attendancesByProgram,
-        topEvents,
-        topParticipants,
-      ] = await Promise.all([
-        fetch(url('/total-events'),                            { signal }).then(r => r.json()),
-        fetch(url('/total-attendances'),                       { signal }).then(r => r.json()),
-        fetch(url('/total-participants'),                       { signal }).then(r => r.json()),
-        fetch(url('/attendances-by-program'),                  { signal }).then(r => r.json()),
-        fetch(url('/top-events'),                              { signal }).then(r => r.json()),
-        fetch(url('/top-participants'),                        { signal }).then(r => r.json()),
-      ]);
+      const data = await fetch(
+        `/api/statistics/asistencias-summary${qs ? '?' + qs : ''}`,
+        { signal },
+      ).then(r => r.json());
 
       setState({
         counters: {
-          events:       totalEvents,
-          attendances:  totalAttendances,
-          participants: totalParticipants,
+          events:       data.counters.events,
+          attendances:  data.counters.attendances,
+          participants: data.counters.participants,
         },
         charts: {
-          attendancesByProgram: attendancesByProgram.map(d => ({ name: d.program, value: d.count })),
-          topEvents:            topEvents.map(d => ({ name: d.title, value: d.count })),
-          topParticipants:      topParticipants.map(d => ({ name: d.name,  value: d.count })),
+          attendancesByProgram: data.charts.attendancesByProgram,
+          topEvents:            data.charts.topEvents,
+          topParticipants:      data.charts.topParticipants,
+          byRole:               data.charts.byRole,
+          bySex:                data.charts.bySex,
+          byGroup:              data.charts.byGroup,
         },
         loading: false,
         error:   null,

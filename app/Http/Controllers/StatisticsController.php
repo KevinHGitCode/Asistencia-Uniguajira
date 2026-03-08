@@ -13,6 +13,14 @@ class StatisticsController extends Controller
 {
     use AppliesStatisticsFilters;
 
+    /** Concatenación compatible con SQLite (tests) y MySQL (producción). */
+    private function concatFullName(): string
+    {
+        return DB::connection()->getDriverName() === 'sqlite'
+            ? "(participants.first_name || ' ' || participants.last_name)"
+            : "CONCAT(participants.first_name, ' ', participants.last_name)";
+    }
+
     // Número total de eventos
     public function totalEvents(Request $request)
     {
@@ -305,7 +313,7 @@ class StatisticsController extends Controller
         }
         $this->applyEventIds($query, $filters);
 
-        return $query->select(DB::raw("CONCAT(participants.first_name, ' ', participants.last_name) as name"), DB::raw('COUNT(*) as count'))
+        return $query->select(DB::raw($this->concatFullName() . " as name"), DB::raw('COUNT(*) as count'))
             ->groupBy('participants.id', 'participants.first_name', 'participants.last_name')
             ->orderByDesc('count')
             ->limit(5)
@@ -464,6 +472,173 @@ class StatisticsController extends Controller
             ->groupBy('participants.grupo_priorizado')
             ->orderByDesc('count')
             ->get();
+    }
+
+    // ── Endpoints de resumen (1 request = todos los datos del módulo) ─────────
+
+    /**
+     * Retorna en una sola llamada todos los datos que necesita el módulo
+     * "Por Asistencias": contadores + gráficos + demográficos.
+     */
+    public function asistenciasSummary(Request $request)
+    {
+        $filters = $this->getFilters($request);
+
+        return response()->json([
+            'counters' => [
+                'events'       => $this->sumTotalEvents($filters),
+                'attendances'  => $this->sumTotalAttendances($filters),
+                'participants' => $this->sumTotalParticipants($filters),
+            ],
+            'charts' => [
+                'attendancesByProgram' => $this->sumAttendancesByProgram($filters),
+                'topEvents'            => $this->sumTopEvents($filters),
+                'topParticipants'      => $this->sumTopParticipants($filters),
+                'byRole'  => $this->sumAttendancesDemoByField($filters, 'participants.role'),
+                'bySex'   => $this->sumAttendancesDemoByField($filters, 'participants.sexo',            'Sin datos'),
+                'byGroup' => $this->sumAttendancesDemoByField($filters, 'participants.grupo_priorizado', 'Sin datos'),
+            ],
+        ]);
+    }
+
+    /**
+     * Retorna en una sola llamada todos los datos que necesita el módulo
+     * "Por Participantes": contadores + gráficos + demográficos.
+     */
+    public function participantesSummary(Request $request)
+    {
+        $filters = $this->getFilters($request);
+
+        return response()->json([
+            'counters' => [
+                'participants' => $this->sumTotalParticipants($filters),
+            ],
+            'charts' => [
+                'participantsByProgram' => $this->sumParticipantsByProgram($filters),
+                'byRole'  => $this->sumParticipantsDemoByField($filters, 'participants.role'),
+                'bySex'   => $this->sumParticipantsDemoByField($filters, 'participants.sexo',            'Sin datos'),
+                'byGroup' => $this->sumParticipantsDemoByField($filters, 'participants.grupo_priorizado', 'Sin datos'),
+            ],
+        ]);
+    }
+
+    // ── Helpers privados para los endpoints de resumen ────────────────────────
+
+    private function sumTotalEvents(array $filters): int
+    {
+        $q = Event::query();
+        if (!empty($filters['dateFrom'])) $q->where('date', '>=', $filters['dateFrom']);
+        if (!empty($filters['dateTo']))   $q->where('date', '<=', $filters['dateTo']);
+        if (!empty($filters['userIds']))  $q->whereIn('user_id', $filters['userIds']);
+        $this->applyEventIds($q, $filters, 'id');
+        return $q->count();
+    }
+
+    private function sumTotalAttendances(array $filters): int
+    {
+        $hasFilters = !empty($filters['dateFrom']) || !empty($filters['dateTo']) || !empty($filters['eventIds']);
+        $q = Attendance::query();
+        if ($hasFilters) {
+            $q->join('events', 'attendances.event_id', '=', 'events.id');
+            if (!empty($filters['dateFrom'])) $q->where('events.date', '>=', $filters['dateFrom']);
+            if (!empty($filters['dateTo']))   $q->where('events.date', '<=', $filters['dateTo']);
+            $this->applyEventIds($q, $filters);
+        }
+        return $q->count();
+    }
+
+    private function sumTotalParticipants(array $filters): int
+    {
+        $hasFilter = !empty($filters['dateFrom']) || !empty($filters['dateTo']) || !empty($filters['eventIds']);
+        if ($hasFilter) {
+            $q = DB::table('participants')
+                ->join('attendances', 'participants.id', '=', 'attendances.participant_id')
+                ->join('events', 'attendances.event_id', '=', 'events.id');
+            if (!empty($filters['dateFrom'])) $q->where('events.date', '>=', $filters['dateFrom']);
+            if (!empty($filters['dateTo']))   $q->where('events.date', '<=', $filters['dateTo']);
+            $this->applyEventIds($q, $filters);
+            return $q->distinct()->count('participants.id');
+        }
+        return Participant::whereHas('attendances')->count();
+    }
+
+    private function sumAttendancesByProgram(array $filters)
+    {
+        $q = DB::table('attendances')
+            ->join('participants', 'attendances.participant_id', '=', 'participants.id')
+            ->join('programs',     'participants.program_id',    '=', 'programs.id')
+            ->join('events',       'attendances.event_id',       '=', 'events.id');
+        if (!empty($filters['dateFrom'])) $q->where('events.date', '>=', $filters['dateFrom']);
+        if (!empty($filters['dateTo']))   $q->where('events.date', '<=', $filters['dateTo']);
+        $this->applyEventIds($q, $filters);
+        return $q->select('programs.name as name', DB::raw('COUNT(*) as value'))
+            ->groupBy('programs.name')->orderByDesc('value')->get();
+    }
+
+    private function sumTopEvents(array $filters)
+    {
+        $q = DB::table('attendances')
+            ->join('events', 'attendances.event_id', '=', 'events.id');
+        if (!empty($filters['dateFrom'])) $q->where('events.date', '>=', $filters['dateFrom']);
+        if (!empty($filters['dateTo']))   $q->where('events.date', '<=', $filters['dateTo']);
+        $this->applyEventIds($q, $filters);
+        return $q->select('events.title as name', DB::raw('COUNT(*) as value'))
+            ->groupBy('events.title')->orderByDesc('value')->limit(5)->get();
+    }
+
+    private function sumTopParticipants(array $filters)
+    {
+        $q = DB::table('attendances')
+            ->join('participants', 'attendances.participant_id', '=', 'participants.id')
+            ->join('events',       'attendances.event_id',       '=', 'events.id');
+        if (!empty($filters['dateFrom'])) $q->where('events.date', '>=', $filters['dateFrom']);
+        if (!empty($filters['dateTo']))   $q->where('events.date', '<=', $filters['dateTo']);
+        $this->applyEventIds($q, $filters);
+        return $q->select(
+                DB::raw($this->concatFullName() . ' as name'),
+                DB::raw('COUNT(*) as value')
+            )
+            ->groupBy('participants.id', 'participants.first_name', 'participants.last_name')
+            ->orderByDesc('value')->limit(5)->get();
+    }
+
+    private function sumAttendancesDemoByField(array $filters, string $col, ?string $coalesce = null)
+    {
+        $q = DB::table('attendances')
+            ->join('participants', 'attendances.participant_id', '=', 'participants.id')
+            ->join('events',       'attendances.event_id',       '=', 'events.id');
+        if (!empty($filters['dateFrom'])) $q->where('events.date', '>=', $filters['dateFrom']);
+        if (!empty($filters['dateTo']))   $q->where('events.date', '<=', $filters['dateTo']);
+        $this->applyEventIds($q, $filters);
+        $expr = $coalesce ? DB::raw("COALESCE({$col}, '{$coalesce}') as name") : DB::raw("{$col} as name");
+        return $q->select($expr, DB::raw('COUNT(*) as value'))
+            ->groupBy($col)->orderByDesc('value')->get();
+    }
+
+    private function sumParticipantsByProgram(array $filters)
+    {
+        $q = DB::table('participants')
+            ->join('programs',    'participants.program_id',    '=', 'programs.id')
+            ->join('attendances', 'participants.id',            '=', 'attendances.participant_id')
+            ->join('events',      'attendances.event_id',       '=', 'events.id');
+        if (!empty($filters['dateFrom'])) $q->where('events.date', '>=', $filters['dateFrom']);
+        if (!empty($filters['dateTo']))   $q->where('events.date', '<=', $filters['dateTo']);
+        $this->applyEventIds($q, $filters);
+        return $q->select('programs.name as name', DB::raw('COUNT(DISTINCT participants.id) as value'))
+            ->groupBy('programs.name')->orderByDesc('value')->get();
+    }
+
+    private function sumParticipantsDemoByField(array $filters, string $col, ?string $coalesce = null)
+    {
+        $q = DB::table('participants')
+            ->join('attendances', 'participants.id',         '=', 'attendances.participant_id')
+            ->join('events',      'attendances.event_id',   '=', 'events.id');
+        if (!empty($filters['dateFrom'])) $q->where('events.date', '>=', $filters['dateFrom']);
+        if (!empty($filters['dateTo']))   $q->where('events.date', '<=', $filters['dateTo']);
+        $this->applyEventIds($q, $filters);
+        $expr = $coalesce ? DB::raw("COALESCE({$col}, '{$coalesce}') as name") : DB::raw("{$col} as name");
+        return $q->select($expr, DB::raw('COUNT(DISTINCT participants.id) as value'))
+            ->groupBy($col)->orderByDesc('value')->get();
     }
 
     // Usuarios con más asistencias

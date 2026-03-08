@@ -14,6 +14,9 @@ const EMPTY = {
   counters: { participants: null },
   charts: {
     participantsByProgram: [],
+    byRole:                [],
+    bySex:                 [],
+    byGroup:               [],
   },
   loading: true,
   error:   null,
@@ -21,8 +24,8 @@ const EMPTY = {
 
 /**
  * Datos para el módulo "Por Participantes".
- * Ambos endpoints soportan filtros de fecha (filtran por eventos.date).
- * Solo cuentan/muestran participantes con al menos una asistencia.
+ * Un único request a /api/statistics/participantes-summary devuelve
+ * contadores + gráficos + demográficos.
  */
 export function useParticipantesStats() {
   const [state, setState] = useState(EMPTY);
@@ -33,26 +36,24 @@ export function useParticipantesStats() {
     abortRef.current = new AbortController();
     const { signal } = abortRef.current;
 
-    const qs  = buildQS(filters, eventIds);
-    const url = (path) => `/api/statistics${path}${qs ? '?' + qs : ''}`;
-
+    const qs = buildQS(filters, eventIds);
     setState(prev => ({ ...prev, loading: true, error: null }));
 
     try {
-      const [
-        totalParticipants,
-        participantsByProgram,
-      ] = await Promise.all([
-        fetch(url('/total-participants'),       { signal }).then(r => r.json()),
-        fetch(url('/participants-by-program'),  { signal }).then(r => r.json()),
-      ]);
+      const data = await fetch(
+        `/api/statistics/participantes-summary${qs ? '?' + qs : ''}`,
+        { signal },
+      ).then(r => r.json());
 
       setState({
         counters: {
-          participants: totalParticipants,
+          participants: data.counters.participants,
         },
         charts: {
-          participantsByProgram: participantsByProgram.map(d => ({ name: d.program, value: d.count })),
+          participantsByProgram: data.charts.participantsByProgram,
+          byRole:                data.charts.byRole,
+          bySex:                 data.charts.bySex,
+          byGroup:               data.charts.byGroup,
         },
         loading: false,
         error:   null,

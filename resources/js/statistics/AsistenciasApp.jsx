@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 
 import { useTheme }            from './hooks/useTheme.js';
 import { useAsistenciasStats } from './hooks/useAsistenciasStats.js';
-import { useDemografiaStats }  from './hooks/useDemografiaStats.js';
 import { useFilters }          from './hooks/useFilters.js';
 import { useEventFilter }      from './hooks/useEventFilter.js';
 
@@ -40,8 +39,7 @@ function colClass(key) {
 
 export default function AsistenciasApp() {
   const isDark = useTheme();
-  const { state, fetchAll }                   = useAsistenciasStats();
-  const { state: demoState, fetchAll: fetchDemografia } = useDemografiaStats({ mode: 'attendances' });
+  const { state, fetchAll }            = useAsistenciasStats();
   const { filters, updateFilter, clearFilter } = useFilters();
   const evFilter = useEventFilter(filters);
 
@@ -49,12 +47,7 @@ export default function AsistenciasApp() {
     fetchAll(filters, evFilter.effectiveEventIds);
   }, [filters, evFilter.effectiveEventIds, fetchAll]);
 
-  useEffect(() => {
-    fetchDemografia(filters, evFilter.effectiveEventIds);
-  }, [filters, evFilter.effectiveEventIds, fetchDemografia]);
-
-  const { counters, charts, loading }       = state;
-  const { charts: demo, loading: demoLoad } = demoState;
+  const { counters, charts, loading } = state;
 
   return (
     <div>
@@ -63,7 +56,7 @@ export default function AsistenciasApp() {
         filters={filters}
         onUpdate={updateFilter}
         onClear={clearFilter}
-        loading={loading || demoLoad}
+        loading={loading}
         actions={
           <EventFilterButton
             open={evFilter.open}
@@ -167,13 +160,13 @@ export default function AsistenciasApp() {
             title="Por Estamento"
             description={DESCRIPTIONS.byRole}
             height={CHART_HEIGHTS.role}
-            loading={demoLoad}
-            isEmpty={!demoLoad && demo.byRole.length === 0}
-            data={demo.byRole}
+            loading={loading}
+            isEmpty={!loading && charts.byRole.length === 0}
+            data={charts.byRole}
             isDark={isDark}
             valueLabel="Asistencias"
           >
-            <ProgramParticipantsPie data={demo.byRole} isDark={isDark} showOuterLabels={false} groupOthers={false} valueLabel="Asistencias" />
+            <ProgramParticipantsPie data={charts.byRole} isDark={isDark} showOuterLabels={false} groupOthers={false} valueLabel="Asistencias" />
           </ChartCard>
 
           {/* Por Sexo */}
@@ -181,13 +174,13 @@ export default function AsistenciasApp() {
             title="Por Sexo"
             description={DESCRIPTIONS.bySex}
             height={CHART_HEIGHTS.role}
-            loading={demoLoad}
-            isEmpty={!demoLoad && demo.bySex.length === 0}
-            data={demo.bySex}
+            loading={loading}
+            isEmpty={!loading && charts.bySex.length === 0}
+            data={charts.bySex}
             isDark={isDark}
             valueLabel="Asistencias"
           >
-            <ProgramParticipantsPie data={demo.bySex} isDark={isDark} showOuterLabels={false} groupOthers={false} valueLabel="Asistencias" />
+            <ProgramParticipantsPie data={charts.bySex} isDark={isDark} showOuterLabels={false} groupOthers={false} valueLabel="Asistencias" />
           </ChartCard>
 
           {/* Por Grupo Priorizado */}
@@ -195,13 +188,13 @@ export default function AsistenciasApp() {
             title="Por Grupo Priorizado"
             description={DESCRIPTIONS.byGroup}
             height={CHART_HEIGHTS.role}
-            loading={demoLoad}
-            isEmpty={!demoLoad && demo.byGroup.length === 0}
-            data={demo.byGroup}
+            loading={loading}
+            isEmpty={!loading && charts.byGroup.length === 0}
+            data={charts.byGroup}
             isDark={isDark}
             valueLabel="Asistencias"
           >
-            <ProgramParticipantsPie data={demo.byGroup} isDark={isDark} showOuterLabels={false} groupOthers={false} valueLabel="Asistencias" />
+            <ProgramParticipantsPie data={charts.byGroup} isDark={isDark} showOuterLabels={false} groupOthers={false} valueLabel="Asistencias" />
           </ChartCard>
 
         </div>
