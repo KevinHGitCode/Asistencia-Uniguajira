@@ -31,7 +31,7 @@
                         <flux:modal.trigger name="create-user-modal">
                             <flux:button
                                 variant="primary"
-                                class="border hover:scale-105 transition-transform w-full sm:w-auto">
+                                class="border hover:scale-105 transition-transform w-full sm:w-auto cursor-pointer">
                                 {{ __('Add User') }}
                             </flux:button>
                         </flux:modal.trigger>
@@ -210,7 +210,7 @@
                                 id="users-page-prev"
                                 type="button"
                                 aria-label="Página anterior"
-                                class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-neutral-300 text-zinc-700 transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:text-zinc-200 dark:hover:bg-zinc-800">
+                                class="inline-flex cursor-pointer h-8 w-8 items-center justify-center rounded-md border border-neutral-300 text-zinc-700 transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:text-zinc-200 dark:hover:bg-zinc-800">
                                 <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                     <path fill-rule="evenodd" d="M12.78 4.22a.75.75 0 010 1.06L8.06 10l4.72 4.72a.75.75 0 11-1.06 1.06l-5.25-5.25a.75.75 0 010-1.06l5.25-5.25a.75.75 0 011.06 0z" clip-rule="evenodd" />
                                 </svg>
@@ -219,7 +219,7 @@
                                 id="users-page-next"
                                 type="button"
                                 aria-label="Página siguiente"
-                                class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-neutral-300 text-zinc-700 transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:text-zinc-200 dark:hover:bg-zinc-800">
+                                class="inline-flex cursor-pointer h-8 w-8 items-center justify-center rounded-md border border-neutral-300 text-zinc-700 transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:text-zinc-200 dark:hover:bg-zinc-800">
                                 <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                     <path fill-rule="evenodd" d="M7.22 15.78a.75.75 0 010-1.06L11.94 10 7.22 5.28a.75.75 0 111.06-1.06l5.25 5.25a.75.75 0 010 1.06l-5.25 5.25a.75.75 0 01-1.06 0z" clip-rule="evenodd" />
                                 </svg>

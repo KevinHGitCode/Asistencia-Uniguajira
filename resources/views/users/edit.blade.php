@@ -44,7 +44,7 @@
                 @endif
 
                 <div class="flex justify-start gap-4 items-center">
-                    <flux:button variant="primary" type="submit" class="px-3 py-6">
+                    <flux:button variant="primary" type="submit" class="px-3 py-6 cursor-pointer">
                         Guardar cambios
                     </flux:button>
 

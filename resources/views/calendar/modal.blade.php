@@ -30,7 +30,7 @@
                         <flux:button 
                             variant="primary" 
                             size="sm" 
-                            class="hover:scale-105 transition-transform"
+                            class="hover:scale-105 transition-transform cursor-pointer"
                             x-on:click="
                                 if (window.selectedCalendarDate) {
                                     Livewire.dispatch('set-event-date', { date: window.selectedCalendarDate });
@@ -46,7 +46,7 @@
 
                 {{-- Botón cerrar --}}
                 <button type="button"
-                    class="p-2 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-full transition-colors"
+                    class="p-2 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-full transition-colors cursor-pointer"
                     onclick="closeModal()">X
                 </button>
             </div>
@@ -68,7 +68,7 @@
                 <span id="eventCount">0 eventos</span>
             </div>
             <button type="button"
-                class="px-5 py-2 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-lg transition-colors font-medium shadow-md"
+                class="px-5 py-2 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-lg transition-colors font-medium shadow-md cursor-pointer"
                 onclick="closeModal()">
                 Cerrar
             </button>

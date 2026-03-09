@@ -99,12 +99,13 @@
 
                 {{-- BOTONES --}}
                 <div class="flex items-center gap-3 border-t border-zinc-200 dark:border-zinc-700 pt-4">
-                    <flux:button variant="primary" type="submit" wire:loading.attr="disabled">
+                    <flux:button variant="primary" class="cursor-pointer" type="submit" wire:loading.attr="disabled">
                         <span wire:loading.remove wire:target="save">Crear usuario</span>
                         <span wire:loading wire:target="save">Creando...</span>
                     </flux:button>
                     <flux:button 
                         variant="ghost" 
+                        class="cursor-pointer"
                         x-on:click="$dispatch('modal-close', { name: 'create-user-modal' })">
                         Cancelar
                     </flux:button>

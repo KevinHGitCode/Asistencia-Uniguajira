@@ -273,6 +273,7 @@
                     'inline-flex items-center gap-1.5 h-9 px-3 text-sm font-medium rounded-lg transition',
                     'text-zinc-300 hover:text-white hover:bg-white/10' => $step > 1,
                     'invisible pointer-events-none'                     => $step === 1,
+                    'cursor-pointer' => true,
                 ])
             >
                 <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -296,6 +297,7 @@
                         'items-center gap-2 h-9 px-4 text-sm font-medium rounded-lg bg-white text-zinc-900 hover:bg-zinc-100 transition disabled:opacity-60',
                         'inline-flex' => $step < self::TOTAL_STEPS,
                         'hidden'      => $step >= self::TOTAL_STEPS,
+                        'cursor-pointer' => true,
                     ])
                 >
                     Siguiente
@@ -313,6 +315,7 @@
                         'items-center gap-2 h-9 px-4 text-sm font-medium rounded-lg bg-white text-zinc-900 hover:bg-zinc-100 transition disabled:opacity-60',
                         'inline-flex' => $step >= self::TOTAL_STEPS,
                         'hidden'      => $step < self::TOTAL_STEPS,
+                        'cursor-pointer' => true,
                     ])
                 >
                     <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">

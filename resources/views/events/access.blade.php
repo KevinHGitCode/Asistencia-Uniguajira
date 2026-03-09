@@ -72,7 +72,7 @@
                 <flux:button 
                     variant="primary" 
                     type="submit"
-                    class="w-full hover:scale-105 transition-transform">
+                    class="w-full hover:scale-105 transition-transform cursor-pointer">
                     {{ __('Registrar asistencia') }}
                 </flux:button>
             </div>

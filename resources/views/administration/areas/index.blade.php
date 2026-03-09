@@ -21,7 +21,7 @@
             </p>
         </div>
         <button @click="openCreate()"
-            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#62a9b6] text-sm font-medium transition-colors shadow-sm self-start sm:self-auto">
+            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#62a9b6] text-sm font-medium transition-colors shadow-sm self-start sm:self-auto cursor-pointer">
             <flux:icon.plus class="size-4" />
             Nueva Área
         </button>
@@ -110,13 +110,13 @@
                                 <div class="flex items-center justify-end gap-2">
                                     <button
                                         @click="openEdit({{ $area->id }}, '{{ addslashes($area->name) }}', {{ $area->dependency_id ?? 'null' }})"
-                                        class="p-1.5 rounded-lg text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400 transition-colors"
+                                        class="p-1.5 rounded-lg text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400 transition-colors cursor-pointer"
                                         title="Editar">
                                         <flux:icon.pencil-square class="size-4" />
                                     </button>
                                     <button
                                         @click="openDelete({{ $area->id }}, '{{ addslashes($area->name) }}')"
-                                        class="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 dark:hover:text-red-400 transition-colors"
+                                        class="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 dark:hover:text-red-400 transition-colors cursor-pointer"
                                         title="Eliminar">
                                         <flux:icon.trash class="size-4" />
                                     </button>
@@ -130,7 +130,7 @@
                                     <flux:icon.squares-2x2 class="size-12 opacity-30" />
                                     <p class="text-sm">No hay áreas registradas aún.</p>
                                     <button @click="openCreate()"
-                                        class="text-sm text-emerald-600 dark:text-emerald-400 hover:underline">
+                                        class="text-sm text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer">
                                         Crear la primera área
                                     </button>
                                 </div>

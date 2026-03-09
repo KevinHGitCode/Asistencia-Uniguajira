@@ -18,6 +18,7 @@
         <div class="flex items-center justify-center gap-3">
             <flux:button 
                 variant="ghost" 
+                class="cursor-pointer"
                 x-on:click="$dispatch('modal-close', { name: 'delete-event-modal' })">
                 Cancelar
             </flux:button>
@@ -25,7 +26,7 @@
             <form action="{{ route('events.destroy', $event->id) }}" method="POST">
                 @csrf
                 @method('DELETE')
-                <flux:button variant="danger" type="submit">
+                <flux:button variant="danger" class="cursor-pointer" type="submit">
                     Sí, eliminar evento
                 </flux:button>
             </form>
