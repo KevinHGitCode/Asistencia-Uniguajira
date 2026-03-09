@@ -16,8 +16,43 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {{-- Información del evento --}}
-                <div class="border border-neutral-200 rounded-lg px-6 pt-10 pb-10 bg-white dark:border-neutral-700 dark:bg-zinc-800">
-            
+                <div class="border border-neutral-200 rounded-lg px-6 pt-6 pb-6 bg-white dark:border-neutral-700 dark:bg-zinc-800">
+
+                    {{-- Header con título y botón editar --}}
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-bold text-black dark:text-white">Información del evento</h3>
+                        @if($event->is_editable)
+                            <div class="flex items-center gap-2">
+                                {{-- Editar --}}
+                                <flux:modal.trigger name="edit-event-modal">
+                                    <flux:button 
+                                        variant="primary" 
+                                        size="sm" 
+                                        class="hover:scale-105 transition-transform"
+                                        x-on:click="Livewire.dispatch('edit-event', { id: {{ $event->id }} })">
+                                        <svg class="size-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L12 15l-4 1 1-4 8.586-8.586z"/>
+                                        </svg>
+                                        {{ __('Editar') }}
+                                    </flux:button>
+                                </flux:modal.trigger>
+
+                                {{-- Eliminar --}}
+                                <flux:modal.trigger name="delete-event-modal">
+                                    <flux:button 
+                                        variant="danger" 
+                                        size="sm" 
+                                        class="hover:scale-105 transition-transform">
+                                        <svg class="size-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                        </svg>
+                                        {{ __('Eliminar') }}
+                                    </flux:button>
+                                </flux:modal.trigger>
+                            </div>
+                        @endif
+                    </div>
+
                     <div class="space-y-3">
                         {{-- Título --}}
                         <div class="flex items-center justify-between border-b border-gray-300 dark:border-neutral-700 pb-2">
@@ -88,7 +123,6 @@
                             </span>
                         </div>
 
-                    
                         {{-- Descripción --}}
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-2 text-black dark:text-white">
@@ -211,6 +245,11 @@
         </div>
 
     </div>
+
+    @livewire('event.edit-event-modal')
+
+    {{-- Modal de confirmación para eliminar --}}
+    <x-events.delete-modal :event="$event" />
 
     {{-- Script para copiar el enlace al portapapeles --}}
     <script>

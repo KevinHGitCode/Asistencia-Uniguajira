@@ -49,4 +49,14 @@ class Event extends Model
     {
         return $this->belongsTo(Area::class);
     }
+
+    public function getIsEditableAttribute(): bool
+    {
+        return \Carbon\Carbon::parse($this->date)->greaterThanOrEqualTo(now()->startOfDay());
+    }
+
+    public function getIsDeletableAttribute(): bool
+    {
+        return \Carbon\Carbon::parse($this->date)->greaterThanOrEqualTo(now()->startOfDay());
+    }
 }

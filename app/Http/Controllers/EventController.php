@@ -172,9 +172,25 @@ class EventController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy($id)
     {
-        //
+        $event = Event::findOrFail($id);
+        $user = Auth::user();
+
+        $isOwner = $event->user_id !== null && (int) $event->user_id === (int) $user->id;
+
+        if ($user->role !== 'admin' && !$isOwner) {
+            abort(403);
+        }
+
+        if (!$event->is_deletable) {
+            return back()->withErrors(['error' => 'No se puede eliminar un evento que ya pasó.']);
+        }
+
+        $event->delete();
+
+        return redirect()->route('events.list')
+            ->with('success', 'Evento eliminado exitosamente.');
     }
 
     public function areas(Dependency $dependency)
