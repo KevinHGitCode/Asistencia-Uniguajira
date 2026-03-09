@@ -22,8 +22,13 @@
                 <flux:navlist.item icon="plus" :href="route('events.new')" class="hover:scale-103 transition-transform" :current="request()->routeIs('events.new')"
                     wire:navigate>{{ __('New') }}</flux:navlist.item>
 
-                <flux:navlist.item icon="numbered-list" :href="route('events.list')" class="hover:scale-103 transition-transform" :current="request()->routeIs('events.list')"
-                    wire:navigate>{{ __('Event list') }}</flux:navlist.item>
+                <flux:navlist.item icon="calendar-check" :href="route('events.list')" class="hover:scale-103 transition-transform" :current="request()->routeIs('events.list')"
+                    wire:navigate>{{ __('Your Events') }}</flux:navlist.item>
+
+                @if(auth()->user()->role === 'admin')
+                    <flux:navlist.item icon="numbered-list" :href="route('admin.events.index')" class="hover:scale-103 transition-transform" :current="request()->routeIs('admin.events.index')"
+                        wire:navigate>{{ __('All Events') }}</flux:navlist.item>
+                @endif
 
                 {{-- Estadísticas: enlace al overview + lista colapsable de sub-módulos --}}
                 <style>[x-cloak]{display:none!important}</style>
@@ -92,10 +97,11 @@
                         <flux:navlist.item :href="route('statistics.compara-eventos')" :current="request()->routeIs('statistics.compara-eventos')" wire:navigate>
                             {{ __('Compara Eventos') }}
                         </flux:navlist.item>
-
-                        <flux:navlist.item :href="route('statistics.usuarios')" :current="request()->routeIs('statistics.usuarios')" wire:navigate>
-                            {{ __('Por Usuarios') }}
-                        </flux:navlist.item>
+                        @if(auth()->user()->role === 'admin')
+                            <flux:navlist.item :href="route('statistics.usuarios')" :current="request()->routeIs('statistics.usuarios')" wire:navigate>
+                                {{ __('Por Usuarios') }}
+                            </flux:navlist.item>
+                        @endif
                     </div>
                 </div>
 

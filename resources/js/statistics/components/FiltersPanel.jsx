@@ -62,7 +62,7 @@ function DateField({ label, value, onChange, onClear }) {
 
 export function FiltersPanel({ filters, onUpdate, onClear, loading, actions = null }) {
   return (
-    <div className="mb-4 p-3 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-sm">
+    <div className="mb-4 p-3 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-sm bg-white dark:bg-zinc-900">
       <div className="flex flex-wrap items-end gap-3">
 
         <DateField

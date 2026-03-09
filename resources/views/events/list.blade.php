@@ -26,7 +26,7 @@
                 <!-- Eventos de otros -->
                 <div class="flex items-center gap-2">
                     <div class="w-4 h-4 rounded-sm bg-[#62a9b6]"></div>
-                    <span class="text-xs sm:text-sm text-black dark:text-white">Areas</span>
+                    <span class="text-xs sm:text-sm text-black dark:text-white">Áreas</span>
                 </div>
             </div>
         </div>

@@ -4,6 +4,7 @@ import AsistenciasApp    from './AsistenciasApp.jsx';
 import ParticipantesApp  from './ParticipantesApp.jsx';
 import UsuariosApp       from './UsuariosApp.jsx';
 import ComparaEventosApp from './ComparaEventosApp.jsx';
+import AdminEventosApp   from './AdminEventosApp.jsx';
 
 /**
  * Mapa módulo → componente.
@@ -14,6 +15,7 @@ const APPS = {
   participantes:     ParticipantesApp,
   usuarios:          UsuariosApp,
   'compara-eventos': ComparaEventosApp,
+  'admin-eventos':   AdminEventosApp,
 };
 
 let root = null;

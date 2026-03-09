@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AdminEventosController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\StatisticsController;
 use Illuminate\Http\Request;
@@ -202,6 +203,14 @@ Route::get('/statistics/compare/data', function (Request $request) {
         'bySex'       => $demo('participants.sexo'),
         'byGroup'     => $demo('participants.grupo_priorizado'),
     ];
+});
+
+
+
+// ✅ Usa sesión web + auth, igual que las demás rutas
+Route::middleware(['web', 'auth', 'role:admin'])->group(function () {
+    Route::get('/statistics/admin-eventos',                [AdminEventosController::class, 'index']);
+    Route::get('/statistics/admin-eventos/filter-options', [AdminEventosController::class, 'filterOptions']);
 });
 
 /**

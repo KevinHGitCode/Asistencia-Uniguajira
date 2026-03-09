@@ -48,6 +48,11 @@ Route::middleware(['auth'])
     ->get('/dependencies/{dependency}/areas', [EventController::class, 'areas'])
     ->name('dependencies.areas');
 
+Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
+    Route::get('/admin/events', function () {
+        return view('events.admin-events');
+    })->name('admin.events.index');
+});
 
 
 /**
