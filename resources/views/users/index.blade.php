@@ -48,6 +48,7 @@
                                     <th class="px-4 py-3">{{ __('User') }}</th>
                                     <th class="px-4 py-3">{{ __('Role') }}</th>
                                     <th class="px-4 py-3">{{ __('Dependencies') }}</th>
+                                    <th class="px-4 py-3">{{ __('Status') }}</th>
                                     <th class="px-4 py-3 text-right">{{ __('Actions') }}</th>
                                 </tr>
                             </thead>
@@ -134,6 +135,17 @@
                                                 @endif
                                             @else
                                                 <span class="text-sm text-zinc-500 dark:text-zinc-400">-</span>
+                                            @endif
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            @if($user->is_active)
+                                                <flux:badge class="!bg-green-600 !text-white" :color="null">
+                                                    Activo
+                                                </flux:badge>
+                                            @else
+                                                <flux:badge class="!bg-red-600 !text-white" :color="null">
+                                                    Inactivo
+                                                </flux:badge>
                                             @endif
                                         </td>
                                         <td class="px-4 py-3">

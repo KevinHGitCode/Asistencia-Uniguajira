@@ -8,6 +8,14 @@
         </ol>
     </nav>
 
+    @if(session('success'))
+        <div
+            id="users-success-alert"
+            class="rounded-lg bg-green-100 border border-green-400 text-green-700 px-4 py-3 text-sm transition-opacity duration-500">
+            {{ session('success') }}
+        </div>
+    @endif
+
     <div class="mt-6 relative flex w-full flex-1 flex-col gap-4 p-6 rounded-2xl border border-neutral-200 dark:border-neutral-700 bg-zinc-50 dark:bg-zinc-900">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8 p-6 dark:bg-black-800">
 
@@ -88,6 +96,18 @@
                             </div>
                         </li>
                     @endif
+                    <li class="py-2 flex justify-between items-center">
+                        <span class="text-sm">Estado:</span> 
+                        @if($user->is_active)
+                            <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 rounded">
+                                Activo
+                            </span>
+                        @else
+                            <span class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300 rounded">
+                                Inactivo
+                            </span>
+                        @endif
+                    </li>
                 </ul>
             </div>
         </div>
@@ -237,42 +257,6 @@
 
     @endforeach
 
-
-    <div>
-        <div class="flex justify-end mt-8">
-            <flux:modal.trigger name="delete-profile">
-                <flux:button 
-                variant="danger" class="bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm transition-colors">
-                Eliminar
-            </flux:button>
-            </flux:modal.trigger>
-        </div>
-
-        <flux:modal name="delete-profile" class="min-w-[22rem]">
-            <form action="{{ route('users.delete', $user->id) }}" method="POST" class="space-y-6">
-                @csrf
-                <div>
-                    <flux:heading size="lg">¿Eliminar usuario?</flux:heading>
-                    <flux:text class="mt-2">
-                        <p>Estás a punto de eliminar este usuario.</p>
-                        <p>Esta acción no se puede revertir.</p>
-                        <p class="text-red-600 font-semibold mt-2">Por favor ingresa tu contraseña para confirmar.</p>
-                    </flux:text>
-                </div>
-                <div>
-                    <flux:input label="Contraseña" name="password" type="password" placeholder="Ingresa tu contraseña" required />
-                    @error('password')
-                        <div class="text-red-600 text-sm mt-2">{{ $message }}</div>
-                    @enderror
-                </div>
-                <div class="flex gap-2">
-                    <flux:spacer />
-                    <flux:modal.close>
-                        <flux:button variant="ghost">Cancelar</flux:button>
-                    </flux:modal.close>
-                    <flux:button type="submit" variant="danger">Eliminar usuario</flux:button>
-                </div>
-            </form>
-        </flux:modal>
-    </div>
+    {{-- Quita todo el div de los botones y modales, solo deja esto --}}
+    <livewire:admin.toggle-user-active :user="$user" />
 </x-layouts.app>

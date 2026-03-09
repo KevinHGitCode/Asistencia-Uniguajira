@@ -15,11 +15,9 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             
             $table->enum('role', ['admin', 'user'])->default('user');
+            $table->boolean('is_active')->default(true);
             $table->string('avatar')->nullable();
             $table->string('password');
-
-            // ELIMINADO: ahora no va porque los usuarios tendrán múltiples dependencias
-            // $table->foreignId('dependency_id')->nullable()...
 
             $table->rememberToken();
             $table->timestamps();
