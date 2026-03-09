@@ -138,19 +138,20 @@
                                         </td>
                                         <td class="px-4 py-3">
                                             <div class="flex items-center justify-end gap-1">
-                                                <a href="{{ route('user.edit', ['id' => $user->id]) }}">
+                                                <flux:modal.trigger name="edit-user-modal">
                                                     <flux:button
                                                         square
                                                         variant="ghost"
                                                         size="sm"
                                                         title="{{ __('Edit user') }}"
-                                                        class="hover:text-[#62a9b6] transition-colors hover:cursor-pointer">
+                                                        class="hover:text-[#62a9b6] transition-colors hover:cursor-pointer"
+                                                        x-on:click="Livewire.dispatch('edit-user', { id: {{ $user->id }} })">
                                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                                 d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L12 15l-4 1 1-4 8.586-8.586z" />
                                                         </svg>
                                                     </flux:button>
-                                                </a>
+                                                </flux:modal.trigger>
                                                 <a href="{{ route('users.information', ['id' => $user->id]) }}">
                                                     <flux:button
                                                         square
@@ -262,4 +263,5 @@
     </div>
 
     @livewire('user.create-user-modal', ['dependencies' => $dependencies, 'roles' => $roles])
+    @livewire('user.edit-user-modal', ['dependencies' => $dependencies, 'roles' => $roles])
 </x-layouts.app>
