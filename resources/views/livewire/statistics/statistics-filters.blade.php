@@ -2,10 +2,10 @@
     <div class="flex items-center justify-between mb-4">
         <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Filtros</h3>
         <div class="flex gap-2">
-            <flux:button variant="ghost" wire:click="clearFilters" size="sm">
+            <flux:button variant="ghost" class="cursor-pointer" wire:click="clearFilters" size="sm">
                 Limpiar filtros
             </flux:button>
-            <flux:button variant="primary" wire:click="applyFilters" size="sm">
+            <flux:button variant="primary" class="cursor-pointer" wire:click="applyFilters" size="sm">
                 Aplicar filtros
             </flux:button>
         </div>

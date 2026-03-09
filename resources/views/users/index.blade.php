@@ -31,7 +31,7 @@
                         <flux:modal.trigger name="create-user-modal">
                             <flux:button
                                 variant="primary"
-                                class="border hover:scale-105 transition-transform w-full sm:w-auto">
+                                class="border hover:scale-105 transition-transform w-full sm:w-auto cursor-pointer">
                                 {{ __('Add User') }}
                             </flux:button>
                         </flux:modal.trigger>
@@ -48,6 +48,7 @@
                                     <th class="px-4 py-3">{{ __('User') }}</th>
                                     <th class="px-4 py-3">{{ __('Role') }}</th>
                                     <th class="px-4 py-3">{{ __('Dependencies') }}</th>
+                                    <th class="px-4 py-3">{{ __('Status') }}</th>
                                     <th class="px-4 py-3 text-right">{{ __('Actions') }}</th>
                                 </tr>
                             </thead>
@@ -137,20 +138,32 @@
                                             @endif
                                         </td>
                                         <td class="px-4 py-3">
+                                            @if($user->is_active)
+                                                <flux:badge class="!bg-green-600 !text-white" :color="null">
+                                                    Activo
+                                                </flux:badge>
+                                            @else
+                                                <flux:badge class="!bg-red-600 !text-white" :color="null">
+                                                    Inactivo
+                                                </flux:badge>
+                                            @endif
+                                        </td>
+                                        <td class="px-4 py-3">
                                             <div class="flex items-center justify-end gap-1">
-                                                <a href="{{ route('user.edit', ['id' => $user->id]) }}">
+                                                <flux:modal.trigger name="edit-user-modal">
                                                     <flux:button
                                                         square
                                                         variant="ghost"
                                                         size="sm"
                                                         title="{{ __('Edit user') }}"
-                                                        class="hover:text-[#62a9b6] transition-colors hover:cursor-pointer">
+                                                        class="hover:text-[#62a9b6] transition-colors hover:cursor-pointer"
+                                                        x-on:click="Livewire.dispatch('edit-user', { id: {{ $user->id }} })">
                                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                                 d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L12 15l-4 1 1-4 8.586-8.586z" />
                                                         </svg>
                                                     </flux:button>
-                                                </a>
+                                                </flux:modal.trigger>
                                                 <a href="{{ route('users.information', ['id' => $user->id]) }}">
                                                     <flux:button
                                                         square
@@ -197,7 +210,7 @@
                                 id="users-page-prev"
                                 type="button"
                                 aria-label="Página anterior"
-                                class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-neutral-300 text-zinc-700 transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:text-zinc-200 dark:hover:bg-zinc-800">
+                                class="inline-flex cursor-pointer h-8 w-8 items-center justify-center rounded-md border border-neutral-300 text-zinc-700 transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:text-zinc-200 dark:hover:bg-zinc-800">
                                 <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                     <path fill-rule="evenodd" d="M12.78 4.22a.75.75 0 010 1.06L8.06 10l4.72 4.72a.75.75 0 11-1.06 1.06l-5.25-5.25a.75.75 0 010-1.06l5.25-5.25a.75.75 0 011.06 0z" clip-rule="evenodd" />
                                 </svg>
@@ -206,7 +219,7 @@
                                 id="users-page-next"
                                 type="button"
                                 aria-label="Página siguiente"
-                                class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-neutral-300 text-zinc-700 transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:text-zinc-200 dark:hover:bg-zinc-800">
+                                class="inline-flex cursor-pointer h-8 w-8 items-center justify-center rounded-md border border-neutral-300 text-zinc-700 transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:text-zinc-200 dark:hover:bg-zinc-800">
                                 <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                     <path fill-rule="evenodd" d="M7.22 15.78a.75.75 0 010-1.06L11.94 10 7.22 5.28a.75.75 0 111.06-1.06l5.25 5.25a.75.75 0 010 1.06l-5.25 5.25a.75.75 0 01-1.06 0z" clip-rule="evenodd" />
                                 </svg>
@@ -262,4 +275,5 @@
     </div>
 
     @livewire('user.create-user-modal', ['dependencies' => $dependencies, 'roles' => $roles])
+    @livewire('user.edit-user-modal', ['dependencies' => $dependencies, 'roles' => $roles])
 </x-layouts.app>

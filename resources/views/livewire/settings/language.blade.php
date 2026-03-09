@@ -18,14 +18,14 @@
             @csrf
 
             <flux:radio.group variant="segmented" x-model="locale" name="locale">
-                <flux:radio value="es" icon="language">{{ __('Spanish') }}</flux:radio>
-                <flux:radio value="en" icon="language">{{ __('English') }}</flux:radio>
+                <flux:radio value="es" class="cursor-pointer" icon="language">{{ __('Spanish') }}</flux:radio>
+                <flux:radio value="en" class="cursor-pointer" icon="language">{{ __('English') }}</flux:radio>
             </flux:radio.group>
 
             <!-- aseguras que el valor viaje en el POST -->
             <input type="hidden" name="locale" :value="locale">
 
-            <button type="submit" class="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg">
+            <button type="submit" class="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg cursor-pointer">
                 {{ __('Save') }}
             </button>
         </form>

@@ -1,10 +1,10 @@
 <div>
-    <flux:modal name="create-event-modal" variant="flyout" class="w-full max-w-lg bg-zinc-50 dark:bg-zinc-900 [&::backdrop]:bg-black/40 [&::backdrop]:backdrop-blur-[2px]" x-data x-init="
+    <flux:modal name="edit-event-modal" variant="flyout" class="w-full max-w-lg bg-zinc-50 dark:bg-zinc-900 [&::backdrop]:bg-black/40 [&::backdrop]:backdrop-blur-[2px]" x-data x-init="
         $nextTick(() => {
             const closeButton = $el.querySelector('[data-flux-modal-close]');
             if (closeButton) {
                 closeButton.addEventListener('click', () => {
-                    $dispatch('modal-close', { name: 'create-event-modal' });
+                    $dispatch('modal-close', { name: 'edit-event-modal' });
                 });
             }
         });
@@ -13,10 +13,12 @@
             {{-- Header --}}
             <div class="border-b border-zinc-200 dark:border-zinc-700 pb-4">
                 <div class="flex items-center gap-2 mb-1">
-                    <flux:icon.calendar-check class="size-6 text-[#e2a542]" />
-                    <flux:heading size="lg">Nuevo evento</flux:heading>
+                    <svg class="size-6 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L12 15l-4 1 1-4 8.586-8.586z"/>
+                    </svg>
+                    <flux:heading size="lg">Editar evento</flux:heading>
                 </div>
-                <flux:text class="mt-1 text-zinc-500">Completa los datos para crear un nuevo evento.</flux:text>
+                <flux:text class="mt-1 text-zinc-500">Modifica los datos del evento.</flux:text>
             </div>
 
             {{-- Formulario --}}
@@ -46,7 +48,6 @@
 
                 {{-- DEPENDENCIA --}}
                 @if($showDependencySelect)
-                    {{-- CASO 1 y 2: Admin o usuario con varias dependencias --}}
                     <div class="flex flex-col gap-1">
                         <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                             Dependencia del evento
@@ -61,9 +62,11 @@
                         @if($isAdmin)
                             <p class="text-xs text-gray-500">Si no seleccionas una dependencia, el evento no estará asociado a ninguna.</p>
                         @endif
+                        @error('dependency_id')
+                            <span class="text-red-500 text-xs">{{ $message }}</span>
+                        @enderror
                     </div>
                 @else
-                    {{-- CASO 3: Usuario con una sola dependencia → oculto, ya precargado --}}
                     <input type="hidden" wire:model="dependency_id">
                 @endif
 
@@ -80,6 +83,9 @@
                             <option value="{{ $area->id }}">{{ $area->name }}</option>
                         @endforeach
                     </select>
+                    @error('area_id')
+                        <span class="text-red-500 text-xs">{{ $message }}</span>
+                    @enderror
                     <p class="text-xs text-gray-500">El área solo se puede seleccionar cuando la dependencia tenga áreas.</p>
                 </div>
 
@@ -90,7 +96,6 @@
                         :label="__('Fecha del evento')" 
                         type="date" 
                         required 
-                        :min="now()->format('Y-m-d')"
                     />
                     <div class="grid grid-cols-2 gap-4">
                         <flux:input 
@@ -120,13 +125,13 @@
                 {{-- BOTONES --}}
                 <div class="flex items-center gap-3 border-t border-zinc-200 dark:border-zinc-700 pt-4">
                     <flux:button variant="primary" class="cursor-pointer" type="submit" wire:loading.attr="disabled">
-                        <span wire:loading.remove wire:target="save">Crear evento</span>
-                        <span wire:loading wire:target="save">Creando...</span>
+                        <span wire:loading.remove wire:target="save">Guardar cambios</span>
+                        <span wire:loading wire:target="save">Guardando...</span>
                     </flux:button>
                     <flux:button 
-                        variant="ghost" 
+                        variant="ghost"
                         class="cursor-pointer"
-                        x-on:click="$dispatch('modal-close', { name: 'create-event-modal' })">
+                        x-on:click="$dispatch('modal-close', { name: 'edit-event-modal' })">
                         Cancelar
                     </flux:button>
                 </div>

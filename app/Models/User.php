@@ -17,6 +17,7 @@ class User extends Authenticatable
         'password',
         'role',
         'avatar',
+        'is_active',
     ];
 
     protected $hidden = [
@@ -54,4 +55,11 @@ class User extends Authenticatable
         return $this->belongsToMany(Dependency::class, 'dependency_user')
                     ->withTimestamps();
     }
+
+
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
 }

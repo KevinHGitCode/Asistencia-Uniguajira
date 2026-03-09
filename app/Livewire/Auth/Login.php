@@ -40,6 +40,17 @@ class Login extends Component
             ]);
         }
 
+        // Verificar si el usuario está activo
+        if (! Auth::user()->is_active) {
+            Auth::logout();
+            Session::invalidate();
+            Session::regenerateToken();
+
+            throw ValidationException::withMessages([
+                'email' => 'Tu cuenta ha sido desactivada. Contacta al administrador.',
+            ]);
+        }
+
         RateLimiter::clear($this->throttleKey());
         Session::regenerate();
 

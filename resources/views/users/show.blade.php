@@ -18,10 +18,10 @@
 
         <div class="flex gap-3 pt-4">
             <a href="{{ route('user.edit', $user->id) }}">
-                <flux:button variant="primary">Editar</flux:button>
+                <flux:button class="cursor-pointer" variant="primary">Editar</flux:button>
             </a>
             <a href="{{ route('users.information', $user->id) }}">
-                <flux:button variant="ghost">Informacion completa</flux:button>
+                <flux:button class="cursor-pointer" variant="ghost">Informacion completa</flux:button>
             </a>
         </div>
     </div>

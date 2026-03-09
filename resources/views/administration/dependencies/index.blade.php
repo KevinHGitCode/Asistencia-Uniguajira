@@ -21,7 +21,7 @@
             </p>
         </div>
         <button @click="openCreate()"
-            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#cc5e50] text-white text-sm font-medium transition-colors shadow-sm self-start sm:self-auto">
+            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#cc5e50] text-white text-sm font-medium transition-colors shadow-sm self-start sm:self-auto cursor-pointer">
             <flux:icon.plus class="size-4" />
             Nueva Dependencia
         </button>
@@ -106,14 +106,14 @@
                                     {{-- Editar: pasa nombre e ID a Alpine para construir la URL --}}
                                     <button
                                         @click="openEdit({{ $dependency->id }}, '{{ addslashes($dependency->name) }}')"
-                                        class="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 dark:hover:text-blue-400 transition-colors"
+                                        class="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 dark:hover:text-blue-400 transition-colors cursor-pointer"
                                         title="Editar">
                                         <flux:icon.pencil-square class="size-4" />
                                     </button>
                                     {{-- Eliminar: pasa nombre e ID a Alpine para construir la URL --}}
                                     <button
                                         @click="openDelete({{ $dependency->id }}, '{{ addslashes($dependency->name) }}')"
-                                        class="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 dark:hover:text-red-400 transition-colors"
+                                        class="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 dark:hover:text-red-400 transition-colors cursor-pointer"
                                         title="Eliminar">
                                         <flux:icon.trash class="size-4" />
                                     </button>
@@ -127,7 +127,7 @@
                                     <flux:icon.building-office-2 class="size-12 opacity-30" />
                                     <p class="text-sm">No hay dependencias registradas aún.</p>
                                     <button @click="openCreate()"
-                                        class="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+                                        class="text-sm text-blue-600 dark:text-blue-400 hover:underline cursor-pointer">
                                         Crear la primera dependencia
                                     </button>
                                 </div>

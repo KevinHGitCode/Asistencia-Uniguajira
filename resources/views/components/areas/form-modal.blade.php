@@ -23,7 +23,7 @@
                 <h3 class="text-base font-semibold text-gray-900 dark:text-white"
                     x-text="editingId ? 'Editar Área' : 'Nueva Área'"></h3>
                 <button @click="closeForm()"
-                    class="p-1 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors">
+                    class="p-1 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer">
                     <flux:icon.x-mark class="size-5" />
                 </button>
             </div>
@@ -75,11 +75,11 @@
 
                 <div class="flex items-center justify-end gap-3 pt-2">
                     <button type="button" @click="closeForm()"
-                        class="px-4 py-2 text-sm rounded-lg border border-neutral-200 dark:border-zinc-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors">
+                        class="px-4 py-2 text-sm rounded-lg border border-neutral-200 dark:border-zinc-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer">
                         Cancelar
                     </button>
                     <button type="submit"
-                        class="px-4 py-2 text-sm rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium transition-colors shadow-sm"
+                        class="px-4 py-2 text-sm rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium transition-colors shadow-sm cursor-pointer"
                         x-text="editingId ? 'Guardar cambios' : 'Crear área'">
                     </button>
                 </div>
