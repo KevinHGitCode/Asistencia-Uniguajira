@@ -185,7 +185,7 @@
 
                     <div>
                         <h2 class="text-lg font-semibold text-white">¿Cuándo es el evento?</h2>
-                        <p class="text-xs text-zinc-400 mt-0.5">La fecha y la hora de inicio son obligatorias; la hora de fin es opcional.</p>
+                        <p class="text-xs text-zinc-400 mt-0.5">Todos los campos de este paso son obligatorios. La hora fin determina cuándo el evento deja de recibir asistencias.</p>
                     </div>
 
                     {{-- Fecha + horas: 3 columnas --}}
@@ -194,7 +194,7 @@
                             <label class="block text-sm font-medium text-zinc-300 mb-1">
                                 Fecha <span class="text-red-400 ml-0.5">*</span>
                             </label>
-                            <input wire:model="date" type="date" class="{{ $inputError('date') }}" />
+                            <input wire:model="date" type="date" min="{{ now()->toDateString() }}" class="{{ $inputError('date') }}" />
                             @error('date')
                                 <p class="text-xs text-red-400 mt-1">{{ $message }}</p>
                             @enderror
@@ -209,7 +209,9 @@
                             @enderror
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-zinc-300 mb-1">Hora fin</label>
+                            <label class="block text-sm font-medium text-zinc-300 mb-1">
+                                Hora fin <span class="text-red-400 ml-0.5">*</span>
+                            </label>
                             <input wire:model="end_time" type="time" step="300" class="{{ $inputError('end_time') }}" />
                             @error('end_time')
                                 <p class="text-xs text-red-400 mt-1">{{ $message }}</p>

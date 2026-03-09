@@ -363,6 +363,7 @@ class CreateEventWizardTest extends TestCase
             ->call('nextStep')   // → paso 3
             ->set('date', '2026-07-20')
             ->set('start_time', '08:00')
+            ->set('end_time', '09:00')
             ->call('save')
             ->assertHasNoErrors()
             ->assertRedirect(route('events.list'));
@@ -385,6 +386,7 @@ class CreateEventWizardTest extends TestCase
             ->call('nextStep')
             ->set('date', '2026-08-10')
             ->set('start_time', '10:00')
+            ->set('end_time', '11:00')
             ->call('save');
 
         $event = Event::where('title', 'Evento con slug')->first();
@@ -412,6 +414,7 @@ class CreateEventWizardTest extends TestCase
             ->call('nextStep')
             ->set('date', '2026-06-15')
             ->set('start_time', '10:00')
+            ->set('end_time', '11:00')
             ->call('save')
             ->assertHasErrors(['dependency_id']);
 
@@ -437,6 +440,7 @@ class CreateEventWizardTest extends TestCase
             ->call('nextStep')
             ->set('date', '2026-06-15')
             ->set('start_time', '10:00')
+            ->set('end_time', '11:00')
             ->call('save')
             ->assertHasErrors(['area_id']);
 
@@ -459,6 +463,7 @@ class CreateEventWizardTest extends TestCase
             ->call('nextStep')
             ->set('date', '2026-09-01')
             ->set('start_time', '09:00')
+            ->set('end_time', '10:00')
             ->call('save')
             ->assertHasNoErrors()
             ->assertRedirect(route('events.list'));
@@ -467,5 +472,68 @@ class CreateEventWizardTest extends TestCase
             'title'         => 'Evento admin',
             'dependency_id' => null,
         ]);
+    }
+
+    // ── Hora fin obligatoria y auto-sugerencia ────────────────────────────────
+
+    #[Test]
+    public function paso_tres_requiere_hora_fin(): void
+    {
+        $this->actingAs($this->user);
+
+        Livewire::test(CreateEventWizard::class)
+            ->set('title', 'Mi evento')
+            ->call('nextStep')
+            ->call('nextStep')
+            ->set('date', '2026-06-15')
+            ->set('start_time', '09:00')
+            ->set('end_time', '')
+            ->call('save')
+            ->assertHasErrors(['end_time' => 'required'])
+            ->assertSet('step', 3);
+    }
+
+    #[Test]
+    public function hora_inicio_sugiere_hora_fin_una_hora_despues(): void
+    {
+        $this->actingAs($this->user);
+
+        Livewire::test(CreateEventWizard::class)
+            ->set('title', 'Mi evento')
+            ->call('nextStep')
+            ->call('nextStep')
+            ->set('start_time', '10:00')
+            ->assertSet('end_time', '11:00');
+    }
+
+    #[Test]
+    public function hora_inicio_no_sobreescribe_hora_fin_existente(): void
+    {
+        $this->actingAs($this->user);
+
+        Livewire::test(CreateEventWizard::class)
+            ->set('title', 'Mi evento')
+            ->call('nextStep')
+            ->call('nextStep')
+            ->set('start_time', '09:00')
+            ->set('end_time', '14:00')   // hora fin puesta manualmente
+            ->set('start_time', '10:00') // cambiar hora inicio
+            ->assertSet('end_time', '14:00'); // no se sobreescribe
+    }
+
+    #[Test]
+    public function fecha_anterior_a_hoy_no_es_valida(): void
+    {
+        $this->actingAs($this->user);
+
+        Livewire::test(CreateEventWizard::class)
+            ->set('title', 'Mi evento')
+            ->call('nextStep')
+            ->call('nextStep')
+            ->set('date', '2020-01-01')
+            ->set('start_time', '10:00')
+            ->set('end_time', '11:00')
+            ->call('save')
+            ->assertHasErrors(['date']);
     }
 }

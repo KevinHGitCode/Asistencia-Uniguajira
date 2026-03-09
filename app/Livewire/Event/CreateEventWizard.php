@@ -5,6 +5,7 @@ namespace App\Livewire\Event;
 use App\Models\Area;
 use App\Models\Dependency;
 use App\Services\EventService;
+use Carbon\Carbon;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
 
@@ -50,10 +51,10 @@ class CreateEventWizard extends Component
                 'area_id'       => ['nullable', 'exists:areas,id'],
             ],
             3 => [
-                'date'       => ['required', 'date'],
+                'date'       => ['required', 'date', 'after_or_equal:today'],
                 'start_time' => ['required', 'date_format:H:i'],
                 'end_time'   => [
-                    'nullable',
+                    'required',
                     'date_format:H:i',
                     function ($attribute, $value, $fail) {
                         if ($value && $this->start_time && $value < $this->start_time) {
@@ -89,6 +90,19 @@ class CreateEventWizard extends Component
                 $this->showDependencySelect = false;
                 $this->dependency_id = (string) optional($userDeps->first())->id;
                 $this->loadAreas();
+            }
+        }
+    }
+
+    public function updatedStartTime(): void
+    {
+        if ($this->start_time && $this->end_time === '') {
+            try {
+                $this->end_time = Carbon::createFromFormat('H:i', $this->start_time)
+                    ->addHour()
+                    ->format('H:i');
+            } catch (\Exception) {
+                // formato inválido, no hacer nada
             }
         }
     }
