@@ -2,6 +2,8 @@
 @import '../../vendor/livewire/flux/dist/flux.css';
 @import './calendar/calendar.css';
 
+[x-cloak] { display: none !important; }
+
 @source '../views';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../vendor/livewire/flux-pro/stubs/**/*.blade.php';

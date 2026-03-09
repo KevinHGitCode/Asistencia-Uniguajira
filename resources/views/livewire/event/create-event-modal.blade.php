@@ -90,6 +90,7 @@
                         :label="__('Fecha del evento')" 
                         type="date" 
                         required 
+                        :min="now()->format('Y-m-d')"
                     />
                     <div class="grid grid-cols-2 gap-4">
                         <flux:input 

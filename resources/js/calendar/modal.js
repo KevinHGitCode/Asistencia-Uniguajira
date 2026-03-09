@@ -1,6 +1,14 @@
 export function openModal(fecha, eventos) {
+
     window.selectedCalendarDate = fecha;
+    
     const modal = document.getElementById('calendarModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    
+    // Despachar evento con la fecha
+    window.dispatchEvent(new CustomEvent('calendar-modal-opened', { detail: { date: fecha } }));
+
     const modalTitle = document.getElementById('calendarModalTitle');
     const modalContent = document.getElementById('calendarModalBody');
     const eventCount = document.getElementById('eventCount');

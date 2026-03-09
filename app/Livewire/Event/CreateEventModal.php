@@ -90,7 +90,7 @@ class CreateEventModal extends Component
             'location'      => 'nullable|string|max:255',
             'dependency_id' => 'nullable|exists:dependencies,id',
             'area_id'       => 'nullable|exists:areas,id',
-            'date'          => 'required|date',
+            'date'          => 'required|date|after_or_equal:today',
             'start_time'    => 'nullable',
             'end_time'      => 'nullable',
         ];

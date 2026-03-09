@@ -7,7 +7,7 @@
             <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
                 <div class="flex items-center gap-2">
                     <flux:icon.cog class="size-16" />
-                    <span class="text-gray-700 dark:text-gray-200">Módulo de Configuración</span>
+                    <span class="text-gray-700 dark:text-gray-200">Módulo de Administración</span>
                 </div>
             </h1>
             <p class="text-sm sm:text-base text-gray-600 dark:text-gray-400">

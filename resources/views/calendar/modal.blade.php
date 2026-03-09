@@ -5,7 +5,14 @@
         class="modal-content bg-zinc-50 dark:bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-3xl mx-4 max-h-[90vh] flex flex-col animate-fadeIn overflow-hidden">
 
         <!-- Header -->
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 sm:p-6 bg-gray-50/80 dark:bg-neutral-800/40">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 sm:p-6 bg-gray-50/80 dark:bg-neutral-800/40"
+            x-data="{ canCreate: false }"
+            @calendar-modal-opened.window="
+                const selected = new Date($event.detail.date + 'T00:00:00');
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                canCreate = selected >= today;
+            ">
             <div class="flex items-center gap-3 min-w-0">
                 <div class="p-2 rounded-lg shrink-0">
                     <flux:icon.calendar-check class="size-6 sm:size-8" />
@@ -17,23 +24,25 @@
             </div>
 
             <div class="flex items-center gap-2 shrink-0 self-end sm:self-auto">
-                {{-- Botón nuevo evento --}}
-                <flux:modal.trigger name="create-event-modal">
-                    <flux:button 
-                        variant="primary" 
-                        size="sm" 
-                        class="hover:scale-105 transition-transform"
-                        x-on:click="
-                            if (window.selectedCalendarDate) {
-                                Livewire.dispatch('set-event-date', { date: window.selectedCalendarDate });
-                            }
-                        ">
-                        <svg class="size-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                        </svg>
-                        {{ __('Nuevo evento') }}
-                    </flux:button>
-                </flux:modal.trigger>
+                {{-- Botón nuevo evento: solo visible si fecha >= hoy --}}
+                <div x-show="canCreate" x-cloak>
+                    <flux:modal.trigger name="create-event-modal">
+                        <flux:button 
+                            variant="primary" 
+                            size="sm" 
+                            class="hover:scale-105 transition-transform"
+                            x-on:click="
+                                if (window.selectedCalendarDate) {
+                                    Livewire.dispatch('set-event-date', { date: window.selectedCalendarDate });
+                                }
+                            ">
+                            <svg class="size-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                            </svg>
+                            {{ __('Nuevo evento') }}
+                        </flux:button>
+                    </flux:modal.trigger>
+                </div>
 
                 {{-- Botón cerrar --}}
                 <button type="button"
