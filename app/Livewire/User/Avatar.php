@@ -42,7 +42,7 @@ class Avatar extends Component
             $this->user->update(['avatar' => $path]);
 
             $this->photo = null;
-            $this->dispatch('avatar-updated');
+            $this->dispatch('avatar-updated', newAvatarUrl: Storage::url($path));
         }
     }
 
@@ -51,7 +51,7 @@ class Avatar extends Component
         if ($this->user->avatar) {
             Storage::delete('public/' . $this->user->avatar);
             $this->user->update(['avatar' => null]);
-            $this->dispatch('avatar-updated');
+            $this->dispatch('avatar-updated', newAvatarUrl: null);
         }
     }
 

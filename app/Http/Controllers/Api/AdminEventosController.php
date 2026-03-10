@@ -53,6 +53,7 @@ class AdminEventosController extends Controller
 
         $events = $query->orderByDesc('date')
                         ->orderByDesc('start_time')
+                        ->limit(500)
                         ->get();
 
         $mapped = $events->map(fn ($e) => [
@@ -82,16 +83,18 @@ class AdminEventosController extends Controller
      */
     public function filterOptions()
     {
-        // Solo dependencias que tienen al menos un evento
-        $dependencies = Dependency::whereHas('events')
-            ->select('id', 'name')
-            ->orderBy('name')
+        // Solo dependencias que tienen al menos un evento (JOIN es más rápido que whereHas)
+        $dependencies = Dependency::select('dependencies.id', 'dependencies.name')
+            ->join('events', 'dependencies.id', '=', 'events.dependency_id')
+            ->distinct()
+            ->orderBy('dependencies.name')
             ->get();
 
-        // Solo usuarios que han creado al menos un evento
-        $users = User::whereHas('events')
-            ->select('id', 'name')
-            ->orderBy('name')
+        // Solo usuarios que han creado al menos un evento (JOIN es más rápido que whereHas)
+        $users = User::select('users.id', 'users.name')
+            ->join('events', 'users.id', '=', 'events.user_id')
+            ->distinct()
+            ->orderBy('users.name')
             ->get();
 
         return response()->json([

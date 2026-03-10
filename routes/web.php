@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Livewire\Settings\About;
 use App\Livewire\Settings\Appearance;
 use App\Livewire\Settings\Password;
 use App\Livewire\Settings\Profile;
@@ -155,6 +156,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('settings/password', Password::class)->name('settings.password');
     Route::get('settings/appearance', Appearance::class)->name('settings.appearance');
     Route::get('settings/language', Language::class)->name('settings.language');
+    Route::get('settings/about', About::class)->name('settings.about');
 
     Route::post('settings/language/switch', [LanguageController::class, 'switch'])
         ->name('settings.language.switch');

@@ -116,10 +116,10 @@ class CreateEventWizard extends Component
     private function loadAreas(): void
     {
         $this->areas = $this->dependency_id
-            ? Area::where('dependency_id', $this->dependency_id)
+            ? Area::select(['id', 'name'])
+                ->where('dependency_id', $this->dependency_id)
                 ->orderBy('name')
                 ->get()
-                ->map(fn ($a) => ['id' => $a->id, 'name' => $a->name])
                 ->toArray()
             : [];
     }

@@ -1,3 +1,12 @@
+@push('head-scripts')
+    <!-- Cal-Heatmap (calendario semestral) -->
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <script src="https://unpkg.com/cal-heatmap/dist/cal-heatmap.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/cal-heatmap/dist/cal-heatmap.css">
+    <!-- Apache ECharts (gráficos legacy) [Reemplazado por Recharts]-->
+    {{-- <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script> --}}
+@endpush
+
 <x-layouts.app :title="__('Dashboard')">
     @include('calendar.modal')
     

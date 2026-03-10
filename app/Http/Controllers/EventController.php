@@ -24,9 +24,13 @@ class EventController extends Controller
     {
         /** @var User $user */
         $user = Auth::user();
-        
-        // Eventos propios (con relaciones)
-        $myEvents = Event::with(['dependency', 'area', 'user'])
+
+        // Una sola consulta de dependencias reutilizada en todo el método
+        $user->loadMissing('dependencies');
+        $dependencyIds = $user->dependencies->pluck('id');
+
+        // Eventos propios (con relaciones restringidas a columnas necesarias)
+        $myEvents = Event::with(['dependency:id,name', 'area:id,name', 'user:id,name'])
             ->where('user_id', $user->id)
             ->orderBy('date', 'desc')
             ->orderBy('created_at', 'desc')
@@ -35,11 +39,8 @@ class EventController extends Controller
         // Eventos de las dependencias del usuario (excluyendo los propios)
         $dependencyEvents = collect();
 
-        if ($user->dependencies()->exists()) {
-
-            $dependencyIds = $user->dependencies()->pluck('dependencies.id');
-
-            $dependencyEvents = Event::with(['dependency', 'area', 'user'])
+        if ($dependencyIds->isNotEmpty()) {
+            $dependencyEvents = Event::with(['dependency:id,name', 'area:id,name', 'user:id,name'])
                 ->whereIn('dependency_id', $dependencyIds)
                 ->where('user_id', '!=', $user->id)
                 ->orderBy('date', 'desc')
@@ -55,35 +56,11 @@ class EventController extends Controller
 
     /**
      * Show the form for creating a new resource.
+     * Los datos (dependencias, áreas) los carga el propio componente Livewire.
      */
     public function create()
     {
-        $user = request()->user();
-
-        if ($user->role === 'admin') {
-            $dependencies = Dependency::orderBy('name')->get();
-        } else {
-            $dependencies = $user->dependencies()
-                ->orderBy('name')
-                ->get();
-        }
-
-        $selectedDependency = null;
-        $areas = collect();
-
-        if ($user->role !== 'admin' && $dependencies->count() === 1) {
-            $selectedDependency = $dependencies->first()->id;
-
-            $areas = Area::where('dependency_id', $selectedDependency)
-                ->orderBy('name')
-                ->get();
-        }
-
-        return view('events.new', compact(
-            'dependencies',
-            'selectedDependency',
-            'areas'
-        ));
+        return view('events.new');
     }
 
     /**

@@ -129,7 +129,7 @@
            <flux:profile name="{{ auth()->user()->name }}"  avatar="{{ auth()->user()->avatar ? asset('storage/' . auth()->user()->avatar) : null }}"
              icon:trailing="chevrons-up-down"
             class="flex items-center space-x-2"
-            avatar-class="h-8 w-8 rounded-full object-cover"/>
+            avatar-class="size-8 shrink-0 rounded-full object-cover aspect-square"/>
             <flux:menu class="w-[220px]">
                 <flux:menu.radio.group>
                     <div class="p-0 text-sm font-normal">
@@ -187,7 +187,7 @@
             avatar="{{ auth()->user()->avatar ? asset('storage/' . auth()->user()->avatar) : null }}"
             icon-trailing="chevron-down"
             class="flex items-center space-x-2"
-            avatar-class="h-8 w-8 rounded-full object-cover"/>
+            avatar-class="size-8 shrink-0 rounded-full object-cover aspect-square"/>
             <flux:menu>
                 <flux:menu.radio.group>
                     <div class="p-0 text-sm font-normal">
