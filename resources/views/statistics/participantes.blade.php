@@ -3,15 +3,10 @@
     <div class="flex h-full w-full flex-1 flex-col gap-4 p-1 sm:p-4 md:p-6">
 
         {{-- Breadcrumb --}}
-        <nav class="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400">
-            <a href="{{ route('statistics') }}"
-               class="hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
-               wire:navigate>
-                Estadísticas
-            </a>
-            <flux:icon.chevron-right class="size-4 shrink-0" />
-            <span class="text-gray-700 dark:text-gray-200 font-medium">Por Participantes</span>
-        </nav>
+        <x-breadcrumb :items="[
+            ['label' => 'Estadísticas', 'route' => 'statistics'],
+            ['label' => 'Por Participantes'],
+        ]" />
 
         {{-- Header --}}
         <div class="flex items-center gap-3 mb-1">

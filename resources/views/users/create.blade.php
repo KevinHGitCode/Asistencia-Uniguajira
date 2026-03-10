@@ -1,12 +1,9 @@
 <x-layouts.app :title="__('Crear Usuario')">
 
-    <nav class="text-sm mb-4 text-gray-500 dark:text-gray-300" aria-label="Breadcrumb">
-        <ol class="list-reset flex">
-            <li><a href="{{ route('users.index') }}" class="hover:underline">Usuarios</a></li>
-            <li><span class="mx-2">/</span></li>
-            <li class="font-bold text-gray-900 dark:text-white">Nuevo usuario</li>
-        </ol>
-    </nav>
+    <x-breadcrumb class="mb-4" :items="[
+        ['label' => 'Usuarios', 'route' => 'users.index'],
+        ['label' => 'Nuevo usuario'],
+    ]" />
 
     <div>
 

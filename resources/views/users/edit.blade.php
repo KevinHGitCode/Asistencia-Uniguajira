@@ -1,12 +1,9 @@
 <x-layouts.app :title="__('Editar Usuario')">
 
-    <nav class="text-sm mb-4 text-gray-500 dark:text-gray-300" aria-label="Breadcrumb">
-        <ol class="list-reset flex">
-            <li><a href="{{ route('users.index') }}" class="hover:underline">Usuarios</a></li>
-            <li><span class="mx-2">/</span></li>
-            <li class="font-bold text-gray-900 dark:text-white">Editar usuario</li>
-        </ol>
-    </nav>
+    <x-breadcrumb class="mb-4" :items="[
+        ['label' => 'Usuarios', 'route' => 'users.index'],
+        ['label' => 'Editar usuario'],
+    ]" />
 
     <div>
         <p class="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Editar usuario</p>

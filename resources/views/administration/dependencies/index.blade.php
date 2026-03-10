@@ -5,13 +5,10 @@
     {{-- Header --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-            <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-1">
-                <a href="{{ route('administracion.index') }}" class="hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
-                    Administración
-                </a>
-                <flux:icon.chevron-right class="size-3" />
-                <span class="text-gray-700 dark:text-gray-200">Dependencias</span>
-            </div>
+            <x-breadcrumb class="mb-1" :items="[
+                ['label' => 'Administración', 'route' => 'administracion.index'],
+                ['label' => 'Dependencias'],
+            ]" />
             <h1 class="flex items-center gap-2 text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
                 <flux:icon name="building-office" class="size-16 text-[#cc5e50]" />
                 <span>Dependencias</span>

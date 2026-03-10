@@ -1,12 +1,9 @@
 <x-layouts.app :title="__('Información del usuario')">
     
-    <nav class="text-sm text-black dark:text-gray-200 mb-6" aria-label="Breadcrumb">
-        <ol class="flex items-center space-x-2">
-            <li><a href="{{ route('users.index') }}" class="hover:underline">Usuarios</a></li>
-            <li><span class="mx-2">/</span></li>
-            <li class="font-medium">Información</li>
-        </ol>
-    </nav>
+    <x-breadcrumb class="mb-6" :items="[
+        ['label' => 'Usuarios', 'route' => 'users.index'],
+        ['label' => 'Información'],
+    ]" />
 
     @if(session('success'))
         <div

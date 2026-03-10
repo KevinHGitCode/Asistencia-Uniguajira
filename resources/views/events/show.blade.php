@@ -1,12 +1,9 @@
 <x-layouts.app :title="__('Evento')">
 
-    <nav class="text-sm mb-4 text-gray-500 dark:text-gray-300" aria-label="Breadcrumb">
-        <ol class="list-reset flex">
-            <li><a href="{{ route('events.list') }}" class="hover:underline"> Eventos </a></li>
-            <li><span class="mx-2">/</span></li>
-            <li class="font-bold text-gray-900 dark:text-white"> Información </li>
-        </ol>
-    </nav>
+    <x-breadcrumb class="mb-4" :items="[
+        ['label' => 'Eventos', 'route' => 'events.list'],
+        ['label' => 'Información'],
+    ]" />
 
     <div class="relative flex w-full mb-3 flex-1 flex-col gap-4 p-1 rounded-2xl border border-neutral-200 dark:border-neutral-700 bg-zinc-50 dark:bg-zinc-900">
 
