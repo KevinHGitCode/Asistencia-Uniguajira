@@ -126,10 +126,10 @@
 
         <!-- Desktop User Menu -->
         <flux:dropdown class="hidden lg:block" position="bottom" align="start">
-           <flux:profile name="{{ auth()->user()->name }}"  avatar="{{ auth()->user()->avatar ? asset('storage/' . auth()->user()->avatar) : null }}"
+           <flux:profile name="{{ auth()->user()->name }}"
+             avatar="{{ auth()->user()->avatar ? asset('storage/' . auth()->user()->avatar) : null }}"
              icon:trailing="chevrons-up-down"
-            class="flex items-center space-x-2"
-            avatar-class="size-8 shrink-0 rounded-full object-cover aspect-square"/>
+             circle />
             <flux:menu class="w-[220px]">
                 <flux:menu.radio.group>
                     <div class="p-0 text-sm font-normal">
@@ -186,8 +186,7 @@
         <flux:profile
             avatar="{{ auth()->user()->avatar ? asset('storage/' . auth()->user()->avatar) : null }}"
             icon-trailing="chevron-down"
-            class="flex items-center space-x-2"
-            avatar-class="size-8 shrink-0 rounded-full object-cover aspect-square"/>
+            circle />
             <flux:menu>
                 <flux:menu.radio.group>
                     <div class="p-0 text-sm font-normal">

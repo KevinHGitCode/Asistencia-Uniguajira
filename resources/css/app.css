@@ -50,6 +50,13 @@
     }
 }
 
+/* Avatares de flux:avatar — imagen rellena el contenedor circular con object-cover */
+[data-flux-avatar] img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
 [data-flux-field]:not(ui-radio, ui-checkbox) {
     @apply grid gap-2;
 }
