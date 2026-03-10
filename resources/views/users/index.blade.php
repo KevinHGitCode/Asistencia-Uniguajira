@@ -18,15 +18,21 @@
 
             <div class="w-full">
                 <div class="flex w-full flex-col sm:flex-row gap-3">
-                    <div class="flex-1">
+                    <form
+                        class="flex-1"
+                        method="GET"
+                        action="{{ route('users.index') }}"
+                        x-data>
                         <flux:input
                             id="users-search-input"
                             type="search"
                             name="q"
                             :label="__('Search users')"
                             :placeholder="__('Name, email, role or dependency')"
-                            :value="$search" />
-                    </div>
+                            :value="$search"
+                            x-on:input.debounce.600ms="$el.closest('form').submit()"
+                            x-on:keydown.enter.prevent="$el.closest('form').submit()" />
+                    </form>
                     <div class="sm:pt-7">
                         <flux:modal.trigger name="create-user-modal">
                             <flux:button
@@ -40,6 +46,8 @@
             </div>
 
             <div class="relative h-full flex-1 rounded-2xl border bg-zinc-50 dark:bg-zinc-900 border-neutral-200 dark:border-neutral-700">
+
+                {{-- Desktop table --}}
                 <div class="hidden md:block p-4">
                     <div class="overflow-x-auto overflow-y-visible rounded-xl border border-neutral-200 dark:border-neutral-700">
                         <table class="min-w-full divide-y divide-neutral-200 dark:divide-neutral-700">
@@ -58,17 +66,8 @@
                                         $dependencyNames = $user->dependencies->pluck('name')->values();
                                         $primaryDependency = $dependencyNames->first();
                                         $extraDependenciesCount = max(0, $dependencyNames->count() - 1);
-                                        $searchText = \Illuminate\Support\Str::lower(implode(' ', [
-                                            $user->name,
-                                            $user->email,
-                                            $user->role,
-                                            $dependencyNames->implode(' '),
-                                            (string) $user->events_count,
-                                        ]));
                                     @endphp
-                                    <tr
-                                        class="hover:bg-zinc-50 dark:hover:bg-zinc-800/70 transition-colors"
-                                        data-user-search="{{ $searchText }}">
+                                    <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/70 transition-colors">
                                         <td class="px-4 py-3">
                                             <div class="flex items-center gap-3 min-w-[16rem]">
                                                 @if($user->avatar)
@@ -182,84 +181,135 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="4" class="px-4 py-8 text-center text-sm text-zinc-600 dark:text-zinc-400">
+                                        <td colspan="5" class="px-4 py-8 text-center text-sm text-zinc-600 dark:text-zinc-400">
                                             {{ __('No users found') }}
                                         </td>
                                     </tr>
                                 @endforelse
-                                <tr id="users-empty-desktop" class="hidden">
-                                    <td colspan="4" class="px-4 py-8 text-center text-sm text-zinc-600 dark:text-zinc-400">
-                                        {{ __('No users found') }}
-                                    </td>
-                                </tr>
                             </tbody>
                         </table>
                     </div>
-                    <div id="users-table-pagination" class="mt-3 flex items-center justify-between gap-3 px-1">
-                        <p id="users-table-page-info" class="text-xs text-zinc-600 dark:text-zinc-400"></p>
-                        <div class="flex items-center gap-3">
-                            <label for="users-page-size" class="text-xs text-zinc-600 dark:text-zinc-400">Por página</label>
-                            <select
-                                id="users-page-size"
-                                class="rounded-md border border-neutral-300 bg-white px-2 py-1.5 text-xs text-zinc-700 dark:border-neutral-600 dark:bg-zinc-900 dark:text-zinc-200">
-                                <option value="5" selected>5</option>
-                                <option value="10">10</option>
-                                <option value="20">20</option>
-                            </select>
-                            <button
-                                id="users-page-prev"
-                                type="button"
-                                aria-label="Página anterior"
-                                class="inline-flex cursor-pointer h-8 w-8 items-center justify-center rounded-md border border-neutral-300 text-zinc-700 transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:text-zinc-200 dark:hover:bg-zinc-800">
-                                <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                    <path fill-rule="evenodd" d="M12.78 4.22a.75.75 0 010 1.06L8.06 10l4.72 4.72a.75.75 0 11-1.06 1.06l-5.25-5.25a.75.75 0 010-1.06l5.25-5.25a.75.75 0 011.06 0z" clip-rule="evenodd" />
-                                </svg>
-                            </button>
-                            <button
-                                id="users-page-next"
-                                type="button"
-                                aria-label="Página siguiente"
-                                class="inline-flex cursor-pointer h-8 w-8 items-center justify-center rounded-md border border-neutral-300 text-zinc-700 transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:text-zinc-200 dark:hover:bg-zinc-800">
-                                <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                    <path fill-rule="evenodd" d="M7.22 15.78a.75.75 0 010-1.06L11.94 10 7.22 5.28a.75.75 0 111.06-1.06l5.25 5.25a.75.75 0 010 1.06l-5.25 5.25a.75.75 0 01-1.06 0z" clip-rule="evenodd" />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
                 </div>
 
+                {{-- Mobile cards --}}
                 <div class="p-4 grid grid-cols-1 gap-4 md:hidden">
                     @forelse ($users as $user)
                         @php
-                            $dependencyNames = $user->dependencies->pluck('name')->values();
-                            $mobileSearchText = \Illuminate\Support\Str::lower(implode(' ', [
-                                $user->name,
-                                $user->email,
-                                $user->role,
-                                $dependencyNames->implode(' '),
-                                (string) $user->events_count,
-                            ]));
+                            $mobileDepNames  = $user->dependencies->pluck('name')->values();
+                            $mobilePrimaryDep = $mobileDepNames->first();
+                            $mobileExtraDeps  = $mobileDepNames->slice(1);
                         @endphp
-                        <div data-user-search="{{ $mobileSearchText }}">
-                            @livewire('user.card', [
-                                'title' => $user->name,
-                                'user' => $user,
-                                'showDependenciesUpward' => $loop->last,
-                            ], key($user->id))
+                        <div class="block p-5 rounded-2xl border border-neutral-200 dark:border-neutral-600 hover:border-[#e2a542] hover:shadow-lg transition-all duration-200 bg-white dark:bg-zinc-800">
+                            <div class="flex items-center gap-5">
+                                {{-- Avatar --}}
+                                <div class="shrink-0">
+                                    @if($user->avatar)
+                                        <img src="{{ Storage::url($user->avatar) }}" alt="{{ $user->name }}"
+                                             class="h-10 w-10 rounded-full object-cover border border-neutral-200 dark:border-neutral-600">
+                                    @else
+                                        <div class="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700 border border-neutral-200 dark:border-neutral-600 flex items-center justify-center">
+                                            <span class="text-base font-bold uppercase text-gray-800 dark:text-white">
+                                                {{ substr($user->name, 0, 1) }}
+                                            </span>
+                                        </div>
+                                    @endif
+                                </div>
+
+                                {{-- Main info --}}
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex flex-wrap items-center gap-2 mb-1">
+                                        <span class="truncate text-base font-semibold text-zinc-800 dark:text-zinc-100">{{ $user->name }}</span>
+
+                                        @if(isset($user->role))
+                                            <flux:badge class="!bg-[#e2a542] !text-white" :color="null">
+                                                {{ __(ucfirst($user->role)) }}
+                                            </flux:badge>
+                                        @endif
+
+                                        @if(isset($user->role) && $user->role === 'user')
+                                            @if($mobileDepNames->isNotEmpty())
+                                                <flux:badge class="!bg-[#cc5e50] !text-white max-w-[18rem] truncate" :color="null" :title="$mobilePrimaryDep">
+                                                    {{ $mobilePrimaryDep }}
+                                                </flux:badge>
+
+                                                @if($mobileExtraDeps->isNotEmpty())
+                                                    <div class="relative group/m-deps">
+                                                        <button type="button"
+                                                            class="inline-flex items-center rounded-full bg-[#cc5e50] px-2 py-0.5 text-xs font-semibold text-white hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-[#cc5e50]/40">
+                                                            +{{ $mobileExtraDeps->count() }}
+                                                        </button>
+                                                        <div class="pointer-events-none absolute left-0 {{ $loop->last ? 'bottom-full mb-2' : 'top-full mt-2' }} z-10 hidden min-w-56 max-w-xs rounded-lg border border-neutral-200 bg-white p-3 text-xs text-zinc-700 shadow-lg dark:border-neutral-700 dark:bg-zinc-900 dark:text-zinc-200 group-hover/m-deps:block group-focus-within/m-deps:block">
+                                                            <p class="mb-2 font-semibold">Dependencias</p>
+                                                            <ul class="space-y-1">
+                                                                @foreach ($mobileDepNames as $mobileDepName)
+                                                                    <li class="truncate" title="{{ $mobileDepName }}">{{ $mobileDepName }}</li>
+                                                                @endforeach
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                @endif
+                                            @else
+                                                <flux:badge color="gray">{{ __('Not assigned') }}</flux:badge>
+                                            @endif
+                                        @endif
+                                    </div>
+
+                                    <p class="text-sm text-gray-600 dark:text-gray-400 truncate">{{ $user->email }}</p>
+                                    <p class="text-xs text-blue-600 dark:text-blue-400 mt-2">
+                                        @if($user->events_count === 1)
+                                            {{ __(':count event created', ['count' => $user->events_count]) }}
+                                        @else
+                                            {{ __(':count events created', ['count' => $user->events_count]) }}
+                                        @endif
+                                    </p>
+                                </div>
+
+                                {{-- Actions --}}
+                                <div class="ml-auto flex items-center gap-2">
+                                    <flux:modal.trigger name="edit-user-modal">
+                                        <flux:button
+                                            square variant="ghost" size="sm"
+                                            title="{{ __('Edit user') }}"
+                                            class="hover:text-[#62a9b6] transition-colors hover:cursor-pointer"
+                                            x-on:click="Livewire.dispatch('edit-user', { id: {{ $user->id }} })">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L12 15l-4 1 1-4 8.586-8.586z" />
+                                            </svg>
+                                        </flux:button>
+                                    </flux:modal.trigger>
+                                    <a href="{{ route('users.information', ['id' => $user->id]) }}">
+                                        <flux:button
+                                            square variant="ghost" size="sm"
+                                            title="{{ __('View information') }}"
+                                            class="hover:text-[#e2a542] transition-colors hover:cursor-pointer">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        </flux:button>
+                                    </a>
+                                </div>
+                            </div>
                         </div>
                     @empty
                         <div class="rounded-xl border border-neutral-200 dark:border-neutral-700 p-6 text-center text-sm text-zinc-600 dark:text-zinc-400">
                             {{ __('No users found') }}
                         </div>
                     @endforelse
-                    <div id="users-empty-mobile" class="hidden rounded-xl border border-neutral-200 dark:border-neutral-700 p-6 text-center text-sm text-zinc-600 dark:text-zinc-400">
-                        {{ __('No users found') }}
-                    </div>
                 </div>
+
+                {{-- Pagination --}}
+                @if ($users->hasPages())
+                    <div class="px-4 pb-4">
+                        {{ $users->links() }}
+                    </div>
+                @endif
+
             </div>
         </div>
     </div>
-    
+
     <!-- Leyenda -->
     <div class="z-10 flex w-full flex-1 flex-col gap-4 p-6 mb-4 rounded-2xl border border-neutral-200 dark:border-neutral-700 bg-zinc-50 dark:bg-zinc-900">
         <div class="flex items-center justify-center gap-4 sm:gap-8 flex-wrap">

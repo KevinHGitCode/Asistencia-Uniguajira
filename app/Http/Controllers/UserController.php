@@ -19,14 +19,21 @@ class UserController extends Controller
     {
         $search = trim((string) $request->query('q', ''));
 
-        // obtener usuarios con su dependencia relacionada
-        $users = User::with('dependencies')
-                    ->withCount(['dependencies', 'events'])
-                    ->get();
+        $users = User::select(['id', 'name', 'email', 'role', 'avatar', 'is_active'])
+            ->with(['dependencies:id,name'])
+            ->withCount(['dependencies', 'events'])
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('email', 'like', "%{$search}%")
+                      ->orWhere('role', 'like', "%{$search}%");
+                });
+            })
+            ->paginate(20)
+            ->withQueryString();
 
         $dependencies = Dependency::orderBy('name')->pluck('name', 'id')->toArray();
         $roles = ['admin' => 'Administrador', 'user' => 'Usuario'];
-
 
         return view('users.index', compact('users', 'dependencies', 'roles', 'search'));
     }

@@ -94,7 +94,7 @@ class UserIndexTest extends TestCase
         });
     }
 
-    public function test_lista_muestra_enlaces_de_informacion_y_edicion(): void
+    public function test_lista_muestra_enlace_de_informacion(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
         $user  = User::factory()->create();
@@ -102,7 +102,8 @@ class UserIndexTest extends TestCase
         $this->actingAs($admin)
             ->get(route('users.index'))
             ->assertOk()
-            ->assertSee(route('users.information', $user->id), false)
-            ->assertSee(route('user.edit', $user->id), false);
+            ->assertSee(route('users.information', $user->id), false);
+        // La edición se realiza ahora via modal (flux:modal.trigger + Livewire.dispatch),
+        // por lo que no hay un enlace directo a route('user.edit') en la lista.
     }
 }
