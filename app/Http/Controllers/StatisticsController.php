@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\Event;
 use App\Models\Attendance;
@@ -13,7 +14,7 @@ class StatisticsController extends Controller
 {
     use AppliesStatisticsFilters;
 
-    /** Concatenación compatible con SQLite (tests) y MySQL (producción). */
+    /** ConcatenaciÃƒÂ³n compatible con SQLite (tests) y MySQL (producciÃƒÂ³n). */
     private function concatFullName(): string
     {
         return DB::connection()->getDriverName() === 'sqlite'
@@ -21,7 +22,7 @@ class StatisticsController extends Controller
             : "CONCAT(participants.first_name, ' ', participants.last_name)";
     }
 
-    // Número total de eventos
+    // NÃƒÂºmero total de eventos
     public function totalEvents(Request $request)
     {
         $filters = $this->getFilters($request);
@@ -46,7 +47,7 @@ class StatisticsController extends Controller
         return $query->count();
     }
 
-    // Número de eventos por rol de usuario (eventos creados por cada rol: admin o user)
+    // NÃƒÂºmero de eventos por rol de usuario (eventos creados por cada rol: admin o user)
     public function eventsByRole(Request $request)
     {
         $filters = $this->getFilters($request);
@@ -72,7 +73,7 @@ class StatisticsController extends Controller
             ->get();
     }
 
-    // Número de eventos por usuario (eventos creados por cada usuario)
+    // NÃƒÂºmero de eventos por usuario (eventos creados por cada usuario)
     public function eventsByUser(Request $request)
     {
         $filters = $this->getFilters($request);
@@ -98,7 +99,7 @@ class StatisticsController extends Controller
             ->get();
     }
 
-    // Número total de asistencias
+    // NÃƒÂºmero total de asistencias
     public function totalAttendances(Request $request)
     {
         $filters = $this->getFilters($request);
@@ -131,7 +132,7 @@ class StatisticsController extends Controller
         return $query->count();
     }
 
-    // Número total de participantes (solo los que tienen al menos una asistencia)
+    // NÃƒÂºmero total de participantes (solo los que tienen al menos una asistencia)
     public function totalParticipants(Request $request)
     {
         $filters = $this->getFilters($request);
@@ -267,7 +268,7 @@ class StatisticsController extends Controller
             ->get();
     }
 
-    // Eventos con más asistencias
+    // Eventos con mÃƒÂ¡s asistencias
     public function topEvents(Request $request)
     {
         $filters = $this->getFilters($request);
@@ -296,7 +297,7 @@ class StatisticsController extends Controller
             ->get();
     }
 
-    // Participantes con más asistencias
+    // Participantes con mÃƒÂ¡s asistencias
     public function topParticipants(Request $request)
     {
         $filters = $this->getFilters($request);
@@ -320,7 +321,7 @@ class StatisticsController extends Controller
             ->get();
     }
 
-    // ── Demográficos por ASISTENCIAS (cuentan registros, no personas únicas) ─────
+    // Ã¢â€â‚¬Ã¢â€â‚¬ DemogrÃƒÂ¡ficos por ASISTENCIAS (cuentan registros, no personas ÃƒÂºnicas) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
     // Asistencias por estamento del participante
     public function attendancesByRole(Request $request)
@@ -397,7 +398,7 @@ class StatisticsController extends Controller
             ->get();
     }
 
-    // ── Demográficos por PARTICIPANTES (cuentan personas únicas) ─────────────
+    // Ã¢â€â‚¬Ã¢â€â‚¬ DemogrÃƒÂ¡ficos por PARTICIPANTES (cuentan personas ÃƒÂºnicas) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
     // Participantes por estamento (rol: Estudiante / Docente)
     public function participantsByRole(Request $request)
@@ -474,15 +475,33 @@ class StatisticsController extends Controller
             ->get();
     }
 
-    // ── Endpoints de resumen (1 request = todos los datos del módulo) ─────────
+    // Ã¢â€â‚¬Ã¢â€â‚¬ Endpoints de resumen (1 request = todos los datos del mÃƒÂ³dulo) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
     /**
-     * Retorna en una sola llamada todos los datos que necesita el módulo
-     * "Por Asistencias": contadores + gráficos + demográficos.
+     * Retorna en una sola llamada todos los datos que necesita el mÃƒÂ³dulo
+     * "Por Asistencias": contadores + grÃƒÂ¡ficos + demogrÃƒÂ¡ficos.
      */
     public function asistenciasSummary(Request $request)
     {
         $filters = $this->getFilters($request);
+
+        $user = Auth::user();
+        if ($user && $user->role !== 'admin') {
+            $filters = $this->applyUserScope($filters, $user->id);
+            if ($filters === null) {
+                return response()->json([
+                    'counters' => ['events' => 0, 'attendances' => 0, 'participants' => 0],
+                    'charts'   => [
+                        'attendancesByProgram' => [],
+                        'topEvents'            => [],
+                        'topParticipants'      => [],
+                        'byRole'               => [],
+                        'bySex'                => [],
+                        'byGroup'              => [],
+                    ],
+                ]);
+            }
+        }
 
         return response()->json([
             'counters' => [
@@ -502,15 +521,32 @@ class StatisticsController extends Controller
     }
 
     /**
-     * Retorna en una sola llamada todos los datos que necesita el módulo
-     * "Por Participantes": contadores + gráficos + demográficos.
+     * Retorna en una sola llamada todos los datos que necesita el mÃƒÂ³dulo
+     * "Por Participantes": contadores + grÃƒÂ¡ficos + demogrÃƒÂ¡ficos.
      */
     public function participantesSummary(Request $request)
     {
         $filters = $this->getFilters($request);
 
+        $user = Auth::user();
+        if ($user && $user->role !== 'admin') {
+            $filters = $this->applyUserScope($filters, $user->id);
+            if ($filters === null) {
+                return response()->json([
+                    'counters' => ['events' => 0, 'participants' => 0],
+                    'charts'   => [
+                        'participantsByProgram' => [],
+                        'byRole'               => [],
+                        'bySex'                => [],
+                        'byGroup'              => [],
+                    ],
+                ]);
+            }
+        }
+
         return response()->json([
             'counters' => [
+                'events'       => $this->sumTotalEvents($filters),
                 'participants' => $this->sumTotalParticipants($filters),
             ],
             'charts' => [
@@ -522,7 +558,27 @@ class StatisticsController extends Controller
         ]);
     }
 
-    // ── Helpers privados para los endpoints de resumen ────────────────────────
+    // Ã¢â€â‚¬Ã¢â€â‚¬ Helpers privados para los endpoints de resumen Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+
+    /**
+     * Restringe los filtros al alcance del usuario: solo eventos creados por ÃƒÂ©l.
+     * Retorna null si el usuario no tiene eventos (resultado debe ser ceros en todos los campos).
+     */
+    private function applyUserScope(array $filters, int $userId): ?array
+    {
+        $userEventIds = Event::where('user_id', $userId)->pluck('id')->toArray();
+
+        if (empty($userEventIds)) {
+            return null;
+        }
+
+        if (!empty($filters['eventIds'])) {
+            $intersection = array_values(array_intersect($filters['eventIds'], $userEventIds));
+            return empty($intersection) ? null : array_merge($filters, ['eventIds' => $intersection]);
+        }
+
+        return array_merge($filters, ['eventIds' => $userEventIds]);
+    }
 
     private function sumTotalEvents(array $filters): int
     {
@@ -641,7 +697,7 @@ class StatisticsController extends Controller
             ->groupBy($col)->orderByDesc('value')->get();
     }
 
-    // Usuarios con más asistencias
+    // Usuarios con mÃƒÂ¡s asistencias
     public function topUsers(Request $request)
     {
         $filters = $this->getFilters($request);

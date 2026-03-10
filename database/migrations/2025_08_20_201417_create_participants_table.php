@@ -19,6 +19,8 @@ return new class extends Migration
             $table->string('last_name', 100);
             $table->string('email')->unique();
             $table->enum('role', ['Estudiante', 'Docente']);
+            $table->string('sexo', 30)->nullable();
+            $table->string('grupo_priorizado', 30)->nullable();
             $table->enum('affiliation', ['Catedratico', 'Ocasional','Planta'])->nullable();
             $table->foreignId('program_id')->nullable()->constrained('programs')->onDelete('cascade');
             $table->timestamps();

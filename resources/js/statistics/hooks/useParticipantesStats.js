@@ -11,7 +11,7 @@ function buildQS(filters, eventIds = null) {
 }
 
 const EMPTY = {
-  counters: { participants: null },
+  counters: { events: null, participants: null },
   charts: {
     participantsByProgram: [],
     byRole:                [],
@@ -23,9 +23,9 @@ const EMPTY = {
 };
 
 /**
- * Datos para el módulo "Por Participantes".
- * Un único request a /api/statistics/participantes-summary devuelve
- * contadores + gráficos + demográficos.
+ * Datos para el mÃƒÂ³dulo "Por Participantes".
+ * Un ÃƒÂºnico request a /api/statistics/participantes-summary devuelve
+ * contadores + grÃƒÂ¡ficos + demogrÃƒÂ¡ficos.
  */
 export function useParticipantesStats() {
   const [state, setState] = useState(EMPTY);
@@ -47,6 +47,7 @@ export function useParticipantesStats() {
 
       setState({
         counters: {
+          events:       data.counters.events,
           participants: data.counters.participants,
         },
         charts: {

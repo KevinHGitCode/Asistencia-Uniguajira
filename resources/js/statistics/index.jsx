@@ -18,19 +18,24 @@ const APPS = {
   'admin-eventos':   AdminEventosApp,
 };
 
-let root = null;
+let root        = null;
+let mountedModule = null; // módulo actualmente montado
 
 /**
  * Monta (o re-monta) la sub-app correspondiente al módulo indicado en data-module.
- * Siempre crea un root nuevo para que la app arranque con estado limpio al navegar
- * entre sub-módulos vía wire:navigate.
+ * Si el mismo módulo ya está montado, no hace nada (evita re-fetches innecesarios).
+ * Solo crea un root nuevo cuando cambia el módulo (navegación entre sub-módulos).
  */
 function mount() {
   const container = document.getElementById('statistics-react-root');
   if (!container) return;
 
-  const App = APPS[container.dataset.module];
+  const module = container.dataset.module;
+  const App    = APPS[module];
   if (!App) return;
+
+  // Si el mismo módulo ya está montado, no remontar (evita re-fetch innecesario)
+  if (root && mountedModule === module) return;
 
   // Desmontar root anterior (transición entre sub-módulos vía wire:navigate)
   if (root) {
@@ -38,7 +43,8 @@ function mount() {
     root = null;
   }
 
-  root = createRoot(container);
+  root          = createRoot(container);
+  mountedModule = module;
   root.render(<App />);
 }
 

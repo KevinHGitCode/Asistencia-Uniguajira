@@ -30,9 +30,14 @@ class StatisticsPerformanceTest extends TestCase
     // Umbral en milisegundos para endpoints de resumen
     private const MAX_MS_SUMMARY = 800;
 
+    private User $admin;
+
     protected function setUp(): void
     {
         parent::setUp();
+
+        // Admin para los endpoints de resumen (que requieren auth)
+        $this->admin = User::factory()->create(['role' => 'admin']);
 
         // Dataset de prueba: 3 programas, 3 usuarios, 5 eventos, 30 participantes, ~90 asistencias
         $programs = Program::factory()->count(3)->create();
@@ -214,6 +219,7 @@ class StatisticsPerformanceTest extends TestCase
     #[Test]
     public function asistencias_summary_retorna_estructura_completa(): void
     {
+        $this->actingAs($this->admin);
         [$res, $ms] = $this->timedGet('/api/statistics/asistencias-summary');
 
         $res->assertOk()->assertJsonStructure([
@@ -235,6 +241,7 @@ class StatisticsPerformanceTest extends TestCase
     #[Test]
     public function participantes_summary_retorna_estructura_completa(): void
     {
+        $this->actingAs($this->admin);
         [$res, $ms] = $this->timedGet('/api/statistics/participantes-summary');
 
         $res->assertOk()->assertJsonStructure([
@@ -254,6 +261,7 @@ class StatisticsPerformanceTest extends TestCase
     #[Test]
     public function asistencias_summary_acepta_filtros_de_fecha(): void
     {
+        $this->actingAs($this->admin);
         $dateFrom = now()->subMonths(3)->format('Y-m-d');
         $dateTo   = now()->format('Y-m-d');
 
@@ -273,6 +281,7 @@ class StatisticsPerformanceTest extends TestCase
     #[Test]
     public function participantes_summary_acepta_filtros_de_fecha(): void
     {
+        $this->actingAs($this->admin);
         $dateFrom = now()->subMonths(3)->format('Y-m-d');
         $dateTo   = now()->format('Y-m-d');
 
@@ -292,6 +301,7 @@ class StatisticsPerformanceTest extends TestCase
     #[Test]
     public function summary_es_mas_rapido_que_llamadas_individuales_equivalentes(): void
     {
+        $this->actingAs($this->admin);
         // Mide las N llamadas individuales que equivalen al summary de asistencias
         $endpoints = [
             '/api/statistics/total-events',
@@ -328,6 +338,7 @@ class StatisticsPerformanceTest extends TestCase
     #[Test]
     public function summary_respeta_filtro_por_event_ids(): void
     {
+        $this->actingAs($this->admin);
         $eventId = Event::first()->id;
 
         [$res] = $this->timedGet(

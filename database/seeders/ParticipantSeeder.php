@@ -10,7 +10,7 @@ use App\Models\Program;
 class ParticipantSeeder extends Seeder
 {
     // Constantes configurables
-    private const BATCH_SIZE = 500; // Tamaño del lote para inserciones masivas
+    private const BATCH_SIZE = 500; // TamaÃ±o del lote para inserciones masivas
 
     public function run(): void
     {
@@ -40,7 +40,7 @@ class ParticipantSeeder extends Seeder
             // Separar el nombre del programa y la sede
             [$programName, $campus] = array_map('trim', explode(' - ', $programName) + [null, null]);
 
-            // Convertir a minúsculas para la comparación
+            // Convertir a minÃºsculas para la comparaciÃ³n
             $programKey = strtolower($programName) . '|' . strtolower($campus);
 
             $participantsToInsert[] = [
@@ -50,6 +50,9 @@ class ParticipantSeeder extends Seeder
                 'email'       => $email,
                 'role'        => $roleName,
                 'affiliation' => ($affiliationType !== 0 && $affiliationType !== '0') ? $affiliationType : null,
+                // agregar sexo y grupo_priorizado aleatoriamente para pruebas
+                'sexo' => ['Masculino', 'Femenino', 'Otro'][array_rand(['Masculino', 'Femenino', 'Otro'])],
+                'grupo_priorizado' => ['Ninguno', 'Población Vulnerable', 'Población Indígena', 'Población Afrodescendiente'][array_rand(['Ninguno', 'Población Vulnerable', 'Población Indígena', 'Población Afrodescendiente'])],
                 'program_id'  => $programHash[$programKey] ?? null,
                 'created_at'  => now(),
                 'updated_at'  => now(),
