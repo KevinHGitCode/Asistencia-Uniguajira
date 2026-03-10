@@ -10,7 +10,7 @@
 <x-layouts.app :title="__('Dashboard')">
     @include('calendar.modal')
     
-    <div class="flex h-full w-full flex-1 flex-col gap-6 p-1 sm:p-4 md:p-6">
+    <div class="flex h-full w-full flex-1 flex-col gap-5 p-1 sm:p-2 md:px-4 md:py-2">
         <!-- Header de bienvenida -->
         <div class="mb-2">
             <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
@@ -22,18 +22,18 @@
         </div>
 
         <!-- Cards de estadísticas -->
-        <div class="text-center grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 md:gap-6">
+        <div class="text-center grid grid-cols-2 gap-3 sm:gap-3 md:grid-cols-3 md:gap-5">
             <!-- Primera card -->
             <livewire:card-stat title="Eventos creados" :value="$eventosCount">
                 <x-slot name="icon">
-                    <flux:icon.calendar-check class="size-8" />
+                    <flux:icon.calendar-check class="size-7" />
                 </x-slot>
             </livewire:card-stat>
 
             <!-- Segunda card -->
             <livewire:card-stat title="Asistencias totales" :value="$asistenciasCount">
                 <x-slot name="icon">
-                    <flux:icon.list-checks class="size-8" />
+                    <flux:icon.list-checks class="size-7" />
                 </x-slot>
             </livewire:card-stat>
 
@@ -41,7 +41,7 @@
             <div class="col-span-2 md:col-span-1">
                 <livewire:card-stat title="Participantes totales" :value="$participantesCount">
                     <x-slot name="icon">
-                        <flux:icon.users class="size-8" />
+                        <flux:icon.users class="size-7" />
                     </x-slot>
                 </livewire:card-stat>
             </div>
@@ -50,7 +50,7 @@
         <!-- Contenedor del calendario -->
         <div class="relative border border-neutral-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-2xl shadow-md overflow-hidden">
             <!-- Header del calendario -->
-            <div class="px-4 sm:px-6 py-4 border-b border-neutral-200 dark:border-neutral-700 bg-zinc-50 dark:bg-zinc-900 text-center">
+            <div class="px-3 sm:px-6 py-3 border-b border-neutral-200 dark:border-neutral-700 bg-zinc-50 dark:bg-zinc-900 text-center">
                 <h2 class="flex items-center justify-center gap-2 text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
                     <flux:icon.calendar-check class="size-6 text-[#e2a542]" />
                     <span>Calendario Semestral de Eventos</span>
@@ -62,27 +62,27 @@
             </div>
 
             <!-- Contenedor con scroll -->
-            <div class="relative overflow-x-auto overflow-y-hidden px-3 sm:px-6 py-6 sm:py-8 bg-white dark:bg-zinc-800 border dark:border-neutral-700" style="scroll-behavior: smooth;">
+            <div class="relative overflow-x-auto overflow-y-hidden px-3 sm:px-5 py-5 sm:py-6 bg-white dark:bg-zinc-800 border dark:border-neutral-700" style="scroll-behavior: smooth;">
                 <div class="flex justify-center min-w-max" id="cal-heatmap"></div>
             </div>
 
             <!-- Leyenda -->
             <div class="px-4 sm:px-6 py-4 border-t border-neutral-200 dark:border-neutral-700 bg-zinc-50 dark:bg-zinc-900">
-                <div class="flex items-center justify-center gap-4 sm:gap-8 flex-wrap">
+                <div class="flex items-center justify-center gap-4 sm:gap-7 flex-wrap">
                     <!-- Tus eventos -->
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-1">
                         <div class="w-4 h-4 rounded-sm bg-[#cc5e50]"></div>
                         <span class="text-xs sm:text-sm text-gray-900 dark:text-gray-300">Tus eventos</span>
                     </div>
 
                     <!-- Hoy -->
-                    <div class="flex items-center gap-2 today-indicator">
+                    <div class="flex items-center gap-1 today-indicator">
                         <div class="w-4 h-4 rounded-sm bg-[#e2a542]"></div>
                         <span class="text-xs sm:text-sm text-gray-900 dark:text-gray-300">Hoy</span>
                     </div>
 
                     <!-- Eventos de otros -->
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-1">
                         <div class="w-4 h-4 rounded-sm bg-[#62a9b6]"></div>
                         <span class="text-xs sm:text-sm text-gray-900 dark:text-gray-300">Eventos de otros</span>
                     </div>
