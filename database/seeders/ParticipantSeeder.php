@@ -52,7 +52,7 @@ class ParticipantSeeder extends Seeder
                 'affiliation' => ($affiliationType !== 0 && $affiliationType !== '0') ? $affiliationType : null,
                 // agregar sexo y grupo_priorizado aleatoriamente para pruebas
                 'sexo' => ['Masculino', 'Femenino', 'Otro'][array_rand(['Masculino', 'Femenino', 'Otro'])],
-                'grupo_priorizado' => ['Ninguno', 'Población Vulnerable', 'Población Indígena', 'Población Afrodescendiente'][array_rand(['Ninguno', 'Población Vulnerable', 'Población Indígena', 'Población Afrodescendiente'])],
+                'grupo_priorizado' => ['Ninguno', 'Indígena', 'Afrodescendiente', 'Discapacitado', 'Víctima de Conflicto Armado', 'Comunidad LGTBQ+', 'Habitante de Frontera'][array_rand(['Ninguno', 'Indígena', 'Afrodescendiente', 'Discapacitado', 'Víctima de Conflicto Armado', 'Comunidad LGTBQ+', 'Habitante de Frontera'])],
                 'program_id'  => $programHash[$programKey] ?? null,
                 'created_at'  => now(),
                 'updated_at'  => now(),

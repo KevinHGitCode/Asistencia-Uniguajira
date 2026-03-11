@@ -73,10 +73,33 @@ class AttendancePdfService
                 );
             }
 
-            if (isset($header['date'])) {
+            if (isset($header['date_day']) && is_array($cfg['date_format'])) {
+                $date = Carbon::parse($event->date);
+
+                $pdf->SetXY($header['date_day']['x'], $header['date_day']['y']);
+                $pdf->Cell(0, 8, $date->format($cfg['date_format']['day']), 0, 0, 'L');
+
+                $pdf->SetXY($header['date_month']['x'], $header['date_month']['y']);
+                $pdf->Cell(0, 8,
+                    $this->toIso($date->translatedFormat($cfg['date_format']['month'])),
+                    0, 0, 'L'
+                );
+
+                $pdf->SetXY($header['date_year']['x'], $header['date_year']['y']);
+                $pdf->Cell(0, 8, $date->format($cfg['date_format']['year']), 0, 0, 'L');
+
+            } elseif (isset($header['date'])) {
                 $pdf->SetXY($header['date']['x'], $header['date']['y']);
                 $pdf->Cell(0, 8,
                     $this->toIso(Carbon::parse($event->date)->format($cfg['date_format'])),
+                    0, 0, 'L'
+                );
+            }
+
+            if (isset($header['responsible'])) {
+                $pdf->SetXY($header['responsible']['x'], $header['responsible']['y']);
+                $pdf->Cell(0, 8,
+                    $this->toIso($event->user->name ?? ''),
                     0, 0, 'L'
                 );
             }
@@ -167,23 +190,27 @@ class AttendancePdfService
 
             // === Gender ===
             if (isset($cols['gender'])) {
-                $gender = $p->gender ?? '';
+                $gender = $p->sexo ?? '';
                 if (isset($cols['gender'][$gender])) {
-                    $pdf->SetXY($cols['gender'][$gender]['x'], $y);
+                    $gx = $cols['gender'][$gender]['x'];
+                    $gy = $y + ($cols['gender'][$gender]['y_offset'] ?? 0);
+                    $pdf->SetXY($gx, $gy);
                     $pdf->Write(0, 'X');
                 }
             }
 
             // === Priority Group ===
             if (isset($cols['priority_group'])) {
-                $groups = is_array($p->priority_group)
-                    ? $p->priority_group
-                    : explode(',', $p->priority_group ?? '');
+                $groups = is_array($p->grupo_priorizado)
+                    ? $p->grupo_priorizado
+                    : explode(',', $p->grupo_priorizado ?? '');
 
                 foreach ($groups as $g) {
                     $g = trim($g);
                     if (isset($cols['priority_group'][$g])) {
-                        $pdf->SetXY($cols['priority_group'][$g]['x'], $y);
+                        $gx = $cols['priority_group'][$g]['x'];
+                        $gy = $y + ($cols['priority_group'][$g]['y_offset'] ?? 0);
+                        $pdf->SetXY($gx, $gy);
                         $pdf->Write(0, 'X');
                     }
                 }

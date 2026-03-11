@@ -197,8 +197,8 @@ class EventController extends Controller
 
     public function descargarAsistencia($id, AttendancePdfService $pdfService)
     {
-        $evento = Event::with('asistencias.participant.program', 'dependency', 'area')->findOrFail($id);
-        $pdfContent = $pdfService->generatePdf($evento); // ya es string
+        $evento = Event::with('asistencias.participant.program', 'dependency', 'area', 'user')->findOrFail($id);
+        $pdfContent = $pdfService->generatePdf($evento);
 
         $nombreArchivo = "Asistencia_".str_replace(' ', '_', $evento->title)."_".\Carbon\Carbon::parse($evento->date)->format('Y-m-d').".pdf";
 
