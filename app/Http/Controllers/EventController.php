@@ -181,7 +181,16 @@ class EventController extends Controller
 
     public function getByDate($date)
     {
-        $events = Event::whereDate('date', $date)->get();
+        $events = Event::with(['dependency:id,name', 'area:id,name', 'user:id,name'])
+            ->whereDate('date', $date)
+            ->get()
+            ->map(function ($e) {
+                $e->dependency_name = $e->dependency?->name;
+                $e->area_name       = $e->area?->name;
+                $e->creator_name    = $e->user?->name;
+                return $e;
+            });
+
         return response()->json($events);
     }
 

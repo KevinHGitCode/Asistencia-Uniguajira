@@ -5,7 +5,7 @@
         class="modal-content bg-zinc-50 dark:bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-3xl mx-4 max-h-[90vh] flex flex-col animate-fadeIn overflow-hidden">
 
         <!-- Header -->
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 sm:p-6 bg-gray-50/80 dark:bg-neutral-800/40"
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 sm:p-6 bg-zinc-50 dark:bg-zinc-900"
             x-data="{ canCreate: false }"
             @calendar-modal-opened.window="
                 const selected = new Date($event.detail.date + 'T00:00:00');
@@ -63,7 +63,7 @@
         </div>
 
         <!-- Footer -->
-        <div class="flex justify-between items-center p-6 bg-gray-50/80 dark:bg-neutral-800/40">
+        <div class="flex justify-between items-center p-6 bg-zinc-50 dark:bg-zinc-900">
             <div class="text-sm text-gray-600 dark:text-gray-300">
                 <span id="eventCount">0 eventos</span>
             </div>

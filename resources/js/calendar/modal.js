@@ -32,20 +32,77 @@ export function openModal(fecha, eventos) {
         const userDependencyId = document.querySelector('meta[name="user-dependency-id"]')?.content;
         const userId = document.querySelector('meta[name="user-id"]')?.content;
         const userRole = document.querySelector('meta[name="user-role"]')?.content;
+        const isAdmin = userRole === 'admin';
         
+        // Helper para formatear hora a 12h
+        const formatTo12h = (time) => {
+            if (!time) return 'No definido';
+            const [h, m] = time.split(':').map(Number);
+            const suffix = h >= 12 ? 'PM' : 'AM';
+            const hour12 = h % 12 || 12;
+            return `${hour12}:${String(m).padStart(2, '0')} ${suffix}`;
+        };
+
         modalContent.innerHTML = eventos.map(e => {
             const isOwnEvent = e.user_id && userId && e.user_id.toString() === userId.toString();
             const isSameDependency = e.dependency_id && userDependencyId && 
                                      e.dependency_id.toString() === userDependencyId.toString();
             
-            const isClickable = userRole === 'admin' || isOwnEvent || isSameDependency;
+            const isClickable = isAdmin || isOwnEvent || isSameDependency;
             const clickableClass = isClickable
                 ? 'cursor-pointer hover:shadow-xl hover:scale-[1.02] transition-all duration-200' 
                 : 'cursor-default';
             const dataAttr = isClickable ? `data-event-id="${e.id}"` : '';
             
+            // Construir badges de metadata (dependencia, área, creador)
+            const metaBadges = [];
+
+            // Badge de dependencia
+            if (e.dependency_name) {
+                metaBadges.push(`
+                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium
+                                 bg-[#cc5e50] text-white">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"/>
+                        </svg>
+                        ${e.dependency_name}
+                    </span>
+                `);
+            }
+
+            // Badge de área
+            if (e.area_name) {
+                metaBadges.push(`
+                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium
+                                 bg-[#62a9b6] text-white">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/>
+                        </svg>
+                        ${e.area_name}
+                    </span>
+                `);
+            }
+
+            // Badge de creador (solo visible para admin)
+            if (isAdmin && e.creator_name) {
+                metaBadges.push(`
+                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium
+                                 bg-[#e2a542] text-white">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                        </svg>
+                        Creado por: ${e.creator_name}
+                    </span>
+                `);
+            }
+
+            const metaBadgesHtml = metaBadges.length > 0
+                ? `<div class="flex flex-wrap gap-2 mb-2">${metaBadges.join('')}</div>`
+                : '';
+
             return `
-                <div class="p-4 mb-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800 shadow-lg ${clickableClass}" ${dataAttr}>
+                <div class="p-4 mb-4 rounded-2xl bg-white dark:bg-zinc-800 shadow-lg ${clickableClass}" ${dataAttr}>
                     
                     <!-- Encabezado: título y botón "Ver" -->
                     <div class="flex justify-between items-start mb-1">
@@ -72,13 +129,16 @@ export function openModal(fecha, eventos) {
                         </div>
                     ` : ''}
 
+                    <!-- Badges: Dependencia, Área, Creador -->
+                    ${metaBadgesHtml}
+
                     <!-- Descripción -->
                     <p class="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
                         ${e.description ?? '<em class="text-gray-400">Sin descripción</em>'}
                     </p>
 
                     <!-- Hora y ubicación -->
-                    <div class="mt-3 text-sm text-gray-600 dark:text-gray-400">🕗 ${e.start_time ?? 'No definido'}</div>
+                    <div class="mt-3 text-sm text-gray-600 dark:text-gray-400">🕗 ${formatTo12h(e.start_time)}</div>
                     <div class="mt-1 text-sm text-gray-600 dark:text-gray-400">📌 ${e.location ?? 'Ubicación no definida'}</div>
                 </div>
             `;
