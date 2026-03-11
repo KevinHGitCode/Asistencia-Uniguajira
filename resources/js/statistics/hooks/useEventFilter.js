@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 
 /**
  * Hook para seleccionar eventos específicos dentro del período de fechas.
@@ -107,10 +107,22 @@ export function useEventFilter(filters) {
   //  - null  → sin parámetro eventIds (todos)
   //  - []    → sin resultados (ninguno seleccionado)
   //  - [id…] → solo esos
-  const effectiveEventIds = isFiltered ? [...selectedIds] : null;
+  //
+  // IMPORTANTE: useMemo garantiza referencia estable entre renders para que
+  // el useEffect de los Apps no se dispare en bucle infinito.
+  const effectiveEventIds = useMemo(
+    () => isFiltered ? [...selectedIds].sort((a, b) => a - b) : null,
+    // selectedIds cambia de referencia solo cuando toggle/clearAll crean un nuevo Set
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [isFiltered, selectedIds],
+  );
 
-  // Para el panel: qué IDs están chequeados
-  const checkedIds = isFiltered ? selectedIds : new Set(events.map(e => e.id));
+  // Para el panel: qué IDs están chequeados (memoizado para evitar re-renders innecesarios)
+  const checkedIds = useMemo(
+    () => isFiltered ? selectedIds : new Set(events.map(e => e.id)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [isFiltered, selectedIds, events],
+  );
 
   return {
     events,
