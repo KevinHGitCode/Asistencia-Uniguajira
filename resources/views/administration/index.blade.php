@@ -67,6 +67,29 @@
                 <div class="absolute bottom-0 left-0 w-0 h-0.5 rounded-b-xl bg-[#62a9b6] group-hover:w-full transition-all duration-300"></div>
             </a>
 
+            {{-- Card: Formatos --}}
+            <a href="{{ route('formats.index') }}"
+            class="group relative flex flex-col gap-4 p-5 sm:p-6 rounded-2xl border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 overflow-hidden">
+
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center justify-center w-12 h-12 rounded-lg group-hover:scale-110 transition-transform duration-200">
+                        <flux:icon name="document-text" class="size-16 text-[#e2a542]" />
+                    </div>
+                    <flux:icon.chevron-right class="size-5 text-gray-400 dark:text-gray-500 group-hover:translate-x-1 transition-transform duration-200" />
+                </div>
+
+                <div>
+                    <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-1">
+                        Formatos
+                    </h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                        Gestiona los formatos de asistencia y asígnalos a dependencias.
+                    </p>
+                </div>
+
+                <div class="absolute bottom-0 left-0 w-0 h-0.5 rounded-b-xl bg-[#e2a542] group-hover:w-full transition-all duration-300"></div>
+            </a>
+
             {{-- Card placeholder: Próximamente --}}
             <div class="relative flex flex-col gap-4 p-5 sm:p-6 rounded-2xl border border-dashed border-neutral-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900/50 opacity-60 cursor-not-allowed">
 
@@ -107,6 +130,10 @@
                     <div class="flex items-start gap-3">
                         <flux:icon.information-circle class="size-5 text-[#62a9b6] mt-0.5 shrink-0" />
                         <span>Las <strong class="text-gray-800 dark:text-gray-200">áreas</strong> se agrupan dentro de una dependencia para organizar mejor los participantes.</span>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <flux:icon.information-circle class="size-5 text-[#e2a542] mt-0.5 shrink-0" />
+                        <span>Los <strong class="text-gray-800 dark:text-gray-200">formatos</strong> definen la plantilla PDF de asistencia que se usa al descargar, y se pueden asignar a una o más dependencias.</span>
                     </div>
                 </div>
             </div>

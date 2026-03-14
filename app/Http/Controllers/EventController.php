@@ -101,12 +101,11 @@ class EventController extends Controller
         /** @var User $user */
         $user = Auth::user();
 
-        $event = Event::with(['dependency', 'area', 'user'])
+        $event = Event::with(['dependency.formats', 'area', 'user'])
             ->findOrFail($id);
 
         $asistenciasCount = Attendance::where('event_id', $event->id)->count();
 
-        // ✔ Verificar si pertenece a la dependencia del evento
         $perteneceDependencia = $user->dependencies()
             ->where('dependencies.id', $event->dependency_id)
             ->exists();
@@ -194,14 +193,25 @@ class EventController extends Controller
         return response()->json($events);
     }
 
-    public function descargarAsistencia($id, $formatSlug, AttendancePdfService $pdfService)
+    public function descargarAsistencia($id, $formatSlug = null, AttendancePdfService $pdfService)
     {
         $evento = Event::with('asistencias.participant.program', 'dependency.formats', 'area', 'user')->findOrFail($id);
 
-        $format = $evento->dependency->formats()->where('slug', $formatSlug)->first();
+        $formats = $evento->dependency->formats ?? collect();
 
-        if (!$format) {
-            abort(403, 'Esta dependencia no tiene acceso a este formato');
+        // Si no tiene formatos asignados, usa general
+        if ($formats->isEmpty()) {
+            $formatSlug = 'general';
+        }
+
+        // Si no se pasó slug, usa general
+        if (!$formatSlug) {
+            $formatSlug = 'general';
+        }
+
+        // Validar acceso solo si tiene formatos asignados
+        if ($formats->isNotEmpty() && !$formats->contains('slug', $formatSlug) && $formatSlug !== 'general') {
+            abort(403, 'Esta dependencia no tiene acceso a este formato.');
         }
 
         $pdfContent = $pdfService->generatePdf($evento, $formatSlug);

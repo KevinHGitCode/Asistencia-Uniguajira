@@ -98,4 +98,67 @@ return [
         ],
         'time_format' => 'H:i',
     ],
+
+    'proyeccion_social' => [
+        'file' => 'LISTADO_DE_ASISTENCIA_PROYECCION_SOCIAL_REVISION_5.pdf',
+        'startY' => 62,
+        'rowHeight' => 7,
+        'maxRows' => 16,
+        'header' => [
+            'title'      => ['x' => 175, 'y' => 32.5],
+            'date_day'   => ['x' => 90, 'y' => 31.5],
+            'date_month' => ['x' => 98, 'y' => 31.5],
+            'date_year'  => ['x' => 120, 'y' => 31.5],
+        ],
+        'columns' => [
+            'name'           => ['x' => 47.5, 'w' => 55, 'h' => 7, 'align' => 'L', 'limit' => 30, 'fontSize' => 10],
+            'identification' => ['x' => 112.5, 'w' => 25, 'h' => 7, 'align' => 'C', 'limit' => 15, 'fontSize' => 12],
+            'email'          => ['x' => 198.5, 'w' => 34, 'align' => 'L', 'limit' => 20, 'fontSize' => 9],
+            'program'        => ['x' => 228, 'w' => 35, 'h' => 7, 'align' => 'L', 'limit' => 30, 'fontSize' => 9],
+            'role' => [
+                'Docente'               => ['x' => 278.75, 'y_offset' => 4.5],
+                'Administrativo'        => ['x' => 290.25, 'y_offset' => 4.5],
+                'Estudiante'            => ['x' => 302.25, 'y_offset' => 4.5],
+                'Graduado'              => ['x' => 314, 'y_offset' => 4.5],
+                'Comunidad Externa'     => ['x' => 328.5, 'y_offset' => 4.5],
+            ],
+            'gender' => [
+                'Femenino'  => ['x' => 97.7, 'y_offset' => 4.5],
+                'Masculino' => ['x' => 104.7, 'y_offset' => 4.5],
+            ],
+        ],
+        'date_format' => [
+            'day'   => 'd',
+            'month' => 'F',
+            'year'  => 'Y',
+        ],
+        'time_format' => 'H:i',
+    ],
+
+    'capacitacion_externa' => [
+        'file' => 'LISTADO_DE_ASISTENCIA_CAPACITACION_EXTERNA_PROYECCION_SOCIAL_REVISION_7.pdf',
+        'startY' => 48.5,
+        'rowHeight' => 5.05,
+        'maxRows' => 26,
+        'header' => [
+            'title'      => ['x' => 60, 'y' => 31.5],
+            'date_day'   => ['x' => 162, 'y' => 31.5, 'fontSize' => 10],
+            'date_month' => ['x' => 168, 'y' => 31.5, 'fontSize' => 10],
+            'date_year'  => ['x' => 186, 'y' => 31.5, 'fontSize' => 10],
+        ],
+        'columns' => [
+            'number'            => ['x' => 16, 'w' => 12, 'align' => 'C', 'fontSize' => 10],
+            'name'              => ['x' => 27.5, 'w' => 55, 'h' => 7, 'align' => 'L', 'limit' => 30, 'fontSize' => 10],
+            // 'phone' => ['x' => 112.5, 'w' => 25, 'h' => 7, 'align' => 'C', 'limit' => 15, 'fontSize' => 12],
+            'email'             => ['x' => 140, 'w' => 34, 'align' => 'L', 'limit' => 35, 'fontSize' => 9],
+            'role'              => ['x' => 195, 'w' => 28, 'align' => 'L', 'limit' => 13, 'fontSize' => 10],
+            'time'              => ['x' => 235, 'w' => 20, 'align' => 'C', 'fontSize' => 10],
+        ],
+        'date_format' => [
+            'day'   => 'd',
+            'month' => 'F',
+            'year'  => 'Y',
+        ],
+        'time_format' => 'h:i A',
+    ],
 ];
