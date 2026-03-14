@@ -32,4 +32,12 @@ class Attendance extends Model
     {
         return $this->belongsTo(Event::class, 'event_id');
     }
+
+    /**
+     * Detalle adicional de la asistencia (género, teléfono, dirección, grupo priorizado)
+     */
+    public function detail()
+    {
+        return $this->hasOne(AttendanceDetail::class);
+    }
 }
