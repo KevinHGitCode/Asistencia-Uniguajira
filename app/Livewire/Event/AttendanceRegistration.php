@@ -28,7 +28,7 @@ class AttendanceRegistration extends Component
     public string $activeTab = 'asistencia';
 
     // ── Estado del flujo de asistencia ────────────────────────────────────────
-    // 'search' | 'not_found' | 'found' | 'details' | 'duplicate' | 'success'
+    // 'search' | 'register_external' | 'found' | 'details' | 'duplicate' | 'success'
 
     public string $step = 'search';
 
@@ -54,7 +54,13 @@ class AttendanceRegistration extends Component
     public string $detailDireccion       = '';
     public string $detailGrupoPriorizado = '';
 
-    // ── Formulario de nuevo participante ──────────────────────────────────────
+    // ── Campos del registro rápido como Comunidad Externa ────────────────────
+
+    public string $externalFirstName = '';
+    public string $externalLastName  = '';
+    public string $externalEmail     = '';
+
+    // ── Formulario de nuevo participante (tab) ────────────────────────────────
 
     public string $newDocument        = '';
     public string $newFirstName       = '';
@@ -71,6 +77,14 @@ class AttendanceRegistration extends Component
     public array $programs = [];
 
     // ── Opciones de selección ─────────────────────────────────────────────────
+
+    public const ROLES = [
+        'Estudiante',
+        'Docente',
+        'Administrativo',
+        'Graduado',
+        'Comunidad Externa',
+    ];
 
     public const SEXO_OPCIONES = [
         'Masculino',
@@ -134,7 +148,7 @@ class AttendanceRegistration extends Component
 
     /**
      * Paso 1: buscar al participante por número de documento.
-     * Transitions: search → found | not_found | duplicate
+     * Transitions: search → found | register_external | duplicate
      */
     public function search(): void
     {
@@ -151,7 +165,8 @@ class AttendanceRegistration extends Component
             ->first();
 
         if (! $participant) {
-            $this->step = 'not_found';
+            // No encontrado → registrar como Comunidad Externa
+            $this->step = 'register_external';
             return;
         }
 
@@ -177,6 +192,59 @@ class AttendanceRegistration extends Component
         }
 
         $this->step = 'found';
+    }
+
+    /**
+     * Registra rápidamente a alguien como Comunidad Externa y continúa al flujo normal.
+     * Transitions: register_external → details
+     */
+    public function registerExternal(): void
+    {
+        $this->validate(
+            [
+                'externalFirstName' => 'required|string|max:100',
+                'externalLastName'  => 'required|string|max:100',
+                'externalEmail'     => 'nullable|email|max:255|unique:participants,email',
+            ],
+            [
+                'externalFirstName.required' => 'El nombre es obligatorio.',
+                'externalLastName.required'  => 'El apellido es obligatorio.',
+                'externalEmail.email'        => 'Ingresa un correo electrónico válido.',
+                'externalEmail.unique'       => 'Este correo ya está registrado en el sistema.',
+            ]
+        );
+
+        try {
+            $participant = Participant::create([
+                'document'   => trim($this->identification),
+                'first_name' => trim($this->externalFirstName),
+                'last_name'  => trim($this->externalLastName),
+                'email'      => $this->externalEmail ?: null,
+                'role'       => 'Comunidad Externa',
+            ]);
+
+            $this->participantData = [
+                'id'          => $participant->id,
+                'first_name'  => $participant->first_name,
+                'last_name'   => $participant->last_name,
+                'document'    => $participant->document,
+                'email'       => $participant->email,
+                'role'        => $participant->role,
+                'affiliation' => null,
+                'program'     => null,
+            ];
+
+            $this->externalFirstName = '';
+            $this->externalLastName  = '';
+            $this->externalEmail     = '';
+
+            $this->loadLastDefaults();
+            $this->step = 'details';
+
+        } catch (\Exception $e) {
+            Log::error('AttendanceRegistration::registerExternal – ' . $e->getMessage());
+            $this->addError('externalFirstName', 'Ocurrió un error al registrar. Intenta de nuevo.');
+        }
     }
 
     /**
@@ -280,10 +348,15 @@ class AttendanceRegistration extends Component
         $this->detailDireccion       = '';
         $this->detailGrupoPriorizado = '';
 
+        // Limpiar campos externos
+        $this->externalFirstName = '';
+        $this->externalLastName  = '';
+        $this->externalEmail     = '';
+
         $this->resetValidation();
     }
 
-    // ── Registro de nuevo participante ────────────────────────────────────────
+    // ── Registro de nuevo participante (tab) ──────────────────────────────────
 
     public function registerParticipant(): void
     {
@@ -293,7 +366,7 @@ class AttendanceRegistration extends Component
                 'newFirstName'       => 'required|string|max:100',
                 'newLastName'        => 'required|string|max:100',
                 'newEmail'           => 'nullable|email|max:255|unique:participants,email',
-                'newRole'            => 'required|in:Estudiante,Docente',
+                'newRole'            => 'required|in:Estudiante,Docente,Administrativo,Graduado,Comunidad Externa',
                 'newAffiliation'     => 'nullable|in:Catedratico,Ocasional,Planta',
                 'newProgramId'       => 'nullable|exists:programs,id',
                 'newSexo'            => 'nullable|string|max:50',
@@ -349,8 +422,8 @@ class AttendanceRegistration extends Component
             return;
         }
 
-        $this->detailSexo            = $lastDetail->sexo            ?? '';
-        $this->detailTelefono        = $lastDetail->telefono        ?? '';
+        $this->detailSexo            = $lastDetail->sexo             ?? '';
+        $this->detailTelefono        = $lastDetail->telefono         ?? '';
         $this->detailGrupoPriorizado = $lastDetail->grupo_priorizado ?? '';
 
         if ($lastDetail->address) {

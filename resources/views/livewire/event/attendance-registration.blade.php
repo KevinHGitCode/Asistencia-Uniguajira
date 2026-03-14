@@ -157,62 +157,135 @@
         @endif
 
         {{-- ─────────────────────────────────────────────────────────────
-             STEP: not_found
+             STEP: register_external
+             Documento no encontrado → capturar nombre y registrar
+             como Comunidad Externa, luego continúa al step 'details'
         ──────────────────────────────────────────────────────────────── --}}
-        @if ($step === 'not_found')
+        @if ($step === 'register_external')
+            @php
+                $inputCls2 = 'w-full rounded-xl border border-neutral-300 bg-white px-3.5 py-2.5
+                              text-sm text-gray-900 placeholder-gray-400 transition
+                              focus:border-[#62a9b6] focus:outline-none focus:ring-2 focus:ring-[#62a9b6]/25
+                              dark:border-zinc-600 dark:bg-zinc-700 dark:text-gray-100
+                              dark:placeholder-zinc-500 dark:focus:border-[#62a9b6]';
+                $labelCls2 = 'mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400';
+                $errCls2   = 'mt-1 flex items-center gap-1 text-xs text-red-500 dark:text-red-400';
+            @endphp
+
             <div wire:transition
-                 class="rounded-2xl border border-red-200 bg-white shadow-sm
-                        dark:border-red-900/40 dark:bg-zinc-800">
-                <div class="px-6 py-10 text-center">
+                 class="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm
+                        dark:border-zinc-700 dark:bg-zinc-800">
 
-                    <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center
-                                rounded-full bg-red-50 dark:bg-red-900/20">
-                        <svg class="h-8 w-8 text-red-500 dark:text-red-400"
-                             fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                  d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z"/>
-                        </svg>
+                {{-- Banner informativo --}}
+                <div class="flex items-start gap-3 px-5 py-3.5 text-white"
+                     style="background: linear-gradient(90deg, #62a9b6 0%, #4d94a0 100%)">
+                    <svg class="mt-0.5 h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24"
+                         stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z"/>
+                    </svg>
+                    <div>
+                        <p class="text-xs font-bold leading-tight">Documento no registrado</p>
+                        <p class="mt-0.5 text-[11px] text-white/90">
+                            Doc. <strong>{{ $identification }}</strong> — se registrará como
+                            <strong>Comunidad Externa</strong>
+                        </p>
                     </div>
+                </div>
 
-                    <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100">Documento no encontrado</h2>
-                    <p class="mt-2 text-sm text-gray-500 dark:text-zinc-400">
-                        El número
-                        <span class="font-semibold text-gray-700 dark:text-gray-200">{{ $identification }}</span>
-                        no está registrado en el sistema.
-                    </p>
-                    <p class="mt-1 text-xs text-gray-400 dark:text-zinc-500">
-                        Verifica que lo hayas escrito correctamente o regístrate como participante.
+                <div class="px-5 py-4">
+                    <p class="mb-3 text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-zinc-500">
+                        Datos de la persona
                     </p>
 
-                    <div class="mt-7 flex flex-col gap-2.5">
-                        <button
-                            wire:click="backToSearch"
-                            type="button"
-                            class="inline-flex items-center justify-center gap-2 rounded-xl border border-neutral-300
-                                   bg-white px-6 py-3 text-sm font-semibold text-gray-700
-                                   transition hover:bg-gray-50 active:scale-[.98]
-                                   dark:border-zinc-600 dark:bg-zinc-700 dark:text-gray-200 dark:hover:bg-zinc-600">
+                    <div class="space-y-3">
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="{{ $labelCls2 }}">
+                                    Nombre <span class="text-red-400">*</span>
+                                </label>
+                                <input
+                                    wire:model="externalFirstName"
+                                    type="text"
+                                    placeholder="Ej: Ana"
+                                    class="{{ $inputCls2 }} {{ $errors->has('externalFirstName') ? 'border-red-400 focus:ring-red-300/40' : '' }}"
+                                />
+                                @error('externalFirstName')
+                                    <p class="{{ $errCls2 }}">{{ $message }}</p>
+                                @enderror
+                            </div>
+                            <div>
+                                <label class="{{ $labelCls2 }}">
+                                    Apellido <span class="text-red-400">*</span>
+                                </label>
+                                <input
+                                    wire:model="externalLastName"
+                                    type="text"
+                                    placeholder="Ej: García"
+                                    class="{{ $inputCls2 }} {{ $errors->has('externalLastName') ? 'border-red-400 focus:ring-red-300/40' : '' }}"
+                                />
+                                @error('externalLastName')
+                                    <p class="{{ $errCls2 }}">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="{{ $labelCls2 }}">Correo electrónico</label>
+                            <input
+                                wire:model="externalEmail"
+                                type="email"
+                                inputmode="email"
+                                placeholder="Opcional"
+                                class="{{ $inputCls2 }} {{ $errors->has('externalEmail') ? 'border-red-400 focus:ring-red-300/40' : '' }}"
+                            />
+                            @error('externalEmail')
+                                <p class="{{ $errCls2 }}">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-2.5 border-t border-gray-100 px-5 py-4 dark:border-zinc-700">
+                    <button
+                        wire:click="registerExternal"
+                        wire:loading.attr="disabled"
+                        wire:target="registerExternal"
+                        type="button"
+                        class="w-full rounded-xl py-3.5 px-6 text-base font-bold text-white shadow
+                               transition-all duration-200 hover:opacity-90 active:scale-[.98]
+                               disabled:cursor-not-allowed disabled:opacity-60"
+                        style="background: linear-gradient(90deg, #62a9b6 0%, #4d94a0 100%)">
+                        <span wire:loading.remove wire:target="registerExternal"
+                              class="flex items-center justify-center gap-2">
                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24"
                                  stroke="currentColor" stroke-width="2.5">
                                 <path stroke-linecap="round" stroke-linejoin="round"
-                                      d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"/>
+                                      d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/>
                             </svg>
-                            Intentar de nuevo
-                        </button>
-                        <button
-                            wire:click="switchTab('participante')"
-                            type="button"
-                            class="inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3
-                                   text-sm font-semibold text-white transition hover:opacity-90 active:scale-[.98]"
-                            style="background: linear-gradient(90deg, #62a9b6 0%, #4d94a0 100%)">
-                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                                 stroke="currentColor" stroke-width="2.2">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                      d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z"/>
+                            Continuar y registrar asistencia
+                        </span>
+                        <span wire:loading wire:target="registerExternal"
+                              class="flex items-center justify-center gap-2">
+                            <svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10"
+                                        stroke="currentColor" stroke-width="4"/>
+                                <path class="opacity-75" fill="currentColor"
+                                      d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z"/>
                             </svg>
-                            Registrarme como participante
-                        </button>
-                    </div>
+                            Registrando…
+                        </span>
+                    </button>
+
+                    <button
+                        wire:click="backToSearch"
+                        type="button"
+                        class="w-full rounded-xl border border-neutral-300 bg-white py-3 px-6
+                               text-sm font-semibold text-gray-600 transition
+                               hover:bg-gray-50 active:scale-[.98]
+                               dark:border-zinc-600 dark:bg-zinc-700 dark:text-gray-300 dark:hover:bg-zinc-600">
+                        ← Verificar documento de nuevo
+                    </button>
                 </div>
             </div>
         @endif
@@ -779,13 +852,14 @@
                     {{-- Rol --}}
                     <div>
                         <label class="{{ $labelCls }}">
-                            Rol <span class="text-red-400">*</span>
+                            Rol / Estamento <span class="text-red-400">*</span>
                         </label>
                         <select
                             wire:model.live="newRole"
                             class="{{ $inputCls }} {{ $errors->has('newRole') ? 'border-red-400 focus:ring-red-300/40' : '' }}">
-                            <option value="Estudiante">Estudiante</option>
-                            <option value="Docente">Docente</option>
+                            @foreach (\App\Livewire\Event\AttendanceRegistration::ROLES as $rol)
+                                <option value="{{ $rol }}">{{ $rol }}</option>
+                            @endforeach
                         </select>
                         @error('newRole')
                             <p class="{{ $errorCls }}">{{ $message }}</p>

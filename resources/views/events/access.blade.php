@@ -12,7 +12,7 @@
             class="relative shrink-0 overflow-hidden text-white
                    px-5 pt-5 pb-5
                    lg:flex lg:w-[44%] lg:h-full lg:flex-col lg:px-10 lg:pt-10 lg:pb-10"
-            style="background: linear-gradient(145deg, #cc5e50 0%, #e2a542 52%, #62a9b6 100%)">
+            style="background-image: url('{{ asset('images/uniguajira-fondo-2.jpg') }}'); background-size: cover; background-position: center;">
 
             {{-- Círculos decorativos (solo notables en desktop) --}}
             <span class="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-white/10"></span>
