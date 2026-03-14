@@ -19,5 +19,6 @@ class DependenciesSeeder extends Seeder
         Dependency::create(['name' => 'Gestión Documental']);
         Dependency::create(['name' => 'Aseguramiento de la Calidad']);
         Dependency::create(['name' => 'Dirección Académica']);
+        Dependency::create(['name' => 'Proyección Social']);
     }
 }

@@ -83,5 +83,6 @@ class DatabaseSeeder extends Seeder
         $this->call(ProgramSeeder::class);
         $this->call(ParticipantSeeder::class);
         $this->call(AttendanceSeeder::class);
+        $this->call(FormatSeeder::class);
     }
 }

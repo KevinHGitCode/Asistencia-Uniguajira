@@ -41,7 +41,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('eventos/{id}', [EventController::class, 'show'])->name('events.show');
     Route::delete('eventos/{id}', [EventController::class, 'destroy'])->name('events.destroy');
 
-    Route::get('eventos/{id}/descargar-asistencia', [EventController::class, 'descargarAsistencia'])
+    Route::get('eventos/{id}/descargar-asistencia/{formatSlug}', [EventController::class, 'descargarAsistencia'])
         ->name('events.download');
 });
 

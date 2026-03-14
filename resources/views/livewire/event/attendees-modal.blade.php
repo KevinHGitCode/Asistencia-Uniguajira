@@ -163,19 +163,33 @@
             <!-- Botones de acción -->
             <div class="flex items-center gap-2 border-t border-zinc-200 dark:border-zinc-700 pt-4">
                 @php
-                    $event = \App\Models\Event::find($eventId);
+                    $event = \App\Models\Event::with('dependency.formats')->find($eventId);
                     $eventEndDateTime = \Carbon\Carbon::parse($event->date . ' ' . $event->end_time);
                     $eventHasEnded = now()->greaterThan($eventEndDateTime);
+                    $formats = $event->dependency->formats ?? collect();
                 @endphp
 
                 @if($eventHasEnded)
-                    <a href="{{ route('events.download', $eventId) }}"
-                    class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors cursor-pointer">
-                        <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                        </svg>
-                        Descargar PDF
-                    </a>
+                    @if($formats->count() <= 1)
+                        {{-- Solo formato general: descarga directa --}}
+                        <a href="{{ route('events.download', [$event->id, 'general']) }}"
+                        class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors cursor-pointer">
+                            <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                            </svg>
+                            Descargar PDF
+                        </a>
+                    @else
+                        {{-- Múltiples formatos: abre modal --}}
+                        <flux:modal.trigger name="format-select-{{ $eventId }}">
+                            <button class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors cursor-pointer">
+                                <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                </svg>
+                                Descargar PDF
+                            </button>
+                        </flux:modal.trigger>
+                    @endif
                 @else
                     <div class="inline-flex items-center gap-2 px-4 py-2 bg-gray-400 text-white rounded-lg opacity-60 cursor-not-allowed">
                         <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -195,4 +209,7 @@
             </div>
         </div>
     </flux:modal>
+
+    {{-- Modal de selección de formato --}}
+    <x-events.format-select-modal :eventId="$eventId" :formats="$formats" :event="$event" />
 </div>

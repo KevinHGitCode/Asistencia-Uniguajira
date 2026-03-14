@@ -194,11 +194,17 @@ class EventController extends Controller
         return response()->json($events);
     }
 
-
-    public function descargarAsistencia($id, AttendancePdfService $pdfService)
+    public function descargarAsistencia($id, $formatSlug, AttendancePdfService $pdfService)
     {
-        $evento = Event::with('asistencias.participant.program', 'dependency', 'area', 'user')->findOrFail($id);
-        $pdfContent = $pdfService->generatePdf($evento);
+        $evento = Event::with('asistencias.participant.program', 'dependency.formats', 'area', 'user')->findOrFail($id);
+
+        $format = $evento->dependency->formats()->where('slug', $formatSlug)->first();
+
+        if (!$format) {
+            abort(403, 'Esta dependencia no tiene acceso a este formato');
+        }
+
+        $pdfContent = $pdfService->generatePdf($evento, $formatSlug);
 
         $nombreArchivo = "Asistencia_".str_replace(' ', '_', $evento->title)."_".\Carbon\Carbon::parse($evento->date)->format('Y-m-d').".pdf";
 
