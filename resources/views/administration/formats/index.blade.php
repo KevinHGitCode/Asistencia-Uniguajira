@@ -129,7 +129,7 @@
                             <td class="px-4 sm:px-6 py-4">
                                 <div class="flex items-center justify-end gap-2">
                                     <button
-                                        @click="openEdit({{ $format->id }}, '{{ addslashes($format->name) }}', '{{ addslashes($format->slug) }}', {{ json_encode($format->dependencies->pluck('id')) }})"
+                                        @click="openEdit({{ $format->id }}, '{{ addslashes($format->name) }}', '{{ addslashes($format->slug) }}', {{ json_encode($format->dependencies->pluck('id')) }}, '{{ $format->file }}')"
                                         class="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 dark:hover:text-blue-400 transition-colors cursor-pointer"
                                         title="Editar">
                                         <flux:icon.pencil-square class="size-4" />

@@ -29,6 +29,12 @@ class AttendancePdfService
 
         $cfg = $this->getConfig($formatSlug);
 
+        // Si el formato tiene archivo en BD, sobreescribir el del config
+        $format = \App\Models\Format::where('slug', $formatSlug)->first();
+        if ($format && $format->file) {
+            $cfg['file'] = $format->file;
+        }
+
         $pdf = new Fpdi();
         $path = public_path("formats/{$cfg['file']}");
 

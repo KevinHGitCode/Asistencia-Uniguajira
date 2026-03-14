@@ -14,22 +14,38 @@ class FormatSeeder extends Seeder
      */
     public function run(): void
     {
-        $general = Format::create(['name' => 'Formato General', 'slug' => 'general']);
-        $bienestar = Format::create(['name' => 'Formato Bienestar', 'slug' => 'bienestar']);
-        $proyeccion = Format::create(['name' => 'Formato Proyección Social', 'slug' => 'proyeccion_social']);
-        $capExterna = Format::create(['name' => 'Formato Capacitación Externa', 'slug' => 'capacitacion_externa']);
+        $general = Format::create([
+            'name' => 'Formato General',
+            'slug' => 'general',
+            'file' => 'LISTADO_DE_ASISTENCIA_GENERAL_REVISION_9.pdf',
+        ]);
 
-        // Todas las dependencias tienen acceso al formato general
+        $bienestar = Format::create([
+            'name' => 'Formato Bienestar',
+            'slug' => 'bienestar',
+            'file' => 'LISTADO_DE_ASISTENCIA_BIENESTAR_REVISION_6.pdf',
+        ]);
+
+        $proyeccion = Format::create([
+            'name' => 'Formato Proyección Social',
+            'slug' => 'proyeccion_social',
+            'file' => 'LISTADO_DE_ASISTENCIA_PROYECCION_SOCIAL_REVISION_5.pdf',
+        ]);
+
+        $capExterna = Format::create([
+            'name' => 'Formato Capacitación Externa',
+            'slug' => 'capacitacion_externa',
+            'file' => 'LISTADO_DE_ASISTENCIA_CAPACITACION_EXTERNA_PROYECCION_SOCIAL_REVISION_7.pdf',
+        ]);
+
         $allDependencies = Dependency::all();
         foreach ($allDependencies as $dep) {
             $dep->formats()->attach($general->id);
         }
 
-        // Bienestar (id 1) tiene su formato propio
         Dependency::find(1)?->formats()->attach($bienestar->id);
 
-        // Proyección Social (ajusta el id) tiene 2 formatos propios
-        $proyeccionDep = Dependency::find(6); // ajusta el id
+        $proyeccionDep = Dependency::find(6);
         $proyeccionDep?->formats()->attach($proyeccion->id);
         $proyeccionDep?->formats()->attach($capExterna->id);
     }

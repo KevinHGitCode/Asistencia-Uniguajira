@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Format extends Model
 {
-    protected $fillable = ['name', 'slug'];
+    protected $fillable = ['name', 'slug', 'file'];
 
     public function dependencies()
     {

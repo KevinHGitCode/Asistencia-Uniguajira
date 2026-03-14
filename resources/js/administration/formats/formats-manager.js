@@ -6,6 +6,8 @@ document.addEventListener('alpine:init', () => {
         formName: '',
         formSlug: '',
         selectedDependencies: [],
+        fileName: '',
+        currentFile: '',
         showDelete: false,
         deleteId: null,
         deleteName: '',
@@ -15,20 +17,26 @@ document.addEventListener('alpine:init', () => {
             this.formName = '';
             this.formSlug = '';
             this.selectedDependencies = [];
+            this.fileName = '';
+            this.currentFile = '';
             this.showForm = true;
         },
 
-        openEdit(id, name, slug, dependencies) {
+        openEdit(id, name, slug, dependencies, file) {
             this.editingId = id;
             this.formName = name;
             this.formSlug = slug;
             this.selectedDependencies = dependencies || [];
+            this.fileName = '';
+            this.currentFile = file || '';
             this.showForm = true;
         },
 
         closeForm() {
             this.showForm = false;
             this.editingId = null;
+            this.fileName = '';
+            this.currentFile = '';
         },
 
         openDelete(id, name) {
