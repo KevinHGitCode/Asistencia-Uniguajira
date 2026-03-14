@@ -7,11 +7,9 @@ use Carbon\Carbon;
 
 class AttendancePdfService
 {
-    private function getConfig($dependencyId): array
+    private function getConfig(string $formatSlug): array
     {
-        $key = "attendance_formats.dependency_{$dependencyId}";
-        
-        return config($key) ?? config('attendance_formats.default');
+        return config("attendance_formats.{$formatSlug}") ?? config('attendance_formats.default');
     }
 
     private function toIso($text): string
@@ -26,9 +24,10 @@ class AttendancePdfService
             : $text;
     }
 
-    public function generatePdf($event): string
+    public function generatePdf($event, string $formatSlug = 'default'): string
     {
-        $cfg = $this->getConfig($event->dependency_id);
+
+        $cfg = $this->getConfig($formatSlug);
 
         $pdf = new Fpdi();
         $path = public_path("formats/{$cfg['file']}");

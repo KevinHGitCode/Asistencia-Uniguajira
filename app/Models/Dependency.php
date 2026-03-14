@@ -31,4 +31,9 @@ class Dependency extends Model
         return $this->hasMany(Area::class);
     }
 
+    public function formats()
+    {
+        return $this->belongsToMany(Format::class, 'dependency_format');
+    }
+
 }
