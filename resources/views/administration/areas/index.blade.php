@@ -24,22 +24,34 @@
         </button>
     </div>
 
-    {{-- Alertas de sesión --}}
     @if(session('success'))
-        <div class="flex items-center gap-3 px-4 py-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 text-sm">
+        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)"
+            x-transition:leave="transition ease-in duration-300"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            class="flex items-center gap-3 px-4 py-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 text-sm">
             <flux:icon.check-circle class="size-5 shrink-0" />
             {{ session('success') }}
         </div>
     @endif
+
     @if(session('error'))
-        <div class="flex items-center gap-3 px-4 py-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">
+        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)"
+            x-transition:leave="transition ease-in duration-300"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            class="flex items-center gap-3 px-4 py-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">
             <flux:icon.x-circle class="size-5 shrink-0" />
             {{ session('error') }}
         </div>
     @endif
 
-    @if ($errors->has('name'))
-        <div class="mb-3 px-4 py-3 rounded-lg bg-red-100 border border-red-300 text-red-700 text-sm">
+    @if($errors->has('name'))
+        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)"
+            x-transition:leave="transition ease-in duration-300"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            class="mb-3 px-4 py-3 rounded-lg bg-red-100 border border-red-300 text-red-700 text-sm">
             {{ $errors->first('name') }}
         </div>
     @endif

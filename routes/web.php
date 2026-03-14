@@ -14,6 +14,7 @@ use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\Configuration\AdministrationController;
 use App\Http\Controllers\Configuration\AreaController;
 use App\Http\Controllers\Configuration\DependencyController;
+use App\Http\Controllers\Configuration\FormatController;
 
 /**
  * ================================================================
@@ -41,7 +42,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('eventos/{id}', [EventController::class, 'show'])->name('events.show');
     Route::delete('eventos/{id}', [EventController::class, 'destroy'])->name('events.destroy');
 
-    Route::get('eventos/{id}/descargar-asistencia/{formatSlug}', [EventController::class, 'descargarAsistencia'])
+    Route::get('eventos/{id}/descargar-asistencia/{formatSlug?}', [EventController::class, 'descargarAsistencia'])
         ->name('events.download');
 });
 
@@ -142,6 +143,16 @@ Route::middleware(['auth', 'verified', 'role:admin'])
         Route::get('/areas/edit/{area}', [AreaController::class, 'edit'])->name('areas.edit');
         Route::post('/areas/edit/{area}', [AreaController::class, 'update'])->name('areas.update');
         Route::post('/areas/delete/{area}', [AreaController::class, 'destroy'])->name('areas.delete');
+
+
+        // Rutas específicas de formatos
+        Route::get('/formats', [FormatController::class, 'index'])->name('formats.index');
+        Route::get('/formats/create', [FormatController::class, 'create'])->name('formats.create');
+        Route::post('/formats', [FormatController::class, 'store'])->name('formats.store');
+        Route::post('/formats/edit/{format}', [FormatController::class, 'update'])->name('formats.update');
+        Route::post('/formats/delete/{format}', [FormatController::class, 'destroy'])->name('formats.destroy');
+        Route::post('/formats/{format}/dependencies', [FormatController::class, 'syncDependencies'])->name('formats.sync-dependencies');
+        
     });
 
 /**
