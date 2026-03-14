@@ -9,6 +9,19 @@ class AttendancePdfService
 {
     private function getConfig(string $formatSlug): array
     {
+        // Primero buscar en BD
+        $format = \App\Models\Format::where('slug', $formatSlug)->first();
+
+        if ($format && $format->mapping) {
+            $cfg = $format->mapping;
+            // Si tiene archivo en BD, usarlo
+            if ($format->file) {
+                $cfg['file'] = $format->file;
+            }
+            return $cfg;
+        }
+
+        // Fallback al config file
         return config("attendance_formats.{$formatSlug}") ?? config('attendance_formats.default');
     }
 
@@ -173,8 +186,9 @@ class AttendancePdfService
                     if (isset($cols['role'][$role])) {
                         $rx = $cols['role'][$role]['x'];
                         $ry = $y + ($cols['role'][$role]['y_offset'] ?? 0);
+                        $align = $cols['role'][$role]['align'] ?? 'C';
                         $pdf->SetXY($rx, $ry);
-                        $pdf->Write(0, 'X');
+                        $pdf->Cell(5, 5, 'X', 0, 0, $align);
                     }
                 }
             }
@@ -217,19 +231,19 @@ class AttendancePdfService
 
             // === Gender ===
             if (isset($cols['gender'])) {
-                $pdf->SetFont('Arial', '', $cols['gender']['fontSize'] ?? 12);
                 $gender = $p->sexo ?? '';
                 if (isset($cols['gender'][$gender])) {
                     $gx = $cols['gender'][$gender]['x'];
                     $gy = $y + ($cols['gender'][$gender]['y_offset'] ?? 0);
+                    $align = $cols['gender'][$gender]['align'] ?? 'C';
+                    $pdf->SetFont('Arial', '', $cols['gender']['fontSize'] ?? 12);
                     $pdf->SetXY($gx, $gy);
-                    $pdf->Write(0, 'X');
+                    $pdf->Cell(5, 5, 'X', 0, 0, $align);
                 }
             }
 
             // === Priority Group ===
             if (isset($cols['priority_group'])) {
-                $pdf->SetFont('Arial', '', $cols['priority_group']['fontSize'] ?? 12);
                 $groups = is_array($p->grupo_priorizado)
                     ? $p->grupo_priorizado
                     : explode(',', $p->grupo_priorizado ?? '');
@@ -239,8 +253,10 @@ class AttendancePdfService
                     if (isset($cols['priority_group'][$g])) {
                         $gx = $cols['priority_group'][$g]['x'];
                         $gy = $y + ($cols['priority_group'][$g]['y_offset'] ?? 0);
+                        $align = $cols['priority_group'][$g]['align'] ?? 'C';
+                        $pdf->SetFont('Arial', '', $cols['priority_group']['fontSize'] ?? 12);
                         $pdf->SetXY($gx, $gy);
-                        $pdf->Write(0, 'X');
+                        $pdf->Cell(5, 5, 'X', 0, 0, $align);
                     }
                 }
             }

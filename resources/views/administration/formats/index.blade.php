@@ -140,6 +140,11 @@
                                         title="Eliminar">
                                         <flux:icon.trash class="size-4" />
                                     </button>
+                                    <a href="{{ route('formats.mapper', $format) }}"
+                                    class="p-1.5 rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/30 dark:hover:text-amber-400 transition-colors cursor-pointer"
+                                    title="Mapear coordenadas">
+                                        <flux:icon name="map-pin" class="size-4" />
+                                    </a>
                                 </div>
                             </td>
                         </tr>

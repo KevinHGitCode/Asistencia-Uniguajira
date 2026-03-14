@@ -6,7 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class Format extends Model
 {
-    protected $fillable = ['name', 'slug', 'file'];
+    protected $fillable = ['name', 'slug', 'file', 'mapping'];
+
+    protected $casts = [
+        'mapping' => 'array',
+    ];
 
     public function dependencies()
     {

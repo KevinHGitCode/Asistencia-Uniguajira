@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Format;
 use App\Models\Dependency;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 
 class FormatController extends Controller
 {
@@ -72,7 +73,6 @@ class FormatController extends Controller
         $data = $request->only('name', 'slug');
 
         if ($request->hasFile('pdf_file')) {
-            // Eliminar archivo anterior si existe
             if ($format->file && file_exists(public_path("formats/{$format->file}"))) {
                 unlink(public_path("formats/{$format->file}"));
             }
@@ -94,9 +94,121 @@ class FormatController extends Controller
             unlink(public_path("formats/{$format->file}"));
         }
 
+        // Eliminar del config
+        $this->removeFromConfigFile($format->slug);
+
         $format->dependencies()->detach();
         $format->delete();
 
         return redirect()->route('formats.index')->with('success', 'Formato eliminado correctamente.');
+    }
+
+    public function mapper(Format $format)
+    {
+        $existingMapping = config("attendance_formats.{$format->slug}") ?? $format->mapping ?? null;
+
+        return view('administration.formats.mapper', compact('format', 'existingMapping'));
+    }
+
+    public function saveMapping(Request $request, Format $format)
+    {
+        $request->validate([
+            'mapping' => 'required|array',
+            'slug' => 'required|string',
+        ]);
+
+        $format->update([
+            'mapping' => $request->mapping,
+        ]);
+
+        $this->updateConfigFile($request->slug, $request->mapping);
+
+        session()->flash('success', 'Mapeo del formato guardado correctamente.');
+
+        return response()->json(['success' => true]);
+    }
+
+    private function updateConfigFile(string $slug, array $mapping): void
+    {
+        $configPath = config_path('attendance_formats.php');
+        $config = include $configPath;
+
+        $config[$slug] = $mapping;
+
+        $content = "<?php\n\nreturn " . $this->arrayToPhp($config, 0) . ";\n";
+        file_put_contents($configPath, $content);
+
+        Artisan::call('config:clear');
+    }
+
+    private function arrayToPhp(array $array, int $depth = 0): string
+    {
+        $indent = str_repeat('    ', $depth + 1);
+        $closingIndent = str_repeat('    ', $depth);
+        $lines = [];
+
+        foreach ($array as $key => $value) {
+            $keyStr = is_int($key) ? '' : "'" . addslashes((string) $key) . "' => ";
+
+            if (is_array($value)) {
+                if ($this->isSmallArray($value)) {
+                    $lines[] = $indent . $keyStr . $this->arrayToInlinePhp($value) . ',';
+                } else {
+                    $lines[] = $indent . $keyStr . $this->arrayToPhp($value, $depth + 1) . ',';
+                }
+            } elseif (is_string($value)) {
+                $lines[] = $indent . $keyStr . "'" . addslashes($value) . "',";
+            } elseif (is_bool($value)) {
+                $lines[] = $indent . $keyStr . ($value ? 'true' : 'false') . ',';
+            } elseif (is_null($value)) {
+                $lines[] = $indent . $keyStr . 'null,';
+            } elseif (is_float($value)) {
+                $lines[] = $indent . $keyStr . $value . ',';
+            } else {
+                $lines[] = $indent . $keyStr . $value . ',';
+            }
+        }
+
+        return "[\n" . implode("\n", $lines) . "\n" . $closingIndent . ']';
+    }
+
+    private function isSmallArray(array $array): bool
+    {
+        if (count($array) > 4) return false;
+        foreach ($array as $value) {
+            if (is_array($value)) return false;
+        }
+        return true;
+    }
+
+    private function arrayToInlinePhp(array $array): string
+    {
+        $items = [];
+        foreach ($array as $key => $value) {
+            $keyStr = is_int($key) ? '' : "'" . addslashes((string) $key) . "' => ";
+            if (is_string($value)) {
+                $items[] = $keyStr . "'" . addslashes($value) . "'";
+            } elseif (is_bool($value)) {
+                $items[] = $keyStr . ($value ? 'true' : 'false');
+            } else {
+                $items[] = $keyStr . $value;
+            }
+        }
+        return '[' . implode(', ', $items) . ']';
+    }
+
+    private function removeFromConfigFile(string $slug): void
+    {
+        $configPath = config_path('attendance_formats.php');
+        $config = include $configPath;
+
+        if (isset($config[$slug])) {
+            unset($config[$slug]);
+
+            $content = "<?php\n\nreturn " . $this->arrayToPhp($config, 0) . ";\n";
+            file_put_contents($configPath, $content);
+
+            Artisan::call('config:clear');
+        }
     }
 }
