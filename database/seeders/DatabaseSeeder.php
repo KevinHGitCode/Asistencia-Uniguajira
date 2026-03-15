@@ -13,8 +13,9 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Cargar dependencias primero
+        // Cargar dependencias y catálogos primero
         $this->call(DependenciesSeeder::class);
+        $this->call(EstamentoSeeder::class);
 
         // Admins sin dependencia
         User::factory()->create([

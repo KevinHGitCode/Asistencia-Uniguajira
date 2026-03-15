@@ -3,7 +3,7 @@
 <div class="flex h-full w-full flex-1 flex-col gap-6 p-1 sm:p-4 md:p-6"
      x-data="{
          activeTab: '{{ session('active_tab', 'bulk') }}',
-         role: '',
+         role: '{{ old('role', '') }}',
          showRoleDependent() { return ['Estudiante', 'Graduado'].includes(this.role); },
          showAffiliation()   { return this.role === 'Docente'; },
      }">
@@ -63,7 +63,7 @@
                 <div class="flex-1 flex items-center justify-between gap-3 px-4 py-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 text-sm">
                     <div class="flex items-center gap-3">
                         <flux:icon.exclamation-triangle class="size-5 shrink-0" />
-                        <span><strong>{{ $result['skipped'] }}</strong> {{ $result['skipped'] === 1 ? 'fila omitida' : 'filas omitidas' }} (sin datos nuevos que agregar).</span>
+                        <span><strong>{{ $result['skipped'] }}</strong> {{ $result['skipped'] === 1 ? 'fila omitida' : 'filas omitidas' }}.</span>
                     </div>
                     <a href="{{ route('participants-import.download-skipped') }}"
                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium transition-colors shrink-0">
@@ -103,46 +103,67 @@
     <div x-show="activeTab === 'bulk'" x-transition>
         <div class="border border-neutral-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm overflow-hidden">
 
-            <div class="px-4 sm:px-6 py-4 border-b border-neutral-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900">
-                <h2 class="text-base font-semibold text-gray-900 dark:text-white">Importar desde Excel</h2>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                    Usa el mismo formato del archivo <code class="font-mono bg-zinc-100 dark:bg-zinc-800 px-1 rounded">seed.xlsx</code>.
-                    Las filas con documentos o correos duplicados serán omitidas y podrás descargarlas al final.
-                </p>
+            <div class="px-4 sm:px-6 py-4 border-b border-neutral-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 flex items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-base font-semibold text-gray-900 dark:text-white">Importar desde Excel</h2>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        El archivo debe tener exactamente las columnas indicadas. Las filas con datos inválidos o duplicados
+                        quedan omitidas y las puedes descargar al final.
+                    </p>
+                </div>
+                <a href="{{ route('participants-import.download-template') }}"
+                   class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 text-xs font-medium transition-colors shrink-0">
+                    <flux:icon.arrow-down-tray class="size-3.5 text-[#3b82f6]" />
+                    Descargar plantilla
+                </a>
             </div>
 
             <div class="px-4 sm:px-6 py-6">
 
                 {{-- Formato esperado --}}
                 <div class="mb-6 rounded-xl border border-blue-100 dark:border-blue-900/40 bg-blue-50 dark:bg-blue-900/20 p-4">
-                    <h3 class="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-2 flex items-center gap-2">
+                    <h3 class="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-3 flex items-center gap-2">
                         <flux:icon.information-circle class="size-4" />
-                        Formato esperado del Excel
+                        Columnas requeridas en el Excel (en cualquier orden)
                     </h3>
                     <div class="overflow-x-auto">
                         <table class="text-xs text-blue-700 dark:text-blue-300 w-full">
                             <thead>
                                 <tr class="border-b border-blue-200 dark:border-blue-800">
-                                    @foreach(['Documento', 'Nombres', 'Apellidos', 'Rol', 'Correo', 'Programa - Sede', 'Tipo Programa', 'Afiliación'] as $col)
-                                        <th class="pb-1 pr-4 text-left font-semibold">{{ $col }}</th>
+                                    @foreach(['Documento', 'Nombres', 'Apellidos', 'Tipo de Estamento', 'Correo', 'Programa o Dependencia', 'Tipo_progama *', 'Vinculacion'] as $col)
+                                        <th class="pb-1.5 pr-4 text-left font-semibold whitespace-nowrap">{{ $col }}</th>
                                     @endforeach
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr class="text-blue-600 dark:text-blue-400 opacity-70">
-                                    <td class="pt-1 pr-4">1234567890</td>
-                                    <td class="pt-1 pr-4">Juan</td>
-                                    <td class="pt-1 pr-4">Pérez</td>
-                                    <td class="pt-1 pr-4">Estudiante</td>
-                                    <td class="pt-1 pr-4">juan@correo.co</td>
-                                    <td class="pt-1 pr-4">Ingeniería - Riohacha</td>
-                                    <td class="pt-1 pr-4">Pregrado</td>
-                                    <td class="pt-1 pr-4">—</td>
+                                    <td class="pt-1.5 pr-4 whitespace-nowrap">1234567890</td>
+                                    <td class="pt-1.5 pr-4">Juan</td>
+                                    <td class="pt-1.5 pr-4">Pérez</td>
+                                    <td class="pt-1.5 pr-4 whitespace-nowrap">Estudiante</td>
+                                    <td class="pt-1.5 pr-4 whitespace-nowrap">juan@correo.co</td>
+                                    <td class="pt-1.5 pr-4 whitespace-nowrap">Ingeniería - Riohacha</td>
+                                    <td class="pt-1.5 pr-4">Pregrado</td>
+                                    <td class="pt-1.5 pr-4">—</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
+                    <p class="text-xs text-blue-600 dark:text-blue-400 mt-2 opacity-80">
+                        * <code class="font-mono">Tipo_progama</code> es opcional.
+                        El valor de <code class="font-mono">Tipo de Estamento</code> debe coincidir
+                        exactamente con un estamento registrado en el sistema.
+                        Si la columna no existe en el archivo, la importación falla con un error claro.
+                    </p>
                 </div>
+
+                {{-- Errores de validación del Excel --}}
+                @error('excel_file')
+                    <div class="mb-4 flex items-start gap-3 px-4 py-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">
+                        <flux:icon.x-circle class="size-5 shrink-0 mt-0.5" />
+                        <span>{{ $message }}</span>
+                    </div>
+                @enderror
 
                 {{-- Formulario de carga --}}
                 <form action="{{ route('participants-import.import') }}" method="POST" enctype="multipart/form-data"
@@ -160,8 +181,7 @@
                             if (file) { fileName = file.name; $refs.fileInput.files = $event.dataTransfer.files; }
                         "
                         :class="dragging ? 'border-[#3b82f6] bg-blue-50 dark:bg-blue-900/20' : 'border-neutral-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50'"
-                        class="relative flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-8 transition-colors text-center cursor-pointer"
-                        @click="$refs.fileInput.click()">
+                        class="relative flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-8 transition-colors text-center cursor-pointer">
 
                         <flux:icon.document-arrow-up class="size-10 text-gray-400 dark:text-zinc-500" />
                         <div>
@@ -170,7 +190,7 @@
                                 <span x-show="fileName" class="text-[#3b82f6]" x-text="fileName"></span>
                             </p>
                             <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                                Formatos: .xlsx, .xls, .csv · Máximo 10 MB
+                                Formatos: .xlsx, .xls, .csv · Máximo 20 MB
                             </p>
                         </div>
                         <input
@@ -181,10 +201,6 @@
                             class="absolute inset-0 opacity-0 cursor-pointer"
                             @change="fileName = $event.target.files[0]?.name ?? ''" />
                     </div>
-
-                    @error('excel_file')
-                        <p class="text-xs text-red-500">{{ $message }}</p>
-                    @enderror
 
                     <div class="flex justify-end">
                         <button type="submit"
@@ -226,16 +242,18 @@
                     @enderror
                 </div>
 
-                {{-- Rol --}}
+                {{-- Estamento (cargado desde BD) --}}
                 <div class="flex flex-col gap-1.5">
                     <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Rol <span class="text-red-500">*</span>
+                        Estamento <span class="text-red-500">*</span>
                     </label>
                     <select name="role" x-model="role" required
                         class="px-3 py-2 rounded-lg border @error('role') border-red-400 @else border-neutral-200 dark:border-zinc-700 @enderror bg-white dark:bg-zinc-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
-                        <option value="">Selecciona un rol…</option>
-                        @foreach(['Estudiante', 'Docente', 'Administrativo', 'Graduado', 'Comunidad Externa'] as $rol)
-                            <option value="{{ $rol }}" {{ old('role') === $rol ? 'selected' : '' }}>{{ $rol }}</option>
+                        <option value="">Selecciona un estamento…</option>
+                        @foreach($estamentos as $estamento)
+                            <option value="{{ $estamento->name }}" {{ old('role') === $estamento->name ? 'selected' : '' }}>
+                                {{ $estamento->name }}
+                            </option>
                         @endforeach
                     </select>
                     @error('role')

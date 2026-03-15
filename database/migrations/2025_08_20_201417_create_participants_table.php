@@ -15,7 +15,7 @@ return new class extends Migration
             $table->string('first_name', 100);
             $table->string('last_name', 100);
             $table->string('email')->nullable()->unique();
-            $table->enum('role', ['Estudiante', 'Docente', 'Administrativo', 'Graduado', 'Comunidad Externa']);
+            $table->string('role', 100)->default('Comunidad Externa');
             $table->string('sexo', 30)->nullable();
             $table->string('grupo_priorizado', 150)->nullable();
             $table->foreignId('affiliation_id')->nullable()->constrained('affiliations')->nullOnDelete();

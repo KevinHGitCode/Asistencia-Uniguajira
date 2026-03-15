@@ -90,6 +90,29 @@
                 <div class="absolute bottom-0 left-0 w-0 h-0.5 rounded-b-xl bg-[#e2a542] group-hover:w-full transition-all duration-300"></div>
             </a>
 
+            {{-- Card: Estamentos --}}
+            <a href="{{ route('estamentos.index') }}"
+               class="group relative flex flex-col gap-4 p-5 sm:p-6 rounded-2xl border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 overflow-hidden">
+
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center justify-center w-12 h-12 rounded-lg group-hover:scale-110 transition-transform duration-200">
+                        <flux:icon name="identification" class="size-16 text-[#0d9488]" />
+                    </div>
+                    <flux:icon.chevron-right class="size-5 text-gray-400 dark:text-gray-500 group-hover:translate-x-1 transition-transform duration-200" />
+                </div>
+
+                <div>
+                    <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-1">
+                        Estamentos
+                    </h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                        Define los tipos de participante válidos (Estudiante, Docente, etc.).
+                    </p>
+                </div>
+
+                <div class="absolute bottom-0 left-0 w-0 h-0.5 rounded-b-xl bg-[#0d9488] group-hover:w-full transition-all duration-300"></div>
+            </a>
+
             {{-- Card: Afiliaciones --}}
             <a href="{{ route('affiliations.index') }}"
                class="group relative flex flex-col gap-4 p-5 sm:p-6 rounded-2xl border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 overflow-hidden">
@@ -158,6 +181,10 @@
                     <div class="flex items-start gap-3">
                         <flux:icon.information-circle class="size-5 text-[#e2a542] mt-0.5 shrink-0" />
                         <span>Los <strong class="text-gray-800 dark:text-gray-200">formatos</strong> definen la plantilla PDF de asistencia que se usa al descargar, y se pueden asignar a una o más dependencias.</span>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <flux:icon.information-circle class="size-5 text-[#0d9488] mt-0.5 shrink-0" />
+                        <span>Los <strong class="text-gray-800 dark:text-gray-200">estamentos</strong> definen los tipos de participante válidos. El Excel de importación los usa para clasificar cada fila — si el valor no coincide, la fila es omitida.</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <flux:icon.information-circle class="size-5 text-[#7c6fcd] mt-0.5 shrink-0" />

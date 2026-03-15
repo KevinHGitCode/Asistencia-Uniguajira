@@ -4,22 +4,68 @@ namespace App\Http\Controllers\Configuration;
 
 use App\Http\Controllers\Controller;
 use App\Models\Affiliation;
+use App\Models\Estamento;
 use App\Models\Participant;
 use App\Models\Program;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Facades\Excel;
 
 class ParticipantImportController extends Controller
 {
     private const BATCH_SIZE = 500;
 
+    /**
+     * Columnas que el Excel DEBE tener (por nombre exacto en la cabecera).
+     * Si alguna falta, la importación se rechaza con un mensaje claro.
+     */
+    private const REQUIRED_COLUMNS = [
+        'Documento',
+        'Nombres',
+        'Apellidos',
+        'Tipo de Estamento',
+        'Correo',
+        'Programa o Dependencia',
+        'Vinculacion',
+    ];
+
+    /**
+     * Mapeo completo: nombre de columna en Excel → campo interno.
+     * Las columnas opcionales (Tipo_progama) se leen si existen pero no son obligatorias.
+     * Para agregar nuevas columnas en el futuro, añade aquí y en la plantilla.
+     */
+    private const COLUMN_MAP = [
+        'Documento'              => 'document',
+        'Nombres'                => 'first_name',
+        'Apellidos'              => 'last_name',
+        'Tipo de Estamento'      => 'role',
+        'Correo'                 => 'email',
+        'Programa o Dependencia' => 'program',
+        'Tipo_progama'           => 'program_type',   // informativo, no se persiste
+        'Vinculacion'            => 'affiliation',
+        // Columnas futuras (descomentar cuando se agreguen al Excel):
+        // 'Codigo de Estudiante' => 'student_code',
+    ];
+
     public function index()
     {
         $programs     = Program::orderBy('name')->get(['id', 'name', 'campus']);
         $affiliations = Affiliation::orderBy('name')->get(['id', 'name']);
+        $estamentos   = Estamento::orderBy('name')->get(['id', 'name']);
 
-        return view('administration.participants.index', compact('programs', 'affiliations'));
+        return view('administration.participants.index', compact('programs', 'affiliations', 'estamentos'));
+    }
+
+    /**
+     * Descarga la plantilla Excel con las cabeceras correctas y una fila de ejemplo.
+     */
+    public function downloadTemplate()
+    {
+        return Excel::download(
+            new \App\Exports\ParticipantTemplateExport(),
+            'plantilla_participantes.xlsx'
+        );
     }
 
     /**
@@ -28,6 +74,8 @@ class ParticipantImportController extends Controller
      *   - Doc nuevo → inserta participante + pivot.
      *   - Doc existente sin programa nuevo → omitido.
      *   - Email duplicado (solo nuevos) → omitido.
+     *   - Tipo de Estamento no válido → omitido.
+     *   - Columna requerida faltante en cabecera → error inmediato.
      */
     public function import(Request $request)
     {
@@ -42,9 +90,47 @@ class ParticipantImportController extends Controller
             'excel_file.max'      => 'El archivo no debe superar los 20 MB.',
         ]);
 
-        $sheets = Excel::toArray([], $request->file('excel_file'));
-        $rows   = $sheets[0] ?? [];
-        array_shift($rows);
+        $sheets  = Excel::toArray([], $request->file('excel_file'));
+        $allRows = $sheets[0] ?? [];
+
+        if (empty($allRows)) {
+            return back()->withErrors(['excel_file' => 'El archivo está vacío.']);
+        }
+
+        // ── Leer y validar cabeceras ──────────────────────────────────────
+        $headerRow = array_values((array) $allRows[0]);
+        $headers   = array_map(fn ($h) => trim((string) ($h ?? '')), $headerRow);
+
+        // Construir índice: nombre-columna → posición
+        $colIndex = [];
+        foreach ($headers as $pos => $name) {
+            if ($name !== '') {
+                $colIndex[$name] = $pos;
+            }
+        }
+
+        // Validar columnas obligatorias
+        $missing = array_values(array_filter(
+            self::REQUIRED_COLUMNS,
+            fn ($col) => ! isset($colIndex[$col])
+        ));
+
+        if (! empty($missing)) {
+            return back()->withErrors([
+                'excel_file' => 'El archivo no tiene las siguientes columnas requeridas: '
+                    . implode(', ', array_map(fn ($c) => "«{$c}»", $missing))
+                    . '. Descarga la plantilla oficial y vuelve a intentarlo.',
+            ]);
+        }
+
+        // Helper para leer una celda por nombre de columna
+        $get = function (array $raw, string $col) use ($colIndex) {
+            return isset($colIndex[$col]) ? ($raw[$colIndex[$col]] ?? null) : null;
+        };
+
+        // Quitar fila de cabecera
+        array_shift($allRows);
+        $rows = $allRows;
 
         // ── Cachés de lookup ──────────────────────────────────────────────
         $programHash = [];
@@ -57,6 +143,9 @@ class ParticipantImportController extends Controller
         foreach (Affiliation::all(['id', 'name']) as $aff) {
             $affiliationHash[strtolower($aff->name)] = $aff->id;
         }
+
+        // Estamentos válidos (desde BD) — flip para lookup O(1)
+        $validEstamentos = Estamento::pluck('name')->flip()->toArray();
 
         $existingDocToId = DB::table('participants')->pluck('id', 'document')->toArray();
         $existingEmails  = DB::table('participants')
@@ -73,8 +162,7 @@ class ParticipantImportController extends Controller
                 });
         }
 
-        $now        = now()->toDateTimeString();
-        $validRoles = ['Estudiante', 'Docente', 'Administrativo', 'Graduado', 'Comunidad Externa'];
+        $now = now()->toDateTimeString();
 
         $newParticipants = [];
         $newPrograms     = [];
@@ -88,23 +176,29 @@ class ParticipantImportController extends Controller
                 continue;
             }
 
-            [$document, $firstName, $lastName, $roleName, $email, $programName, , $affiliationType]
-                = array_pad($rawValues, 8, null);
-
-            $document  = trim((string) ($document ?? ''));
-            $firstName = ucwords(strtolower(trim((string) ($firstName ?? ''))));
-            $lastName  = ucwords(strtolower(trim((string) ($lastName ?? ''))));
-            $roleName  = trim((string) ($roleName ?? ''));
-            $email     = $email ? strtolower(trim((string) $email)) : null;
+            $document  = trim((string) ($get($rawValues, 'Documento') ?? ''));
+            $firstName = ucwords(strtolower(trim((string) ($get($rawValues, 'Nombres') ?? ''))));
+            $lastName  = ucwords(strtolower(trim((string) ($get($rawValues, 'Apellidos') ?? ''))));
+            $roleName  = trim((string) ($get($rawValues, 'Tipo de Estamento') ?? ''));
+            $emailRaw  = $get($rawValues, 'Correo');
+            $email     = $emailRaw ? strtolower(trim((string) $emailRaw)) : null;
+            $programName     = $get($rawValues, 'Programa o Dependencia');
+            $affiliationType = $get($rawValues, 'Vinculacion');
 
             if ($document === '') {
-                $row['_motivo'] = 'Documento vacío';
-                $skipped[]      = $row;
+                $skipped[] = $this->skippedRow($rawValues, $headers, 'Documento vacío');
                 continue;
             }
 
-            if (! in_array($roleName, $validRoles, true)) {
-                $roleName = 'Comunidad Externa';
+            // Validar estamento contra la tabla de estamentos
+            if (! isset($validEstamentos[$roleName])) {
+                $skipped[] = $this->skippedRow(
+                    $rawValues, $headers,
+                    $roleName === ''
+                        ? 'Tipo de Estamento vacío'
+                        : "Tipo de Estamento no válido: \"{$roleName}\""
+                );
+                continue;
             }
 
             // Resolver program_id
@@ -130,11 +224,13 @@ class ParticipantImportController extends Controller
             if (isset($existingDocToId[$document])) {
                 $pid = $existingDocToId[$document];
                 if ($programId && ! isset($existingPivot[$pid][$programId])) {
-                    $existingUpdates[$pid][]          = $programId;
+                    $existingUpdates[$pid][]         = $programId;
                     $existingPivot[$pid][$programId] = true;
                 } else {
-                    $row['_motivo'] = 'Participante ya registrado (sin programa nuevo que agregar)';
-                    $skipped[]      = $row;
+                    $skipped[] = $this->skippedRow(
+                        $rawValues, $headers,
+                        'Participante ya registrado (sin programa nuevo que agregar)'
+                    );
                 }
                 continue;
             }
@@ -149,8 +245,7 @@ class ParticipantImportController extends Controller
 
             // ── Email duplicado (nuevos participantes) ────────────────────
             if ($email !== null && isset($existingEmails[$email])) {
-                $row['_motivo'] = "Correo duplicado ({$email})";
-                $skipped[]      = $row;
+                $skipped[] = $this->skippedRow($rawValues, $headers, "Correo duplicado ({$email})");
                 continue;
             }
 
@@ -168,7 +263,7 @@ class ParticipantImportController extends Controller
                 'created_at'       => $now,
                 'updated_at'       => $now,
             ];
-            $newPrograms[$document]    = $programId ? [$programId] : [];
+            $newPrograms[$document] = $programId ? [$programId] : [];
 
             $existingDocToId[$document] = 0;
             if ($email) {
@@ -198,7 +293,7 @@ class ParticipantImportController extends Controller
 
         // ── Pivot para nuevos participantes ───────────────────────────────
         if (! empty($docKeys)) {
-            $docToId    = DB::table('participants')
+            $docToId = DB::table('participants')
                 ->whereIn('document', $docKeys)
                 ->pluck('id', 'document')
                 ->toArray();
@@ -210,8 +305,12 @@ class ParticipantImportController extends Controller
                     continue;
                 }
                 foreach (($newPrograms[$doc] ?? []) as $programId) {
-                    $pivotBatch[] = ['participant_id' => $pid, 'program_id' => $programId,
-                                     'created_at' => $now, 'updated_at' => $now];
+                    $pivotBatch[] = [
+                        'participant_id' => $pid,
+                        'program_id'     => $programId,
+                        'created_at'     => $now,
+                        'updated_at'     => $now,
+                    ];
                     if (count($pivotBatch) === self::BATCH_SIZE) {
                         DB::table('participant_program')->insert($pivotBatch);
                         $pivotBatch = [];
@@ -228,8 +327,12 @@ class ParticipantImportController extends Controller
         $existingPivotBatch = [];
         foreach ($existingUpdates as $pid => $programIds) {
             foreach (array_unique($programIds) as $programId) {
-                $existingPivotBatch[] = ['participant_id' => $pid, 'program_id' => $programId,
-                                          'created_at' => $now, 'updated_at' => $now];
+                $existingPivotBatch[] = [
+                    'participant_id' => $pid,
+                    'program_id'     => $programId,
+                    'created_at'     => $now,
+                    'updated_at'     => $now,
+                ];
                 $programsAttached++;
                 if (count($existingPivotBatch) === self::BATCH_SIZE) {
                     DB::table('participant_program')->insertOrIgnore($existingPivotBatch);
@@ -274,17 +377,19 @@ class ParticipantImportController extends Controller
      */
     public function store(Request $request)
     {
+        $validEstamentos = Estamento::pluck('name')->toArray();
+
         $request->validate([
             'document'         => 'required|string|max:20|unique:participants,document',
             'first_name'       => 'required|string|max:100',
             'last_name'        => 'required|string|max:100',
             'email'            => 'nullable|email|max:255|unique:participants,email',
-            'role'             => 'required|in:Estudiante,Docente,Administrativo,Graduado,Comunidad Externa',
+            'role'             => ['required', 'string', Rule::in($validEstamentos)],
             'student_code'     => 'nullable|string|max:20|unique:participants,student_code',
             'affiliation_id'   => 'nullable|exists:affiliations,id',
             'program_id'       => 'nullable|exists:programs,id',
             'sexo'             => 'nullable|in:Masculino,Femenino,No binario',
-            'grupo_priorizado' => 'nullable|string|max:100',
+            'grupo_priorizado' => 'nullable|string|max:150',
         ], [
             'document.required'   => 'El documento es obligatorio.',
             'document.unique'     => 'Ya existe un participante con ese documento.',
@@ -292,7 +397,8 @@ class ParticipantImportController extends Controller
             'last_name.required'  => 'El apellido es obligatorio.',
             'email.email'         => 'El correo no tiene un formato válido.',
             'email.unique'        => 'Ya existe un participante con ese correo.',
-            'role.required'       => 'El rol es obligatorio.',
+            'role.required'       => 'El estamento es obligatorio.',
+            'role.in'             => 'El estamento seleccionado no es válido.',
             'student_code.unique' => 'Ya existe un participante con ese código estudiantil.',
         ]);
 
@@ -314,5 +420,26 @@ class ParticipantImportController extends Controller
 
         return redirect()->route('participants-import.index')
             ->with('success', 'Participante registrado exitosamente.');
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Helpers privados
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Construye una fila "omitida" como array asociativo
+     * (cabecera → valor) más la clave '_motivo'.
+     */
+    private function skippedRow(array $raw, array $headers, string $motivo): array
+    {
+        $row = [];
+        foreach ($headers as $i => $header) {
+            if ($header !== '') {
+                $row[$header] = $raw[$i] ?? null;
+            }
+        }
+        $row['_motivo'] = $motivo;
+
+        return $row;
     }
 }

@@ -11,6 +11,18 @@ class SkippedParticipantsExport implements FromArray, WithHeadings, WithStyles
 {
     private array $rows;
 
+    /** Cabeceras canónicas del Excel (las mismas que usa la plantilla). */
+    private const COLS = [
+        'Documento',
+        'Nombres',
+        'Apellidos',
+        'Tipo de Estamento',
+        'Correo',
+        'Programa o Dependencia',
+        'Tipo_progama',
+        'Vinculacion',
+    ];
+
     public function __construct(array $rows)
     {
         $this->rows = $rows;
@@ -19,19 +31,14 @@ class SkippedParticipantsExport implements FromArray, WithHeadings, WithStyles
     public function array(): array
     {
         return array_map(function ($row) {
-            // $row puede ser un array indexado (0..7) más '_motivo'
             $motivo = $row['_motivo'] ?? '';
-            unset($row['_motivo']);
 
-            // Asegurar que sea array plano
-            $data = array_values($row);
-
-            // Rellenar hasta 8 columnas
-            while (count($data) < 8) {
-                $data[] = null;
+            // Construir la fila en el orden canónico de columnas
+            $data = [];
+            foreach (self::COLS as $col) {
+                $data[] = $row[$col] ?? null;
             }
 
-            // Agregar motivo al final
             $data[] = $motivo;
 
             return $data;
@@ -40,17 +47,7 @@ class SkippedParticipantsExport implements FromArray, WithHeadings, WithStyles
 
     public function headings(): array
     {
-        return [
-            'Documento',
-            'Nombres',
-            'Apellidos',
-            'Rol',
-            'Correo',
-            'Programa - Sede',
-            'Tipo Programa',
-            'Afiliación',
-            'Motivo de omisión',
-        ];
+        return array_merge(self::COLS, ['Motivo de omisión']);
     }
 
     public function styles(Worksheet $sheet): array
