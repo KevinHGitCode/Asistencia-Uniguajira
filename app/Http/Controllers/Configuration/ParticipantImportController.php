@@ -144,8 +144,12 @@ class ParticipantImportController extends Controller
             $affiliationHash[strtolower($aff->name)] = $aff->id;
         }
 
-        // Estamentos válidos (desde BD) — flip para lookup O(1)
-        $validEstamentos = Estamento::pluck('name')->flip()->toArray();
+        // Estamentos válidos (desde BD) — clave lowercase → nombre original en BD
+        // Permite comparación case-insensitive (ESTUDIANTE, Estudiante, estudiante → 'Estudiante')
+        $validEstamentos = [];
+        foreach (Estamento::pluck('name') as $name) {
+            $validEstamentos[strtolower($name)] = $name;
+        }
 
         $existingDocToId = DB::table('participants')->pluck('id', 'document')->toArray();
         $existingEmails  = DB::table('participants')
@@ -190,8 +194,9 @@ class ParticipantImportController extends Controller
                 continue;
             }
 
-            // Validar estamento contra la tabla de estamentos
-            if (! isset($validEstamentos[$roleName])) {
+            // Validar estamento contra la tabla de estamentos (case-insensitive)
+            $roleKey = strtolower($roleName);
+            if (! isset($validEstamentos[$roleKey])) {
                 $skipped[] = $this->skippedRow(
                     $rawValues, $headers,
                     $roleName === ''
@@ -200,6 +205,8 @@ class ParticipantImportController extends Controller
                 );
                 continue;
             }
+            // Usar el nombre canónico de la BD (capitalización correcta)
+            $roleName = $validEstamentos[$roleKey];
 
             // Resolver program_id
             $programId = null;
