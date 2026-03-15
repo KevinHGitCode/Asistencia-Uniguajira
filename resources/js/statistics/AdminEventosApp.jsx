@@ -6,29 +6,86 @@ import { useAdminEventos } from "./hooks/useAdminEventos.js";
 import { CalendarIcon }      from "./components/AdminEventosIcons.jsx";
 import AdminFiltersPanel     from "./components/AdminFiltersPanel.jsx";
 import ActiveFilters         from "./components/ActiveFilters.jsx";
-import EventCard, { EventCardSkeleton } from "./components/EventCard.jsx";
-import Pagination            from "./components/Pagination.jsx";
+import { EventCardSkeleton } from "./components/EventCard.jsx";
+import EventSection          from "./components/EventSection.jsx";
 
-const PER_PAGE = 9;
+// ── Íconos de sección ──
+
+const ClockSectionIcon = (
+    <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round"
+            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+);
+
+const TrendUpSectionIcon = (
+    <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round"
+            d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+    </svg>
+);
+
+const CheckCircleSectionIcon = (
+    <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round"
+            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+);
+
+// ── Helpers para clasificar eventos ──
+
+function classifyEvents(events) {
+    const now = new Date();
+
+    const inProgress = [];
+    const upcoming   = [];
+    const finished   = [];
+
+    events.forEach((event) => {
+        if (!event.date) {
+            upcoming.push(event);
+            return;
+        }
+
+        const startStr = `${event.date}T${event.start_time || "00:00:00"}`;
+        const endStr   = `${event.date}T${event.end_time   || "23:59:59"}`;
+        const start    = new Date(startStr);
+        const end      = new Date(endStr);
+
+        if (now >= start && now <= end) {
+            inProgress.push(event);
+        } else if (now < start) {
+            upcoming.push(event);
+        } else {
+            finished.push(event);
+        }
+    });
+
+    // En proceso y próximos: ordenar ascendente (más cercano primero)
+    inProgress.sort((a, b) => `${a.date} ${a.start_time}`.localeCompare(`${b.date} ${b.start_time}`));
+    upcoming.sort((a, b)   => `${a.date} ${a.start_time}`.localeCompare(`${b.date} ${b.start_time}`));
+    // Finalizados: ordenar descendente (más reciente primero)
+    finished.sort((a, b)   => `${b.date} ${b.end_time}`.localeCompare(`${a.date} ${a.end_time}`));
+
+    return { inProgress, upcoming, finished };
+}
+
+// ── Componente principal ──
 
 export default function AdminEventosApp() {
     useTheme();
     const { state, fetchAll } = useAdminEventos();
 
-    // ── Filtros ──
-    const [from, setFrom]             = useState("");
-    const [to, setTo]                 = useState("");
-    const [search, setSearch]         = useState("");
+    // Filtros
+    const [from, setFrom]               = useState("");
+    const [to, setTo]                   = useState("");
+    const [search, setSearch]           = useState("");
     const [searchInput, setSearchInput] = useState("");
-    const [selectedDeps, setSelectedDeps]   = useState([]);
-    const [selectedUsers, setSelectedUsers] = useState([]);
+    const [selectedDeps, setSelectedDeps]     = useState([]);
+    const [selectedUsers, setSelectedUsers]   = useState([]);
 
-    // ── Paginación ──
-    const [currentPage, setCurrentPage] = useState(1);
-    const gridRef     = useRef(null);
     const debounceRef = useRef(null);
 
-    // Debounce búsqueda
     const handleSearchChange = useCallback((e) => {
         const value = e.target.value;
         setSearchInput(value);
@@ -36,32 +93,22 @@ export default function AdminEventosApp() {
         debounceRef.current = setTimeout(() => setSearch(value), 400);
     }, []);
 
-    // Filtros combinados
     const filters = useMemo(
         () => ({ from, to, search, dependencies: selectedDeps, users: selectedUsers }),
         [from, to, search, selectedDeps, selectedUsers],
     );
 
-    // Reset página al cambiar filtros
-    useEffect(() => { setCurrentPage(1); }, [from, to, search, selectedDeps, selectedUsers]);
-
-    // Fetch
     useEffect(() => { fetchAll(filters); }, [filters, fetchAll]);
 
     const { events, total, loading, error, filterOptions } = state;
 
-    // ── Paginación calculada ──
-    const totalPages      = Math.max(1, Math.ceil(events.length / PER_PAGE));
-    const safePage        = Math.min(currentPage, totalPages);
-    const startIdx        = (safePage - 1) * PER_PAGE;
-    const paginatedEvents = events.slice(startIdx, startIdx + PER_PAGE);
+    // Clasificar eventos
+    const { inProgress, upcoming, finished } = useMemo(
+        () => classifyEvents(events),
+        [events],
+    );
 
-    const handlePageChange = useCallback((page) => {
-        setCurrentPage(page);
-        gridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, []);
-
-    // ── Handlers limpiar filtros ──
+    // Handlers limpiar filtros
     const clearDates  = () => { setFrom(""); setTo(""); };
     const clearSearch = () => { setSearch(""); setSearchInput(""); };
     const removeDep   = (id) => setSelectedDeps((p) => p.filter((d) => d !== id));
@@ -114,58 +161,51 @@ export default function AdminEventosApp() {
                 </div>
             </div>
 
-            {/* ── Grid ── */}
-            <div ref={gridRef} className="relative flex w-full flex-1 flex-col gap-4 p-6 rounded-2xl border border-neutral-200 dark:border-neutral-700 bg-zinc-50 dark:bg-zinc-900">
-                <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                        <CalendarIcon className="inline-block w-6 h-6 mr-2" />
-                        Todos los Eventos
-                    </h2>
-                    <span className="px-3 py-1 text-sm font-medium bg-[#e2a542] text-white rounded-2xl">
-                        {loading ? "…" : `${total} ${total === 1 ? "evento" : "eventos"}`}
-                    </span>
-                </div>
-
-                {loading && (
+            {/* ── Loading ── */}
+            {loading && (
+                <div className="relative flex w-full flex-col gap-4 p-6 rounded-2xl border border-neutral-200 dark:border-neutral-700 bg-zinc-50 dark:bg-zinc-900">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {Array.from({ length: PER_PAGE }).map((_, i) => <EventCardSkeleton key={i} />)}
+                        {Array.from({ length: 9 }).map((_, i) => <EventCardSkeleton key={i} />)}
                     </div>
-                )}
+                </div>
+            )}
 
-                {!loading && error && (
-                    <div className="text-center py-8 text-red-500">
-                        <p className="text-lg font-medium">Error al cargar los eventos</p>
-                        <p className="text-sm mt-1">{error}</p>
-                    </div>
-                )}
+            {/* ── Error ── */}
+            {!loading && error && (
+                <div className="text-center py-8 text-red-500">
+                    <p className="text-lg font-medium">Error al cargar los eventos</p>
+                    <p className="text-sm mt-1">{error}</p>
+                </div>
+            )}
 
-                {!loading && !error && events.length === 0 && (
-                    <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                        <CalendarIcon className="mx-auto h-12 w-12 mb-3" />
-                        <p className="text-lg font-medium">No se encontraron eventos</p>
-                        <p className="text-sm mt-1">Intenta ajustar los filtros o el término de búsqueda</p>
-                    </div>
-                )}
+            {/* ── Secciones ── */}
+            {!loading && !error && (
+                <div className="space-y-6">
+                    <EventSection
+                        title="Eventos en Proceso"
+                        icon={ClockSectionIcon}
+                        events={inProgress}
+                        emptyMessage="No hay eventos en proceso"
+                        emptyHint="Los eventos que estén en curso aparecerán aquí"
+                    />
 
-                {!loading && !error && events.length > 0 && (
-                    <>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {paginatedEvents.map((event) => <EventCard key={event.id} event={event} />)}
-                        </div>
+                    <EventSection
+                        title="Eventos Próximos"
+                        icon={TrendUpSectionIcon}
+                        events={upcoming}
+                        emptyMessage="No hay eventos próximos"
+                        emptyHint="Los eventos futuros aparecerán aquí"
+                    />
 
-                        <div className="mt-2">
-                            <p className="text-xs text-center text-gray-400 dark:text-gray-500 mb-1">
-                                Mostrando {startIdx + 1}–{Math.min(startIdx + PER_PAGE, events.length)} de {events.length} eventos
-                            </p>
-                            <Pagination
-                                currentPage={safePage}
-                                totalPages={totalPages}
-                                onPageChange={handlePageChange}
-                            />
-                        </div>
-                    </>
-                )}
-            </div>
+                    <EventSection
+                        title="Eventos Finalizados"
+                        icon={CheckCircleSectionIcon}
+                        events={finished}
+                        emptyMessage="No hay eventos finalizados"
+                        emptyHint="Los eventos completados aparecerán aquí"
+                    />
+                </div>
+            )}
         </div>
     );
 }
