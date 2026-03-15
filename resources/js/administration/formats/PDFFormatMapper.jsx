@@ -41,7 +41,7 @@ const COLORS = {
 
 // Estimate how many characters fit in a given width (mm) at a given font size
 function estimateLimit(wMm, fontSize) {
-  const avgCharWidthMm = fontSize * 0.22;
+  const avgCharWidthMm = fontSize * 0.17;
   return Math.max(3, Math.floor(wMm / avgCharWidthMm));
 }
 
@@ -111,7 +111,10 @@ export default function PDFFormatMapper({ formatId, formatSlug, formatName, form
       if (cfg.header) {
         const h = {};
         Object.entries(cfg.header).forEach(([id, pos]) => {
-          if (HEADER_FIELDS.find(f => f.id === id)) h[id] = { xPx: m2p(pos.x, "x"), yPx: m2p(pos.y, "y"), fontSize: pos.fontSize || 12, wMm: 40 };
+          if (HEADER_FIELDS.find(f => f.id === id)) {
+              const wMm = pos.w || 40;
+              h[id] = { xPx: m2p(pos.x, "x"), yPx: m2p(pos.y, "y"), fontSize: pos.fontSize || 12, wMm: wMm, limit: pos.limit || estimateLimit(wMm, pos.fontSize || 12) };
+          }
         });
         setPlacedHeaders(h);
       }
@@ -186,18 +189,20 @@ export default function PDFFormatMapper({ formatId, formatSlug, formatName, form
       } else if (interaction.fieldType === "header") {
         const h = placedHeaders[interaction.id];
         if (h) {
-          const newWMm = Math.round(pxToMm(Math.max(20, x - h.xPx), "x") * 10) / 10;
-          setPlacedHeaders(p => ({ ...p, [interaction.id]: { ...p[interaction.id], wMm: newWMm } }));
+            const newWMm = Math.round(pxToMm(Math.max(20, x - h.xPx), "x") * 10) / 10;
+            const newLimit = estimateLimit(newWMm, h.fontSize || 12);
+            setPlacedHeaders(p => ({ ...p, [interaction.id]: { ...p[interaction.id], wMm: newWMm, limit: newLimit } }));
         }
       } else if (interaction.fieldType === "checkbox") {
         const opts = placedCheckboxes[interaction.id];
         const opt = opts?.[interaction.optionKey];
         if (opt) {
-          const newWMm = Math.round(pxToMm(Math.max(10, x - opt.xPx), "x") * 10) / 10;
-          setPlacedCheckboxes(p => {
-            const field = { ...p[interaction.id] };
-            field[interaction.optionKey] = { ...field[interaction.optionKey], wMm: newWMm };
-            return { ...p, [interaction.id]: field };
+            const newWMm = Math.round(pxToMm(Math.max(10, x - opt.xPx), "x") * 10) / 10;
+            const newLimit = estimateLimit(newWMm, 12);
+            setPlacedCheckboxes(p => {
+              const field = { ...p[interaction.id] };
+              field[interaction.optionKey] = { ...field[interaction.optionKey], wMm: newWMm, limit: newLimit };
+              return { ...p, [interaction.id]: field };
           });
         }
       }
@@ -214,19 +219,23 @@ export default function PDFFormatMapper({ formatId, formatSlug, formatName, form
     }
   }, [interaction, handleMouseMove, handleMouseUp]);
 
-  const addHeaderField = (id) => { if (!placedHeaders[id]) setPlacedHeaders(p => ({ ...p, [id]: { xPx: 100, yPx: 40, fontSize: 12, wMm: 40 } })); };
+  const addHeaderField = (id) => {
+      if (!placedHeaders[id]) setPlacedHeaders(p => ({
+          ...p, [id]: { xPx: 100, yPx: 40, fontSize: 12, wMm: 40, limit: estimateLimit(40, 12) }
+      }));
+  };
   const addColumnField = (id) => {
     if (placedColumns[id]) return;
     const def = COLUMN_FIELDS.find(f => f.id === id)?.defaults || {};
     setPlacedColumns(p => ({ ...p, [id]: { xPx: 100, yPx: mmToPx(tableConfig.startY, "y"), w: def.w || 30, h: 7, align: def.align || "L", limit: def.limit || 25, fontSize: def.fontSize || 12 } }));
   };
   const addCheckboxOption = (fieldId, optionKey) => {
-    setPlacedCheckboxes(p => {
-      const field = { ...p[fieldId] } || {};
-      if (field[optionKey]) return p;
-      field[optionKey] = { xPx: 200, yPx: mmToPx(tableConfig.startY, "y"), wMm: 10, align: 'C' };
-      return { ...p, [fieldId]: field };
-    });
+      setPlacedCheckboxes(p => {
+        const field = { ...p[fieldId] } || {};
+        if (field[optionKey]) return p;
+        field[optionKey] = { xPx: 200, yPx: mmToPx(tableConfig.startY, "y"), wMm: 10, align: 'C', limit: estimateLimit(10, 12) };
+        return { ...p, [fieldId]: field };
+      });
   };
   const removeField = (id, type, optionKey) => {
     if (type === "header") setPlacedHeaders(p => { const n = { ...p }; delete n[id]; return n; });
@@ -262,9 +271,10 @@ export default function PDFFormatMapper({ formatId, formatSlug, formatName, form
     const delta = e.deltaY < 0 ? 1 : -1;
     if (type === "header") {
       setPlacedHeaders(p => {
-        const cur = p[id]?.fontSize || 12;
-        const newSize = Math.max(6, Math.min(24, cur + delta));
-        return { ...p, [id]: { ...p[id], fontSize: newSize } };
+          const cur = p[id]?.fontSize || 12;
+          const newSize = Math.max(6, Math.min(24, cur + delta));
+          const newLimit = estimateLimit(p[id]?.wMm || 40, newSize);
+          return { ...p, [id]: { ...p[id], fontSize: newSize, limit: newLimit } };
       });
     } else if (type === "column") {
       setPlacedColumns(p => {
@@ -287,8 +297,10 @@ export default function PDFFormatMapper({ formatId, formatSlug, formatName, form
   const generateConfig = () => {
     const header = {};
     Object.entries(placedHeaders).forEach(([id, f]) => {
-      header[id] = { x: pxToMm(f.xPx, "x"), y: pxToMm(f.yPx, "y") };
-      if (f.fontSize && f.fontSize !== 12) header[id].fontSize = f.fontSize;
+        header[id] = { x: pxToMm(f.xPx, "x"), y: pxToMm(f.yPx, "y") };
+        if (f.fontSize && f.fontSize !== 12) header[id].fontSize = f.fontSize;
+        if (f.wMm) header[id].w = f.wMm;
+        if (f.limit) header[id].limit = f.limit;
     });
     const columns = {};
     Object.entries(placedColumns).forEach(([id, f]) => {
@@ -438,7 +450,18 @@ export default function PDFFormatMapper({ formatId, formatSlug, formatName, form
                   </div>
                 )}
                 {selectedField.type === "header" && (
-                  <MiniInput label="Tamaño letra" type="number" value={placedHeaders[selectedField.id]?.fontSize || 12} onChange={e => updateFieldProp(selectedField.id, "header", "fontSize", parseInt(e.target.value) || 12)} />
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 3 }}>
+                      <MiniInput label="Letra" type="number" value={placedHeaders[selectedField.id]?.fontSize || 12}
+                          onChange={e => updateFieldProp(selectedField.id, "header", "fontSize", parseInt(e.target.value) || 12)} />
+                      <MiniInput label="Ancho(mm)" type="number" step="0.5" value={placedHeaders[selectedField.id]?.wMm || 40}
+                          onChange={e => {
+                              const w = parseFloat(e.target.value) || 40;
+                              const fs = placedHeaders[selectedField.id]?.fontSize || 12;
+                              setPlacedHeaders(p => ({ ...p, [selectedField.id]: { ...p[selectedField.id], wMm: w, limit: estimateLimit(w, fs) } }));
+                          }} />
+                      <MiniInput label="Límite" type="number" value={placedHeaders[selectedField.id]?.limit || ''}
+                          onChange={e => updateFieldProp(selectedField.id, "header", "limit", parseInt(e.target.value) || 0)} />
+                  </div>
                 )}
                 {selectedField.type === "checkbox" && (
                   <div>
@@ -535,6 +558,8 @@ export default function PDFFormatMapper({ formatId, formatSlug, formatName, form
                   {label}
                   <span style={coordBadge}>{pxToMm(f.xPx, "x")},{pxToMm(f.yPx, "y")}</span>
                   <span style={{ ...propBadge, marginLeft: 2 }}>{f.fontSize || 12}px</span>
+                  <span style={{ ...propBadge, marginLeft: 2 }}>w:{f.wMm || 40}</span>
+                  <span style={{ ...propBadge, marginLeft: 2 }}>lím:{f.limit || '-'}</span>
                   <ResizeHandle visible={isSel} onMouseDown={e => { e.preventDefault(); e.stopPropagation(); setInteraction({ type: "resize", id, fieldType: "header" }); }} />
                 </div>
               );
@@ -586,6 +611,8 @@ export default function PDFFormatMapper({ formatId, formatSlug, formatName, form
                       border: isSel ? "2px solid #fff" : "1px solid rgba(255,255,255,0.3)", whiteSpace: "nowrap", overflow: "hidden" }}>
                     <span style={{ overflow: "hidden", textOverflow: "ellipsis", flex: 1 }}>✕ {optKey.length > 12 ? optKey.substring(0, 12) + "…" : optKey}</span>
                     <span style={coordBadge}>{pxToMm(pos.xPx, "x")}</span>
+                    <span style={propBadge}>w:{pos.wMm || 10}</span>
+                    <span style={propBadge}>lím:{pos.limit || '-'}</span>
                     <span style={propBadge}>{pos.align || 'C'}</span>
                     <ResizeHandle visible={isSel} onMouseDown={e => { e.preventDefault(); e.stopPropagation(); setInteraction({ type: "resize", id: fieldId, fieldType: "checkbox", optionKey: optKey }); }} />
                   </div>
