@@ -15,29 +15,17 @@ use Livewire\Component;
 
 class AttendanceRegistration extends Component
 {
-    // ── Identificadores (inmutables tras mount) ───────────────────────────────
-
     #[Locked]
     public int $eventId = 0;
 
-    /** Datos del evento para mostrar en el header (solo lectura). */
     public array $eventData = [];
-
-    // ── Navegación por pestañas ───────────────────────────────────────────────
-    // 'asistencia' | 'participante'
 
     public string $activeTab = 'asistencia';
 
-    // ── Estado del flujo de asistencia ────────────────────────────────────────
-    // 'search' | 'register_external' | 'found' | 'details' | 'duplicate' | 'success'
-
+    // 'search' | 'register_external' | 'found' | 'select_program' | 'details' | 'duplicate' | 'success'
     public string $step = 'search';
 
-    // ── Input de búsqueda (documento o código estudiantil) ────────────────────
-
     public string $identification = '';
-
-    // ── Datos del participante encontrado ─────────────────────────────────────
 
     #[Locked]
     public ?array $participantData = null;
@@ -46,23 +34,24 @@ class AttendanceRegistration extends Component
     public ?string $successRegisteredAt   = null;
     public int     $totalAttendances      = 0;
 
-    // ── Campos del detalle de asistencia (step 'details') ────────────────────
+    // Programa seleccionado para esta asistencia
+    public ?int $selectedProgramId = null;
 
+    // Campos del detalle de asistencia
     public string $detailSexo            = '';
     public string $detailTelefono        = '';
     public string $detailMunicipio       = '';
     public string $detailBarrio          = '';
     public string $detailDireccion       = '';
     public string $detailGrupoPriorizado = '';
+    public string $detailEmail           = '';
 
-    // ── Campos del registro rápido como Comunidad Externa ────────────────────
-
+    // Registro rapido Comunidad Externa
     public string $externalFirstName = '';
     public string $externalLastName  = '';
     public string $externalEmail     = '';
 
-    // ── Formulario de nuevo participante (tab) ────────────────────────────────
-
+    // Formulario nuevo participante (tab)
     public string $newDocument        = '';
     public string $newStudentCode     = '';
     public string $newFirstName       = '';
@@ -74,12 +63,8 @@ class AttendanceRegistration extends Component
     public string $newSexo            = '';
     public string $newGrupoPriorizado = '';
 
-    // ── Datos de apoyo ────────────────────────────────────────────────────────
-
-    public array $programs = [];
+    public array $programs    = [];
     public array $affiliations = [];
-
-    // ── Opciones de selección ─────────────────────────────────────────────────
 
     public const ROLES = [
         'Estudiante',
@@ -97,17 +82,15 @@ class AttendanceRegistration extends Component
     ];
 
     public const GRUPOS_PRIORIZADOS = [
-        'Víctimas del conflicto armado',
-        'Población con discapacidad',
-        'Comunidades indígenas',
+        'Victimas del conflicto armado',
+        'Poblacion con discapacidad',
+        'Comunidades indigenas',
         'Comunidades afrodescendientes',
-        'Jóvenes rurales',
+        'Jovenes rurales',
         'Adulto mayor',
         'LGBTIQ+',
         'Ninguno',
     ];
-
-    // ── Ciclo de vida ─────────────────────────────────────────────────────────
 
     public function mount(string $slug): void
     {
@@ -123,57 +106,45 @@ class AttendanceRegistration extends Component
         ];
 
         $this->programs = Program::orderBy('name')
-            ->get()
+            ->get(['id', 'name', 'campus'])
             ->map(fn ($p) => [
-                'id'   => $p->id,
-                'name' => $p->name,
-                'type' => $p->program_type,
+                'id'        => $p->id,
+                'name'      => $p->name,
+                'campus'    => $p->campus,
+                'full_name' => $p->name . ($p->campus ? ' - ' . $p->campus : ''),
             ])
             ->toArray();
 
         $this->affiliations = Affiliation::orderBy('name')
-            ->get()
-            ->map(fn ($a) => [
-                'id'   => $a->id,
-                'name' => $a->name,
-            ])
+            ->get(['id', 'name'])
+            ->map(fn ($a) => ['id' => $a->id, 'name' => $a->name])
             ->toArray();
     }
-
-    // ── Navegación por pestañas ───────────────────────────────────────────────
 
     public function switchTab(string $tab): void
     {
         if ($tab === $this->activeTab) {
             return;
         }
-
         $this->activeTab = $tab;
-
         if ($tab === 'asistencia') {
             $this->backToSearch();
         }
     }
 
-    // ── Flujo de asistencia ───────────────────────────────────────────────────
-
-    /**
-     * Paso 1: buscar al participante por número de documento.
-     * Transitions: search → found | register_external | duplicate
-     */
     public function search(): void
     {
         $this->validate(
             ['identification' => 'required|string|max:20'],
             [
-                'identification.required' => 'Ingresa tu documento o código estudiantil.',
-                'identification.max'      => 'El código no puede superar los 20 caracteres.',
+                'identification.required' => 'Ingresa tu documento o codigo estudiantil.',
+                'identification.max'      => 'El codigo no puede superar los 20 caracteres.',
             ],
         );
 
         $term = trim($this->identification);
 
-        $participant = Participant::with(['program', 'affiliation'])
+        $participant = Participant::with(['programs', 'affiliation'])
             ->where(function ($q) use ($term) {
                 $q->where('document', $term)
                   ->orWhere('student_code', $term);
@@ -181,10 +152,16 @@ class AttendanceRegistration extends Component
             ->first();
 
         if (! $participant) {
-            // No encontrado → registrar como Comunidad Externa
             $this->step = 'register_external';
             return;
         }
+
+        $programs = $participant->programs->map(fn ($p) => [
+            'id'        => $p->id,
+            'name'      => $p->name,
+            'campus'    => $p->campus,
+            'full_name' => $p->name . ($p->campus ? ' - ' . $p->campus : ''),
+        ])->values()->toArray();
 
         $this->participantData = [
             'id'          => $participant->id,
@@ -192,9 +169,10 @@ class AttendanceRegistration extends Component
             'last_name'   => $participant->last_name,
             'document'    => $participant->document,
             'email'       => $participant->email,
+            'has_email'   => ! empty($participant->email),
             'role'        => $participant->role,
             'affiliation' => $participant->affiliation?->name,
-            'program'     => $participant->program?->name,
+            'programs'    => $programs,
         ];
 
         $existing = Attendance::where('event_id', $this->eventId)
@@ -210,10 +188,6 @@ class AttendanceRegistration extends Component
         $this->step = 'found';
     }
 
-    /**
-     * Registra rápidamente a alguien como Comunidad Externa y continúa al flujo normal.
-     * Transitions: register_external → details
-     */
     public function registerExternal(): void
     {
         $this->validate(
@@ -225,8 +199,8 @@ class AttendanceRegistration extends Component
             [
                 'externalFirstName.required' => 'El nombre es obligatorio.',
                 'externalLastName.required'  => 'El apellido es obligatorio.',
-                'externalEmail.email'        => 'Ingresa un correo electrónico válido.',
-                'externalEmail.unique'       => 'Este correo ya está registrado en el sistema.',
+                'externalEmail.email'        => 'Ingresa un correo electronico valido.',
+                'externalEmail.unique'       => 'Este correo ya esta registrado en el sistema.',
             ]
         );
 
@@ -245,9 +219,10 @@ class AttendanceRegistration extends Component
                 'last_name'   => $participant->last_name,
                 'document'    => $participant->document,
                 'email'       => $participant->email,
+                'has_email'   => ! empty($participant->email),
                 'role'        => $participant->role,
                 'affiliation' => null,
-                'program'     => null,
+                'programs'    => [],
             ];
 
             $this->externalFirstName = '';
@@ -258,15 +233,11 @@ class AttendanceRegistration extends Component
             $this->step = 'details';
 
         } catch (\Exception $e) {
-            Log::error('AttendanceRegistration::registerExternal – ' . $e->getMessage());
-            $this->addError('externalFirstName', 'Ocurrió un error al registrar. Intenta de nuevo.');
+            Log::error('AttendanceRegistration::registerExternal - ' . $e->getMessage());
+            $this->addError('externalFirstName', 'Ocurrio un error al registrar. Intenta de nuevo.');
         }
     }
 
-    /**
-     * Paso 2: ir al formulario de detalles (desde 'found').
-     * Pre-carga los últimos valores registrados en el sistema.
-     */
     public function goToDetails(): void
     {
         if (! $this->participantData) {
@@ -274,14 +245,40 @@ class AttendanceRegistration extends Component
             return;
         }
 
+        $programs = $this->participantData['programs'] ?? [];
+
+        if (count($programs) > 1) {
+            $this->selectedProgramId = null;
+            $this->step = 'select_program';
+            return;
+        }
+
+        $this->selectedProgramId = ! empty($programs) ? $programs[0]['id'] : null;
         $this->loadLastDefaults();
         $this->step = 'details';
     }
 
-    /**
-     * Paso 3: confirmar y registrar la asistencia con detalles adicionales.
-     * Transitions: details → success | duplicate (race condition)
-     */
+    public function confirmProgramSelection(): void
+    {
+        if (! $this->participantData) {
+            $this->backToSearch();
+            return;
+        }
+
+        $validIds = array_column($this->participantData['programs'] ?? [], 'id');
+
+        $this->validate(
+            ['selectedProgramId' => 'required|integer|in:' . implode(',', $validIds)],
+            [
+                'selectedProgramId.required' => 'Selecciona el programa con el que registras asistencia.',
+                'selectedProgramId.in'       => 'El programa seleccionado no es valido.',
+            ]
+        );
+
+        $this->loadLastDefaults();
+        $this->step = 'details';
+    }
+
     public function confirmWithDetails(): void
     {
         if (! $this->participantData) {
@@ -289,18 +286,22 @@ class AttendanceRegistration extends Component
             return;
         }
 
-        $this->validate(
-            [
-                'detailSexo'            => 'nullable|string|max:50',
-                'detailTelefono'        => 'nullable|string|max:20',
-                'detailMunicipio'       => 'nullable|string|max:100',
-                'detailBarrio'          => 'nullable|string|max:100',
-                'detailDireccion'       => 'nullable|string|max:255',
-                'detailGrupoPriorizado' => 'nullable|string|max:150',
-            ],
-        );
+        $emailRules = ($this->participantData['has_email'] ?? true)
+            ? []
+            : ['detailEmail' => 'nullable|email|max:255|unique:participants,email'];
 
-        // Protección contra race condition
+        $this->validate(array_merge([
+            'detailSexo'            => 'nullable|string|max:50',
+            'detailTelefono'        => 'nullable|string|max:20',
+            'detailMunicipio'       => 'nullable|string|max:100',
+            'detailBarrio'          => 'nullable|string|max:100',
+            'detailDireccion'       => 'nullable|string|max:255',
+            'detailGrupoPriorizado' => 'nullable|string|max:150',
+        ], $emailRules), [
+            'detailEmail.email'  => 'Ingresa un correo electronico valido.',
+            'detailEmail.unique' => 'Este correo ya esta registrado en el sistema.',
+        ]);
+
         $existing = Attendance::where('event_id', $this->eventId)
             ->where('participant_id', $this->participantData['id'])
             ->first();
@@ -312,12 +313,18 @@ class AttendanceRegistration extends Component
         }
 
         try {
+            if (! ($this->participantData['has_email'] ?? true) && ! empty($this->detailEmail)) {
+                Participant::where('id', $this->participantData['id'])
+                    ->update(['email' => strtolower(trim($this->detailEmail))]);
+                $this->participantData['email']     = $this->detailEmail;
+                $this->participantData['has_email'] = true;
+            }
+
             $attendance = Attendance::create([
                 'event_id'       => $this->eventId,
                 'participant_id' => $this->participantData['id'],
             ]);
 
-            // Crear dirección si se ingresó algún campo de ubicación
             $address = null;
             if ($this->detailMunicipio || $this->detailBarrio || $this->detailDireccion) {
                 $address = Address::create([
@@ -327,13 +334,13 @@ class AttendanceRegistration extends Component
                 ]);
             }
 
-            // Guardar detalle de asistencia
             AttendanceDetail::create([
                 'attendance_id'    => $attendance->id,
                 'sexo'             => $this->detailSexo            ?: null,
                 'telefono'         => $this->detailTelefono        ?: null,
                 'address_id'       => $address?->id,
                 'grupo_priorizado' => $this->detailGrupoPriorizado ?: null,
+                'program_id'       => $this->selectedProgramId,
             ]);
 
             $this->successRegisteredAt = $attendance->created_at->format('h:i A');
@@ -341,12 +348,11 @@ class AttendanceRegistration extends Component
             $this->step                = 'success';
 
         } catch (\Exception $e) {
-            Log::error('AttendanceRegistration::confirmWithDetails – ' . $e->getMessage());
-            $this->addError('confirm', 'Ocurrió un error al registrar. Por favor, intenta de nuevo.');
+            Log::error('AttendanceRegistration::confirmWithDetails - ' . $e->getMessage());
+            $this->addError('confirm', 'Ocurrio un error al registrar. Por favor, intenta de nuevo.');
         }
     }
 
-    /** Vuelve al formulario inicial limpiando todo el estado. */
     public function backToSearch(): void
     {
         $this->identification        = '';
@@ -354,25 +360,23 @@ class AttendanceRegistration extends Component
         $this->duplicateRegisteredAt = null;
         $this->successRegisteredAt   = null;
         $this->totalAttendances      = 0;
+        $this->selectedProgramId     = null;
         $this->step                  = 'search';
 
-        // Limpiar campos de detalle
         $this->detailSexo            = '';
         $this->detailTelefono        = '';
         $this->detailMunicipio       = '';
         $this->detailBarrio          = '';
         $this->detailDireccion       = '';
         $this->detailGrupoPriorizado = '';
+        $this->detailEmail           = '';
 
-        // Limpiar campos externos
         $this->externalFirstName = '';
         $this->externalLastName  = '';
         $this->externalEmail     = '';
 
         $this->resetValidation();
     }
-
-    // ── Registro de nuevo participante (tab) ──────────────────────────────────
 
     public function registerParticipant(): void
     {
@@ -390,27 +394,24 @@ class AttendanceRegistration extends Component
                 'newGrupoPriorizado' => 'nullable|string|max:150',
             ],
             [
-                'newDocument.required'    => 'El número de documento es obligatorio.',
-                'newDocument.max'         => 'El documento no puede superar 20 caracteres.',
-                'newDocument.unique'      => 'Este documento ya está registrado en el sistema.',
-                'newStudentCode.unique'   => 'Este código estudiantil ya está registrado.',
-                'newStudentCode.max'      => 'El código no puede superar 20 caracteres.',
-                'newFirstName.required'   => 'El nombre es obligatorio.',
-                'newLastName.required'    => 'El apellido es obligatorio.',
-                'newEmail.email'          => 'Ingresa un correo electrónico válido.',
-                'newEmail.unique'         => 'Este correo ya está registrado en el sistema.',
-                'newRole.required'        => 'Selecciona un rol.',
-                'newRole.in'              => 'El rol seleccionado no es válido.',
-                'newAffiliation.max'      => 'La vinculación no puede superar 100 caracteres.',
+                'newDocument.required'  => 'El numero de documento es obligatorio.',
+                'newDocument.max'       => 'El documento no puede superar 20 caracteres.',
+                'newDocument.unique'    => 'Este documento ya esta registrado en el sistema.',
+                'newStudentCode.unique' => 'Este codigo estudiantil ya esta registrado.',
+                'newStudentCode.max'    => 'El codigo no puede superar 20 caracteres.',
+                'newFirstName.required' => 'El nombre es obligatorio.',
+                'newLastName.required'  => 'El apellido es obligatorio.',
+                'newEmail.email'        => 'Ingresa un correo electronico valido.',
+                'newEmail.unique'       => 'Este correo ya esta registrado en el sistema.',
+                'newRole.required'      => 'Selecciona un rol.',
+                'newRole.in'            => 'El rol seleccionado no es valido.',
             ]
         );
 
         try {
             $affiliationId = null;
             if ($this->newRole === 'Docente' && ! empty($this->newAffiliation)) {
-                $affiliation = Affiliation::firstOrCreate([
-                    'name' => trim($this->newAffiliation),
-                ]);
+                $affiliation   = Affiliation::firstOrCreate(['name' => trim($this->newAffiliation)]);
                 $affiliationId = $affiliation->id;
             }
 
@@ -422,26 +423,25 @@ class AttendanceRegistration extends Component
                 'email'            => $this->newEmail           ?: null,
                 'role'             => $this->newRole,
                 'affiliation_id'   => $affiliationId,
-                'program_id'       => $this->newProgramId,
                 'sexo'             => $this->newSexo            ?: null,
                 'grupo_priorizado' => $this->newGrupoPriorizado ?: null,
             ]);
 
-            // Pre-cargar documento, cambiar a tab de asistencia y buscar directamente
+            if ($this->newProgramId && in_array($this->newRole, ['Estudiante', 'Graduado'])) {
+                $participant->programs()->attach($this->newProgramId);
+            }
+
             $this->identification = $participant->document;
             $this->resetNewParticipantForm();
             $this->activeTab = 'asistencia';
             $this->search();
 
         } catch (\Exception $e) {
-            Log::error('AttendanceRegistration::registerParticipant – ' . $e->getMessage());
-            $this->addError('newDocument', 'Ocurrió un error al registrar el participante. Intenta de nuevo.');
+            Log::error('AttendanceRegistration::registerParticipant - ' . $e->getMessage());
+            $this->addError('newDocument', 'Ocurrio un error al registrar el participante. Intenta de nuevo.');
         }
     }
 
-    // ── Helpers privados ──────────────────────────────────────────────────────
-
-    /** Carga los últimos valores registrados en attendance_details como valores por defecto. */
     private function loadLastDefaults(): void
     {
         $lastDetail = AttendanceDetail::with('address')->latest()->first();
@@ -475,8 +475,6 @@ class AttendanceRegistration extends Component
         $this->newGrupoPriorizado = '';
         $this->resetValidation();
     }
-
-    // ── Render ────────────────────────────────────────────────────────────────
 
     public function render()
     {

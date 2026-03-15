@@ -52,13 +52,18 @@
         <div class="flex flex-col sm:flex-row gap-3">
             <div class="flex-1 flex items-center gap-3 px-4 py-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 text-sm">
                 <flux:icon.check-circle class="size-5 shrink-0" />
-                <span><strong>{{ $result['saved'] }}</strong> {{ $result['saved'] === 1 ? 'participante guardado' : 'participantes guardados' }} exitosamente.</span>
+                <span>
+                    <strong>{{ $result['saved'] }}</strong> {{ $result['saved'] === 1 ? 'participante nuevo guardado' : 'participantes nuevos guardados' }}.
+                    @if(($result['programs_attached'] ?? 0) > 0)
+                        <strong>{{ $result['programs_attached'] }}</strong> {{ $result['programs_attached'] === 1 ? 'carrera nueva adjuntada' : 'carreras nuevas adjuntadas' }} a participantes existentes.
+                    @endif
+                </span>
             </div>
             @if($result['skipped'] > 0)
                 <div class="flex-1 flex items-center justify-between gap-3 px-4 py-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 text-sm">
                     <div class="flex items-center gap-3">
                         <flux:icon.exclamation-triangle class="size-5 shrink-0" />
-                        <span><strong>{{ $result['skipped'] }}</strong> {{ $result['skipped'] === 1 ? 'fila omitida' : 'filas omitidas' }} por conflictos de unicidad.</span>
+                        <span><strong>{{ $result['skipped'] }}</strong> {{ $result['skipped'] === 1 ? 'fila omitida' : 'filas omitidas' }} (sin datos nuevos que agregar).</span>
                     </div>
                     <a href="{{ route('participants-import.download-skipped') }}"
                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium transition-colors shrink-0">

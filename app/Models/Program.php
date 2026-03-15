@@ -14,8 +14,12 @@ class Program extends Model
         'campus',
     ];
 
+    /**
+     * Un programa puede tener muchos participantes (relación N:M).
+     */
     public function participants()
     {
-        return $this->hasMany(Participant::class, 'program_id');
+        return $this->belongsToMany(Participant::class, 'participant_program')
+            ->withTimestamps();
     }
 }

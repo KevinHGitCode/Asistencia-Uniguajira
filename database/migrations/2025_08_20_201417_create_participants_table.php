@@ -6,32 +6,23 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-        // Participantes
         Schema::create('participants', function (Blueprint $table) {
             $table->id();
             $table->string('document', 20)->unique();
-            // Código estudiantil (aplica para Estudiante y Graduado)
             $table->string('student_code', 20)->nullable()->unique();
             $table->string('first_name', 100);
             $table->string('last_name', 100);
             $table->string('email')->nullable()->unique();
             $table->enum('role', ['Estudiante', 'Docente', 'Administrativo', 'Graduado', 'Comunidad Externa']);
             $table->string('sexo', 30)->nullable();
-            $table->string('grupo_priorizado', 30)->nullable();
+            $table->string('grupo_priorizado', 150)->nullable();
             $table->foreignId('affiliation_id')->nullable()->constrained('affiliations')->nullOnDelete();
-            $table->foreignId('program_id')->nullable()->constrained('programs')->onDelete('cascade');
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('participants');

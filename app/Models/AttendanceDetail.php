@@ -2,19 +2,17 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class AttendanceDetail extends Model
 {
-    use HasFactory;
-
     protected $fillable = [
         'attendance_id',
         'sexo',
         'telefono',
         'address_id',
         'grupo_priorizado',
+        'program_id',
     ];
 
     public function attendance()
@@ -25,5 +23,13 @@ class AttendanceDetail extends Model
     public function address()
     {
         return $this->belongsTo(Address::class);
+    }
+
+    /**
+     * Programa con el que el participante asistió a este evento.
+     */
+    public function program()
+    {
+        return $this->belongsTo(Program::class);
     }
 }

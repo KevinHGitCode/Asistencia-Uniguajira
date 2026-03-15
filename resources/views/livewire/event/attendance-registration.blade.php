@@ -22,7 +22,7 @@
          NAVEGACIÓN POR PESTAÑAS
          Solo visible cuando se puede cambiar de pestaña (step inicial)
     ══════════════════════════════════════════════════════════════════ --}}
-    @if ($step === 'search' || $activeTab === 'participante')
+    @if (in_array($step, ['search', 'select_program']) || $activeTab === 'participante')
         <div class="mb-4 flex rounded-xl bg-gray-100 p-1 dark:bg-zinc-800">
             <button
                 wire:click="switchTab('asistencia')"
@@ -325,7 +325,6 @@
                             bg-gray-50 dark:divide-zinc-700 dark:border-zinc-700 dark:bg-zinc-700/40">
                     @foreach ([
                         ['Documento',  $participantData['document'] ?? null],
-                        ['Programa',   $participantData['program'] ?? null],
                         ['Rol',        $participantData['role'] ?? null],
                         ['Afiliación', $participantData['affiliation'] ?? null],
                         ['Correo',     $participantData['email'] ?? null],
@@ -341,6 +340,18 @@
                             </div>
                         @endif
                     @endforeach
+                    @if (!empty($participantData['programs']))
+                        @foreach ($participantData['programs'] as $prog)
+                            <div class="flex items-center gap-3 px-4 py-2.5">
+                                <span class="w-24 shrink-0 text-xs font-medium text-gray-400 dark:text-zinc-500">
+                                    {{ $loop->first ? 'Programa' : '' }}
+                                </span>
+                                <span class="flex-1 truncate text-sm font-semibold text-gray-800 dark:text-gray-100">
+                                    {{ $prog['full_name'] }}
+                                </span>
+                            </div>
+                        @endforeach
+                    @endif
                 </div>
 
                 <div class="space-y-2.5 px-6 pb-6">
@@ -382,6 +393,107 @@
                                hover:bg-gray-50 active:scale-[.98]
                                dark:border-zinc-600 dark:bg-zinc-700 dark:text-gray-300 dark:hover:bg-zinc-600">
                         No soy yo
+                    </button>
+                </div>
+            </div>
+        @endif
+
+        {{-- ─────────────────────────────────────────────────────────────
+             STEP: select_program — Elegir carrera para esta asistencia
+        ──────────────────────────────────────────────────────────────── --}}
+        @if ($step === 'select_program' && $participantData)
+            @php
+                $arColors   = ['#cc5e50', '#e2a542', '#62a9b6'];
+                $arBg       = $arColors[$participantData['id'] % 3];
+                $arInitials = mb_strtoupper(
+                    mb_substr($participantData['first_name'], 0, 1) .
+                    mb_substr($participantData['last_name'],  0, 1)
+                );
+            @endphp
+
+            <div wire:transition
+                 class="rounded-2xl border border-neutral-200 bg-white shadow-sm
+                        dark:border-zinc-700 dark:bg-zinc-800">
+
+                <div class="px-6 pt-7 pb-4 text-center">
+                    <div class="mx-auto mb-3 flex h-16 w-16 items-center justify-center
+                                rounded-full text-xl font-extrabold text-white shadow-md"
+                         style="background-color: {{ $arBg }}">
+                        {{ $arInitials }}
+                    </div>
+                    <h2 class="text-lg font-extrabold text-gray-800 dark:text-gray-100">
+                        {{ $participantData['first_name'] }} {{ $participantData['last_name'] }}
+                    </h2>
+                    <p class="mt-1.5 text-sm text-gray-500 dark:text-zinc-400">
+                        Tienes <strong>{{ count($participantData['programs']) }}</strong> programas registrados.<br>
+                        Selecciona con cuál asistes a este evento.
+                    </p>
+                </div>
+
+                <div class="px-5 pb-2">
+                    <div class="space-y-2">
+                        @foreach ($participantData['programs'] as $prog)
+                            <label class="flex cursor-pointer items-center gap-3 rounded-xl border p-3.5 transition
+                                          {{ $selectedProgramId == $prog['id']
+                                               ? 'border-[#cc5e50] bg-red-50 dark:bg-red-900/20'
+                                               : 'border-neutral-200 hover:border-neutral-300 dark:border-zinc-700 dark:hover:border-zinc-600' }}">
+                                <input
+                                    type="radio"
+                                    wire:model="selectedProgramId"
+                                    value="{{ $prog['id'] }}"
+                                    class="h-4 w-4 accent-[#cc5e50]"
+                                />
+                                <span class="text-sm font-medium text-gray-800 dark:text-gray-100">
+                                    {{ $prog['full_name'] }}
+                                </span>
+                            </label>
+                        @endforeach
+                    </div>
+
+                    @error('selectedProgramId')
+                        <p class="mt-2 text-xs text-red-500">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div class="space-y-2.5 border-t border-gray-100 px-5 py-4 dark:border-zinc-700 mt-2">
+                    <button
+                        wire:click="confirmProgramSelection"
+                        wire:loading.attr="disabled"
+                        wire:target="confirmProgramSelection"
+                        type="button"
+                        class="w-full rounded-xl py-3.5 px-6 text-base font-bold text-white shadow
+                               transition-all duration-200 hover:opacity-90 active:scale-[.98]
+                               disabled:cursor-not-allowed disabled:opacity-60"
+                        style="background: linear-gradient(90deg, #cc5e50 0%, #b84a3d 100%)">
+                        <span wire:loading.remove wire:target="confirmProgramSelection"
+                              class="flex items-center justify-center gap-2">
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                                 stroke="currentColor" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                      d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/>
+                            </svg>
+                            Continuar con este programa
+                        </span>
+                        <span wire:loading wire:target="confirmProgramSelection"
+                              class="flex items-center justify-center gap-2">
+                            <svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10"
+                                        stroke="currentColor" stroke-width="4"/>
+                                <path class="opacity-75" fill="currentColor"
+                                      d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z"/>
+                            </svg>
+                            Cargando…
+                        </span>
+                    </button>
+
+                    <button
+                        wire:click="backToSearch"
+                        type="button"
+                        class="w-full rounded-xl border border-neutral-300 bg-white py-3 px-6
+                               text-sm font-semibold text-gray-600 transition
+                               hover:bg-gray-50 active:scale-[.98]
+                               dark:border-zinc-600 dark:bg-zinc-700 dark:text-gray-300 dark:hover:bg-zinc-600">
+                        ← Volver al inicio
                     </button>
                 </div>
             </div>
@@ -505,6 +617,30 @@
                                 @endforeach
                             </select>
                         </div>
+
+                        {{-- Correo (solo si no tiene email registrado) --}}
+                        @if (!($participantData['has_email'] ?? true))
+                            <div>
+                                <label class="{{ $labelClass }}">
+                                    Correo electrónico
+                                    <span class="ml-1 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-900/40 dark:text-amber-400">
+                                        Sin registrar
+                                    </span>
+                                </label>
+                                <input
+                                    wire:model="detailEmail"
+                                    type="email"
+                                    inputmode="email"
+                                    placeholder="Opcional — se guardará en tu perfil"
+                                    class="{{ $inputClass }} {{ $errors->has('detailEmail') ? 'border-amber-400 focus:ring-amber-300/40' : '' }}"
+                                />
+                                @error('detailEmail')
+                                    <p class="mt-1 flex items-center gap-1 text-xs text-red-500 dark:text-red-400">
+                                        {{ $message }}
+                                    </p>
+                                @enderror
+                            </div>
+                        @endif
 
                     </div>
 

@@ -9,7 +9,6 @@ class Participant extends Model
 {
     use HasFactory;
 
-
     protected $fillable = [
         'document',
         'student_code',
@@ -20,7 +19,6 @@ class Participant extends Model
         'affiliation_id',
         'sexo',
         'grupo_priorizado',
-        'program_id',
     ];
 
     public function affiliation()
@@ -28,9 +26,13 @@ class Participant extends Model
         return $this->belongsTo(Affiliation::class, 'affiliation_id');
     }
 
-    public function program()
+    /**
+     * Un participante puede pertenecer a varios programas académicos.
+     */
+    public function programs()
     {
-        return $this->belongsTo(Program::class, 'program_id');
+        return $this->belongsToMany(Program::class, 'participant_program')
+            ->withTimestamps();
     }
 
     public function attendances()

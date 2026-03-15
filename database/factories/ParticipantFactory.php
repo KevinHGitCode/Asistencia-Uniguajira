@@ -26,7 +26,6 @@ class ParticipantFactory extends Factory
 
         return [
             'document'         => fake()->unique()->numerify('##########'),
-            // student_code solo aplica para Estudiante y Graduado (65 % de probabilidad)
             'student_code'     => in_array($role, ['Estudiante', 'Graduado']) && fake()->boolean(65)
                                     ? fake()->unique()->numerify('##########')
                                     : null,
@@ -42,27 +41,44 @@ class ParticipantFactory extends Factory
                 'Comunidades indígenas',
                 'Ninguno', null, null,
             ]),
-            'program_id'       => in_array($role, ['Estudiante', 'Graduado'])
-                                    ? Program::factory()
-                                    : null,
         ];
+    }
+
+    /**
+     * Adjunta 1-2 programas al participante después de crearlo
+     * (solo para roles Estudiante y Graduado).
+     */
+    public function configure(): static
+    {
+        return $this->afterCreating(function (Participant $participant) {
+            if (in_array($participant->role, ['Estudiante', 'Graduado'])) {
+                $count    = fake()->randomElement([1, 1, 1, 2]); // 75% uno, 25% dos
+                $programs = Program::inRandomOrder()->limit($count)->pluck('id');
+                $participant->programs()->syncWithoutDetaching($programs);
+            }
+        });
     }
 
     public function estudiante(): static
     {
         return $this->state(fn () => [
-            'role'         => 'Estudiante',
-            'student_code' => fake()->unique()->numerify('##########'),
+            'role'            => 'Estudiante',
+            'student_code'    => fake()->unique()->numerify('##########'),
             'affiliation_id'  => null,
-        ]);
+        ])->afterCreating(function (Participant $participant) {
+            $program = Program::inRandomOrder()->first();
+            if ($program) {
+                $participant->programs()->syncWithoutDetaching([$program->id]);
+            }
+        });
     }
 
     public function docente(): static
     {
         return $this->state(fn () => [
-            'role'         => 'Docente',
-            'student_code' => null,
-            'affiliation_id'  => Affiliation::firstOrCreate([
+            'role'           => 'Docente',
+            'student_code'   => null,
+            'affiliation_id' => Affiliation::firstOrCreate([
                 'name' => fake()->randomElement(['Catedratico', 'Ocasional', 'Planta']),
             ])->id,
         ]);
@@ -71,9 +87,9 @@ class ParticipantFactory extends Factory
     public function administrativo(): static
     {
         return $this->state(fn () => [
-            'role'         => 'Administrativo',
-            'student_code' => null,
-            'affiliation_id'  => null,
+            'role'           => 'Administrativo',
+            'student_code'   => null,
+            'affiliation_id' => null,
         ]);
     }
 
@@ -82,8 +98,13 @@ class ParticipantFactory extends Factory
         return $this->state(fn () => [
             'role'         => 'Graduado',
             'student_code' => fake()->unique()->numerify('##########'),
-            'affiliation_id'  => null,
-        ]);
+            'affiliation_id' => null,
+        ])->afterCreating(function (Participant $participant) {
+            $program = Program::inRandomOrder()->first();
+            if ($program) {
+                $participant->programs()->syncWithoutDetaching([$program->id]);
+            }
+        });
     }
 
     public function sinGrupoPriorizado(): static

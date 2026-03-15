@@ -15,6 +15,8 @@ return new class extends Migration
             $table->string('telefono', 20)->nullable();
             $table->foreignId('address_id')->nullable()->constrained()->nullOnDelete();
             $table->string('grupo_priorizado', 150)->nullable();
+            // Programa con el que el participante asistió (si tiene varios)
+            $table->foreignId('program_id')->nullable()->constrained('programs')->nullOnDelete();
             $table->timestamps();
         });
     }
