@@ -41,9 +41,14 @@ class DependencyController extends Controller
             'name.unique'           => 'Ya existe una dependencia con ese nombre.',
         ]);
 
-        Dependency::create([
+        $dependency = Dependency::create([
             'name' => $request->name,
         ]);
+
+        $formatGeneral = \App\Models\Format::where('slug', 'general')->first();
+        if ($formatGeneral) {
+            $dependency->formats()->attach($formatGeneral->id);
+        }
 
         return redirect()->route('dependencies.index')->with('success', 'Dependencia creada exitosamente.');
     }

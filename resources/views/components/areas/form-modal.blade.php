@@ -79,7 +79,7 @@
                         Cancelar
                     </button>
                     <button type="submit"
-                        class="px-4 py-2 text-sm rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium transition-colors shadow-sm cursor-pointer"
+                        class="px-4 py-2 text-sm rounded-lg bg-[#62a9b6] text-white font-medium transition-colors shadow-sm cursor-pointer"
                         x-text="editingId ? 'Guardar cambios' : 'Crear área'">
                     </button>
                 </div>

@@ -59,7 +59,7 @@
                         Cancelar
                     </button>
                     <button type="submit"
-                        class="px-4 py-2 text-sm rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors shadow-sm cursor-pointer"
+                        class="px-4 py-2 text-sm rounded-lg bg-[#cc5e50] text-white font-medium transition-colors shadow-sm cursor-pointer"
                         x-text="editingId ? 'Guardar cambios' : 'Crear dependencia'">
                     </button>
                 </div>
