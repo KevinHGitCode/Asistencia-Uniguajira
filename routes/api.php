@@ -12,6 +12,7 @@ use App\Models\Program;
 use App\Models\Attendance;
 use App\Models\User;
 use App\Models\Dependency;
+use App\Models\Affiliation;
 use Illuminate\Support\Facades\DB;
 
 Route::get('/user', function (Request $request) {
@@ -298,7 +299,7 @@ Route::get('/programs', function () {
 
 // Get all affiliations
 Route::get('/affiliations', function () {
-    return Participant::select('affiliation')->distinct()->get();
+    return Affiliation::all();
 });
 
 // Get all attendances

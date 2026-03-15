@@ -38,10 +38,8 @@ return new class extends Migration
                                    )),
                 "sexo"             varchar(30)   null,
                 "grupo_priorizado" varchar(30)   null,
-                "affiliation"      varchar       null
-                                   check ("affiliation" in (
-                                       \'Catedratico\',\'Ocasional\',\'Planta\'
-                                   )),
+                "affiliation_id"   integer       null
+                                   references "affiliations"("id") on delete set null,
                 "program_id"       integer       null
                                    references "programs"("id") on delete cascade,
                 "created_at"       datetime      null,
@@ -52,7 +50,7 @@ return new class extends Migration
             DB::statement('
                 INSERT INTO participants_new
                     (id, document, student_code, first_name, last_name, email, role,
-                     sexo, grupo_priorizado, affiliation, program_id, created_at, updated_at)
+                     sexo, grupo_priorizado, affiliation_id, program_id, created_at, updated_at)
                 SELECT
                     id,
                     document,
@@ -63,7 +61,7 @@ return new class extends Migration
                     role,
                     sexo,
                     grupo_priorizado,
-                    affiliation,
+                    affiliation_id,
                     program_id,
                     created_at,
                     updated_at
@@ -112,10 +110,8 @@ return new class extends Migration
                                    check ("role" in (\'Estudiante\',\'Docente\')),
                 "sexo"             varchar(30)   null,
                 "grupo_priorizado" varchar(30)   null,
-                "affiliation"      varchar       null
-                                   check ("affiliation" in (
-                                       \'Catedratico\',\'Ocasional\',\'Planta\'
-                                   )),
+                "affiliation_id"   integer       null
+                                   references "affiliations"("id") on delete set null,
                 "program_id"       integer       null
                                    references "programs"("id") on delete cascade,
                 "created_at"       datetime      null,
@@ -125,7 +121,7 @@ return new class extends Migration
             DB::statement("
                 INSERT INTO participants_old
                 SELECT id, document, first_name, last_name, email, role, sexo,
-                       grupo_priorizado, affiliation, program_id, created_at, updated_at
+                       grupo_priorizado, affiliation_id, program_id, created_at, updated_at
                 FROM participants
                 WHERE role IN ('Estudiante','Docente') AND email IS NOT NULL
             ");

@@ -17,11 +17,16 @@ class Participant extends Model
         'last_name',
         'email',
         'role',
-        'affiliation',
+        'affiliation_id',
         'sexo',
         'grupo_priorizado',
         'program_id',
     ];
+
+    public function affiliation()
+    {
+        return $this->belongsTo(Affiliation::class, 'affiliation_id');
+    }
 
     public function program()
     {

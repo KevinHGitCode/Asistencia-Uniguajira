@@ -8,6 +8,7 @@ use App\Models\AttendanceDetail;
 use App\Models\Event;
 use App\Models\Participant;
 use App\Models\Program;
+use App\Models\Affiliation;
 use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
@@ -76,6 +77,7 @@ class AttendanceRegistration extends Component
     // ── Datos de apoyo ────────────────────────────────────────────────────────
 
     public array $programs = [];
+    public array $affiliations = [];
 
     // ── Opciones de selección ─────────────────────────────────────────────────
 
@@ -128,6 +130,14 @@ class AttendanceRegistration extends Component
                 'type' => $p->program_type,
             ])
             ->toArray();
+
+        $this->affiliations = Affiliation::orderBy('name')
+            ->get()
+            ->map(fn ($a) => [
+                'id'   => $a->id,
+                'name' => $a->name,
+            ])
+            ->toArray();
     }
 
     // ── Navegación por pestañas ───────────────────────────────────────────────
@@ -163,7 +173,7 @@ class AttendanceRegistration extends Component
 
         $term = trim($this->identification);
 
-        $participant = Participant::with('program')
+        $participant = Participant::with(['program', 'affiliation'])
             ->where(function ($q) use ($term) {
                 $q->where('document', $term)
                   ->orWhere('student_code', $term);
@@ -183,7 +193,7 @@ class AttendanceRegistration extends Component
             'document'    => $participant->document,
             'email'       => $participant->email,
             'role'        => $participant->role,
-            'affiliation' => $participant->affiliation,
+            'affiliation' => $participant->affiliation?->name,
             'program'     => $participant->program?->name,
         ];
 
@@ -374,7 +384,7 @@ class AttendanceRegistration extends Component
                 'newLastName'        => 'required|string|max:100',
                 'newEmail'           => 'nullable|email|max:255|unique:participants,email',
                 'newRole'            => 'required|in:Estudiante,Docente,Administrativo,Graduado,Comunidad Externa',
-                'newAffiliation'     => 'nullable|in:Catedratico,Ocasional,Planta',
+                'newAffiliation'     => 'nullable|string|max:100',
                 'newProgramId'       => 'nullable|exists:programs,id',
                 'newSexo'            => 'nullable|string|max:50',
                 'newGrupoPriorizado' => 'nullable|string|max:150',
@@ -391,11 +401,19 @@ class AttendanceRegistration extends Component
                 'newEmail.unique'         => 'Este correo ya está registrado en el sistema.',
                 'newRole.required'        => 'Selecciona un rol.',
                 'newRole.in'              => 'El rol seleccionado no es válido.',
-                'newAffiliation.in'       => 'La afiliación seleccionada no es válida.',
+                'newAffiliation.max'      => 'La vinculación no puede superar 100 caracteres.',
             ]
         );
 
         try {
+            $affiliationId = null;
+            if ($this->newRole === 'Docente' && ! empty($this->newAffiliation)) {
+                $affiliation = Affiliation::firstOrCreate([
+                    'name' => trim($this->newAffiliation),
+                ]);
+                $affiliationId = $affiliation->id;
+            }
+
             $participant = Participant::create([
                 'document'         => trim($this->newDocument),
                 'student_code'     => $this->newStudentCode    ?: null,
@@ -403,7 +421,7 @@ class AttendanceRegistration extends Component
                 'last_name'        => trim($this->newLastName),
                 'email'            => $this->newEmail           ?: null,
                 'role'             => $this->newRole,
-                'affiliation'      => $this->newAffiliation     ?: null,
+                'affiliation_id'   => $affiliationId,
                 'program_id'       => $this->newProgramId,
                 'sexo'             => $this->newSexo            ?: null,
                 'grupo_priorizado' => $this->newGrupoPriorizado ?: null,

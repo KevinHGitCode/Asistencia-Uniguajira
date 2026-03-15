@@ -23,7 +23,7 @@ return new class extends Migration
             $table->enum('role', ['Estudiante', 'Docente', 'Administrativo', 'Graduado', 'Comunidad Externa']);
             $table->string('sexo', 30)->nullable();
             $table->string('grupo_priorizado', 30)->nullable();
-            $table->enum('affiliation', ['Catedratico', 'Ocasional', 'Planta'])->nullable();
+            $table->foreignId('affiliation_id')->nullable()->constrained('affiliations')->nullOnDelete();
             $table->foreignId('program_id')->nullable()->constrained('programs')->onDelete('cascade');
             $table->timestamps();
         });

@@ -10,7 +10,7 @@ class ProgramSeeder extends Seeder
 {
     public function run(): void
     {
-        $path = database_path('seeders/files/seed.xlsx');
+        $path = database_path('seeders/files/BASE DE DATOS MAICAO.xlsx');
         $sheets = Excel::toArray([], $path);
         $rows = $sheets[0];
 

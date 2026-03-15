@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Participant;
 use App\Models\Program;
+use App\Models\Affiliation;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -17,6 +18,12 @@ class ParticipantFactory extends Factory
     {
         $role = fake()->randomElement(['Estudiante', 'Docente', 'Administrativo', 'Graduado']);
 
+        $affiliationId = null;
+        if ($role === 'Docente') {
+            $affiliationName = fake()->randomElement(['Catedratico', 'Ocasional', 'Planta']);
+            $affiliationId = Affiliation::firstOrCreate(['name' => $affiliationName])->id;
+        }
+
         return [
             'document'         => fake()->unique()->numerify('##########'),
             // student_code solo aplica para Estudiante y Graduado (65 % de probabilidad)
@@ -27,9 +34,7 @@ class ParticipantFactory extends Factory
             'last_name'        => fake('es_CO')->lastName(),
             'email'            => fake()->optional(0.85)->unique()->safeEmail(),
             'role'             => $role,
-            'affiliation'      => $role === 'Docente'
-                                    ? fake()->randomElement(['Catedratico', 'Ocasional', 'Planta', null])
-                                    : null,
+            'affiliation_id'   => $affiliationId,
             'sexo'             => fake()->randomElement(['Masculino', 'Femenino', 'No binario', null]),
             'grupo_priorizado' => fake()->randomElement([
                 'Víctimas del conflicto armado',
@@ -48,7 +53,7 @@ class ParticipantFactory extends Factory
         return $this->state(fn () => [
             'role'         => 'Estudiante',
             'student_code' => fake()->unique()->numerify('##########'),
-            'affiliation'  => null,
+            'affiliation_id'  => null,
         ]);
     }
 
@@ -57,7 +62,9 @@ class ParticipantFactory extends Factory
         return $this->state(fn () => [
             'role'         => 'Docente',
             'student_code' => null,
-            'affiliation'  => fake()->randomElement(['Catedratico', 'Ocasional', 'Planta']),
+            'affiliation_id'  => Affiliation::firstOrCreate([
+                'name' => fake()->randomElement(['Catedratico', 'Ocasional', 'Planta']),
+            ])->id,
         ]);
     }
 
@@ -66,7 +73,7 @@ class ParticipantFactory extends Factory
         return $this->state(fn () => [
             'role'         => 'Administrativo',
             'student_code' => null,
-            'affiliation'  => null,
+            'affiliation_id'  => null,
         ]);
     }
 
@@ -75,7 +82,7 @@ class ParticipantFactory extends Factory
         return $this->state(fn () => [
             'role'         => 'Graduado',
             'student_code' => fake()->unique()->numerify('##########'),
-            'affiliation'  => null,
+            'affiliation_id'  => null,
         ]);
     }
 

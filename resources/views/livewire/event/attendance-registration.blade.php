@@ -889,9 +889,9 @@
                             <label class="{{ $labelCls }}">Tipo de vinculación</label>
                             <select wire:model="newAffiliation" class="{{ $inputCls }}">
                                 <option value="">— Seleccionar —</option>
-                                <option value="Planta">Planta</option>
-                                <option value="Ocasional">Ocasional</option>
-                                <option value="Catedratico">Catedrático</option>
+                                @foreach ($affiliations as $affiliation)
+                                    <option value="{{ $affiliation['name'] }}">{{ $affiliation['name'] }}</option>
+                                @endforeach
                             </select>
                             @error('newAffiliation')
                                 <p class="{{ $errorCls }}">{{ $message }}</p>

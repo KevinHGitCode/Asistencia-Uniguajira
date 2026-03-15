@@ -6,6 +6,7 @@ use Illuminate\Database\Seeder;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Models\Participant;
 use App\Models\Program;
+use App\Models\Affiliation;
 
 class ParticipantSeeder extends Seeder
 {
@@ -14,7 +15,7 @@ class ParticipantSeeder extends Seeder
 
     public function run(): void
     {
-        $path = database_path('seeders/files/seed.xlsx');
+        $path = database_path('seeders/files/BASE DE DATOS MAICAO.xlsx');
         $sheets = Excel::toArray([], $path);
         $rows = $sheets[0];
 
@@ -26,6 +27,12 @@ class ParticipantSeeder extends Seeder
         foreach (Program::all() as $program) {
             $key = strtolower($program->name) . '|' . strtolower($program->campus);
             $programHash[$key] = $program->id;
+        }
+
+        // Cache de afiliaciones existentes
+        $affiliationHash = [];
+        foreach (Affiliation::all() as $affiliation) {
+            $affiliationHash[strtolower($affiliation->name)] = $affiliation->id;
         }
 
         // Insertar participantes en lotes
@@ -43,6 +50,16 @@ class ParticipantSeeder extends Seeder
             // Convertir a minÃºsculas para la comparaciÃ³n
             $programKey = strtolower($programName) . '|' . strtolower($campus);
 
+            $affiliationId = null;
+            if ($affiliationType !== 0 && $affiliationType !== '0' && ! empty($affiliationType)) {
+                $affiliationKey = strtolower(trim((string) $affiliationType));
+                if (! isset($affiliationHash[$affiliationKey])) {
+                    $affiliation = Affiliation::create(['name' => trim((string) $affiliationType)]);
+                    $affiliationHash[$affiliationKey] = $affiliation->id;
+                }
+                $affiliationId = $affiliationHash[$affiliationKey];
+            }
+
             $participantsToInsert[] = [
                 'document'         => $document,
                 'student_code'     => null, // El Excel no contiene código estudiantil
@@ -50,7 +67,7 @@ class ParticipantSeeder extends Seeder
                 'last_name'        => $lastName,
                 'email'            => $email ?: null,
                 'role'             => $roleName,
-                'affiliation'      => ($affiliationType !== 0 && $affiliationType !== '0') ? $affiliationType : null,
+                'affiliation_id'   => $affiliationId,
                 // sexo y grupo_priorizado aleatorios para datos de prueba
                 'sexo'             => ['Masculino', 'Femenino', 'No binario'][array_rand(['Masculino', 'Femenino', 'No binario'])],
                 'grupo_priorizado' => ['Ninguno', 'Comunidades indígenas', 'Comunidades afrodescendientes', 'Población con discapacidad', 'Víctimas del conflicto armado', 'Jóvenes rurales', 'LGBTIQ+'][array_rand(['Ninguno', 'Comunidades indígenas', 'Comunidades afrodescendientes', 'Población con discapacidad', 'Víctimas del conflicto armado', 'Jóvenes rurales', 'LGBTIQ+'])],
