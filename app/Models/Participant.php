@@ -12,6 +12,7 @@ class Participant extends Model
 
     protected $fillable = [
         'document',
+        'student_code',
         'first_name',
         'last_name',
         'email',

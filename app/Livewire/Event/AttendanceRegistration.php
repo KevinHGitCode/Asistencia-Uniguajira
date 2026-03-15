@@ -32,7 +32,7 @@ class AttendanceRegistration extends Component
 
     public string $step = 'search';
 
-    // ── Input de búsqueda ─────────────────────────────────────────────────────
+    // ── Input de búsqueda (documento o código estudiantil) ────────────────────
 
     public string $identification = '';
 
@@ -63,6 +63,7 @@ class AttendanceRegistration extends Component
     // ── Formulario de nuevo participante (tab) ────────────────────────────────
 
     public string $newDocument        = '';
+    public string $newStudentCode     = '';
     public string $newFirstName       = '';
     public string $newLastName        = '';
     public string $newEmail           = '';
@@ -155,13 +156,18 @@ class AttendanceRegistration extends Component
         $this->validate(
             ['identification' => 'required|string|max:20'],
             [
-                'identification.required' => 'Ingresa tu número de documento.',
-                'identification.max'      => 'El documento no puede superar los 20 caracteres.',
+                'identification.required' => 'Ingresa tu documento o código estudiantil.',
+                'identification.max'      => 'El código no puede superar los 20 caracteres.',
             ],
         );
 
+        $term = trim($this->identification);
+
         $participant = Participant::with('program')
-            ->where('document', trim($this->identification))
+            ->where(function ($q) use ($term) {
+                $q->where('document', $term)
+                  ->orWhere('student_code', $term);
+            })
             ->first();
 
         if (! $participant) {
@@ -363,6 +369,7 @@ class AttendanceRegistration extends Component
         $this->validate(
             [
                 'newDocument'        => 'required|string|max:20|unique:participants,document',
+                'newStudentCode'     => 'nullable|string|max:20|unique:participants,student_code',
                 'newFirstName'       => 'required|string|max:100',
                 'newLastName'        => 'required|string|max:100',
                 'newEmail'           => 'nullable|email|max:255|unique:participants,email',
@@ -373,22 +380,25 @@ class AttendanceRegistration extends Component
                 'newGrupoPriorizado' => 'nullable|string|max:150',
             ],
             [
-                'newDocument.required' => 'El número de documento es obligatorio.',
-                'newDocument.max'      => 'El documento no puede superar 20 caracteres.',
-                'newDocument.unique'   => 'Este documento ya está registrado en el sistema.',
-                'newFirstName.required'=> 'El nombre es obligatorio.',
-                'newLastName.required' => 'El apellido es obligatorio.',
-                'newEmail.email'       => 'Ingresa un correo electrónico válido.',
-                'newEmail.unique'      => 'Este correo ya está registrado en el sistema.',
-                'newRole.required'     => 'Selecciona un rol.',
-                'newRole.in'           => 'El rol seleccionado no es válido.',
-                'newAffiliation.in'    => 'La afiliación seleccionada no es válida.',
+                'newDocument.required'    => 'El número de documento es obligatorio.',
+                'newDocument.max'         => 'El documento no puede superar 20 caracteres.',
+                'newDocument.unique'      => 'Este documento ya está registrado en el sistema.',
+                'newStudentCode.unique'   => 'Este código estudiantil ya está registrado.',
+                'newStudentCode.max'      => 'El código no puede superar 20 caracteres.',
+                'newFirstName.required'   => 'El nombre es obligatorio.',
+                'newLastName.required'    => 'El apellido es obligatorio.',
+                'newEmail.email'          => 'Ingresa un correo electrónico válido.',
+                'newEmail.unique'         => 'Este correo ya está registrado en el sistema.',
+                'newRole.required'        => 'Selecciona un rol.',
+                'newRole.in'              => 'El rol seleccionado no es válido.',
+                'newAffiliation.in'       => 'La afiliación seleccionada no es válida.',
             ]
         );
 
         try {
             $participant = Participant::create([
                 'document'         => trim($this->newDocument),
+                'student_code'     => $this->newStudentCode    ?: null,
                 'first_name'       => trim($this->newFirstName),
                 'last_name'        => trim($this->newLastName),
                 'email'            => $this->newEmail           ?: null,
@@ -436,6 +446,7 @@ class AttendanceRegistration extends Component
     private function resetNewParticipantForm(): void
     {
         $this->newDocument        = '';
+        $this->newStudentCode     = '';
         $this->newFirstName       = '';
         $this->newLastName        = '';
         $this->newEmail           = '';

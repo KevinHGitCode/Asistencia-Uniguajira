@@ -1,7 +1,7 @@
 <x-layouts.app-nosidebar :title="$event->title ?? __('Registro de asistencia')">
 
     {{-- Cancelar el p-6 del layout → toma control total del viewport --}}
-    <div class="-m-6 flex h-screen flex-col overflow-hidden lg:flex-row">
+    <div class="-m-6 flex min-h-dvh flex-col overflow-hidden lg:h-dvh lg:flex-row">
 
         {{-- ═══════════════════════════════════════════════════════════════
              PANEL DE EVENTO
@@ -11,12 +11,14 @@
         <aside
             class="relative shrink-0 overflow-hidden text-white
                    px-5 pt-5 pb-5
-                   lg:flex lg:w-[44%] lg:h-full lg:flex-col lg:px-10 lg:pt-10 lg:pb-10"
-            style="background-image: url('{{ asset('images/uniguajira-fondo-2.jpg') }}'); background-size: cover; background-position: center;">
+                   bg-cover bg-center bg-no-repeat
+                   lg:flex lg:h-dvh lg:w-[44%] lg:flex-col lg:self-stretch lg:px-10 lg:pt-10 lg:pb-10"
+            style="background-image: url('{{ asset('images/fondo-uniguajira.jpeg') }}');">
 
+            <div class="absolute inset-0 bg-neutral-900/65"></div>
             {{-- Círculos decorativos (solo notables en desktop) --}}
             <span class="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-white/10"></span>
-            <span class="pointer-events-none absolute -left-14 bottom-8   h-52 w-52 rounded-full bg-white/10"></span>
+            <span class="pointer-events-none absolute -left-14 bottom-8 h-52 w-52 rounded-full bg-white/10"></span>
             <span class="pointer-events-none absolute  right-10 bottom-32 h-32 w-32 rounded-full bg-white/[.06]"></span>
 
             {{-- ─────────────────────────────────────────────────────────
@@ -24,7 +26,7 @@
                  Logo | Título + badge
                  Fecha · Hora · Lugar  (una sola línea)
             ──────────────────────────────────────────────────────────── --}}
-            <div class="relative lg:hidden">
+            <div class="relative lg:hidden border border-red-500">
 
                 {{-- Fila superior: logo + título --}}
                 <div class="flex items-start gap-3">
@@ -87,24 +89,16 @@
                  VISTA DESKTOP: columna completa con logo, ícono, título
                  y detalles con espaciado generoso
             ──────────────────────────────────────────────────────────── --}}
-            <div class="relative hidden lg:flex lg:h-full lg:flex-col">
-
-                {{-- Logo --}}
-                <img
-                    src="{{ asset('images/logo-uniguajira-blanco.webp') }}"
-                    alt="Universidad de La Guajira"
-                    class="h-12 w-auto object-contain">
+            <div class="relative hidden lg:flex lg:h-full lg:flex-col pb-10">              
 
                 {{-- Bloque central —centrado verticalmente --}}
                 <div class="flex flex-1 flex-col justify-center">
-                    <div class="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/20">
-                        <svg class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24"
-                             stroke="currentColor" stroke-width="2.2">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                  d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0
-                                     2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0
-                                     2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2m-6 9 2 2 4-4"/>
-                        </svg>
+                    <div class="mb-5 flex py-3 items-center justify-center rounded-2xl bg-white/20">
+                        {{-- Logo --}}
+                        <img
+                            src="{{ asset('images/logo-uniguajira-blanco.webp') }}"
+                            alt="Universidad de La Guajira"
+                            class="h-12 w-auto object-contain">
                     </div>
 
                     <p class="text-[10px] font-bold uppercase tracking-[.22em] text-white/60">

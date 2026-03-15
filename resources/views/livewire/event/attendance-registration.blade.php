@@ -86,7 +86,7 @@
                     <div class="mb-4">
                         <label for="ar-identification"
                                class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Número de documento
+                            Documento o código estudiantil
                         </label>
                         <input
                             id="ar-identification"
@@ -151,7 +151,7 @@
 
                 <p class="border-t border-neutral-100 px-6 py-3 text-center text-xs
                            text-gray-400 dark:border-zinc-700 dark:text-zinc-500">
-                    Ingresa el documento exactamente como aparece en tu cédula
+                    Puedes usar tu número de cédula o tu código estudiantil
                 </p>
             </div>
         @endif
@@ -801,6 +801,23 @@
                             </p>
                         @enderror
                     </div>
+
+                    {{-- Código estudiantil (Estudiante / Graduado) --}}
+                    @if (in_array($newRole, ['Estudiante', 'Graduado']))
+                        <div wire:transition>
+                            <label class="{{ $labelCls }}">Código estudiantil</label>
+                            <input
+                                wire:model="newStudentCode"
+                                type="text"
+                                inputmode="numeric"
+                                placeholder="Ej: 1243210019"
+                                class="{{ $inputCls }} {{ $errors->has('newStudentCode') ? 'border-red-400 focus:ring-red-300/40' : '' }}"
+                            />
+                            @error('newStudentCode')
+                                <p class="{{ $errorCls }}">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    @endif
 
                     {{-- Nombre + Apellido --}}
                     <div class="grid grid-cols-2 gap-2">

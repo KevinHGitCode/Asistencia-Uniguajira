@@ -44,18 +44,19 @@ class ParticipantSeeder extends Seeder
             $programKey = strtolower($programName) . '|' . strtolower($campus);
 
             $participantsToInsert[] = [
-                'document'    => $document,
-                'first_name'  => $firstName,
-                'last_name'   => $lastName,
-                'email'       => $email,
-                'role'        => $roleName,
-                'affiliation' => ($affiliationType !== 0 && $affiliationType !== '0') ? $affiliationType : null,
-                // agregar sexo y grupo_priorizado aleatoriamente para pruebas
-                'sexo' => ['Masculino', 'Femenino', 'Otro'][array_rand(['Masculino', 'Femenino', 'Otro'])],
-                'grupo_priorizado' => ['Ninguno', 'Indígena', 'Afrodescendiente', 'Discapacitado', 'Víctima de Conflicto Armado', 'Comunidad LGTBQ+', 'Habitante de Frontera'][array_rand(['Ninguno', 'Indígena', 'Afrodescendiente', 'Discapacitado', 'Víctima de Conflicto Armado', 'Comunidad LGTBQ+', 'Habitante de Frontera'])],
-                'program_id'  => $programHash[$programKey] ?? null,
-                'created_at'  => now(),
-                'updated_at'  => now(),
+                'document'         => $document,
+                'student_code'     => null, // El Excel no contiene código estudiantil
+                'first_name'       => $firstName,
+                'last_name'        => $lastName,
+                'email'            => $email ?: null,
+                'role'             => $roleName,
+                'affiliation'      => ($affiliationType !== 0 && $affiliationType !== '0') ? $affiliationType : null,
+                // sexo y grupo_priorizado aleatorios para datos de prueba
+                'sexo'             => ['Masculino', 'Femenino', 'No binario'][array_rand(['Masculino', 'Femenino', 'No binario'])],
+                'grupo_priorizado' => ['Ninguno', 'Comunidades indígenas', 'Comunidades afrodescendientes', 'Población con discapacidad', 'Víctimas del conflicto armado', 'Jóvenes rurales', 'LGBTIQ+'][array_rand(['Ninguno', 'Comunidades indígenas', 'Comunidades afrodescendientes', 'Población con discapacidad', 'Víctimas del conflicto armado', 'Jóvenes rurales', 'LGBTIQ+'])],
+                'program_id'       => $programHash[$programKey] ?? null,
+                'created_at'       => now(),
+                'updated_at'       => now(),
             ];
 
             if (count($participantsToInsert) === self::BATCH_SIZE) {
