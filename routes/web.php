@@ -12,9 +12,11 @@ use \App\Http\Controllers\Lang\LanguageController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\Configuration\AdministrationController;
+use App\Http\Controllers\Configuration\AffiliationController;
 use App\Http\Controllers\Configuration\AreaController;
 use App\Http\Controllers\Configuration\DependencyController;
 use App\Http\Controllers\Configuration\FormatController;
+use App\Http\Controllers\Configuration\ParticipantImportController;
 
 /**
  * ================================================================
@@ -155,7 +157,17 @@ Route::middleware(['auth', 'verified', 'role:admin'])
 
         Route::get('/formats/{format}/mapper', [FormatController::class, 'mapper'])->name('formats.mapper');
         Route::post('/formats/{format}/mapping', [FormatController::class, 'saveMapping'])->name('formats.save-mapping');
-        
+
+        // Rutas de afiliaciones
+        Route::get('/affiliations', [AffiliationController::class, 'index'])->name('affiliations.index');
+        Route::post('/affiliations', [AffiliationController::class, 'store'])->name('affiliations.store');
+
+        // Rutas de importación / registro de participantes
+        Route::get('/participants', [ParticipantImportController::class, 'index'])->name('participants-import.index');
+        Route::post('/participants/import', [ParticipantImportController::class, 'import'])->name('participants-import.import');
+        Route::get('/participants/download-skipped', [ParticipantImportController::class, 'downloadSkipped'])->name('participants-import.download-skipped');
+        Route::post('/participants', [ParticipantImportController::class, 'store'])->name('participants-import.store');
+
     });
 
 /**
