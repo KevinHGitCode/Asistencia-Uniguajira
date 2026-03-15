@@ -48,7 +48,7 @@ export default function EventSection({ title, icon, events, emptyMessage, emptyH
                         <div className="flex justify-center mt-2">
                             <button
                                 onClick={() => setExpanded(!expanded)}
-                                className="px-4 py-2 text-sm font-medium text-[#e2a542] hover:text-[#c8912e] border border-[#e2a542] hover:bg-[#e2a542]/10 rounded-xl transition"
+                                className="cursor-pointer px-4 py-2 text-sm font-medium text-[#e2a542] hover:text-[#c8912e] border border-[#e2a542] hover:bg-[#e2a542]/10 rounded-xl transition"
                             >
                                 {expanded
                                     ? `Ver menos`
