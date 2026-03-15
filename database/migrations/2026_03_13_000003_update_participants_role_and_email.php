@@ -26,11 +26,7 @@ return new class extends Migration
                 "first_name"       varchar(100)  not null,
                 "last_name"        varchar(100)  not null,
                 "email"            varchar       null unique,
-                "role"             varchar       not null default \'Comunidad Externa\'
-                                   check ("role" in (
-                                       \'Estudiante\',\'Docente\',\'Administrativo\',
-                                       \'Graduado\',\'Comunidad Externa\'
-                                   )),
+                "role"             varchar(100)  not null default \'Comunidad Externa\',
                 "sexo"             varchar(30)   null,
                 "grupo_priorizado" varchar(150)  null,
                 "affiliation_id"   integer       null
@@ -74,7 +70,7 @@ return new class extends Migration
             }
             DB::statement("ALTER TABLE participants MODIFY COLUMN email varchar(255) NULL");
             DB::statement("ALTER TABLE participants MODIFY COLUMN grupo_priorizado varchar(150) NULL");
-            DB::statement("ALTER TABLE participants MODIFY COLUMN role ENUM('Estudiante','Docente','Administrativo','Graduado','Comunidad Externa') NOT NULL DEFAULT 'Comunidad Externa'");
+            DB::statement("ALTER TABLE participants MODIFY COLUMN role varchar(100) NOT NULL DEFAULT 'Comunidad Externa'");
         } else {
             // PostgreSQL
             DB::statement("ALTER TABLE participants ADD COLUMN IF NOT EXISTS student_code varchar(20) NULL");
