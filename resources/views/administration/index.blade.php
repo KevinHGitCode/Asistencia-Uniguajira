@@ -91,7 +91,7 @@
             </a>
 
             {{-- Card: Estamentos --}}
-            <a href="{{ route('estamentos.index') }}"
+            <a href="{{ route('participant-types.index') }}"
                class="group relative flex flex-col gap-4 p-5 sm:p-6 rounded-2xl border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 overflow-hidden">
 
                 <div class="flex items-center justify-between">

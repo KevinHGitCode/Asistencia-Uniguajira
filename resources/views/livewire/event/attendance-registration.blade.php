@@ -386,6 +386,107 @@
         @endif
 
         {{-- ─────────────────────────────────────────────────────────────
+             STEP: select_type — Elegir estamento para esta asistencia
+        ──────────────────────────────────────────────────────────────── --}}
+        @if ($step === 'select_type' && $participantData)
+            @php
+                $arColors   = ['#cc5e50', '#e2a542', '#62a9b6'];
+                $arBg       = $arColors[$participantData['id'] % 3];
+                $arInitials = mb_strtoupper(
+                    mb_substr($participantData['first_name'], 0, 1) .
+                    mb_substr($participantData['last_name'],  0, 1)
+                );
+            @endphp
+
+            <div wire:transition
+                 class="rounded-2xl border border-neutral-200 bg-white shadow-sm
+                        dark:border-zinc-700 dark:bg-zinc-800">
+
+                <div class="px-6 pt-7 pb-4 text-center">
+                    <div class="mx-auto mb-3 flex h-16 w-16 items-center justify-center
+                                rounded-full text-xl font-extrabold text-white shadow-md"
+                         style="background-color: {{ $arBg }}">
+                        {{ $arInitials }}
+                    </div>
+                    <h2 class="text-lg font-extrabold text-gray-800 dark:text-gray-100">
+                        {{ $participantData['first_name'] }} {{ $participantData['last_name'] }}
+                    </h2>
+                    <p class="mt-1.5 text-sm text-gray-500 dark:text-zinc-400">
+                        Tienes <strong>{{ count($participantData['types']) }}</strong> estamentos registrados.<br>
+                        Selecciona con cuál deseas registrarte en este evento.
+                    </p>
+                </div>
+
+                <div class="px-5 pb-2">
+                    <div class="space-y-2">
+                        @foreach ($participantData['types'] as $type)
+                            <label class="flex cursor-pointer items-center gap-3 rounded-xl border p-3.5 transition
+                                          {{ $selectedTypeId == $type['id']
+                                               ? 'border-[#0d9488] bg-teal-50 dark:bg-teal-900/20'
+                                               : 'border-neutral-200 hover:border-neutral-300 dark:border-zinc-700 dark:hover:border-zinc-600' }}">
+                                <input
+                                    type="radio"
+                                    wire:model="selectedTypeId"
+                                    value="{{ $type['id'] }}"
+                                    class="h-4 w-4 accent-[#0d9488]"
+                                />
+                                <span class="text-sm font-medium text-gray-800 dark:text-gray-100">
+                                    {{ $type['name'] }}
+                                </span>
+                            </label>
+                        @endforeach
+                    </div>
+
+                    @error('selectedTypeId')
+                        <p class="mt-2 text-xs text-red-500">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div class="space-y-2.5 border-t border-gray-100 px-5 py-4 dark:border-zinc-700 mt-2">
+                    <button
+                        wire:click="confirmTypeSelection"
+                        wire:loading.attr="disabled"
+                        wire:target="confirmTypeSelection"
+                        type="button"
+                        class="w-full rounded-xl py-3.5 px-6 text-base font-bold text-white shadow
+                               transition-all duration-200 hover:opacity-90 active:scale-[.98]
+                               disabled:cursor-not-allowed disabled:opacity-60"
+                        style="background: linear-gradient(90deg, #0d9488 0%, #0f766e 100%)">
+                        <span wire:loading.remove wire:target="confirmTypeSelection"
+                              class="flex items-center justify-center gap-2">
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                                 stroke="currentColor" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                      d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/>
+                            </svg>
+                            Continuar con este estamento
+                        </span>
+                        <span wire:loading wire:target="confirmTypeSelection"
+                              class="flex items-center justify-center gap-2">
+                            <svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10"
+                                        stroke="currentColor" stroke-width="4"/>
+                                <path class="opacity-75" fill="currentColor"
+                                      d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z"/>
+                            </svg>
+                            Cargando…
+                        </span>
+                    </button>
+
+                    <button
+                        wire:click="backToSearch"
+                        type="button"
+                        class="w-full rounded-xl border border-neutral-300 bg-white py-3 px-6
+                               text-sm font-semibold text-gray-600 transition
+                               hover:bg-gray-50 active:scale-[.98]
+                               dark:border-zinc-600 dark:bg-zinc-700 dark:text-gray-300 dark:hover:bg-zinc-600">
+                        ← Volver al inicio
+                    </button>
+                </div>
+            </div>
+        @endif
+
+        {{-- ─────────────────────────────────────────────────────────────
              STEP: select_program — Elegir carrera para esta asistencia
         ──────────────────────────────────────────────────────────────── --}}
         @if ($step === 'select_program' && $participantData)

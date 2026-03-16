@@ -2,23 +2,23 @@
 
 namespace Database\Seeders;
 
-use App\Models\Estamento;
+use App\Models\ParticipantType;
 use Illuminate\Database\Seeder;
 
-class EstamentoSeeder extends Seeder
+class ParticipantTypeSeeder extends Seeder
 {
     public function run(): void
     {
         $defaults = [
             'Estudiante',
             'Docente',
-            'Administrativo',
+            'Administrativos',
             'Graduado',
             'Comunidad Externa',
         ];
 
         foreach ($defaults as $name) {
-            Estamento::firstOrCreate(['name' => $name]);
+            ParticipantType::firstOrCreate(['name' => $name]);
         }
     }
 }

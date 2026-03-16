@@ -8,13 +8,12 @@ class AttendanceDetail extends Model
 {
     protected $fillable = [
         'attendance_id',
-        'sexo',
+        'gender',
         'telefono',
-        'municipio',
-        'barrio',
-        'direccion',
-        'grupo_priorizado',
+        'address_id',
+        'priority_group',
         'program_id',
+        'participant_type_id',
     ];
 
     public function attendance()
@@ -33,5 +32,13 @@ class AttendanceDetail extends Model
     public function program()
     {
         return $this->belongsTo(Program::class);
+    }
+
+    /**
+     * Tipo de estamento con el que el participante se registró en este evento.
+     */
+    public function participantType()
+    {
+        return $this->belongsTo(ParticipantType::class, 'participant_type_id');
     }
 }

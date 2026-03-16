@@ -11,14 +11,14 @@ return new class extends Migration
         Schema::create('attendance_details', function (Blueprint $table) {
             $table->id();
             $table->foreignId('attendance_id')->constrained()->cascadeOnDelete();
-            $table->string('sexo', 50)->nullable();
+            $table->string('gender', 50)->nullable();
             $table->string('telefono', 20)->nullable();
-            $table->string('municipio', 100);
-            $table->string('barrio', 100)->nullable();
-            $table->string('direccion', 255)->nullable();
-            $table->string('grupo_priorizado', 150)->nullable();
+            $table->foreignId('address_id')->nullable()->constrained()->nullOnDelete();
+            $table->string('priority_group', 150)->nullable();
             // Programa con el que el participante asistió (si tiene varios)
             $table->foreignId('program_id')->nullable()->constrained('programs')->nullOnDelete();
+            // Tipo de estamento con el que el participante se registró (si tiene varios)
+            $table->foreignId('participant_type_id')->nullable()->constrained('participant_types')->nullOnDelete();
             $table->timestamps();
         });
     }
