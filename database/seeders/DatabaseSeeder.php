@@ -5,59 +5,41 @@ namespace Database\Seeders;
 use App\Models\Dependency;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // Cargar dependencias y catálogos primero
-        $this->call(DependenciesSeeder::class);
-        $this->call(ParticipantTypeSeeder::class);
-
-        // Admins sin dependencia
-        User::factory()->create([
-            'name' => 'carlos',
-            'email' => 'carlos@example.com',
-            'password' => bcrypt('12345678'),
-            'role' => 'admin',
+        // Seeders base
+        $this->call([
+            DependenciesSeeder::class,
+            ParticipantTypeSeeder::class,
         ]);
 
-        User::factory()->create([
-            'name' => 'luis',
-            'email' => 'luis@example.com',
-            'password' => bcrypt('12345678'),
-            'role' => 'admin',
-        ]);
+        // Lista de administradores
+        $admins = [
+            ['name' => 'carlos', 'email' => 'carlos@example.com'],
+            ['name' => 'luis', 'email' => 'luis@example.com'],
+            ['name' => 'kevin', 'email' => 'kevin@example.com'],
+            ['name' => 'daniel', 'email' => 'daniel@example.com'],
+            ['name' => 'renzo', 'email' => 'renzo@example.com'],
+        ];
 
-        User::factory()->create([
-            'name' => 'kevin',
-            'email' => 'kevin@example.com',
-            'password' => bcrypt('12345678'),
-            'role' => 'admin',
-        ]);
+        foreach ($admins as $admin) {
+            User::create([
+                'name' => $admin['name'],
+                'email' => $admin['email'],
+                'password' => Hash::make('12345678'),
+                'role' => 'admin',
+            ]);
+        }
 
-        User::factory()->create([
-            'name' => 'daniel',
-            'email' => 'daniel@example.com',
-            'password' => bcrypt('12345678'),
-            'role' => 'admin',
-        ]);
-
-        User::factory()->create([
-            'name' => 'renzo',
-            'email' => 'renzo@example.com',
-            'password' => bcrypt('12345678'),
-            'role' => 'admin',
-        ]);
-
-        // Usuarios con dependencia (MANY TO MANY)
-        $kevinUser = User::factory()->create([
+        // Usuario con dependencia
+        $kevinUser = User::create([
             'name' => 'kevin User',
             'email' => 'kevin.user@example.com',
-            'password' => bcrypt('12345678'),
+            'password' => Hash::make('12345678'),
             'role' => 'user',
         ]);
 
@@ -65,10 +47,11 @@ class DatabaseSeeder extends Seeder
             Dependency::where('name', 'Bienestar Universitario')->first()->id,
         ]);
 
-        $user = User::factory()->create([
+        // Usuario con varias dependencias
+        $user = User::create([
             'name' => 'user',
             'email' => 'user@example.com',
-            'password' => bcrypt('12345678'),
+            'password' => Hash::make('12345678'),
             'role' => 'user',
         ]);
 
@@ -77,14 +60,15 @@ class DatabaseSeeder extends Seeder
             Dependency::where('name', 'Gestión Administrativa y Financiera')->first()->id,
         ]);
 
-
         // Otros seeders
-        $this->call(AreasSeeder::class);
-        $this->call(EventSeeder::class);
-        $this->call(ProgramSeeder::class);
-        $this->call(AffiliationSeeder::class);
-        $this->call(ParticipantSeeder::class);
-        $this->call(AttendanceSeeder::class);
-        $this->call(FormatSeeder::class);
+        $this->call([
+            AreasSeeder::class,
+            // $this->call(EventSeeder::class);
+            // $this->call(ProgramSeeder::class);
+            // $this->call(AffiliationSeeder::class);
+            // $this->call(ParticipantSeeder::class);
+            // $this->call(AttendanceSeeder::class);
+            FormatSeeder::class,
+        ]);
     }
 }
