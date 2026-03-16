@@ -115,8 +115,90 @@
                 @endif
 
                 @if(auth()->user()->role === 'admin')
-                    <flux:navlist.item icon="cog" :href="route('administracion.index')" class="hover:scale-103 transition-transform" :current="request()->routeIs('administracion.index')"
-                        wire:navigate>{{ __('Administration') }}</flux:navlist.item>
+                    {{-- AdministraciÃ³n: enlace al overview + lista colapsable de sub-mÃ³dulos --}}
+                    <div x-data="{
+                        open: false,
+                        ready: false,
+                        init() {
+                            if (@js(request()->routeIs('administracion.*', 'dependencies.*', 'areas.*', 'programs.*', 'formats.*', 'participant-types.*', 'affiliations.*', 'participants-import.*'))) {
+                                this.open = true;
+                            } else {
+                                this.open = localStorage.getItem('sidebar-admin-open') === 'true';
+                            }
+                            this.$nextTick(() => { this.ready = true; });
+                        }
+                    }" x-effect="localStorage.setItem('sidebar-admin-open', open)" class="my-px">
+
+                        {{-- Fila: enlace overview + botÃ³n toggle --}}
+                        <div class="flex items-center">
+                            <a href="{{ route('administracion.index') }}" wire:navigate
+                               @class([
+                                   'h-10 lg:h-8 flex flex-1 min-w-0 items-center gap-3 rounded-lg pl-3 pr-1 text-sm font-medium leading-none border transition-colors duration-150 hover:scale-103',
+                                   'text-zinc-500 dark:text-white/80 border-transparent hover:text-zinc-800 hover:bg-zinc-800/5 dark:hover:text-white dark:hover:bg-white/[7%]' => !request()->routeIs('administracion.index'),
+                                   'text-[--color-accent-content] bg-white dark:bg-white/[7%] border-zinc-200 dark:border-transparent' => request()->routeIs('administracion.index'),
+                               ])>
+                                <flux:icon.cog class="size-4! shrink-0" />
+                                <span class="truncate">{{ __('Administration') }}</span>
+                            </a>
+
+                            {{-- BotÃ³n chevron --}}
+                            <button
+                                type="button"
+                                @click="open = !open"
+                                class="h-8 w-7 flex shrink-0 items-center justify-center rounded-lg text-zinc-500 dark:text-white/80 hover:text-zinc-800 hover:bg-zinc-800/5 dark:hover:text-white dark:hover:bg-white/[7%] transition-colors"
+                                :aria-expanded="open.toString()"
+                            >
+                                <span class="block"
+                                      :class="[open ? 'rotate-90' : '', ready ? 'transition-transform duration-200' : '']">
+                                    <flux:icon.chevron-right class="size-3.5!" />
+                                </span>
+                            </button>
+                        </div>
+
+                        {{-- Sub-Ã­tems --}}
+                        <div
+                            x-cloak
+                            x-show="open"
+                            x-transition:enter="transition ease-out duration-150"
+                            x-transition:enter-start="opacity-0 -translate-y-1"
+                            x-transition:enter-end="opacity-100 translate-y-0"
+                            x-transition:leave="transition ease-in duration-100"
+                            x-transition:leave-start="opacity-100 translate-y-0"
+                            x-transition:leave-end="opacity-0 -translate-y-1"
+                            class="relative mt-0.5 flex flex-col gap-[2px] pl-6"
+                        >
+                            {{-- LÃ­nea vertical decorativa --}}
+                            <div class="absolute inset-y-1 left-[11px] w-px rounded-full bg-zinc-200 dark:bg-white/20"></div>
+
+                            <flux:navlist.item :href="route('dependencies.index')" :current="request()->routeIs('dependencies.*')" wire:navigate>
+                                {{ __('Dependencias') }}
+                            </flux:navlist.item>
+
+                            <flux:navlist.item :href="route('areas.index')" :current="request()->routeIs('areas.*')" wire:navigate>
+                                {{ __('Áreas') }}
+                            </flux:navlist.item>
+
+                            <flux:navlist.item :href="route('programs.index')" :current="request()->routeIs('programs.*')" wire:navigate>
+                                {{ __('Programas') }}
+                            </flux:navlist.item>
+
+                            <flux:navlist.item :href="route('formats.index')" :current="request()->routeIs('formats.*')" wire:navigate>
+                                {{ __('Formatos') }}
+                            </flux:navlist.item>
+
+                            <flux:navlist.item :href="route('participant-types.index')" :current="request()->routeIs('participant-types.*')" wire:navigate>
+                                {{ __('Estamentos') }}
+                            </flux:navlist.item>
+
+                            <flux:navlist.item :href="route('affiliations.index')" :current="request()->routeIs('affiliations.*')" wire:navigate>
+                                {{ __('Afiliaciones') }}
+                            </flux:navlist.item>
+
+                            <flux:navlist.item :href="route('participants-import.index')" :current="request()->routeIs('participants-import.*')" wire:navigate>
+                                {{ __('Participantes') }}
+                            </flux:navlist.item>
+                        </div>
+                    </div>
                 @endif
 
             </flux:navlist.group>
