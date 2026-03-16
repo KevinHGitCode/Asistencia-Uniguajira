@@ -163,6 +163,8 @@ Route::middleware(['auth', 'verified', 'role:admin'])
         // Rutas de afiliaciones
         Route::get('/affiliations', [AffiliationController::class, 'index'])->name('affiliations.index');
         Route::post('/affiliations', [AffiliationController::class, 'store'])->name('affiliations.store');
+        Route::post('/affiliations/edit/{affiliation}', [AffiliationController::class, 'update'])->name('affiliations.update');
+        Route::delete('/affiliations/{affiliation}', [AffiliationController::class, 'destroy'])->name('affiliations.destroy');
 
         // Rutas de estamentos / tipos de participante
         Route::get('/participant-types', [ParticipantTypeController::class, 'index'])->name('participant-types.index');
