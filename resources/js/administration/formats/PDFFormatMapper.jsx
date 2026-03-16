@@ -1,23 +1,26 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+﻿import { useState, useRef, useEffect, useCallback } from "react";
 
 const HEADER_FIELDS = [
   { id: "dependency", label: "Dependencia" },
-  { id: "area", label: "Área" },
-  { id: "title", label: "Título" },
-  { id: "date_day", label: "Día" },
+  { id: "area", label: "Ãrea" },
+  { id: "title", label: "TÃ­tulo" },
+  { id: "date_day", label: "DÃ­a" },
   { id: "date_month", label: "Mes" },
-  { id: "date_year", label: "Año" },
+  { id: "date_year", label: "AÃ±o" },
   { id: "responsible", label: "Responsable" },
 ];
 
 const COLUMN_FIELDS = [
-  { id: "number", label: "N°", defaults: { w: 12, align: "C", fontSize: 12, limit: 5 } },
+  { id: "number", label: "NÂ°", defaults: { w: 12, align: "C", fontSize: 12, limit: 5 } },
   { id: "name", label: "Nombre", defaults: { w: 55, align: "L", limit: 30, fontSize: 12 } },
-  { id: "identification", label: "Identificación", defaults: { w: 25, align: "C", limit: 15, fontSize: 12 } },
+  { id: "identification", label: "IdentificaciÃ³n", defaults: { w: 25, align: "C", limit: 15, fontSize: 12 } },
   { id: "role", label: "Cargo", defaults: { w: 28, align: "L", limit: 13, fontSize: 12 }, canBeCheckbox: true },
   { id: "program", label: "Programa", defaults: { w: 35, align: "L", limit: 25, fontSize: 10 } },
   { id: "email", label: "Correo", defaults: { w: 34, align: "L", limit: 30, fontSize: 12 } },
-  { id: "phone", label: "Teléfono", defaults: { w: 25, align: "L", limit: 15, fontSize: 12 } },
+  { id: "phone", label: "TelÃ©fono", defaults: { w: 25, align: "L", limit: 15, fontSize: 12 } },
+  { id: "city", label: "Ciudad", defaults: { w: 28, align: "L", limit: 18, fontSize: 12 } },
+  { id: "neighborhood", label: "Barrio", defaults: { w: 28, align: "L", limit: 18, fontSize: 12 } },
+  { id: "address", label: "Direccion", defaults: { w: 40, align: "L", limit: 30, fontSize: 11 } },
   { id: "time", label: "Hora", defaults: { w: 20, align: "C", fontSize: 12, limit: 10 } },
 ];
 
@@ -25,7 +28,7 @@ const CHECKBOX_FIELDS = [
   { id: "gender", label: "Sexo", options: ["Femenino", "Masculino"] },
   {
     id: "priority_group", label: "Grupo Priorizado",
-    options: ["Indígena", "Afrodescendiente", "Discapacitado", "Víctima de Conflicto Armado", "Comunidad LGTBQ+", "Habitante de Frontera"],
+    options: ["IndÃ­gena", "Afrodescendiente", "Discapacitado", "VÃ­ctima de Conflicto Armado", "Comunidad LGTBQ+", "Habitante de Frontera"],
   },
   {
     id: "role_checkbox", label: "Cargo (casillas)", configId: "role",
@@ -43,6 +46,12 @@ const COLORS = {
 function estimateLimit(wMm, fontSize) {
   const avgCharWidthMm = fontSize * 0.17;
   return Math.max(3, Math.floor(wMm / avgCharWidthMm));
+}
+
+function isEditableTarget(target) {
+  if (!target) return false;
+  const tag = target.tagName?.toLowerCase();
+  return tag === "input" || tag === "textarea" || tag === "select" || target.isContentEditable;
 }
 
 export default function PDFFormatMapper({ formatId, formatSlug, formatName, formatFile, formatMapping, saveUrl, pdfUrl, csrfToken } = {}) {
@@ -113,7 +122,7 @@ export default function PDFFormatMapper({ formatId, formatSlug, formatName, form
         Object.entries(cfg.header).forEach(([id, pos]) => {
           if (HEADER_FIELDS.find(f => f.id === id)) {
               const wMm = pos.w || 40;
-              h[id] = { xPx: m2p(pos.x, "x"), yPx: m2p(pos.y, "y"), fontSize: pos.fontSize || 12, wMm: wMm, limit: pos.limit || estimateLimit(wMm, pos.fontSize || 12) };
+              h[id] = { xPx: m2p(pos.x, "x"), yPx: m2p(pos.y, "y"), fontSize: pos.fontSize || 12, wMm: wMm, limit: pos.limit || estimateLimit(wMm, pos.fontSize || 12), align: pos.align || "L" };
           }
         });
         setPlacedHeaders(h);
@@ -219,9 +228,57 @@ export default function PDFFormatMapper({ formatId, formatSlug, formatName, form
     }
   }, [interaction, handleMouseMove, handleMouseUp]);
 
+  const moveSelectedField = useCallback((dx, dy) => {
+    if (!selectedField) return;
+    const clampX = (x) => Math.max(0, Math.min(x, pageInfo.wPx - 20));
+    const clampY = (y) => Math.max(0, Math.min(y, pageInfo.hPx - 10));
+
+    if (selectedField.type === "header") {
+      setPlacedHeaders(p => {
+        const cur = p[selectedField.id];
+        if (!cur) return p;
+        return { ...p, [selectedField.id]: { ...cur, xPx: clampX(cur.xPx + dx), yPx: clampY(cur.yPx + dy) } };
+      });
+    } else if (selectedField.type === "column") {
+      setPlacedColumns(p => {
+        const cur = p[selectedField.id];
+        if (!cur) return p;
+        return { ...p, [selectedField.id]: { ...cur, xPx: clampX(cur.xPx + dx), yPx: clampY(cur.yPx + dy) } };
+      });
+    } else if (selectedField.type === "checkbox") {
+      setPlacedCheckboxes(p => {
+        const field = p[selectedField.id];
+        const optKey = selectedField.optionKey;
+        if (!field || !optKey || !field[optKey]) return p;
+        const cur = field[optKey];
+        return { ...p, [selectedField.id]: { ...field, [optKey]: { ...cur, xPx: clampX(cur.xPx + dx), yPx: clampY(cur.yPx + dy) } } };
+      });
+    }
+  }, [selectedField, pageInfo.wPx, pageInfo.hPx]);
+
+  useEffect(() => {
+    if (!selectedField) return;
+    const onKeyDown = (e) => {
+      if (isEditableTarget(e.target)) return;
+      let dx = 0;
+      let dy = 0;
+      if (e.key === "ArrowUp") dy = -1;
+      else if (e.key === "ArrowDown") dy = 1;
+      else if (e.key === "ArrowLeft") dx = -1;
+      else if (e.key === "ArrowRight") dx = 1;
+      else return;
+
+      e.preventDefault();
+      const step = e.shiftKey ? 5 : 1;
+      moveSelectedField(dx * step, dy * step);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [selectedField, moveSelectedField]);
+
   const addHeaderField = (id) => {
       if (!placedHeaders[id]) setPlacedHeaders(p => ({
-          ...p, [id]: { xPx: 100, yPx: 40, fontSize: 12, wMm: 40, limit: estimateLimit(40, 12) }
+          ...p, [id]: { xPx: 100, yPx: 40, fontSize: 12, wMm: 40, limit: estimateLimit(40, 12), align: "L" }
       }));
   };
   const addColumnField = (id) => {
@@ -301,6 +358,7 @@ export default function PDFFormatMapper({ formatId, formatSlug, formatName, form
         if (f.fontSize && f.fontSize !== 12) header[id].fontSize = f.fontSize;
         if (f.wMm) header[id].w = f.wMm;
         if (f.limit) header[id].limit = f.limit;
+        if (f.align && f.align !== "L") header[id].align = f.align;
     });
     const columns = {};
     Object.entries(placedColumns).forEach(([id, f]) => {
@@ -354,6 +412,42 @@ export default function PDFFormatMapper({ formatId, formatSlug, formatName, form
   };
 
   const exportedConfig = showExport ? generateConfig() : null;
+  const gridMinorX = mmToPx(5, "x");
+  const gridMinorY = mmToPx(5, "y");
+  const gridMajorX = mmToPx(10, "x");
+  const gridMajorY = mmToPx(10, "y");
+  const gridMinorStyle = {
+    position: "absolute",
+    inset: 0,
+    pointerEvents: "none",
+    backgroundImage: "linear-gradient(to right, rgba(59,130,246,0.18) 1px, transparent 1px), linear-gradient(to bottom, rgba(59,130,246,0.18) 1px, transparent 1px)",
+    backgroundSize: `${gridMinorX}px ${gridMinorY}px`,
+  };
+  const gridMajorStyle = {
+    position: "absolute",
+    inset: 0,
+    pointerEvents: "none",
+    backgroundImage: "linear-gradient(to right, rgba(59,130,246,0.35) 1px, transparent 1px), linear-gradient(to bottom, rgba(59,130,246,0.35) 1px, transparent 1px)",
+    backgroundSize: `${gridMajorX}px ${gridMajorY}px`,
+  };
+  const centerLineStyleX = {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    left: Math.round(pageInfo.wPx / 2),
+    width: 1,
+    background: "rgba(239,68,68,0.6)",
+    pointerEvents: "none",
+  };
+  const centerLineStyleY = {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    top: Math.round(pageInfo.hPx / 2),
+    height: 1,
+    background: "rgba(239,68,68,0.6)",
+    pointerEvents: "none",
+  };
   const coordBadge = { fontSize: 7, opacity: 0.8, marginLeft: 3, fontFamily: "monospace", background: "rgba(0,0,0,0.3)", padding: "0 3px", borderRadius: 2 };
   const propBadge = { fontSize: 7, padding: "0 3px", borderRadius: 2, background: "rgba(0,0,0,0.35)", fontFamily: "monospace", color: "#fff" };
   const fieldBase = { position: "absolute", borderRadius: 4, cursor: "grab", userSelect: "none", display: "flex", alignItems: "center", transition: "box-shadow 0.12s" };
@@ -382,7 +476,7 @@ export default function PDFFormatMapper({ formatId, formatSlug, formatName, form
           {pdfLoading ? "..." : "Cambiar PDF"}<input type="file" accept=".pdf" onChange={handlePdfUpload} style={{ display: "none" }} disabled={!pdfReady} />
         </label>
         <Btn onClick={() => setShowExport(!showExport)} bg="#475569">{showExport ? "Ocultar PHP" : "Ver PHP"}</Btn>
-        <Btn onClick={handleSave} bg="#22c55e" disabled={saving}>{saving ? "Guardando..." : "💾 Guardar"}</Btn>
+        <Btn onClick={handleSave} bg="#22c55e" disabled={saving}>{saving ? "Guardando..." : "ðŸ’¾ Guardar"}</Btn>
       </div>
 
       <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
@@ -391,17 +485,17 @@ export default function PDFFormatMapper({ formatId, formatSlug, formatName, form
           <div style={{ width: 230, background: "#1e293b", borderRight: "1px solid #334155", overflowY: "auto", flexShrink: 0, padding: 10, fontSize: 11 }}>
             <Section title="Tabla">
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 4 }}>
-                {[["startY", "Inicio Y"], ["rowHeight", "Alt.Fila"], ["maxRows", "Máx"]].map(([k, l]) => (
+                {[["startY", "Inicio Y"], ["rowHeight", "Alt.Fila"], ["maxRows", "MÃ¡x"]].map(([k, l]) => (
                   <MiniInput key={k} label={l} type="number" step="0.5" value={tableConfig[k]} onChange={e => setTableConfig(p => ({ ...p, [k]: parseFloat(e.target.value) || 0 }))} />
                 ))}
               </div>
               <label style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 5, fontSize: 10, color: "#94a3b8", cursor: "pointer" }}>
-                <input type="checkbox" checked={showGuides} onChange={e => setShowGuides(e.target.checked)} /> Guías de filas
+                <input type="checkbox" checked={showGuides} onChange={e => setShowGuides(e.target.checked)} /> GuÃ­as (filas + rejilla)
               </label>
             </Section>
             <Section title="Fecha / Hora">
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 4 }}>
-                {[["day", "Día"], ["month", "Mes"], ["year", "Año"]].map(([k, l]) => (
+                {[["day", "DÃ­a"], ["month", "Mes"], ["year", "AÃ±o"]].map(([k, l]) => (
                   <MiniInput key={k} label={l} value={dateFormat[k]} onChange={e => setDateFormat(p => ({ ...p, [k]: e.target.value }))} mono />
                 ))}
               </div>
@@ -422,7 +516,7 @@ export default function PDFFormatMapper({ formatId, formatSlug, formatName, form
                 <div key={field.id} style={{ marginBottom: 6 }}>
                   <div style={{ fontSize: 10, fontWeight: 600, color: "#cbd5e1", marginBottom: 2 }}>{field.label}</div>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
-                    {field.options.map(opt => <FieldBtn key={opt} label={opt.length > 14 ? opt.substring(0, 14) + "…" : opt} placed={!!placedCheckboxes[field.id]?.[opt]} color={COLORS.checkbox.badge} onClick={() => addCheckboxOption(field.id, opt)} small />)}
+                    {field.options.map(opt => <FieldBtn key={opt} label={opt.length > 14 ? opt.substring(0, 14) + "â€¦" : opt} placed={!!placedCheckboxes[field.id]?.[opt]} color={COLORS.checkbox.badge} onClick={() => addCheckboxOption(field.id, opt)} small />)}
                   </div>
                 </div>
               ))}
@@ -437,11 +531,11 @@ export default function PDFFormatMapper({ formatId, formatSlug, formatName, form
                 </div>
                 {selectedField.type === "column" && (
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 3 }}>
-                    {[["w", "Ancho(mm)"], ["h", "Alto(mm)"], ["fontSize", "Letra"], ["limit", "Límite"]].map(([k, l]) => (
+                    {[["w", "Ancho(mm)"], ["h", "Alto(mm)"], ["fontSize", "Letra"], ["limit", "LÃ­mite"]].map(([k, l]) => (
                       <MiniInput key={k} label={l} type="number" step={k === "fontSize" ? 1 : 0.5} value={placedColumns[selectedField.id]?.[k] || ""} onChange={e => updateFieldProp(selectedField.id, "column", k, parseFloat(e.target.value) || 0)} />
                     ))}
                     <div style={{ gridColumn: "span 2" }}>
-                      <label style={{ fontSize: 9, color: "#64748b" }}>Alineación</label>
+                      <label style={{ fontSize: 9, color: "#64748b" }}>AlineaciÃ³n</label>
                       <select value={placedColumns[selectedField.id]?.align || "L"} onChange={e => updateFieldProp(selectedField.id, "column", "align", e.target.value)}
                         style={{ width: "100%", padding: "2px 4px", borderRadius: 3, border: "1px solid #475569", background: "#1e293b", color: "#e2e8f0", fontSize: 10 }}>
                         <option value="L">Izquierda</option><option value="C">Centro</option><option value="R">Derecha</option>
@@ -459,13 +553,22 @@ export default function PDFFormatMapper({ formatId, formatSlug, formatName, form
                               const fs = placedHeaders[selectedField.id]?.fontSize || 12;
                               setPlacedHeaders(p => ({ ...p, [selectedField.id]: { ...p[selectedField.id], wMm: w, limit: estimateLimit(w, fs) } }));
                           }} />
-                      <MiniInput label="Límite" type="number" value={placedHeaders[selectedField.id]?.limit || ''}
+                      <MiniInput label="LÃ­mite" type="number" value={placedHeaders[selectedField.id]?.limit || ''}
                           onChange={e => updateFieldProp(selectedField.id, "header", "limit", parseInt(e.target.value) || 0)} />
+                      <div style={{ gridColumn: "span 2" }}>
+                        <label style={{ fontSize: 9, color: "#64748b" }}>AlineaciÃ³n</label>
+                        <select value={placedHeaders[selectedField.id]?.align || "L"} onChange={e => updateFieldProp(selectedField.id, "header", "align", e.target.value)}
+                          style={{ width: "100%", padding: "2px 4px", borderRadius: 3, border: "1px solid #475569", background: "#1e293b", color: "#e2e8f0", fontSize: 10 }}>
+                          <option value="L">Izquierda</option>
+                          <option value="C">Centro</option>
+                          <option value="R">Derecha</option>
+                        </select>
+                      </div>
                   </div>
                 )}
                 {selectedField.type === "checkbox" && (
                   <div>
-                    <label style={{ fontSize: 9, color: "#64748b" }}>Alineación</label>
+                    <label style={{ fontSize: 9, color: "#64748b" }}>AlineaciÃ³n</label>
                     <select 
                       value={placedCheckboxes[selectedField.id]?.[selectedField.optionKey]?.align || "C"}
                       onChange={e => {
@@ -487,10 +590,12 @@ export default function PDFFormatMapper({ formatId, formatSlug, formatName, form
 
             <div style={{ marginTop: 10, padding: 6, borderRadius: 5, background: "#0f172a", border: "1px solid #334155", fontSize: 9, color: "#64748b", lineHeight: 1.5 }}>
               <strong style={{ color: "#94a3b8" }}>Controles:</strong><br/>
-              • Arrastrar = mover campo<br/>
-              • Borde derecho = ancho (y límite)<br/>
-              • Scroll (rueda) = tamaño letra<br/>
-              • Click = ver propiedades
+              â€¢ Arrastrar = mover campo<br/>
+              â€¢ Flechas = mover seleccionado<br/>
+              â€¢ Shift + flechas = movimiento rÃ¡pido<br/>
+              â€¢ Borde derecho = ancho (y lÃ­mite)<br/>
+              â€¢ Scroll (rueda) = tamaÃ±o letra<br/>
+              â€¢ Click = ver propiedades
             </div>
           </div>
         )}
@@ -500,6 +605,16 @@ export default function PDFFormatMapper({ formatId, formatSlug, formatName, form
           <div ref={containerRef} style={{ position: "relative", width: pageInfo.wPx, height: pageInfo.hPx, flexShrink: 0 }}>
             <canvas ref={canvasRef} style={{ position: "absolute", top: 0, left: 0, borderRadius: 3, boxShadow: "0 4px 20px rgba(0,0,0,0.5)" }} />
 
+            {/* ===== GRID GUIDES ===== */}
+            {showGuides && fileName && (
+              <>
+                <div style={gridMinorStyle} />
+                <div style={gridMajorStyle} />
+                <div style={centerLineStyleX} />
+                <div style={centerLineStyleY} />
+              </>
+            )}
+
             {/* ===== ROW GUIDES with labels ===== */}
             {showGuides && fileName && Array.from({ length: tableConfig.maxRows + 1 }, (_, i) => {
               const yPx = mmToPx(tableConfig.startY + i * tableConfig.rowHeight, "y");
@@ -508,7 +623,7 @@ export default function PDFFormatMapper({ formatId, formatSlug, formatName, form
               return (
                 <div key={`g-${i}`}>
                   {/* Horizontal line */}
-                  <div style={{ position: "absolute", left: 0, top: yPx, width: "100%", height: 1, background: isFirst ? "#ef4444" : isLast ? "#f59e0b" : "#3b82f6", opacity: isFirst ? 0.7 : isLast ? 0.6 : 0.15, pointerEvents: "none" }} />
+                  <div style={{ position: "absolute", left: 0, top: yPx, width: "100%", height: 1, background: isFirst ? "#ef4444" : isLast ? "#f59e0b" : "#3b82f6", opacity: isFirst ? 0.95 : isLast ? 0.85 : 0.3, pointerEvents: "none" }} />
 
                   {/* Row number label on the right */}
                   {i < tableConfig.maxRows && (
@@ -520,7 +635,7 @@ export default function PDFFormatMapper({ formatId, formatSlug, formatName, form
                   {/* startY label */}
                   {isFirst && (
                     <span style={{ position: "absolute", left: 4, top: yPx - 13, fontSize: 8, color: "#ef4444", fontWeight: 700, pointerEvents: "none" }}>
-                      ▼ startY: {tableConfig.startY}mm
+                      â–¼ startY: {tableConfig.startY}mm
                     </span>
                   )}
 
@@ -528,14 +643,14 @@ export default function PDFFormatMapper({ formatId, formatSlug, formatName, form
                   {i === 1 && (
                     <div style={{ position: "absolute", left: 6, top: mmToPx(tableConfig.startY, "y"), height: mmToPx(tableConfig.rowHeight, "y"), display: "flex", alignItems: "center", pointerEvents: "none" }}>
                       <div style={{ width: 1, height: "100%", background: "#22c55e", opacity: 0.6 }} />
-                      <span style={{ fontSize: 7, color: "#22c55e", marginLeft: 3, fontFamily: "monospace", whiteSpace: "nowrap" }}>↕ {tableConfig.rowHeight}mm</span>
+                      <span style={{ fontSize: 7, color: "#22c55e", marginLeft: 3, fontFamily: "monospace", whiteSpace: "nowrap" }}>â†• {tableConfig.rowHeight}mm</span>
                     </div>
                   )}
 
                   {/* Last row label */}
                   {isLast && (
                     <span style={{ position: "absolute", left: 4, top: yPx + 3, fontSize: 8, color: "#f59e0b", fontWeight: 700, pointerEvents: "none" }}>
-                      ▲ máx: {tableConfig.maxRows} filas
+                      â–² mÃ¡x: {tableConfig.maxRows} filas
                     </span>
                   )}
                 </div>
@@ -559,7 +674,8 @@ export default function PDFFormatMapper({ formatId, formatSlug, formatName, form
                   <span style={coordBadge}>{pxToMm(f.xPx, "x")},{pxToMm(f.yPx, "y")}</span>
                   <span style={{ ...propBadge, marginLeft: 2 }}>{f.fontSize || 12}px</span>
                   <span style={{ ...propBadge, marginLeft: 2 }}>w:{f.wMm || 40}</span>
-                  <span style={{ ...propBadge, marginLeft: 2 }}>lím:{f.limit || '-'}</span>
+                  <span style={{ ...propBadge, marginLeft: 2 }}>lÃ­m:{f.limit || '-'}</span>
+                  <span style={{ ...propBadge, marginLeft: 2 }}>{f.align || 'L'}</span>
                   <ResizeHandle visible={isSel} onMouseDown={e => { e.preventDefault(); e.stopPropagation(); setInteraction({ type: "resize", id, fieldType: "header" }); }} />
                 </div>
               );
@@ -588,7 +704,7 @@ export default function PDFFormatMapper({ formatId, formatSlug, formatName, form
                     <span style={propBadge}>x:{pxToMm(f.xPx, "x")}</span>
                     <span style={propBadge}>w:{f.w}</span>
                     <span style={propBadge}>{f.fontSize || 12}px</span>
-                    <span style={propBadge}>lím:{f.limit}</span>
+                    <span style={propBadge}>lÃ­m:{f.limit}</span>
                     <span style={propBadge}>{f.align}</span>
                   </div>
                   <ResizeHandle visible={isSel} onMouseDown={e => { e.preventDefault(); e.stopPropagation(); setInteraction({ type: "resize", id, fieldType: "column" }); }} />
@@ -609,10 +725,10 @@ export default function PDFFormatMapper({ formatId, formatSlug, formatName, form
                     style={{ ...fieldBase, left: pos.xPx, top: pos.yPx, width: wPx, padding: "1px 10px 1px 5px", fontSize: 8, fontWeight: 600,
                       background: isSel ? COLORS.checkbox.bgSelected : COLORS.checkbox.bg, color: "#fff",
                       border: isSel ? "2px solid #fff" : "1px solid rgba(255,255,255,0.3)", whiteSpace: "nowrap", overflow: "hidden" }}>
-                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", flex: 1 }}>✕ {optKey.length > 12 ? optKey.substring(0, 12) + "…" : optKey}</span>
+                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", flex: 1 }}>âœ• {optKey.length > 12 ? optKey.substring(0, 12) + "â€¦" : optKey}</span>
                     <span style={coordBadge}>{pxToMm(pos.xPx, "x")}</span>
                     <span style={propBadge}>w:{pos.wMm || 10}</span>
-                    <span style={propBadge}>lím:{pos.limit || '-'}</span>
+                    <span style={propBadge}>lÃ­m:{pos.limit || '-'}</span>
                     <span style={propBadge}>{pos.align || 'C'}</span>
                     <ResizeHandle visible={isSel} onMouseDown={e => { e.preventDefault(); e.stopPropagation(); setInteraction({ type: "resize", id: fieldId, fieldType: "checkbox", optionKey: optKey }); }} />
                   </div>
@@ -670,7 +786,7 @@ function FieldBtn({ label, placed, color, onClick, small }) {
     <button onClick={onClick} disabled={placed}
       style={{ padding: small ? "1px 4px" : "2px 6px", borderRadius: 3, fontSize: small ? 8 : 10, fontWeight: 600, border: "none",
         cursor: placed ? "default" : "pointer", background: placed ? "#334155" : color, color: placed ? "#64748b" : "#fff", opacity: placed ? 0.5 : 1 }}>
-      {placed ? "✓" : "+"} {label}
+      {placed ? "âœ“" : "+"} {label}
     </button>
   );
 }

@@ -72,7 +72,8 @@ class AttendancePdfService
                 $w = $header['dependency']['w'] ?? 0;
                 $text = mb_strtoupper($event->dependency->name ?? 'SIN DEPENDENCIA', 'UTF-8');
                 if (isset($header['dependency']['limit'])) $text = $this->truncateText($text, $header['dependency']['limit']);
-                $pdf->Cell($w, 8, $this->toIso($text), 0, 0, 'L');
+                $align = $header['dependency']['align'] ?? 'L';
+                $pdf->Cell($w, 8, $this->toIso($text), 0, 0, $align);
             }
 
             if (isset($header['area']) && $event->area) {
@@ -81,7 +82,8 @@ class AttendancePdfService
                 $w = $header['area']['w'] ?? 0;
                 $text = ' - ' . mb_strtoupper($event->area->name, 'UTF-8');
                 if (isset($header['area']['limit'])) $text = $this->truncateText($text, $header['area']['limit']);
-                $pdf->Cell($w, 8, $this->toIso($text), 0, 0, 'L');
+                $align = $header['area']['align'] ?? 'L';
+                $pdf->Cell($w, 8, $this->toIso($text), 0, 0, $align);
             }
 
             if (isset($header['title'])) {
@@ -90,7 +92,8 @@ class AttendancePdfService
                 $w = $header['title']['w'] ?? 0;
                 $text = mb_strtoupper($event->title ?? 'SIN TÍTULO', 'UTF-8');
                 if (isset($header['title']['limit'])) $text = $this->truncateText($text, $header['title']['limit']);
-                $pdf->Cell($w, 8, $this->toIso($text), 0, 0, 'L');
+                $align = $header['title']['align'] ?? 'L';
+                $pdf->Cell($w, 8, $this->toIso($text), 0, 0, $align);
             }
 
             if (isset($cfg['date_format']) && isset($header['date_day']) && is_array($cfg['date_format'])) {
@@ -101,21 +104,24 @@ class AttendancePdfService
                 $w = $header['date_day']['w'] ?? 0;
                 $text = $date->format($cfg['date_format']['day']);
                 if (isset($header['date_day']['limit'])) $text = $this->truncateText($text, $header['date_day']['limit']);
-                $pdf->Cell($w, 8, $text, 0, 0, 'L');
+                $align = $header['date_day']['align'] ?? 'L';
+                $pdf->Cell($w, 8, $text, 0, 0, $align);
 
                 $pdf->SetFont('Arial', 'B', $header['date_month']['fontSize'] ?? 12);
                 $pdf->SetXY($header['date_month']['x'], $header['date_month']['y']);
                 $w = $header['date_month']['w'] ?? 0;
                 $text = $date->translatedFormat($cfg['date_format']['month']);
                 if (isset($header['date_month']['limit'])) $text = $this->truncateText($text, $header['date_month']['limit']);
-                $pdf->Cell($w, 8, $this->toIso($text), 0, 0, 'L');
+                $align = $header['date_month']['align'] ?? 'L';
+                $pdf->Cell($w, 8, $this->toIso($text), 0, 0, $align);
 
                 $pdf->SetFont('Arial', 'B', $header['date_year']['fontSize'] ?? 12);
                 $pdf->SetXY($header['date_year']['x'], $header['date_year']['y']);
                 $w = $header['date_year']['w'] ?? 0;
                 $text = $date->format($cfg['date_format']['year']);
                 if (isset($header['date_year']['limit'])) $text = $this->truncateText($text, $header['date_year']['limit']);
-                $pdf->Cell($w, 8, $text, 0, 0, 'L');
+                $align = $header['date_year']['align'] ?? 'L';
+                $pdf->Cell($w, 8, $text, 0, 0, $align);
 
             } elseif (isset($cfg['date_format']) && isset($header['date']) && is_string($cfg['date_format'])) {
                 $pdf->SetFont('Arial', 'B', $header['date']['fontSize'] ?? 12);
@@ -123,7 +129,8 @@ class AttendancePdfService
                 $w = $header['date']['w'] ?? 0;
                 $text = Carbon::parse($event->date)->format($cfg['date_format']);
                 if (isset($header['date']['limit'])) $text = $this->truncateText($text, $header['date']['limit']);
-                $pdf->Cell($w, 8, $this->toIso($text), 0, 0, 'L');
+                $align = $header['date']['align'] ?? 'L';
+                $pdf->Cell($w, 8, $this->toIso($text), 0, 0, $align);
             }
 
             if (isset($header['responsible'])) {
@@ -132,7 +139,8 @@ class AttendancePdfService
                 $w = $header['responsible']['w'] ?? 0;
                 $text = $event->user->name ?? '';
                 if (isset($header['responsible']['limit'])) $text = $this->truncateText($text, $header['responsible']['limit']);
-                $pdf->Cell($w, 8, $this->toIso($text), 0, 0, 'L');
+                $align = $header['responsible']['align'] ?? 'L';
+                $pdf->Cell($w, 8, $this->toIso($text), 0, 0, $align);
             }
 
             $pdf->SetFont('Arial', '', 12);
@@ -150,8 +158,7 @@ class AttendancePdfService
             }
 
             $p = $attendance->participant;
-            // Preferir el programa específico de la asistencia sobre el primero del participante
-            $p->setRelation('programs', collect([$attendance->detail?->program ?? $p->programs->first()])->filter());
+            $detail = $attendance->detail;
             $y = round($cfg['startY'] + ($row * $cfg['rowHeight']), 2);
 
             if (isset($cols['number'])) {
@@ -179,7 +186,7 @@ class AttendancePdfService
             }
 
             if (isset($cols['role'])) {
-                $roleText = $attendance->detail?->participantType?->name ?? $p->types->first()?->name ?? '';
+                $roleText = $detail?->participantType?->name ?? $p->types->first()?->name ?? '';
                 // Si tiene 'x' y 'w', es texto
                 if (isset($cols['role']['x']) && isset($cols['role']['w'])) {
                     $pdf->SetFont('Arial', '', $cols['role']['fontSize'] ?? 12);
@@ -204,8 +211,9 @@ class AttendancePdfService
             if (isset($cols['program'])) {
                 $pdf->SetFont('Arial', '', $cols['program']['fontSize'] ?? 12);
                 $pdf->SetXY($cols['program']['x'], $y);
+                $programName = $detail?->program?->name ?? $p->programs->first()?->name ?? '';
                 $pdf->Cell($cols['program']['w'], $cols['program']['h'] ?? 7.8,
-                    $this->toIso($this->truncateText($p->programs->first()?->name ?? '', $cols['program']['limit'])),
+                    $this->toIso($this->truncateText($programName, $cols['program']['limit'])),
                     0, 0, $cols['program']['align']
                 );
             }
@@ -222,9 +230,40 @@ class AttendancePdfService
             if (isset($cols['phone'])) {
                 $pdf->SetFont('Arial', '', $cols['phone']['fontSize'] ?? 12);
                 $pdf->SetXY($cols['phone']['x'], $y);
+                $phoneText = $detail?->phone ?? $p->phone ?? '';
                 $pdf->Cell($cols['phone']['w'], $cols['phone']['h'] ?? 7.8,
-                    $this->toIso($this->truncateText($p->phone ?? '', $cols['phone']['limit'])),
+                    $this->toIso($this->truncateText($phoneText, $cols['phone']['limit'])),
                     0, 0, $cols['phone']['align']
+                );
+            }
+
+            if (isset($cols['city'])) {
+                $pdf->SetFont('Arial', '', $cols['city']['fontSize'] ?? 12);
+                $pdf->SetXY($cols['city']['x'], $y);
+                $cityText = $detail?->city ?? '';
+                $pdf->Cell($cols['city']['w'], $cols['city']['h'] ?? 7.8,
+                    $this->toIso($this->truncateText($cityText, $cols['city']['limit'])),
+                    0, 0, $cols['city']['align']
+                );
+            }
+
+            if (isset($cols['neighborhood'])) {
+                $pdf->SetFont('Arial', '', $cols['neighborhood']['fontSize'] ?? 12);
+                $pdf->SetXY($cols['neighborhood']['x'], $y);
+                $neighborhoodText = $detail?->neighborhood ?? '';
+                $pdf->Cell($cols['neighborhood']['w'], $cols['neighborhood']['h'] ?? 7.8,
+                    $this->toIso($this->truncateText($neighborhoodText, $cols['neighborhood']['limit'])),
+                    0, 0, $cols['neighborhood']['align']
+                );
+            }
+
+            if (isset($cols['address'])) {
+                $pdf->SetFont('Arial', '', $cols['address']['fontSize'] ?? 12);
+                $pdf->SetXY($cols['address']['x'], $y);
+                $addressText = $detail?->address ?? '';
+                $pdf->Cell($cols['address']['w'], $cols['address']['h'] ?? 7.8,
+                    $this->toIso($this->truncateText($addressText, $cols['address']['limit'])),
+                    0, 0, $cols['address']['align']
                 );
             }
 
@@ -239,7 +278,7 @@ class AttendancePdfService
 
             // === Gender ===
             if (isset($cols['gender'])) {
-                $gender = $p->gender ?? '';
+                $gender = $detail?->gender ?? $p->gender ?? '';
                 if (isset($cols['gender'][$gender])) {
                     $gx = $cols['gender'][$gender]['x'];
                     $gy = $y + ($cols['gender'][$gender]['y_offset'] ?? 0);
@@ -252,9 +291,10 @@ class AttendancePdfService
 
             // === Priority Group ===
             if (isset($cols['priority_group'])) {
-                $groups = is_array($p->priority_group)
-                    ? $p->priority_group
-                    : explode(',', $p->priority_group ?? '');
+                $priorityGroup = $detail?->priority_group ?? $p->priority_group ?? '';
+                $groups = is_array($priorityGroup)
+                    ? $priorityGroup
+                    : explode(',', $priorityGroup);
 
                 foreach ($groups as $g) {
                     $g = trim($g);
