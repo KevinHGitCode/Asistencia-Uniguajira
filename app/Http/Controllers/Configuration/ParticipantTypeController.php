@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Configuration;
 
 use App\Http\Controllers\Controller;
-use App\Models\Participant;
 use App\Models\ParticipantType;
 use Illuminate\Http\Request;
 
@@ -36,7 +35,8 @@ class ParticipantTypeController extends Controller
 
     public function destroy(ParticipantType $participantType)
     {
-        $count = Participant::where('role', $participantType->name)->count();
+        $participantType->loadCount('participants');
+        $count = $participantType->participants_count;
 
         if ($count > 0) {
             return redirect()->route('participant-types.index')
