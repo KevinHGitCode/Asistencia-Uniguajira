@@ -12,10 +12,10 @@ return new class extends Migration
             $table->id();
             $table->foreignId('attendance_id')->constrained()->cascadeOnDelete();
             $table->string('gender', 30)->nullable();
-            $table->string('telefono', 20)->nullable();
-            $table->string('municipio', 100)->nullable();
-            $table->string('barrio', 100)->nullable();
-            $table->string('direccion', 255)->nullable();
+            $table->string('phone', 20)->nullable();
+            $table->string('city', 100)->nullable();
+            $table->string('neighborhood', 100)->nullable();
+            $table->string('address', 255)->nullable();
             $table->string('priority_group', 150)->nullable();
             // Programa con el que el participante asistió (si tiene varios)
             $table->foreignId('program_id')->nullable()->constrained('programs')->nullOnDelete();

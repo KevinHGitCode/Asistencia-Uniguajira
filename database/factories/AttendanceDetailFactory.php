@@ -13,14 +13,14 @@ class AttendanceDetailFactory extends Factory
     public function definition(): array
     {
         return [
-            'sexo'             => $this->faker->optional(0.85)->randomElement([
+            'gender'             => $this->faker->optional(0.85)->randomElement([
                 'Masculino', 'Femenino', 'Otro',
             ]),
-            'telefono'         => $this->faker->optional(0.7)->numerify('3##-###-####'),
-            'municipio'        => $this->faker->optional(0.6)->city(),
-            'barrio'           => $this->faker->optional(0.4)->word(),
-            'direccion'        => $this->faker->optional(0.3)->streetAddress(),
-            'grupo_priorizado' => $this->faker->optional(0.6)->randomElement([
+            'phone'         => $this->faker->optional(0.7)->numerify('3##-###-####'),
+            'city'        => $this->faker->optional(0.6)->city(),
+            'neighborhood'           => $this->faker->optional(0.4)->word(),
+            'address'        => $this->faker->optional(0.3)->streetAddress(),
+            'priority_group' => $this->faker->optional(0.6)->randomElement([
                 'Indígena',
                 'Afrodescendiente',
                 'Discapacitado',

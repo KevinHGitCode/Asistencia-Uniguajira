@@ -654,7 +654,7 @@
                         <div>
                             <label class="{{ $labelClass }}">Teléfono / Celular</label>
                             <input
-                                wire:model="detailTelefono"
+                                wire:model="detailPhone"
                                 type="text"
                                 inputmode="tel"
                                 placeholder="Ej: 300 123 4567"
@@ -667,7 +667,7 @@
                             <div>
                                 <label class="{{ $labelClass }}">Municipio</label>
                                 <input
-                                    wire:model="detailMunicipio"
+                                    wire:model="detailCity"
                                     type="text"
                                     placeholder="Ej: Riohacha"
                                     class="{{ $inputClass }}"
@@ -676,7 +676,7 @@
                             <div>
                                 <label class="{{ $labelClass }}">Barrio</label>
                                 <input
-                                    wire:model="detailBarrio"
+                                    wire:model="detailNeighborhood"
                                     type="text"
                                     placeholder="Ej: El Centro"
                                     class="{{ $inputClass }}"
@@ -688,7 +688,7 @@
                         <div>
                             <label class="{{ $labelClass }}">Dirección</label>
                             <input
-                                wire:model="detailDireccion"
+                                wire:model="detailAddress"
                                 type="text"
                                 placeholder="Ej: Cra. 7 # 11-28"
                                 class="{{ $inputClass }}"

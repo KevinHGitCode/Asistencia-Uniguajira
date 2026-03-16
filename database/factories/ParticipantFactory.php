@@ -16,7 +16,7 @@ class ParticipantFactory extends Factory
 
     public function definition(): array
     {
-        $role = fake()->randomElement(['Estudiante', 'Docente', 'Administrativo', 'Graduado']);
+        $role = fake()->randomElement(['Estudiante', 'Docente', 'Administrativos', 'Graduado']);
 
         $affiliationId = null;
         if ($role === 'Docente') {

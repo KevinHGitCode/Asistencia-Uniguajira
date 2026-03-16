@@ -21,7 +21,7 @@ class AttendanceSeeder extends Seeder
     private const GENDERS = [
         'Masculino',
         'Femenino',
-        'Prefiero no decir',
+        'Otro',
     ];
 
     private const PRIORITY_GROUPS = [
@@ -88,10 +88,10 @@ class AttendanceSeeder extends Seeder
                     DB::table('attendance_details')->insert([
                         'attendance_id' => $attendanceId,
                         'gender' => self::GENDERS[array_rand(self::GENDERS)],
-                        'telefono' => $faker->numerify('3#########'),
-                        'municipio' => $faker->city(),
-                        'barrio' => $faker->streetName(),
-                        'direccion' => $faker->streetAddress(),
+                        'phone' => $faker->numerify('3#########'),
+                        'city' => $faker->city(),
+                        'neighborhood' => $faker->streetName(),
+                        'address' => $faker->streetAddress(),
                         'priority_group' => self::PRIORITY_GROUPS[array_rand(self::PRIORITY_GROUPS)],
                         'program_id' => $programId,
                         'participant_type_id' => $studentTypeId,
@@ -132,10 +132,10 @@ class AttendanceSeeder extends Seeder
                 DB::table('attendance_details')->insert([
                     'attendance_id' => $attendanceId,
                     'gender' => self::GENDERS[array_rand(self::GENDERS)],
-                    'telefono' => $faker->numerify('3#########'),
-                    'municipio' => $faker->city(),
-                    'barrio' => $faker->streetName(),
-                    'direccion' => $faker->streetAddress(),
+                    'phone' => $faker->numerify('3#########'),
+                    'city' => $faker->city(),
+                    'neighborhood' => $faker->streetName(),
+                    'address' => $faker->streetAddress(),
                     'priority_group' => self::PRIORITY_GROUPS[array_rand(self::PRIORITY_GROUPS)],
                     'program_id' => null,
                     'participant_type_id' => $teacherTypeId,

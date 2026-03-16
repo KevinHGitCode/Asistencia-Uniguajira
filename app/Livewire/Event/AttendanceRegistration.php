@@ -40,10 +40,10 @@ class AttendanceRegistration extends Component
 
     // Campos del detalle de asistencia
     public string $detailGender        = '';
-    public string $detailTelefono      = '';
-    public string $detailMunicipio     = '';
-    public string $detailBarrio        = '';
-    public string $detailDireccion     = '';
+    public string $detailPhone         = '';
+    public string $detailCity          = '';
+    public string $detailNeighborhood  = '';
+    public string $detailAddress       = '';
     public string $detailPriorityGroup = '';
     public string $detailEmail         = '';
 
@@ -71,7 +71,7 @@ class AttendanceRegistration extends Component
     public const GENDER_OPTIONS = [
         'Masculino',
         'Femenino',
-        'Prefiero no decir',
+        'Otro',
     ];
 
     public const GRUPOS_PRIORIZADOS = [
@@ -360,10 +360,10 @@ class AttendanceRegistration extends Component
 
         $this->validate(array_merge([
             'detailGender'        => 'nullable|string|max:50',
-            'detailTelefono'      => 'nullable|string|max:20',
-            'detailMunicipio'     => 'nullable|string|max:100',
-            'detailBarrio'        => 'nullable|string|max:100',
-            'detailDireccion'     => 'nullable|string|max:255',
+            'detailPhone'         => 'nullable|string|max:20',
+            'detailCity'          => 'nullable|string|max:100',
+            'detailNeighborhood'  => 'nullable|string|max:100',
+            'detailAddress'       => 'nullable|string|max:255',
             'detailPriorityGroup' => 'nullable|string|max:150',
         ], $emailRules), [
             'detailEmail.email'  => 'Ingresa un correo electronico valido.',
@@ -396,10 +396,10 @@ class AttendanceRegistration extends Component
             AttendanceDetail::create([
                 'attendance_id'       => $attendance->id,
                 'gender'              => $this->detailGender        ?: null,
-                'telefono'            => $this->detailTelefono      ?: null,
-                'municipio'           => $this->detailMunicipio     ?: null,
-                'barrio'              => $this->detailBarrio        ?: null,
-                'direccion'           => $this->detailDireccion     ?: null,
+                'phone'               => $this->detailPhone         ?: null,
+                'city'                => $this->detailCity          ?: null,
+                'neighborhood'        => $this->detailNeighborhood  ?: null,
+                'address'             => $this->detailAddress       ?: null,
                 'priority_group'      => $this->detailPriorityGroup ?: null,
                 'program_id'          => $this->selectedProgramId,
                 'participant_type_id' => $this->selectedTypeId,
@@ -427,10 +427,10 @@ class AttendanceRegistration extends Component
         $this->step                  = 'search';
 
         $this->detailGender        = '';
-        $this->detailTelefono      = '';
-        $this->detailMunicipio     = '';
-        $this->detailBarrio        = '';
-        $this->detailDireccion     = '';
+        $this->detailPhone         = '';
+        $this->detailCity          = '';
+        $this->detailNeighborhood  = '';
+        $this->detailAddress       = '';
         $this->detailPriorityGroup = '';
         $this->detailEmail         = '';
 
@@ -529,19 +529,19 @@ class AttendanceRegistration extends Component
         if (! $lastDetail) {
             // Reset to empty so stale typing from a previous search doesn't linger
             $this->detailGender        = '';
-            $this->detailTelefono      = '';
-            $this->detailMunicipio     = '';
-            $this->detailBarrio        = '';
-            $this->detailDireccion     = '';
+            $this->detailPhone         = '';
+            $this->detailCity          = '';
+            $this->detailNeighborhood  = '';
+            $this->detailAddress       = '';
             $this->detailPriorityGroup = '';
             return;
         }
 
         $this->detailGender        = $lastDetail->gender         ?? '';
-        $this->detailTelefono      = $lastDetail->telefono       ?? '';
-        $this->detailMunicipio     = $lastDetail->municipio      ?? '';
-        $this->detailBarrio        = $lastDetail->barrio         ?? '';
-        $this->detailDireccion     = $lastDetail->direccion      ?? '';
+        $this->detailPhone         = $lastDetail->phone          ?? '';
+        $this->detailCity          = $lastDetail->city           ?? '';
+        $this->detailNeighborhood  = $lastDetail->neighborhood   ?? '';
+        $this->detailAddress       = $lastDetail->address        ?? '';
         $this->detailPriorityGroup = $lastDetail->priority_group ?? '';
     }
 
