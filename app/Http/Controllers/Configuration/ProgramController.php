@@ -183,6 +183,7 @@ class ProgramController extends Controller
     private static function normalizeName(string $value): string
     {
         $lower = mb_strtolower(trim($value), 'UTF-8');
+        $lower = preg_replace('/\s+/u', ' ', $lower);
 
         return mb_strtoupper(mb_substr($lower, 0, 1, 'UTF-8'), 'UTF-8')
              . mb_substr($lower, 1, null, 'UTF-8');
@@ -191,12 +192,17 @@ class ProgramController extends Controller
     /**
      * Genera una clave de comparación: minúsculas + sin acentos + espacios normalizados.
      *
-     * "Ingeniería de Sistemas" → "ingenieria de sistemas"
-     * "Ingenieria de sistemas"  → "ingenieria de sistemas"  (misma clave)
+     * "Ingeniería de Sistemas"  → "ingenieria de sistemas"
+     * "Ingenieria de sistemas"   → "ingenieria de sistemas"  (misma clave)
+     * "PROFESIONAL  -  APOYO..." → "profesional - apoyo..."  (espacios normalizados)
      */
     public static function comparisonKey(string $value): string
     {
-        return self::stripAccents(mb_strtolower(trim($value), 'UTF-8'));
+        $lower = mb_strtolower(trim($value), 'UTF-8');
+        // Colapsar múltiples espacios/tabs en uno solo
+        $normalized = preg_replace('/\s+/u', ' ', $lower);
+
+        return self::stripAccents($normalized);
     }
 
     /**

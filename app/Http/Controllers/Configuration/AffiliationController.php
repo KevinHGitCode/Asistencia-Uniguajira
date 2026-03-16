@@ -22,15 +22,15 @@ class AffiliationController extends Controller
         $request->validate([
             'name' => 'required|string|max:100|unique:affiliations,name',
         ], [
-            'name.required' => 'El nombre de la afiliacion es obligatorio.',
-            'name.unique'   => 'Ya existe una afiliacion con ese nombre.',
+            'name.required' => 'El nombre de la afiliación es obligatorio.',
+            'name.unique'   => 'Ya existe una afiliación con ese nombre.',
             'name.max'      => 'El nombre no puede superar los 100 caracteres.',
         ]);
 
-        Affiliation::create(['name' => trim($request->name)]);
+        Affiliation::create(['name' => self::normalizeName($request->name)]);
 
         return redirect()->route('affiliations.index')
-            ->with('success', 'Afiliacion creada exitosamente.');
+            ->with('success', 'Afiliación creada exitosamente.');
     }
 
     public function update(Request $request, Affiliation $affiliation)
@@ -38,15 +38,15 @@ class AffiliationController extends Controller
         $request->validate([
             'name' => 'required|string|max:100|unique:affiliations,name,' . $affiliation->id,
         ], [
-            'name.required' => 'El nombre de la afiliacion es obligatorio.',
-            'name.unique'   => 'Ya existe una afiliacion con ese nombre.',
+            'name.required' => 'El nombre de la afiliación es obligatorio.',
+            'name.unique'   => 'Ya existe una afiliación con ese nombre.',
             'name.max'      => 'El nombre no puede superar los 100 caracteres.',
         ]);
 
-        $affiliation->update(['name' => trim($request->name)]);
+        $affiliation->update(['name' => self::normalizeName($request->name)]);
 
         return redirect()->route('affiliations.index')
-            ->with('success', 'Afiliacion actualizada exitosamente.');
+            ->with('success', 'Afiliación actualizada exitosamente.');
     }
 
     public function destroy(Affiliation $affiliation)
@@ -63,7 +63,16 @@ class AffiliationController extends Controller
         $affiliation->delete();
 
         return redirect()->route('affiliations.index')
-            ->with('success', "Afiliacion \"{$name}\" eliminada exitosamente.");
+            ->with('success', "Afiliación \"{$name}\" eliminada exitosamente.");
+    }
+
+    /**
+     * Normaliza: trim + colapsar espacios múltiples.
+     *
+     * "PROFESIONAL  -  APOYO..." → "PROFESIONAL - APOYO..."
+     */
+    private static function normalizeName(string $value): string
+    {
+        return preg_replace('/\s+/u', ' ', trim($value));
     }
 }
-

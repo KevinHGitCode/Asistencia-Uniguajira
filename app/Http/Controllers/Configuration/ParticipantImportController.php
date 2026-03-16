@@ -218,7 +218,9 @@ class ParticipantImportController extends Controller
             if (! empty($affiliationType) && $affiliationType !== '0' && $affiliationType !== 0) {
                 $affKey = ProgramController::comparisonKey($affiliationType);
                 if (! isset($affiliationHash[$affKey])) {
-                    $aff                      = Affiliation::create(['name' => trim((string) $affiliationType)]);
+                    // Normalizar: colapsar espacios múltiples y trim
+                    $cleanName                = preg_replace('/\s+/u', ' ', trim((string) $affiliationType));
+                    $aff                      = Affiliation::create(['name' => $cleanName]);
                     $affiliationHash[$affKey] = $aff->id;
                 }
                 $affiliationId = $affiliationHash[$affKey];
