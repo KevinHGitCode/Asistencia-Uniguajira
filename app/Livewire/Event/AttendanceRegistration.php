@@ -169,14 +169,6 @@ class AttendanceRegistration extends Component
             'name' => $t->name,
         ])->values()->toArray();
 
-        // Fallback: if no types in pivot, use role field
-        if (empty($types) && $participant->role) {
-            $type = ParticipantType::where('name', $participant->role)->first();
-            if ($type) {
-                $types = [['id' => $type->id, 'name' => $type->name]];
-            }
-        }
-
         $this->participantData = [
             'id'          => $participant->id,
             'first_name'  => $participant->first_name,
@@ -184,7 +176,6 @@ class AttendanceRegistration extends Component
             'document'    => $participant->document,
             'email'       => $participant->email,
             'has_email'   => ! empty($participant->email),
-            'role'        => $participant->role,
             'affiliation' => $participant->affiliations->first()?->name,
             'programs'    => $programs,
             'types'       => $types,
@@ -225,7 +216,6 @@ class AttendanceRegistration extends Component
                 'first_name' => trim($this->externalFirstName),
                 'last_name'  => trim($this->externalLastName),
                 'email'      => $this->externalEmail ?: null,
-                'role'       => 'Comunidad Externa',
             ]);
 
             // Attach to type pivot
@@ -244,7 +234,6 @@ class AttendanceRegistration extends Component
                 'document'    => $participant->document,
                 'email'       => $participant->email,
                 'has_email'   => ! empty($participant->email),
-                'role'        => $participant->role,
                 'affiliation' => null,
                 'programs'    => [],
                 'types'       => $typeData,
@@ -284,7 +273,7 @@ class AttendanceRegistration extends Component
 
         // Single type or no type → pre-select
         $this->selectedTypeId = ! empty($types) ? $types[0]['id'] : null;
-        $typeName = ! empty($types) ? $types[0]['name'] : ($this->participantData['role'] ?? '');
+        $typeName = ! empty($types) ? $types[0]['name'] : '';
 
         // If type requires program and has multiple programs → ask program
         if (count($programs) > 1 && in_array($typeName, ['Estudiante', 'Graduado'])) {
@@ -497,7 +486,6 @@ class AttendanceRegistration extends Component
                 'first_name'     => trim($this->newFirstName),
                 'last_name'      => trim($this->newLastName),
                 'email'          => $this->newEmail          ?: null,
-                'role'           => $this->newRole,
                 'gender'         => $this->newGender         ?: null,
                 'priority_group' => $this->newPriorityGroup  ?: null,
             ]);

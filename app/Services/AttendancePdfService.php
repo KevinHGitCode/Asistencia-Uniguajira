@@ -179,22 +179,22 @@ class AttendancePdfService
             }
 
             if (isset($cols['role'])) {
+                $roleText = $attendance->detail?->participantType?->name ?? $p->types->first()?->name ?? '';
                 // Si tiene 'x' y 'w', es texto
                 if (isset($cols['role']['x']) && isset($cols['role']['w'])) {
                     $pdf->SetFont('Arial', '', $cols['role']['fontSize'] ?? 12);
                     $pdf->SetXY($cols['role']['x'], $y);
                     $pdf->Cell($cols['role']['w'], $cols['role']['h'] ?? 7.8,
-                        $this->toIso($this->truncateText($p->role ?? '', $cols['role']['limit'])),
+                        $this->toIso($this->truncateText($roleText, $cols['role']['limit'])),
                         0, 0, $cols['role']['align']
                     );
                 // Si no, es tipo casilla
                 } else {
                     $pdf->SetFont('Arial', '', $cols['role']['fontSize'] ?? 12);
-                    $role = $p->role ?? '';
-                    if (isset($cols['role'][$role])) {
-                        $rx = $cols['role'][$role]['x'];
-                        $ry = $y + ($cols['role'][$role]['y_offset'] ?? 0);
-                        $align = $cols['role'][$role]['align'] ?? 'C';
+                    if (isset($cols['role'][$roleText])) {
+                        $rx = $cols['role'][$roleText]['x'];
+                        $ry = $y + ($cols['role'][$roleText]['y_offset'] ?? 0);
+                        $align = $cols['role'][$roleText]['align'] ?? 'C';
                         $pdf->SetXY($rx, $ry);
                         $pdf->Cell(5, 5, 'X', 0, 0, $align);
                     }
@@ -205,7 +205,7 @@ class AttendancePdfService
                 $pdf->SetFont('Arial', '', $cols['program']['fontSize'] ?? 12);
                 $pdf->SetXY($cols['program']['x'], $y);
                 $pdf->Cell($cols['program']['w'], $cols['program']['h'] ?? 7.8,
-                    $this->toIso($this->truncateText($p->program->name ?? '', $cols['program']['limit'])),
+                    $this->toIso($this->truncateText($p->programs->first()?->name ?? '', $cols['program']['limit'])),
                     0, 0, $cols['program']['align']
                 );
             }

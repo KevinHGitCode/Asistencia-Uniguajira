@@ -65,13 +65,17 @@
                                         <h4 class="font-semibold text-zinc-900 dark:text-white">
                                             {{ $attendance->participant->first_name }} {{ $attendance->participant->last_name }}
                                         </h4>
-                                        @if($attendance->participant->role === 'Estudiante')
-                                            <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
-                                                Estudiante
-                                            </span>
-                                        @else
-                                            <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300">
-                                                Docente
+                                        @php
+                                            $modalTypeName = $attendance->detail?->participantType?->name
+                                                ?? $attendance->participant->types->first()?->name
+                                                ?? '';
+                                        @endphp
+                                        @if($modalTypeName !== '')
+                                            <span class="px-2 py-0.5 text-xs font-medium rounded-full
+                                                {{ $modalTypeName === 'Estudiante'
+                                                    ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
+                                                    : 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300' }}">
+                                                {{ $modalTypeName }}
                                             </span>
                                         @endif
                                     </div>
@@ -152,13 +156,13 @@
                     <div class="text-center p-3 bg-green-50 dark:bg-green-950 rounded-lg">
                         <p class="text-xs text-green-600 dark:text-green-400 mb-1">Estudiantes</p>
                         <p class="text-2xl font-bold text-green-700 dark:text-green-300">
-                            {{ $attendees->where('participant.role', 'Estudiante')->count() }}
+                            {{ $attendees->filter(fn($a) => ($a->detail?->participantType?->name ?? $a->participant->types->first()?->name) === 'Estudiante')->count() }}
                         </p>
                     </div>
                     <div class="text-center p-3 bg-purple-50 dark:bg-purple-950 rounded-lg">
                         <p class="text-xs text-purple-600 dark:text-purple-400 mb-1">Docentes</p>
                         <p class="text-2xl font-bold text-purple-700 dark:text-purple-300">
-                            {{ $attendees->where('participant.role', 'Docente')->count() }}
+                            {{ $attendees->filter(fn($a) => ($a->detail?->participantType?->name ?? $a->participant->types->first()?->name) === 'Docente')->count() }}
                         </p>
                     </div>
                 </div>

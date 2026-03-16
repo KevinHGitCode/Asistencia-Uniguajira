@@ -17,6 +17,7 @@ use App\Http\Controllers\Configuration\AreaController;
 use App\Http\Controllers\Configuration\DependencyController;
 use App\Http\Controllers\Configuration\EstamentoController;
 use App\Http\Controllers\Configuration\ParticipantTypeController;
+use App\Http\Controllers\Configuration\ProgramController;
 use App\Http\Controllers\Configuration\FormatController;
 use App\Http\Controllers\Configuration\ParticipantImportController;
 
@@ -165,6 +166,12 @@ Route::middleware(['auth', 'verified', 'role:admin'])
         Route::post('/affiliations', [AffiliationController::class, 'store'])->name('affiliations.store');
         Route::post('/affiliations/edit/{affiliation}', [AffiliationController::class, 'update'])->name('affiliations.update');
         Route::delete('/affiliations/{affiliation}', [AffiliationController::class, 'destroy'])->name('affiliations.destroy');
+
+        // Rutas de programas
+        Route::get('/programs', [ProgramController::class, 'index'])->name('programs.index');
+        Route::post('/programs', [ProgramController::class, 'store'])->name('programs.store');
+        Route::post('/programs/edit/{program}', [ProgramController::class, 'update'])->name('programs.update');
+        Route::delete('/programs/{program}', [ProgramController::class, 'destroy'])->name('programs.destroy');
 
         // Rutas de estamentos / tipos de participante
         Route::get('/participant-types', [ParticipantTypeController::class, 'index'])->name('participant-types.index');

@@ -312,7 +312,7 @@
                             bg-gray-50 dark:divide-zinc-700 dark:border-zinc-700 dark:bg-zinc-700/40">
                     @foreach ([
                         ['Documento',  $participantData['document'] ?? null],
-                        ['Rol',        $participantData['role'] ?? null],
+                        ['Estamento',  isset($participantData['types'][0]) ? $participantData['types'][0]['name'] : null],
                         ['Afiliación', $participantData['affiliation'] ?? null],
                         ['Correo',     $participantData['email'] ?? null],
                     ] as [$arLabel, $arValue])

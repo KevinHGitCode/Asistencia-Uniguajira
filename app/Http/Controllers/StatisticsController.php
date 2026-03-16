@@ -330,8 +330,9 @@ class StatisticsController extends Controller
         $filters = $this->getFilters($request);
 
         $query = DB::table('attendances')
-            ->join('participants', 'attendances.participant_id', '=', 'participants.id')
-            ->join('events',       'attendances.event_id',       '=', 'events.id');
+            ->join('attendance_details', 'attendances.id',                        '=', 'attendance_details.attendance_id')
+            ->join('participant_types',  'attendance_details.participant_type_id', '=', 'participant_types.id')
+            ->join('events',             'attendances.event_id',                   '=', 'events.id');
 
         if (!empty($filters['dateFrom'])) {
             $query->where('events.date', '>=', $filters['dateFrom']);
@@ -341,8 +342,8 @@ class StatisticsController extends Controller
         }
         $this->applyEventIds($query, $filters);
 
-        return $query->select('participants.role as label', DB::raw('COUNT(*) as count'))
-            ->groupBy('participants.role')
+        return $query->select('participant_types.name as label', DB::raw('COUNT(*) as count'))
+            ->groupBy('participant_types.name')
             ->orderByDesc('count')
             ->get();
     }
@@ -406,9 +407,10 @@ class StatisticsController extends Controller
     {
         $filters = $this->getFilters($request);
 
-        $query = DB::table('participants')
-            ->join('attendances', 'participants.id', '=', 'attendances.participant_id')
-            ->join('events',      'attendances.event_id', '=', 'events.id');
+        $query = DB::table('attendances')
+            ->join('attendance_details', 'attendances.id',                        '=', 'attendance_details.attendance_id')
+            ->join('participant_types',  'attendance_details.participant_type_id', '=', 'participant_types.id')
+            ->join('events',             'attendances.event_id',                   '=', 'events.id');
 
         if (!empty($filters['dateFrom'])) {
             $query->where('events.date', '>=', $filters['dateFrom']);
@@ -418,8 +420,8 @@ class StatisticsController extends Controller
         }
         $this->applyEventIds($query, $filters);
 
-        return $query->select('participants.role as label', DB::raw('COUNT(DISTINCT participants.id) as count'))
-            ->groupBy('participants.role')
+        return $query->select('participant_types.name as label', DB::raw('COUNT(DISTINCT attendances.participant_id) as count'))
+            ->groupBy('participant_types.name')
             ->orderByDesc('count')
             ->get();
     }
@@ -514,7 +516,7 @@ class StatisticsController extends Controller
                 'attendancesByProgram' => $this->sumAttendancesByProgram($filters),
                 'topEvents'            => $this->sumTopEvents($filters),
                 'topParticipants'      => $this->sumTopParticipants($filters),
-                'byRole'  => $this->sumAttendancesDemoByField($filters, 'participants.role'),
+                'byRole'  => $this->sumAttendancesDemoByType($filters),
                 'bySex'   => $this->sumAttendancesDemoByField($filters, 'participants.gender',            'Sin datos'),
                 'byGroup' => $this->sumAttendancesDemoByField($filters, 'participants.priority_group', 'Sin datos'),
             ],
@@ -552,7 +554,7 @@ class StatisticsController extends Controller
             ],
             'charts' => [
                 'participantsByProgram' => $this->sumParticipantsByProgram($filters),
-                'byRole'  => $this->sumParticipantsDemoByField($filters, 'participants.role'),
+                'byRole'  => $this->sumParticipantsDemoByType($filters),
                 'bySex'   => $this->sumParticipantsDemoByField($filters, 'participants.gender',            'Sin datos'),
                 'byGroup' => $this->sumParticipantsDemoByField($filters, 'participants.priority_group', 'Sin datos'),
             ],
@@ -697,6 +699,34 @@ class StatisticsController extends Controller
         $expr = $coalesce ? DB::raw("COALESCE({$col}, '{$coalesce}') as name") : DB::raw("{$col} as name");
         return $q->select($expr, DB::raw('COUNT(DISTINCT participants.id) as value'))
             ->groupBy($col)->orderByDesc('value')->get();
+    }
+
+    /** Asistencias agrupadas por estamento (via attendance_details → participant_types). */
+    private function sumAttendancesDemoByType(array $filters)
+    {
+        $q = DB::table('attendances')
+            ->join('attendance_details', 'attendances.id',                        '=', 'attendance_details.attendance_id')
+            ->join('participant_types',  'attendance_details.participant_type_id', '=', 'participant_types.id')
+            ->join('events',             'attendances.event_id',                   '=', 'events.id');
+        if (!empty($filters['dateFrom'])) $q->where('events.date', '>=', $filters['dateFrom']);
+        if (!empty($filters['dateTo']))   $q->where('events.date', '<=', $filters['dateTo']);
+        $this->applyEventIds($q, $filters);
+        return $q->select('participant_types.name as name', DB::raw('COUNT(*) as value'))
+            ->groupBy('participant_types.name')->orderByDesc('value')->get();
+    }
+
+    /** Participantes únicos agrupados por estamento (via attendance_details → participant_types). */
+    private function sumParticipantsDemoByType(array $filters)
+    {
+        $q = DB::table('attendances')
+            ->join('attendance_details', 'attendances.id',                        '=', 'attendance_details.attendance_id')
+            ->join('participant_types',  'attendance_details.participant_type_id', '=', 'participant_types.id')
+            ->join('events',             'attendances.event_id',                   '=', 'events.id');
+        if (!empty($filters['dateFrom'])) $q->where('events.date', '>=', $filters['dateFrom']);
+        if (!empty($filters['dateTo']))   $q->where('events.date', '<=', $filters['dateTo']);
+        $this->applyEventIds($q, $filters);
+        return $q->select('participant_types.name as name', DB::raw('COUNT(DISTINCT attendances.participant_id) as value'))
+            ->groupBy('participant_types.name')->orderByDesc('value')->get();
     }
 
     // Usuarios con mÃƒÂ¡s asistencias

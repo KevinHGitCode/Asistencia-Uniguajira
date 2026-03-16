@@ -54,12 +54,15 @@ confirmation.blade.php
                         </p>
                     </div>
 
+                    @php $confirmType = $attendance->detail?->participantType?->name ?? $participant->types->first()?->name ?? null; @endphp
+                    @if($confirmType)
                     <div class="border-b border-gray-200 dark:border-gray-700 pb-3">
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Rol</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Estamento</p>
                         <p class="text-lg font-semibold text-gray-900 dark:text-white">
-                            {{ $participant->role }}
+                            {{ $confirmType }}
                         </p>
                     </div>
+                    @endif
 
                     @php $confirmAffiliation = $participant->affiliations->first(); @endphp
                     @if($confirmAffiliation)

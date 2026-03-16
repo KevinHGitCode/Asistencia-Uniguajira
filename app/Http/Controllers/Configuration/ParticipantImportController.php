@@ -283,7 +283,6 @@ class ParticipantImportController extends Controller
                 'first_name'     => $firstName,
                 'last_name'      => $lastName,
                 'email'          => $email ?: null,
-                'role'           => $roleName,
                 'created_at'     => $now,
                 'updated_at'     => $now,
             ];
@@ -474,7 +473,6 @@ class ParticipantImportController extends Controller
             'first_name'     => ucwords(strtolower(trim($request->first_name))),
             'last_name'      => ucwords(strtolower(trim($request->last_name))),
             'email'          => $request->email ?: null,
-            'role'           => $request->role,
             'student_code'   => $request->student_code ?: null,
             'gender'         => $request->sexo ?: null,
             'priority_group' => $request->priority_group ?: null,
