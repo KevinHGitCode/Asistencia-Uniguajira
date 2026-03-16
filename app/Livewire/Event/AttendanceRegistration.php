@@ -146,7 +146,7 @@ class AttendanceRegistration extends Component
 
         $term = trim($this->identification);
 
-        $participant = Participant::with(['programs', 'affiliation', 'types'])
+        $participant = Participant::with(['programs', 'affiliations', 'types'])
             ->where(function ($q) use ($term) {
                 $q->where('document', $term)
                   ->orWhere('student_code', $term);
@@ -186,7 +186,7 @@ class AttendanceRegistration extends Component
             'email'       => $participant->email,
             'has_email'   => ! empty($participant->email),
             'role'        => $participant->role,
-            'affiliation' => $participant->affiliation?->name,
+            'affiliation' => $participant->affiliations->first()?->name,
             'programs'    => $programs,
             'types'       => $types,
         ];
@@ -415,14 +415,15 @@ class AttendanceRegistration extends Component
             }
 
             AttendanceDetail::create([
-                'attendance_id'    => $attendance->id,
-                'sexo'             => $this->detailSexo            ?: null,
-                'telefono'         => $this->detailTelefono        ?: null,
-                'municipio'        => $this->detailMunicipio       ?: null,
-                'barrio'           => $this->detailBarrio          ?: null,
-                'direccion'        => $this->detailDireccion       ?: null,
-                'grupo_priorizado' => $this->detailGrupoPriorizado ?: null,
-                'program_id'       => $this->selectedProgramId,
+                'attendance_id'       => $attendance->id,
+                'gender'              => $this->detailGender        ?: null,
+                'telefono'            => $this->detailTelefono      ?: null,
+                'municipio'           => $this->detailMunicipio     ?: null,
+                'barrio'              => $this->detailBarrio        ?: null,
+                'direccion'           => $this->detailDireccion     ?: null,
+                'priority_group'      => $this->detailPriorityGroup ?: null,
+                'program_id'          => $this->selectedProgramId,
+                'participant_type_id' => $this->selectedTypeId,
             ]);
 
             $this->successRegisteredAt = $attendance->created_at->format('h:i A');
@@ -507,10 +508,14 @@ class AttendanceRegistration extends Component
                 'last_name'      => trim($this->newLastName),
                 'email'          => $this->newEmail          ?: null,
                 'role'           => $this->newRole,
-                'affiliation_id' => $affiliationId,
                 'gender'         => $this->newGender         ?: null,
                 'priority_group' => $this->newPriorityGroup  ?: null,
             ]);
+
+            // Attach affiliation via pivot
+            if ($affiliationId) {
+                $participant->affiliations()->attach($affiliationId);
+            }
 
             // Attach to type pivot
             $type = ParticipantType::where('name', $this->newRole)->first();

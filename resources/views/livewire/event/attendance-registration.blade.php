@@ -642,9 +642,9 @@
                         {{-- Género --}}
                         <div>
                             <label class="{{ $labelClass }}">Género</label>
-                            <select wire:model="detailSexo" class="{{ $selectClass }}">
+                            <select wire:model="detailGender" class="{{ $selectClass }}">
                                 <option value="">— Seleccionar —</option>
-                                @foreach (\App\Livewire\Event\AttendanceRegistration::SEXO_OPCIONES as $opcion)
+                                @foreach (\App\Livewire\Event\AttendanceRegistration::GENDER_OPTIONS as $opcion)
                                     <option value="{{ $opcion }}">{{ $opcion }}</option>
                                 @endforeach
                             </select>
@@ -698,7 +698,7 @@
                         {{-- Grupo priorizado --}}
                         <div>
                             <label class="{{ $labelClass }}">Grupo priorizado</label>
-                            <select wire:model="detailGrupoPriorizado" class="{{ $selectClass }}">
+                            <select wire:model="detailPriorityGroup" class="{{ $selectClass }}">
                                 <option value="">— Seleccionar —</option>
                                 @foreach (\App\Livewire\Event\AttendanceRegistration::GRUPOS_PRIORIZADOS as $grupo)
                                     <option value="{{ $grupo }}">{{ $grupo }}</option>
