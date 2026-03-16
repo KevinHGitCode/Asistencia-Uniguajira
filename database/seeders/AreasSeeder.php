@@ -17,56 +17,56 @@ class AreasSeeder extends Seeder
         $direccionAcademica = Dependency::where('name', 'Dirección Académica')->first();
 
         // Bienestar Universitario
-        Area::create([
+        Area::firstOrCreate([
             'name' => 'Salud',
             'dependency_id' => $bienestar->id
         ]);
 
-        Area::create([
+        Area::firstOrCreate([
             'name' => 'Deporte',
             'dependency_id' => $bienestar->id
         ]);
 
-        Area::create([
+        Area::firstOrCreate([
             'name' => 'Tutorías',
             'dependency_id' => $bienestar->id
         ]);
 
         // Gestión Administrativa y Financiera
-        Area::create([
+        Area::firstOrCreate([
             'name' => 'Contabilidad',
             'dependency_id' => $gestionAdmin->id
         ]);
 
-        Area::create([
+        Area::firstOrCreate([
             'name' => 'Tesorería',
             'dependency_id' => $gestionAdmin->id
         ]);
 
         // Gestión Documental
-        Area::create([
+        Area::firstOrCreate([
             'name' => 'Archivo Central',
             'dependency_id' => $gestionDoc->id
         ]);
 
         // Aseguramiento de la Calidad
-        Area::create([
+        Area::firstOrCreate([
             'name' => 'Evaluación Institucional',
             'dependency_id' => $calidad->id
         ]);
 
-        Area::create([
+        Area::firstOrCreate([
             'name' => 'Acreditación',
             'dependency_id' => $calidad->id
         ]);
 
         // Dirección Académica
-        Area::create([
+        Area::firstOrCreate([
             'name' => 'Planeación Académica',
             'dependency_id' => $direccionAcademica->id
         ]);
 
-        Area::create([
+        Area::firstOrCreate([
             'name' => 'Registro y Control',
             'dependency_id' => $direccionAcademica->id
         ]);

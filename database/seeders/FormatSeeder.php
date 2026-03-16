@@ -14,25 +14,25 @@ class FormatSeeder extends Seeder
      */
     public function run(): void
     {
-        $general = Format::create([
+        $general = Format::firstOrCreate([
             'name' => 'Formato General',
             'slug' => 'general',
             'file' => 'LISTADO_DE_ASISTENCIA_GENERAL_REVISION_9.pdf',
         ]);
 
-        $bienestar = Format::create([
+        $bienestar = Format::firstOrCreate([
             'name' => 'Formato Bienestar',
             'slug' => 'bienestar',
             'file' => 'LISTADO_DE_ASISTENCIA_BIENESTAR_REVISION_6.pdf',
         ]);
 
-        $proyeccion = Format::create([
+        $proyeccion = Format::firstOrCreate([
             'name' => 'Formato Proyección Social',
             'slug' => 'proyeccion_social',
             'file' => 'LISTADO_DE_ASISTENCIA_PROYECCION_SOCIAL_REVISION_5.pdf',
         ]);
 
-        $capExterna = Format::create([
+        $capExterna = Format::firstOrCreate([
             'name' => 'Formato Capacitación Externa',
             'slug' => 'capacitacion_externa',
             'file' => 'LISTADO_DE_ASISTENCIA_CAPACITACION_EXTERNA_PROYECCION_SOCIAL_REVISION_7.pdf',

@@ -14,11 +14,11 @@ class DependenciesSeeder extends Seeder
      */
     public function run(): void
     {
-        Dependency::create(['name' => 'Bienestar Universitario']);
-        Dependency::create(['name' => 'Gestión Administrativa y Financiera']);
-        Dependency::create(['name' => 'Gestión Documental']);
-        Dependency::create(['name' => 'Aseguramiento de la Calidad']);
-        Dependency::create(['name' => 'Dirección Académica']);
-        Dependency::create(['name' => 'Proyección Social']);
+        Dependency::firstOrCreate(['name' => 'Bienestar Universitario']);
+        Dependency::firstOrCreate(['name' => 'Gestión Administrativa y Financiera']);
+        Dependency::firstOrCreate(['name' => 'Gestión Documental']);
+        Dependency::firstOrCreate(['name' => 'Aseguramiento de la Calidad']);
+        Dependency::firstOrCreate(['name' => 'Dirección Académica']);
+        Dependency::firstOrCreate(['name' => 'Proyección Social']);
     }
 }
