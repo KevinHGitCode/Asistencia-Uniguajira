@@ -21,7 +21,7 @@
                     </p>
                     <span class="inline-flex items-center gap-1.5 mt-2 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#e2a542]/15 text-[#c48a28] dark:bg-[#e2a542]/20 dark:text-[#e2a542]">
                         <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
-                        v1.1.1
+                        v1.2.0
                     </span>
                 </div>
             </div>
