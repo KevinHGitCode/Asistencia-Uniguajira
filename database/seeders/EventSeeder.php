@@ -12,7 +12,7 @@ use Illuminate\Support\Carbon;
 
 class EventSeeder extends Seeder
 {
-    private const NUM_EVENTS = 50;
+    private const NUM_EVENTS = 20;
 
     public function run(): void
     {
