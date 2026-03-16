@@ -16,7 +16,7 @@ class AffiliationSeeder extends Seeder
         ];
 
         foreach ($defaults as $name) {
-            Affiliation::firstOrCreate(['name' => $name]);
+            Affiliation::firstOrCreate(['name' => trim($name)]);
         }
     }
 }

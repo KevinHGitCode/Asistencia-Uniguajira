@@ -11,11 +11,11 @@ class ParticipantTypeSeeder extends Seeder
     {
         $defaults = [
             'Estudiante',
-            'Bolsa',
             'Docente',
-            'Administrativos',
+            'Administrativo',
             'Graduado',
             'Comunidad Externa',
+            'Bolsa',
         ];
 
         foreach ($defaults as $name) {

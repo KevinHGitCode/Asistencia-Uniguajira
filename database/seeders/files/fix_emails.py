@@ -2,7 +2,7 @@ import sys
 import pandas as pd
 import unicodedata
 
-FILE_PATH = "/home/kevin/Proyectos/laravel/Asistencia-Uniguajira/database/seeders/files/seed.xlsx"
+FILE_PATH = "C:/xampp/htdocs/Laravel/Asistencia-Uniguajira/database/seeders/files/BASE DE DATOS MAICAO.xlsx"
 
 def remove_accents(input_str):
     if not isinstance(input_str, str):

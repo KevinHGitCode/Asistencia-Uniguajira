@@ -18,18 +18,30 @@ class EventSeeder extends Seeder
     {
         $faker = \Faker\Factory::create();
 
-        $userIds = User::pluck('id')->toArray();
-        $dependencies = Dependency::with('areas')->get();
+        $users = User::with('dependencies.areas')->get();
+        $allDependencies = Dependency::with('areas')->get();
         $now = now();
+
+        if ($users->isEmpty()) {
+            return;
+        }
 
         $rows = [];
 
         for ($i = 0; $i < self::NUM_EVENTS; $i++) {
 
+            $user = $users->random();
+
             // 10% de probabilidad de evento sin dependencia (tipo super admin)
-            $dependency = $faker->boolean(10)
-                ? null
-                : $dependencies->random();
+            $dependency = null;
+            if (! $faker->boolean(10) && $allDependencies->isNotEmpty()) {
+                $dependencyPool = $user->dependencies->isNotEmpty()
+                    ? $user->dependencies
+                    : $allDependencies;
+                if ($dependencyPool->isNotEmpty()) {
+                    $dependency = $dependencyPool->random();
+                }
+            }
 
             $areaId = null;
 
@@ -64,7 +76,7 @@ class EventSeeder extends Seeder
                 'end_time' => $end,
                 'location' => $faker->city(),
                 'link' => $slug,
-                'user_id' => $faker->randomElement($userIds),
+                'user_id' => $user->id,
                 'created_at' => now(),
                 'updated_at' => now(),
             ];
