@@ -136,6 +136,8 @@ Route::middleware(['auth', 'verified', 'role:admin'])
         // Rutas específicas de dependencias
         Route::get('/dependencies', [DependencyController::class, 'index'])->name('dependencies.index');
         Route::get('/dependencies/create', [DependencyController::class, 'create'])->name('dependencies.create');
+        Route::post('/dependencies/import', [DependencyController::class, 'importExcel'])->name('dependencies.import');
+        Route::get('/dependencies/download-template', [DependencyController::class, 'downloadTemplate'])->name('dependencies.download-template');
         Route::post('/dependencies', [DependencyController::class, 'store'])->name('dependencies.store');
         // Route::get('/dependencies/edit/{dependency}', [DependencyController::class, 'edit'])->name('dependencies.edit');
         Route::post('/dependencies/edit/{dependency}', [DependencyController::class, 'update'])->name('dependencies.update');
@@ -144,6 +146,8 @@ Route::middleware(['auth', 'verified', 'role:admin'])
         // Rutas específicas de áreas
         Route::get('/areas', [AreaController::class, 'index'])->name('areas.index');
         Route::get('/areas/create', [AreaController::class, 'create'])->name('areas.create');
+        Route::post('/areas/import', [AreaController::class, 'importExcel'])->name('areas.import');
+        Route::get('/areas/download-template', [AreaController::class, 'downloadTemplate'])->name('areas.download-template');
         Route::post('/areas', [AreaController::class, 'store'])->name('areas.store');
         Route::get('/areas/edit/{area}', [AreaController::class, 'edit'])->name('areas.edit');
         Route::post('/areas/edit/{area}', [AreaController::class, 'update'])->name('areas.update');

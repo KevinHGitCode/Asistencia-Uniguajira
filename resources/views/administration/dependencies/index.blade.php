@@ -17,12 +17,42 @@
                 {{ $dependencies->count() }} {{ Str::plural('dependencia', $dependencies->count()) }} registrada{{ $dependencies->count() !== 1 ? 's' : '' }}
             </p>
         </div>
-        <button @click="openCreate()"
-            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#cc5e50] text-white text-sm font-medium transition-colors shadow-sm self-start sm:self-auto cursor-pointer">
-            <flux:icon.plus class="size-4" />
-            Nueva Dependencia
-        </button>
+        <div class="flex items-center gap-2 self-start sm:self-auto">
+            <a href="{{ route('dependencies.download-template') }}"
+                class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-700 dark:text-gray-200 text-sm font-medium transition-colors shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-700">
+                <flux:icon.arrow-down-tray class="size-4" />
+                Plantilla
+            </a>
+            <label for="import-trigger"
+                class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-emerald-200 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 text-sm font-medium transition-colors shadow-sm hover:bg-emerald-100 dark:hover:bg-emerald-900/50 cursor-pointer">
+                <flux:icon.arrow-up-tray class="size-4" />
+                Importar Excel
+            </label>
+            <button @click="openCreate()"
+                class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#cc5e50] text-white text-sm font-medium transition-colors shadow-sm cursor-pointer">
+                <flux:icon.plus class="size-4" />
+                Nueva Dependencia
+            </button>
+        </div>
     </div>
+
+    {{-- Formulario de importación oculto --}}
+    <form id="import-form" action="{{ route('dependencies.import') }}" method="POST" enctype="multipart/form-data" class="hidden">
+        @csrf
+        <input id="import-trigger" type="file" name="excel_file" accept=".xlsx,.xls,.csv"
+            onchange="document.getElementById('import-form').submit()">
+    </form>
+
+    @if($errors->has('excel_file'))
+        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 6000)"
+            x-transition:leave="transition ease-in duration-300"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            class="flex items-center gap-3 px-4 py-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">
+            <flux:icon.x-circle class="size-5 shrink-0" />
+            {{ $errors->first('excel_file') }}
+        </div>
+    @endif
 
     @if(session('success'))
         <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)"

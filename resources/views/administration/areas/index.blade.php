@@ -1,4 +1,4 @@
-<x-layouts.app :title="__('Áreas')">
+﻿<x-layouts.app :title="__('Ãreas')">
 
 <div class="flex h-full w-full flex-1 flex-col gap-6 p-1 sm:p-4 md:p-6" x-data="areasManager()">
 
@@ -17,12 +17,41 @@
                 {{ $areas->count() }} {{ Str::plural('área', $areas->count()) }} registrada{{ $areas->count() !== 1 ? 's' : '' }}
             </p>
         </div>
-        <button @click="openCreate()"
-            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#62a9b6] text-sm font-medium transition-colors shadow-sm self-start sm:self-auto cursor-pointer">
-            <flux:icon.plus class="size-4" />
-            Nueva Área
-        </button>
+        <div class="flex items-center gap-2 self-start sm:self-auto">
+            <a href="{{ route('areas.download-template') }}"
+                class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-700 dark:text-gray-200 text-sm font-medium transition-colors shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-700">
+                <flux:icon.arrow-down-tray class="size-4" />
+                Plantilla
+            </a>
+            <label for="import-trigger"
+                class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-emerald-200 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 text-sm font-medium transition-colors shadow-sm hover:bg-emerald-100 dark:hover:bg-emerald-900/50 cursor-pointer">
+                <flux:icon.arrow-up-tray class="size-4" />
+                Importar Excel
+            </label>
+            <button @click="openCreate()"
+                class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#62a9b6] text-sm font-medium transition-colors shadow-sm cursor-pointer">
+                <flux:icon.plus class="size-4" />
+                Nueva Área
+            </button>
+        </div>
     </div>
+    {{-- Formulario de importación oculto --}}
+    <form id="import-form" action="{{ route('areas.import') }}" method="POST" enctype="multipart/form-data" class="hidden">
+        @csrf
+        <input id="import-trigger" type="file" name="excel_file" accept=".xlsx,.xls,.csv"
+            onchange="document.getElementById('import-form').submit()">
+    </form>
+
+    @if($errors->has('excel_file'))
+        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 6000)"
+            x-transition:leave="transition ease-in duration-300"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            class="flex items-center gap-3 px-4 py-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">
+            <flux:icon.x-circle class="size-5 shrink-0" />
+            {{ $errors->first('excel_file') }}
+        </div>
+    @endif
 
     @if(session('success'))
         <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)"
@@ -61,7 +90,7 @@
 
         {{-- Header tabla --}}
         <div class="px-4 sm:px-6 py-4 border-b border-neutral-200 dark:border-neutral-700 bg-zinc-50 dark:bg-zinc-900 flex items-center justify-between gap-4">
-            <h2 class="text-base font-semibold text-gray-900 dark:text-white">Listado de Áreas</h2>
+            <h2 class="text-base font-semibold text-gray-900 dark:text-white">Listado de Ãreas</h2>
             <div class="relative">
                 <flux:icon.magnifying-glass class="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input type="text" x-model="search" placeholder="Buscar..."
@@ -137,11 +166,7 @@
                             <td colspan="6" class="px-6 py-16 text-center">
                                 <div class="flex flex-col items-center gap-3 text-gray-400 dark:text-zinc-500">
                                     <flux:icon.squares-2x2 class="size-12 opacity-30" />
-                                    <p class="text-sm">No hay áreas registradas aún.</p>
-                                    <button @click="openCreate()"
-                                        class="text-sm text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer">
-                                        Crear la primera área
-                                    </button>
+                                    <p class="text-sm">No hay Áreas registradas aún.</p>
                                 </div>
                             </td>
                         </tr>
@@ -164,3 +189,8 @@
 {{-- @vite('resources/js/administration/areas/areas-manager.js') --}}
 
 </x-layouts.app>
+
+
+
+
+
