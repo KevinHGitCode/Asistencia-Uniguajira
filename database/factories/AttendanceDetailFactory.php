@@ -14,20 +14,19 @@ class AttendanceDetailFactory extends Factory
     {
         return [
             'sexo'             => $this->faker->optional(0.85)->randomElement([
-                'Masculino', 'Femenino', 'No binario', 'Prefiero no decir',
+                'Masculino', 'Femenino', 'Otro',
             ]),
             'telefono'         => $this->faker->optional(0.7)->numerify('3##-###-####'),
-            'address_id'       => $this->faker->boolean(60)
-                ? Address::factory()
-                : null,
+            'municipio'        => $this->faker->optional(0.6)->city(),
+            'barrio'           => $this->faker->optional(0.4)->word(),
+            'direccion'        => $this->faker->optional(0.3)->streetAddress(),
             'grupo_priorizado' => $this->faker->optional(0.6)->randomElement([
-                'Víctimas del conflicto armado',
-                'Población con discapacidad',
-                'Comunidades indígenas',
-                'Comunidades afrodescendientes',
-                'Jóvenes rurales',
-                'Adulto mayor',
-                'LGBTIQ+',
+                'Indígena',
+                'Afrodescendiente',
+                'Discapacitado',
+                'Víctima de Conflicto Armado',
+                'Comunidad LGTBQ+',
+                'Habitante de Frontera',
                 'Ninguno',
             ]),
         ];

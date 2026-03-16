@@ -10,7 +10,9 @@ class AttendanceDetail extends Model
         'attendance_id',
         'sexo',
         'telefono',
-        'address_id',
+        'municipio',
+        'barrio',
+        'direccion',
         'grupo_priorizado',
         'program_id',
     ];

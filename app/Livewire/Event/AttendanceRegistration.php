@@ -77,18 +77,16 @@ class AttendanceRegistration extends Component
     public const SEXO_OPCIONES = [
         'Masculino',
         'Femenino',
-        'No binario',
         'Prefiero no decir',
     ];
 
     public const GRUPOS_PRIORIZADOS = [
-        'Victimas del conflicto armado',
-        'Poblacion con discapacidad',
-        'Comunidades indigenas',
-        'Comunidades afrodescendientes',
-        'Jovenes rurales',
-        'Adulto mayor',
-        'LGBTIQ+',
+        'Indígena',
+        'Afrodescendiente',
+        'Discapacitado',
+        'Víctima de Conflicto Armado',
+        'Comunidad LGTBQ+',
+        'Habitante de Frontera',
         'Ninguno',
     ];
 
@@ -338,7 +336,9 @@ class AttendanceRegistration extends Component
                 'attendance_id'    => $attendance->id,
                 'sexo'             => $this->detailSexo            ?: null,
                 'telefono'         => $this->detailTelefono        ?: null,
-                'address_id'       => $address?->id,
+                'municipio'        => $this->detailMunicipio       ?: null,
+                'barrio'           => $this->detailBarrio          ?: null,
+                'direccion'        => $this->detailDireccion       ?: null,
                 'grupo_priorizado' => $this->detailGrupoPriorizado ?: null,
                 'program_id'       => $this->selectedProgramId,
             ]);
