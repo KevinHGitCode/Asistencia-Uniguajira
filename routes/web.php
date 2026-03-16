@@ -167,6 +167,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])
         // Rutas de estamentos / tipos de participante
         Route::get('/participant-types', [ParticipantTypeController::class, 'index'])->name('participant-types.index');
         Route::post('/participant-types', [ParticipantTypeController::class, 'store'])->name('participant-types.store');
+        Route::post('/participant-types/edit/{participantType}', [ParticipantTypeController::class, 'update'])->name('participant-types.update');
         Route::delete('/participant-types/{participantType}', [ParticipantTypeController::class, 'destroy'])->name('participant-types.destroy');
 
         // Rutas de importación / registro de participantes

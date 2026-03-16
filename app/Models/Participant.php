@@ -15,15 +15,13 @@ class Participant extends Model
         'first_name',
         'last_name',
         'email',
-        'role',
-        'affiliation_id',
-        'gender',
-        'priority_group',
     ];
 
-    public function affiliation()
+    // son varios
+    public function affiliations()
     {
-        return $this->belongsTo(Affiliation::class, 'affiliation_id');
+        return $this->belongsToMany(Affiliation::class, 'affiliation_participant')
+            ->withTimestamps();
     }
 
     /**

@@ -49,4 +49,20 @@ class ParticipantTypeController extends Controller
         return redirect()->route('participant-types.index')
             ->with('success', "Estamento \"{$name}\" eliminado exitosamente.");
     }
+
+    public function update(Request $request, ParticipantType $participantType)
+    {
+        $request->validate([
+            'name' => 'required|string|max:100|unique:participant_types,name,' . $participantType->id,
+        ], [
+            'name.required' => 'El nombre del estamento es obligatorio.',
+            'name.unique'   => 'Ya existe un estamento con ese nombre.',
+            'name.max'      => 'El nombre no puede superar los 100 caracteres.',
+        ]);
+
+        $participantType->update(['name' => trim($request->name)]);
+
+        return redirect()->route('participant-types.index')
+            ->with('success', 'Estamento actualizado exitosamente.');
+    }
 }
