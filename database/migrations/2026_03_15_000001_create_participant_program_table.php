@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('participant_id')->constrained('participants')->cascadeOnDelete();
             $table->foreignId('program_id')->constrained('programs')->cascadeOnDelete();
-            $table->primary(['participant_id', 'program_id']);
+            $table->unique(['participant_id', 'program_id'], 'pp_participant_program_unique');
             $table->timestamps();
         });
     }

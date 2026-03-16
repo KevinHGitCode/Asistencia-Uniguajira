@@ -15,6 +15,7 @@ class Affiliation extends Model
 
     public function participants()
     {
-        return $this->hasMany(Participant::class, 'affiliation_id');
+        return $this->belongsToMany(Participant::class, 'affiliation_participant')
+            ->withTimestamps();
     }
 }

@@ -9,13 +9,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('participant_type_participant', function (Blueprint $table) {
+            $table->id();
             $table->foreignId('participant_id')
                   ->constrained('participants')
                   ->cascadeOnDelete();
             $table->foreignId('participant_type_id')
                   ->constrained('participant_types')
                   ->cascadeOnDelete();
-            $table->primary(['participant_id', 'participant_type_id']);
+            $table->unique(['participant_id', 'participant_type_id'], 'ptp_participant_type_unique');
             $table->timestamps();
         });
     }

@@ -19,7 +19,7 @@ return new class extends Migration
             $table->foreignId('affiliation_id')
                   ->constrained('affiliations')
                   ->cascadeOnDelete();
-            $table->primary(['participant_id', 'affiliation_id']);
+            $table->unique(['participant_id', 'affiliation_id'], 'ap_participant_affiliation_unique');
             $table->timestamps();
         });
     }
