@@ -2,7 +2,6 @@
 
 namespace App\Livewire\Event;
 
-use App\Models\Address;
 use App\Models\Attendance;
 use App\Models\AttendanceDetail;
 use App\Models\Event;
@@ -405,15 +404,6 @@ class AttendanceRegistration extends Component
                 'participant_id' => $this->participantData['id'],
             ]);
 
-            $address = null;
-            if ($this->detailMunicipio || $this->detailBarrio || $this->detailDireccion) {
-                $address = Address::create([
-                    'municipio' => $this->detailMunicipio ?: 'Sin especificar',
-                    'barrio'    => $this->detailBarrio    ?: null,
-                    'direccion' => $this->detailDireccion ?: null,
-                ]);
-            }
-
             AttendanceDetail::create([
                 'attendance_id'       => $attendance->id,
                 'gender'              => $this->detailGender        ?: null,
@@ -540,7 +530,7 @@ class AttendanceRegistration extends Component
 
     private function loadLastDefaults(): void
     {
-        $lastDetail = AttendanceDetail::with('address')->latest()->first();
+        $lastDetail = AttendanceDetail::latest()->first();
 
         if (! $lastDetail) {
             return;
@@ -548,13 +538,10 @@ class AttendanceRegistration extends Component
 
         $this->detailGender        = $lastDetail->gender         ?? '';
         $this->detailTelefono      = $lastDetail->telefono       ?? '';
+        $this->detailMunicipio     = $lastDetail->municipio      ?? '';
+        $this->detailBarrio        = $lastDetail->barrio         ?? '';
+        $this->detailDireccion     = $lastDetail->direccion      ?? '';
         $this->detailPriorityGroup = $lastDetail->priority_group ?? '';
-
-        if ($lastDetail->address) {
-            $this->detailMunicipio = $lastDetail->address->municipio ?? '';
-            $this->detailBarrio    = $lastDetail->address->barrio    ?? '';
-            $this->detailDireccion = $lastDetail->address->direccion ?? '';
-        }
     }
 
     private function resetNewParticipantForm(): void
