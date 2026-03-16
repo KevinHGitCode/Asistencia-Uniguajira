@@ -1,13 +1,7 @@
-<x-layouts.app :title="__('Afiliaciones')">
+﻿<x-layouts.app :title="__('Afiliaciones')">
 
 <div class="flex h-full w-full flex-1 flex-col gap-6 p-1 sm:p-4 md:p-6"
-     x-data="{
-         search: '',
-         showForm: false,
-         formName: '',
-         openCreate() { this.formName = ''; this.showForm = true; },
-         closeForm()  { this.showForm = false; },
-     }">
+     x-data="affiliationsManager()">
 
     {{-- Header --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -76,6 +70,7 @@
                         <th class="px-4 sm:px-6 py-3 text-left font-medium">Nombre</th>
                         <th class="px-4 sm:px-6 py-3 text-center font-medium">Participantes</th>
                         <th class="px-4 sm:px-6 py-3 text-center font-medium hidden sm:table-cell">Creada</th>
+                        <th class="px-4 sm:px-6 py-3 text-right font-medium">Acciones</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-neutral-100 dark:divide-zinc-800">
@@ -100,10 +95,31 @@
                             <td class="px-4 sm:px-6 py-4 text-center text-gray-500 dark:text-gray-400 text-xs hidden sm:table-cell">
                                 {{ $affiliation->created_at->format('d/m/Y') }}
                             </td>
+                            <td class="px-4 sm:px-6 py-4">
+                                <div class="flex items-center justify-end gap-2">
+                                    <button
+                                        @click="openEdit({{ $affiliation->id }}, '{{ addslashes($affiliation->name) }}')"
+                                        class="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 dark:hover:text-blue-400 transition-colors cursor-pointer"
+                                        title="Editar">
+                                        <flux:icon.pencil-square class="size-4" />
+                                    </button>
+
+                                    @if(($affiliation->participants_count ?? 0) === 0)
+                                        <button
+                                            @click="openDelete({{ $affiliation->id }}, '{{ addslashes($affiliation->name) }}')"
+                                            class="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 dark:hover:text-red-400 transition-colors cursor-pointer"
+                                            title="Eliminar">
+                                            <flux:icon.trash class="size-4" />
+                                        </button>
+                                    @else
+                                        <span class="text-xs text-gray-400 dark:text-zinc-600 italic">En uso</span>
+                                    @endif
+                                </div>
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="px-6 py-16 text-center">
+                            <td colspan="5" class="px-6 py-16 text-center">
                                 <div class="flex flex-col items-center gap-3 text-gray-400 dark:text-zinc-500">
                                     <flux:icon.tag class="size-12 opacity-30" />
                                     <p class="text-sm">No hay afiliaciones registradas aún.</p>
@@ -120,70 +136,13 @@
         </div>
     </div>
 
-    {{-- ======================== MODAL: CREAR ======================== --}}
-    <div x-show="showForm"
-         x-transition:enter="transition ease-out duration-200"
-         x-transition:enter-start="opacity-0"
-         x-transition:enter-end="opacity-100"
-         x-transition:leave="transition ease-in duration-150"
-         x-transition:leave-start="opacity-100"
-         x-transition:leave-end="opacity-0"
-         class="fixed inset-0 z-50 flex items-center justify-center p-4"
-         style="display: none;">
+    {{-- MODAL: CREAR / EDITAR --}}
+    <x-affiliations.form-modal />
 
-        <div class="absolute inset-0 bg-black/50 dark:bg-black/70" @click="closeForm()"></div>
-
-        <div x-show="showForm"
-             x-transition:enter="transition ease-out duration-200"
-             x-transition:enter-start="opacity-0 scale-95"
-             x-transition:enter-end="opacity-100 scale-100"
-             x-transition:leave="transition ease-in duration-150"
-             x-transition:leave-start="opacity-100 scale-100"
-             x-transition:leave-end="opacity-0 scale-95"
-             class="relative w-full max-w-md bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-neutral-200 dark:border-zinc-700 z-10">
-
-            <div class="flex items-center justify-between px-6 py-4 border-b border-neutral-200 dark:border-zinc-700">
-                <h3 class="text-base font-semibold text-gray-900 dark:text-white">Nueva Afiliación</h3>
-                <button @click="closeForm()"
-                    class="p-1 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer">
-                    <flux:icon.x-mark class="size-5" />
-                </button>
-            </div>
-
-            <form action="{{ route('affiliations.store') }}" method="POST" class="px-6 py-5 flex flex-col gap-4">
-                @csrf
-                <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Nombre <span class="text-red-500">*</span>
-                    </label>
-                    <input
-                        type="text"
-                        name="name"
-                        x-model="formName"
-                        x-ref="nameInput"
-                        x-init="$watch('showForm', v => v && $nextTick(() => $refs.nameInput.focus()))"
-                        required
-                        placeholder="Ej: Catedrático"
-                        class="px-3 py-2 rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-[#7c6fcd] transition" />
-                    <p class="text-xs text-gray-400 dark:text-gray-500">
-                        Ejemplos: Catedrático, Ocasional, Planta, Contratista…
-                    </p>
-                </div>
-
-                <div class="flex items-center justify-end gap-3 pt-2">
-                    <button type="button" @click="closeForm()"
-                        class="px-4 py-2 text-sm rounded-lg border border-neutral-200 dark:border-zinc-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer">
-                        Cancelar
-                    </button>
-                    <button type="submit"
-                        class="px-4 py-2 text-sm rounded-lg bg-[#7c6fcd] hover:bg-[#6b5eb8] text-white font-medium transition-colors shadow-sm cursor-pointer">
-                        Crear afiliación
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
+    {{-- MODAL: ELIMINAR --}}
+    <x-affiliations.delete-modal />
 </div>
 
 </x-layouts.app>
+
+
