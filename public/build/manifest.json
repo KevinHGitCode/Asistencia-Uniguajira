@@ -1,0 +1,96 @@
+{
+  "_ProgramParticipantsPie-BiYipDsw.js": {
+    "file": "assets/ProgramParticipantsPie-BiYipDsw.js",
+    "name": "ProgramParticipantsPie",
+    "imports": [
+      "_index-BwNU8OnE.js"
+    ]
+  },
+  "_index-BwNU8OnE.js": {
+    "file": "assets/index-BwNU8OnE.js",
+    "name": "index"
+  },
+  "resources/css/app.css": {
+    "file": "assets/app-B3GqVIP1.css",
+    "src": "resources/css/app.css",
+    "isEntry": true,
+    "names": [
+      "app.css"
+    ]
+  },
+  "resources/js/administration/formats/pdf-mapper.jsx": {
+    "file": "assets/pdf-mapper-EwDrnFqY.js",
+    "name": "pdf-mapper",
+    "src": "resources/js/administration/formats/pdf-mapper.jsx",
+    "isEntry": true,
+    "imports": [
+      "_index-BwNU8OnE.js"
+    ]
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-xMKGyrEP.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true,
+    "dynamicImports": [
+      "resources/js/calendar/paint.js",
+      "resources/js/calendar/observers.js",
+      "resources/js/charts.js",
+      "resources/js/charts/general/index.js",
+      "resources/js/charts-details-event.js"
+    ]
+  },
+  "resources/js/calendar/observers.js": {
+    "file": "assets/observers-8wUE1YvB.js",
+    "name": "observers",
+    "src": "resources/js/calendar/observers.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/calendar/paint.js"
+    ]
+  },
+  "resources/js/calendar/paint.js": {
+    "file": "assets/paint-CUWGXknF.js",
+    "name": "paint",
+    "src": "resources/js/calendar/paint.js",
+    "isDynamicEntry": true
+  },
+  "resources/js/charts-details-event.js": {
+    "file": "assets/charts-details-event-BM5D8MJi.js",
+    "name": "charts-details-event",
+    "src": "resources/js/charts-details-event.js",
+    "isDynamicEntry": true
+  },
+  "resources/js/charts.js": {
+    "file": "assets/charts-Bqn4AjwI.js",
+    "name": "charts",
+    "src": "resources/js/charts.js",
+    "isDynamicEntry": true
+  },
+  "resources/js/charts/general/index.js": {
+    "file": "assets/index-BHmubLxx.js",
+    "name": "index",
+    "src": "resources/js/charts/general/index.js",
+    "isDynamicEntry": true
+  },
+  "resources/js/events/index.jsx": {
+    "file": "assets/index-CQhRMCJq.js",
+    "name": "index",
+    "src": "resources/js/events/index.jsx",
+    "isEntry": true,
+    "imports": [
+      "_index-BwNU8OnE.js",
+      "_ProgramParticipantsPie-BiYipDsw.js"
+    ]
+  },
+  "resources/js/statistics/index.jsx": {
+    "file": "assets/index-BJXRhK48.js",
+    "name": "index",
+    "src": "resources/js/statistics/index.jsx",
+    "isEntry": true,
+    "imports": [
+      "_index-BwNU8OnE.js",
+      "_ProgramParticipantsPie-BiYipDsw.js"
+    ]
+  }
+}
