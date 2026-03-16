@@ -165,8 +165,8 @@ class StatisticsController extends Controller
     {
         $filters = $this->getFilters($request);
         $query = DB::table('attendances')
-            ->join('participants', 'attendances.participant_id', '=', 'participants.id')
-            ->join('programs', 'participants.program_id', '=', 'programs.id')
+            ->join('attendance_details', 'attendances.id', '=', 'attendance_details.attendance_id')
+            ->join('programs', 'attendance_details.program_id', '=', 'programs.id')
             ->join('events', 'attendances.event_id', '=', 'events.id');
 
         if (!empty($filters['dateFrom'])) {
@@ -196,9 +196,10 @@ class StatisticsController extends Controller
         $filters = $this->getFilters($request);
 
         $query = DB::table('participants')
-            ->join('programs',    'participants.program_id', '=', 'programs.id')
-            ->join('attendances', 'participants.id',         '=', 'attendances.participant_id')
-            ->join('events',      'attendances.event_id',    '=', 'events.id');
+            ->join('participant_program', 'participants.id',              '=', 'participant_program.participant_id')
+            ->join('programs',            'participant_program.program_id', '=', 'programs.id')
+            ->join('attendances',         'participants.id',               '=', 'attendances.participant_id')
+            ->join('events',              'attendances.event_id',          '=', 'events.id');
 
         if (!empty($filters['dateFrom'])) {
             $query->where('events.date', '>=', $filters['dateFrom']);
@@ -621,9 +622,9 @@ class StatisticsController extends Controller
     private function sumAttendancesByProgram(array $filters)
     {
         $q = DB::table('attendances')
-            ->join('participants', 'attendances.participant_id', '=', 'participants.id')
-            ->join('programs',     'participants.program_id',    '=', 'programs.id')
-            ->join('events',       'attendances.event_id',       '=', 'events.id');
+            ->join('attendance_details', 'attendances.id',                  '=', 'attendance_details.attendance_id')
+            ->join('programs',           'attendance_details.program_id',   '=', 'programs.id')
+            ->join('events',             'attendances.event_id',            '=', 'events.id');
         if (!empty($filters['dateFrom'])) $q->where('events.date', '>=', $filters['dateFrom']);
         if (!empty($filters['dateTo']))   $q->where('events.date', '<=', $filters['dateTo']);
         $this->applyEventIds($q, $filters);
@@ -674,9 +675,10 @@ class StatisticsController extends Controller
     private function sumParticipantsByProgram(array $filters)
     {
         $q = DB::table('participants')
-            ->join('programs',    'participants.program_id',    '=', 'programs.id')
-            ->join('attendances', 'participants.id',            '=', 'attendances.participant_id')
-            ->join('events',      'attendances.event_id',       '=', 'events.id');
+            ->join('participant_program', 'participants.id',               '=', 'participant_program.participant_id')
+            ->join('programs',            'participant_program.program_id', '=', 'programs.id')
+            ->join('attendances',         'participants.id',               '=', 'attendances.participant_id')
+            ->join('events',              'attendances.event_id',          '=', 'events.id');
         if (!empty($filters['dateFrom'])) $q->where('events.date', '>=', $filters['dateFrom']);
         if (!empty($filters['dateTo']))   $q->where('events.date', '<=', $filters['dateTo']);
         $this->applyEventIds($q, $filters);

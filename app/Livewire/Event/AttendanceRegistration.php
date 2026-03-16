@@ -530,7 +530,13 @@ class AttendanceRegistration extends Component
 
     private function loadLastDefaults(): void
     {
-        $lastDetail = AttendanceDetail::latest()->first();
+        if (! $this->participantData) {
+            return;
+        }
+
+        $lastDetail = AttendanceDetail::whereHas('attendance', function ($q) {
+            $q->where('participant_id', $this->participantData['id']);
+        })->latest()->first();
 
         if (! $lastDetail) {
             return;

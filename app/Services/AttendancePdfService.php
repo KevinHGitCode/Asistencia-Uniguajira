@@ -150,6 +150,8 @@ class AttendancePdfService
             }
 
             $p = $attendance->participant;
+            // Preferir el programa específico de la asistencia sobre el primero del participante
+            $p->setRelation('programs', collect([$attendance->detail?->program ?? $p->programs->first()])->filter());
             $y = round($cfg['startY'] + ($row * $cfg['rowHeight']), 2);
 
             if (isset($cols['number'])) {

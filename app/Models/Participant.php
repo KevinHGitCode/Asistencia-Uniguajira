@@ -15,7 +15,28 @@ class Participant extends Model
         'first_name',
         'last_name',
         'email',
+        'role',
+        'gender',
+        'priority_group',
     ];
+
+    /**
+     * Accessor para compatibilidad con vistas legacy que usan ->affiliation (singular).
+     * Devuelve la primera afiliación del pivot.
+     */
+    public function getAffiliationAttribute(): ?Affiliation
+    {
+        return $this->affiliations->first();
+    }
+
+    /**
+     * Accessor para compatibilidad con vistas legacy que usan ->program (singular).
+     * Devuelve el primer programa del pivot.
+     */
+    public function getProgramAttribute(): ?Program
+    {
+        return $this->programs->first();
+    }
 
     // son varios
     public function affiliations()

@@ -420,10 +420,14 @@ class ParticipantImportController extends Controller
             'email'          => $request->email ?: null,
             'role'           => $request->role,
             'student_code'   => $request->student_code ?: null,
-            'affiliation_id' => $request->role === 'Docente' ? $request->affiliation_id : null,
             'gender'         => $request->sexo ?: null,
             'priority_group' => $request->priority_group ?: null,
         ]);
+
+        // Attach affiliation via pivot
+        if ($request->role === 'Docente' && $request->affiliation_id) {
+            $participant->affiliations()->attach($request->affiliation_id);
+        }
 
         // Attach to type pivot
         $type = ParticipantType::where('name', $request->role)->first();

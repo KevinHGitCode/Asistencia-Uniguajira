@@ -195,7 +195,7 @@ class EventController extends Controller
 
     public function descargarAsistencia($id, $formatSlug = null, AttendancePdfService $pdfService)
     {
-        $evento = Event::with('asistencias.participant.program', 'dependency.formats', 'area', 'user')->findOrFail($id);
+        $evento = Event::with(['asistencias.participant.programs', 'asistencias.detail.program', 'dependency.formats', 'area', 'user'])->findOrFail($id);
 
         $formats = $evento->dependency->formats ?? collect();
 

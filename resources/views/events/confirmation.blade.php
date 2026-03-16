@@ -70,11 +70,12 @@ confirmation.blade.php
                     </div>
                     @endif
 
-                    @if($participant->program)
+                    @php $confirmProgram = $attendance->detail?->program ?? $participant->programs->first(); @endphp
+                    @if($confirmProgram)
                     <div class="pb-3">
                         <p class="text-sm text-gray-500 dark:text-gray-400">Programa Académico</p>
                         <p class="text-lg font-semibold text-gray-900 dark:text-white">
-                            {{ $participant->program->name }}
+                            {{ $confirmProgram->name }}
                         </p>
                     </div>
                     @endif

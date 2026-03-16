@@ -83,7 +83,7 @@ class AttendanceController extends Controller
             $event = Event::where('link', $slug)->firstOrFail();
 
             // Buscar la asistencia con el participante
-            $attendance = Attendance::with('participant.program')
+            $attendance = Attendance::with(['participant.affiliations', 'participant.programs', 'detail.program'])
                 ->where('id', $attendanceId)
                 ->where('event_id', $event->id)
                 ->firstOrFail();
