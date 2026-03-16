@@ -364,10 +364,10 @@ class StatisticsController extends Controller
         $this->applyEventIds($query, $filters);
 
         return $query->select(
-                DB::raw("COALESCE(participants.sexo, 'Sin datos') as label"),
+                DB::raw("COALESCE(participants.gender, 'Sin datos') as label"),
                 DB::raw('COUNT(*) as count')
             )
-            ->groupBy('participants.sexo')
+            ->groupBy('participants.gender')
             ->orderByDesc('count')
             ->get();
     }
@@ -390,10 +390,10 @@ class StatisticsController extends Controller
         $this->applyEventIds($query, $filters);
 
         return $query->select(
-                DB::raw("COALESCE(participants.grupo_priorizado, 'Sin datos') as label"),
+                DB::raw("COALESCE(participants.priority_group, 'Sin datos') as label"),
                 DB::raw('COUNT(*) as count')
             )
-            ->groupBy('participants.grupo_priorizado')
+            ->groupBy('participants.priority_group')
             ->orderByDesc('count')
             ->get();
     }
@@ -441,10 +441,10 @@ class StatisticsController extends Controller
         $this->applyEventIds($query, $filters);
 
         return $query->select(
-                DB::raw("COALESCE(participants.sexo, 'Sin datos') as label"),
+                DB::raw("COALESCE(participants.gender, 'Sin datos') as label"),
                 DB::raw('COUNT(DISTINCT participants.id) as count')
             )
-            ->groupBy('participants.sexo')
+            ->groupBy('participants.gender')
             ->orderByDesc('count')
             ->get();
     }
@@ -467,10 +467,10 @@ class StatisticsController extends Controller
         $this->applyEventIds($query, $filters);
 
         return $query->select(
-                DB::raw("COALESCE(participants.grupo_priorizado, 'Sin datos') as label"),
+                DB::raw("COALESCE(participants.priority_group, 'Sin datos') as label"),
                 DB::raw('COUNT(DISTINCT participants.id) as count')
             )
-            ->groupBy('participants.grupo_priorizado')
+            ->groupBy('participants.priority_group')
             ->orderByDesc('count')
             ->get();
     }
@@ -514,8 +514,8 @@ class StatisticsController extends Controller
                 'topEvents'            => $this->sumTopEvents($filters),
                 'topParticipants'      => $this->sumTopParticipants($filters),
                 'byRole'  => $this->sumAttendancesDemoByField($filters, 'participants.role'),
-                'bySex'   => $this->sumAttendancesDemoByField($filters, 'participants.sexo',            'Sin datos'),
-                'byGroup' => $this->sumAttendancesDemoByField($filters, 'participants.grupo_priorizado', 'Sin datos'),
+                'bySex'   => $this->sumAttendancesDemoByField($filters, 'participants.gender',            'Sin datos'),
+                'byGroup' => $this->sumAttendancesDemoByField($filters, 'participants.priority_group', 'Sin datos'),
             ],
         ]);
     }
@@ -552,8 +552,8 @@ class StatisticsController extends Controller
             'charts' => [
                 'participantsByProgram' => $this->sumParticipantsByProgram($filters),
                 'byRole'  => $this->sumParticipantsDemoByField($filters, 'participants.role'),
-                'bySex'   => $this->sumParticipantsDemoByField($filters, 'participants.sexo',            'Sin datos'),
-                'byGroup' => $this->sumParticipantsDemoByField($filters, 'participants.grupo_priorizado', 'Sin datos'),
+                'bySex'   => $this->sumParticipantsDemoByField($filters, 'participants.gender',            'Sin datos'),
+                'byGroup' => $this->sumParticipantsDemoByField($filters, 'participants.priority_group', 'Sin datos'),
             ],
         ]);
     }

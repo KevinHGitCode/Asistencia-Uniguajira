@@ -57,6 +57,9 @@
                     @if(($result['programs_attached'] ?? 0) > 0)
                         <strong>{{ $result['programs_attached'] }}</strong> {{ $result['programs_attached'] === 1 ? 'carrera nueva adjuntada' : 'carreras nuevas adjuntadas' }} a participantes existentes.
                     @endif
+                    @if(($result['types_attached'] ?? 0) > 0)
+                        <strong>{{ $result['types_attached'] }}</strong> {{ $result['types_attached'] === 1 ? 'estamento nuevo adjuntado' : 'estamentos nuevos adjuntados' }} a participantes existentes.
+                    @endif
                 </span>
             </div>
             @if($result['skipped'] > 0)

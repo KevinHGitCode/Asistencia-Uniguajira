@@ -17,8 +17,8 @@ class Participant extends Model
         'email',
         'role',
         'affiliation_id',
-        'sexo',
-        'grupo_priorizado',
+        'gender',
+        'priority_group',
     ];
 
     public function affiliation()
@@ -32,6 +32,15 @@ class Participant extends Model
     public function programs()
     {
         return $this->belongsToMany(Program::class, 'participant_program')
+            ->withTimestamps();
+    }
+
+    /**
+     * Un participante puede tener varios tipos/estamentos.
+     */
+    public function types()
+    {
+        return $this->belongsToMany(ParticipantType::class, 'participant_type_participant')
             ->withTimestamps();
     }
 

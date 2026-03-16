@@ -7,6 +7,7 @@ use App\Models\Attendance;
 use App\Models\AttendanceDetail;
 use App\Models\Event;
 use App\Models\Participant;
+use App\Models\ParticipantType;
 use App\Models\Program;
 use App\Models\Affiliation;
 use Illuminate\Support\Facades\Log;
@@ -22,7 +23,7 @@ class AttendanceRegistration extends Component
 
     public string $activeTab = 'asistencia';
 
-    // 'search' | 'register_external' | 'found' | 'select_program' | 'details' | 'duplicate' | 'success'
+    // 'search' | 'register_external' | 'found' | 'select_type' | 'select_program' | 'details' | 'duplicate' | 'success'
     public string $step = 'search';
 
     public string $identification = '';
@@ -34,17 +35,18 @@ class AttendanceRegistration extends Component
     public ?string $successRegisteredAt   = null;
     public int     $totalAttendances      = 0;
 
-    // Programa seleccionado para esta asistencia
+    // Tipo y programa seleccionados para esta asistencia
+    public ?int $selectedTypeId    = null;
     public ?int $selectedProgramId = null;
 
     // Campos del detalle de asistencia
-    public string $detailSexo            = '';
-    public string $detailTelefono        = '';
-    public string $detailMunicipio       = '';
-    public string $detailBarrio          = '';
-    public string $detailDireccion       = '';
-    public string $detailGrupoPriorizado = '';
-    public string $detailEmail           = '';
+    public string $detailGender        = '';
+    public string $detailTelefono      = '';
+    public string $detailMunicipio     = '';
+    public string $detailBarrio        = '';
+    public string $detailDireccion     = '';
+    public string $detailPriorityGroup = '';
+    public string $detailEmail         = '';
 
     // Registro rapido Comunidad Externa
     public string $externalFirstName = '';
@@ -52,36 +54,29 @@ class AttendanceRegistration extends Component
     public string $externalEmail     = '';
 
     // Formulario nuevo participante (tab)
-    public string $newDocument        = '';
-    public string $newStudentCode     = '';
-    public string $newFirstName       = '';
-    public string $newLastName        = '';
-    public string $newEmail           = '';
-    public string $newRole            = 'Estudiante';
-    public string $newAffiliation     = '';
-    public ?int   $newProgramId       = null;
-    public string $newSexo            = '';
-    public string $newGrupoPriorizado = '';
+    public string $newDocument       = '';
+    public string $newStudentCode    = '';
+    public string $newFirstName      = '';
+    public string $newLastName       = '';
+    public string $newEmail          = '';
+    public string $newRole           = '';
+    public string $newAffiliation    = '';
+    public ?int   $newProgramId      = null;
+    public string $newGender         = '';
+    public string $newPriorityGroup  = '';
 
-    public array $programs    = [];
-    public array $affiliations = [];
+    public array $programs        = [];
+    public array $affiliations    = [];
+    public array $participantTypes = [];
 
-    public const ROLES = [
-        'Estudiante',
-        'Docente',
-        'Administrativo',
-        'Graduado',
-        'Comunidad Externa',
-    ];
-
-    public const SEXO_OPCIONES = [
+    public const GENDER_OPTIONS = [
         'Masculino',
         'Femenino',
         'No binario',
         'Prefiero no decir',
     ];
 
-    public const GRUPOS_PRIORIZADOS = [
+    public const PRIORITY_GROUPS = [
         'Victimas del conflicto armado',
         'Poblacion con discapacidad',
         'Comunidades indigenas',
@@ -119,6 +114,15 @@ class AttendanceRegistration extends Component
             ->get(['id', 'name'])
             ->map(fn ($a) => ['id' => $a->id, 'name' => $a->name])
             ->toArray();
+
+        $this->participantTypes = ParticipantType::orderBy('name')
+            ->get(['id', 'name'])
+            ->map(fn ($t) => ['id' => $t->id, 'name' => $t->name])
+            ->toArray();
+
+        if (!empty($this->participantTypes)) {
+            $this->newRole = $this->participantTypes[0]['name'];
+        }
     }
 
     public function switchTab(string $tab): void
@@ -144,7 +148,7 @@ class AttendanceRegistration extends Component
 
         $term = trim($this->identification);
 
-        $participant = Participant::with(['programs', 'affiliation'])
+        $participant = Participant::with(['programs', 'affiliation', 'types'])
             ->where(function ($q) use ($term) {
                 $q->where('document', $term)
                   ->orWhere('student_code', $term);
@@ -163,6 +167,19 @@ class AttendanceRegistration extends Component
             'full_name' => $p->name . ($p->campus ? ' - ' . $p->campus : ''),
         ])->values()->toArray();
 
+        $types = $participant->types->map(fn ($t) => [
+            'id'   => $t->id,
+            'name' => $t->name,
+        ])->values()->toArray();
+
+        // Fallback: if no types in pivot, use role field
+        if (empty($types) && $participant->role) {
+            $type = ParticipantType::where('name', $participant->role)->first();
+            if ($type) {
+                $types = [['id' => $type->id, 'name' => $type->name]];
+            }
+        }
+
         $this->participantData = [
             'id'          => $participant->id,
             'first_name'  => $participant->first_name,
@@ -173,6 +190,7 @@ class AttendanceRegistration extends Component
             'role'        => $participant->role,
             'affiliation' => $participant->affiliation?->name,
             'programs'    => $programs,
+            'types'       => $types,
         ];
 
         $existing = Attendance::where('event_id', $this->eventId)
@@ -213,6 +231,15 @@ class AttendanceRegistration extends Component
                 'role'       => 'Comunidad Externa',
             ]);
 
+            // Attach to type pivot
+            $type = ParticipantType::where('name', 'Comunidad Externa')->first();
+            if ($type) {
+                $participant->types()->attach($type->id);
+                $typeData = [['id' => $type->id, 'name' => $type->name]];
+            } else {
+                $typeData = [];
+            }
+
             $this->participantData = [
                 'id'          => $participant->id,
                 'first_name'  => $participant->first_name,
@@ -223,7 +250,10 @@ class AttendanceRegistration extends Component
                 'role'        => $participant->role,
                 'affiliation' => null,
                 'programs'    => [],
+                'types'       => $typeData,
             ];
+
+            $this->selectedTypeId = $type?->id;
 
             $this->externalFirstName = '';
             $this->externalLastName  = '';
@@ -245,15 +275,67 @@ class AttendanceRegistration extends Component
             return;
         }
 
+        $types    = $this->participantData['types'] ?? [];
         $programs = $this->participantData['programs'] ?? [];
 
-        if (count($programs) > 1) {
+        // If multiple types → ask which one
+        if (count($types) > 1) {
+            $this->selectedTypeId = null;
+            $this->step = 'select_type';
+            return;
+        }
+
+        // Single type or no type → pre-select
+        $this->selectedTypeId = ! empty($types) ? $types[0]['id'] : null;
+        $typeName = ! empty($types) ? $types[0]['name'] : ($this->participantData['role'] ?? '');
+
+        // If type requires program and has multiple programs → ask program
+        if (count($programs) > 1 && in_array($typeName, ['Estudiante', 'Graduado'])) {
             $this->selectedProgramId = null;
             $this->step = 'select_program';
             return;
         }
 
-        $this->selectedProgramId = ! empty($programs) ? $programs[0]['id'] : null;
+        $this->selectedProgramId = (! empty($programs) && in_array($typeName, ['Estudiante', 'Graduado']))
+            ? $programs[0]['id']
+            : null;
+
+        $this->loadLastDefaults();
+        $this->step = 'details';
+    }
+
+    public function confirmTypeSelection(): void
+    {
+        if (! $this->participantData) {
+            $this->backToSearch();
+            return;
+        }
+
+        $validIds = array_column($this->participantData['types'] ?? [], 'id');
+
+        $this->validate(
+            ['selectedTypeId' => 'required|integer|in:' . implode(',', $validIds)],
+            [
+                'selectedTypeId.required' => 'Selecciona el estamento con el que registras asistencia.',
+                'selectedTypeId.in'       => 'El estamento seleccionado no es valido.',
+            ]
+        );
+
+        // Get selected type name
+        $selectedType = collect($this->participantData['types'])->firstWhere('id', $this->selectedTypeId);
+        $typeName = $selectedType['name'] ?? '';
+        $programs = $this->participantData['programs'] ?? [];
+
+        if (count($programs) > 1 && in_array($typeName, ['Estudiante', 'Graduado'])) {
+            $this->selectedProgramId = null;
+            $this->step = 'select_program';
+            return;
+        }
+
+        $this->selectedProgramId = (! empty($programs) && in_array($typeName, ['Estudiante', 'Graduado']))
+            ? $programs[0]['id']
+            : null;
+
         $this->loadLastDefaults();
         $this->step = 'details';
     }
@@ -291,12 +373,12 @@ class AttendanceRegistration extends Component
             : ['detailEmail' => 'nullable|email|max:255|unique:participants,email'];
 
         $this->validate(array_merge([
-            'detailSexo'            => 'nullable|string|max:50',
-            'detailTelefono'        => 'nullable|string|max:20',
-            'detailMunicipio'       => 'nullable|string|max:100',
-            'detailBarrio'          => 'nullable|string|max:100',
-            'detailDireccion'       => 'nullable|string|max:255',
-            'detailGrupoPriorizado' => 'nullable|string|max:150',
+            'detailGender'        => 'nullable|string|max:50',
+            'detailTelefono'      => 'nullable|string|max:20',
+            'detailMunicipio'     => 'nullable|string|max:100',
+            'detailBarrio'        => 'nullable|string|max:100',
+            'detailDireccion'     => 'nullable|string|max:255',
+            'detailPriorityGroup' => 'nullable|string|max:150',
         ], $emailRules), [
             'detailEmail.email'  => 'Ingresa un correo electronico valido.',
             'detailEmail.unique' => 'Este correo ya esta registrado en el sistema.',
@@ -335,12 +417,13 @@ class AttendanceRegistration extends Component
             }
 
             AttendanceDetail::create([
-                'attendance_id'    => $attendance->id,
-                'sexo'             => $this->detailSexo            ?: null,
-                'telefono'         => $this->detailTelefono        ?: null,
-                'address_id'       => $address?->id,
-                'grupo_priorizado' => $this->detailGrupoPriorizado ?: null,
-                'program_id'       => $this->selectedProgramId,
+                'attendance_id'       => $attendance->id,
+                'gender'              => $this->detailGender        ?: null,
+                'telefono'            => $this->detailTelefono      ?: null,
+                'address_id'          => $address?->id,
+                'priority_group'      => $this->detailPriorityGroup ?: null,
+                'program_id'          => $this->selectedProgramId,
+                'participant_type_id' => $this->selectedTypeId,
             ]);
 
             $this->successRegisteredAt = $attendance->created_at->format('h:i A');
@@ -360,16 +443,17 @@ class AttendanceRegistration extends Component
         $this->duplicateRegisteredAt = null;
         $this->successRegisteredAt   = null;
         $this->totalAttendances      = 0;
+        $this->selectedTypeId        = null;
         $this->selectedProgramId     = null;
         $this->step                  = 'search';
 
-        $this->detailSexo            = '';
-        $this->detailTelefono        = '';
-        $this->detailMunicipio       = '';
-        $this->detailBarrio          = '';
-        $this->detailDireccion       = '';
-        $this->detailGrupoPriorizado = '';
-        $this->detailEmail           = '';
+        $this->detailGender        = '';
+        $this->detailTelefono      = '';
+        $this->detailMunicipio     = '';
+        $this->detailBarrio        = '';
+        $this->detailDireccion     = '';
+        $this->detailPriorityGroup = '';
+        $this->detailEmail         = '';
 
         $this->externalFirstName = '';
         $this->externalLastName  = '';
@@ -380,18 +464,20 @@ class AttendanceRegistration extends Component
 
     public function registerParticipant(): void
     {
+        $validTypeNames = array_column($this->participantTypes, 'name');
+
         $this->validate(
             [
-                'newDocument'        => 'required|string|max:20|unique:participants,document',
-                'newStudentCode'     => 'nullable|string|max:20|unique:participants,student_code',
-                'newFirstName'       => 'required|string|max:100',
-                'newLastName'        => 'required|string|max:100',
-                'newEmail'           => 'nullable|email|max:255|unique:participants,email',
-                'newRole'            => 'required|in:Estudiante,Docente,Administrativo,Graduado,Comunidad Externa',
-                'newAffiliation'     => 'nullable|string|max:100',
-                'newProgramId'       => 'nullable|exists:programs,id',
-                'newSexo'            => 'nullable|string|max:50',
-                'newGrupoPriorizado' => 'nullable|string|max:150',
+                'newDocument'       => 'required|string|max:20|unique:participants,document',
+                'newStudentCode'    => 'nullable|string|max:20|unique:participants,student_code',
+                'newFirstName'      => 'required|string|max:100',
+                'newLastName'       => 'required|string|max:100',
+                'newEmail'          => 'nullable|email|max:255|unique:participants,email',
+                'newRole'           => ['required', 'string', \Illuminate\Validation\Rule::in($validTypeNames)],
+                'newAffiliation'    => 'nullable|string|max:100',
+                'newProgramId'      => 'nullable|exists:programs,id',
+                'newGender'         => 'nullable|string|max:50',
+                'newPriorityGroup'  => 'nullable|string|max:150',
             ],
             [
                 'newDocument.required'  => 'El numero de documento es obligatorio.',
@@ -403,8 +489,8 @@ class AttendanceRegistration extends Component
                 'newLastName.required'  => 'El apellido es obligatorio.',
                 'newEmail.email'        => 'Ingresa un correo electronico valido.',
                 'newEmail.unique'       => 'Este correo ya esta registrado en el sistema.',
-                'newRole.required'      => 'Selecciona un rol.',
-                'newRole.in'            => 'El rol seleccionado no es valido.',
+                'newRole.required'      => 'Selecciona un estamento.',
+                'newRole.in'            => 'El estamento seleccionado no es valido.',
             ]
         );
 
@@ -416,16 +502,22 @@ class AttendanceRegistration extends Component
             }
 
             $participant = Participant::create([
-                'document'         => trim($this->newDocument),
-                'student_code'     => $this->newStudentCode    ?: null,
-                'first_name'       => trim($this->newFirstName),
-                'last_name'        => trim($this->newLastName),
-                'email'            => $this->newEmail           ?: null,
-                'role'             => $this->newRole,
-                'affiliation_id'   => $affiliationId,
-                'sexo'             => $this->newSexo            ?: null,
-                'grupo_priorizado' => $this->newGrupoPriorizado ?: null,
+                'document'       => trim($this->newDocument),
+                'student_code'   => $this->newStudentCode   ?: null,
+                'first_name'     => trim($this->newFirstName),
+                'last_name'      => trim($this->newLastName),
+                'email'          => $this->newEmail          ?: null,
+                'role'           => $this->newRole,
+                'affiliation_id' => $affiliationId,
+                'gender'         => $this->newGender         ?: null,
+                'priority_group' => $this->newPriorityGroup  ?: null,
             ]);
+
+            // Attach to type pivot
+            $type = ParticipantType::where('name', $this->newRole)->first();
+            if ($type) {
+                $participant->types()->attach($type->id);
+            }
 
             if ($this->newProgramId && in_array($this->newRole, ['Estudiante', 'Graduado'])) {
                 $participant->programs()->attach($this->newProgramId);
@@ -450,9 +542,9 @@ class AttendanceRegistration extends Component
             return;
         }
 
-        $this->detailSexo            = $lastDetail->sexo             ?? '';
-        $this->detailTelefono        = $lastDetail->telefono         ?? '';
-        $this->detailGrupoPriorizado = $lastDetail->grupo_priorizado ?? '';
+        $this->detailGender        = $lastDetail->gender         ?? '';
+        $this->detailTelefono      = $lastDetail->telefono       ?? '';
+        $this->detailPriorityGroup = $lastDetail->priority_group ?? '';
 
         if ($lastDetail->address) {
             $this->detailMunicipio = $lastDetail->address->municipio ?? '';
@@ -463,16 +555,16 @@ class AttendanceRegistration extends Component
 
     private function resetNewParticipantForm(): void
     {
-        $this->newDocument        = '';
-        $this->newStudentCode     = '';
-        $this->newFirstName       = '';
-        $this->newLastName        = '';
-        $this->newEmail           = '';
-        $this->newRole            = 'Estudiante';
-        $this->newAffiliation     = '';
-        $this->newProgramId       = null;
-        $this->newSexo            = '';
-        $this->newGrupoPriorizado = '';
+        $this->newDocument      = '';
+        $this->newStudentCode   = '';
+        $this->newFirstName     = '';
+        $this->newLastName      = '';
+        $this->newEmail         = '';
+        $this->newRole          = ! empty($this->participantTypes) ? $this->participantTypes[0]['name'] : '';
+        $this->newAffiliation   = '';
+        $this->newProgramId     = null;
+        $this->newGender        = '';
+        $this->newPriorityGroup = '';
         $this->resetValidation();
     }
 

@@ -15,7 +15,7 @@ class DatabaseSeeder extends Seeder
     {
         // Cargar dependencias y catálogos primero
         $this->call(DependenciesSeeder::class);
-        $this->call(EstamentoSeeder::class);
+        $this->call(ParticipantTypeSeeder::class);
 
         // Admins sin dependencia
         User::factory()->create([

@@ -237,7 +237,7 @@ class AttendancePdfService
 
             // === Gender ===
             if (isset($cols['gender'])) {
-                $gender = $p->sexo ?? '';
+                $gender = $p->gender ?? '';
                 if (isset($cols['gender'][$gender])) {
                     $gx = $cols['gender'][$gender]['x'];
                     $gy = $y + ($cols['gender'][$gender]['y_offset'] ?? 0);
@@ -250,9 +250,9 @@ class AttendancePdfService
 
             // === Priority Group ===
             if (isset($cols['priority_group'])) {
-                $groups = is_array($p->grupo_priorizado)
-                    ? $p->grupo_priorizado
-                    : explode(',', $p->grupo_priorizado ?? '');
+                $groups = is_array($p->priority_group)
+                    ? $p->priority_group
+                    : explode(',', $p->priority_group ?? '');
 
                 foreach ($groups as $g) {
                     $g = trim($g);

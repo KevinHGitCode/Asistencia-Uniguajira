@@ -7,10 +7,9 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Amplía el enum 'role' de participants para incluir todos los estamentos
-     * de Uniguajira y Comunidad Externa. Además hace email nullable y añade
-     * student_code (único, nullable) para Estudiante / Graduado.
+     * Amplía la tabla participants para incluir student_code y ajusta tipos de columnas.
      * Elimina program_id (ahora es relación muchos-a-muchos via participant_program).
+     * Columnas renombradas a inglés: gender (antes sexo), priority_group (antes grupo_priorizado).
      */
     public function up(): void
     {
@@ -27,8 +26,8 @@ return new class extends Migration
                 "last_name"        varchar(100)  not null,
                 "email"            varchar       null unique,
                 "role"             varchar(100)  not null default \'Comunidad Externa\',
-                "sexo"             varchar(30)   null,
-                "grupo_priorizado" varchar(150)  null,
+                "gender"           varchar(30)   null,
+                "priority_group"   varchar(150)  null,
                 "affiliation_id"   integer       null
                                    references "affiliations"("id") on delete set null,
                 "created_at"       datetime      null,
@@ -38,7 +37,7 @@ return new class extends Migration
             DB::statement('
                 INSERT INTO participants_new
                     (id, document, student_code, first_name, last_name, email, role,
-                     sexo, grupo_priorizado, affiliation_id, created_at, updated_at)
+                     gender, priority_group, affiliation_id, created_at, updated_at)
                 SELECT
                     id,
                     document,
@@ -47,8 +46,8 @@ return new class extends Migration
                     last_name,
                     email,
                     role,
-                    sexo,
-                    grupo_priorizado,
+                    gender,
+                    priority_group,
                     affiliation_id,
                     created_at,
                     updated_at
@@ -69,7 +68,7 @@ return new class extends Migration
                 DB::statement("ALTER TABLE participants DROP COLUMN program_id");
             }
             DB::statement("ALTER TABLE participants MODIFY COLUMN email varchar(255) NULL");
-            DB::statement("ALTER TABLE participants MODIFY COLUMN grupo_priorizado varchar(150) NULL");
+            DB::statement("ALTER TABLE participants MODIFY COLUMN priority_group varchar(150) NULL");
             DB::statement("ALTER TABLE participants MODIFY COLUMN role varchar(100) NOT NULL DEFAULT 'Comunidad Externa'");
         } else {
             // PostgreSQL
@@ -78,8 +77,6 @@ return new class extends Migration
             DB::statement("ALTER TABLE participants DROP COLUMN IF EXISTS program_id");
             DB::statement("ALTER TABLE participants ALTER COLUMN email DROP NOT NULL");
             DB::statement("ALTER TABLE participants DROP CONSTRAINT IF EXISTS participants_role_check");
-            DB::statement("ALTER TABLE participants ADD CONSTRAINT participants_role_check
-                CHECK (role IN ('Estudiante','Docente','Administrativo','Graduado','Comunidad Externa'))");
         }
     }
 
