@@ -539,6 +539,13 @@ class AttendanceRegistration extends Component
         })->latest()->first();
 
         if (! $lastDetail) {
+            // Reset to empty so stale typing from a previous search doesn't linger
+            $this->detailGender        = '';
+            $this->detailTelefono      = '';
+            $this->detailMunicipio     = '';
+            $this->detailBarrio        = '';
+            $this->detailDireccion     = '';
+            $this->detailPriorityGroup = '';
             return;
         }
 

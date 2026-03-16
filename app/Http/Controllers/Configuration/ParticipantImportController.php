@@ -107,10 +107,15 @@ class ParticipantImportController extends Controller
         $rows = $allRows;
 
         // ── Cachés de lookup ──────────────────────────────────────────────
-        $programHash = [];
+        $programHash     = [];
+        $programByNameHash = []; // fallback: name only → first matching program id
         foreach (Program::all(['id', 'name', 'campus']) as $program) {
             $key = strtolower($program->name) . '|' . strtolower($program->campus ?? '');
             $programHash[$key] = $program->id;
+            $nameKey = strtolower(trim($program->name));
+            if (! isset($programByNameHash[$nameKey])) {
+                $programByNameHash[$nameKey] = $program->id;
+            }
         }
 
         $affiliationHash = [];
@@ -146,11 +151,21 @@ class ParticipantImportController extends Controller
                 ->each(fn ($r) => $existingTypePivot[$r->participant_id][$r->participant_type_id] = true);
         }
 
+        // Affiliations ya asignadas: [participant_id][affiliation_id] = true
+        $existingAffiliationPivot = [];
+        if (! empty($existingDocToId)) {
+            DB::table('affiliation_participant')
+                ->whereIn('participant_id', array_values($existingDocToId))
+                ->get(['participant_id', 'affiliation_id'])
+                ->each(fn ($r) => $existingAffiliationPivot[$r->participant_id][$r->affiliation_id] = true);
+        }
+
         $now = now()->toDateTimeString();
 
         $newParticipants = [];
         $newPrograms     = [];
         $newTypes        = [];
+        $newAffiliations = [];
         $existingUpdates = [];
         $skipped         = [];
 
@@ -195,7 +210,9 @@ class ParticipantImportController extends Controller
             if (! empty($programName)) {
                 $parts      = explode(' - ', (string) $programName, 2);
                 $programKey = strtolower(trim($parts[0])) . '|' . strtolower(trim($parts[1] ?? ''));
-                $programId  = $programHash[$programKey] ?? null;
+                $programId  = $programHash[$programKey]
+                    ?? $programByNameHash[strtolower(trim($parts[0]))]
+                    ?? null;
             }
 
             // Resolver affiliation_id
@@ -213,10 +230,11 @@ class ParticipantImportController extends Controller
             if (isset($existingDocToId[$document])) {
                 $pid = $existingDocToId[$document];
 
-                $hasNewProgram = $programId && ! isset($existingPivot[$pid][$programId]);
-                $hasNewType    = ! isset($existingTypePivot[$pid][$typeId]);
+                $hasNewProgram     = $programId && ! isset($existingPivot[$pid][$programId]);
+                $hasNewType        = ! isset($existingTypePivot[$pid][$typeId]);
+                $hasNewAffiliation = $affiliationId && ! isset($existingAffiliationPivot[$pid][$affiliationId]);
 
-                if ($hasNewProgram || $hasNewType) {
+                if ($hasNewProgram || $hasNewType || $hasNewAffiliation) {
                     if ($hasNewProgram) {
                         $existingUpdates[$pid]['programs'][] = $programId;
                         $existingPivot[$pid][$programId]     = true;
@@ -224,6 +242,10 @@ class ParticipantImportController extends Controller
                     if ($hasNewType) {
                         $existingUpdates[$pid]['types'][] = $typeId;
                         $existingTypePivot[$pid][$typeId] = true;
+                    }
+                    if ($hasNewAffiliation) {
+                        $existingUpdates[$pid]['affiliations'][]              = $affiliationId;
+                        $existingAffiliationPivot[$pid][$affiliationId]       = true;
                     }
                 } else {
                     $skipped[] = $this->skippedRow(
@@ -242,6 +264,9 @@ class ParticipantImportController extends Controller
                 if ($typeId && ! in_array($typeId, $newTypes[$document] ?? [], true)) {
                     $newTypes[$document][] = $typeId;
                 }
+                if ($affiliationId && ! in_array($affiliationId, $newAffiliations[$document] ?? [], true)) {
+                    $newAffiliations[$document][] = $affiliationId;
+                }
                 continue;
             }
 
@@ -258,11 +283,13 @@ class ParticipantImportController extends Controller
                 'first_name'     => $firstName,
                 'last_name'      => $lastName,
                 'email'          => $email ?: null,
+                'role'           => $roleName,
                 'created_at'     => $now,
                 'updated_at'     => $now,
             ];
-            $newPrograms[$document] = $programId ? [$programId] : [];
-            $newTypes[$document]    = [$typeId];
+            $newPrograms[$document]     = $programId ? [$programId] : [];
+            $newTypes[$document]        = [$typeId];
+            $newAffiliations[$document] = $affiliationId ? [$affiliationId] : [];
 
             $existingDocToId[$document] = 0;
             if ($email) {
@@ -327,13 +354,32 @@ class ParticipantImportController extends Controller
             if (! empty($typeBatch)) {
                 DB::table('participant_type_participant')->insert($typeBatch);
             }
+
+            $affiliationBatch = [];
+            foreach ($docKeys as $doc) {
+                $pid = $docToId[$doc] ?? null;
+                if (! $pid) {
+                    continue;
+                }
+                foreach (($newAffiliations[$doc] ?? []) as $affiliationId) {
+                    $affiliationBatch[] = ['participant_id' => $pid, 'affiliation_id' => $affiliationId, 'created_at' => $now, 'updated_at' => $now];
+                    if (count($affiliationBatch) === self::BATCH_SIZE) {
+                        DB::table('affiliation_participant')->insertOrIgnore($affiliationBatch);
+                        $affiliationBatch = [];
+                    }
+                }
+            }
+            if (! empty($affiliationBatch)) {
+                DB::table('affiliation_participant')->insertOrIgnore($affiliationBatch);
+            }
         }
 
         // ── Actualizar participantes existentes ───────────────────────────
-        $programsAttached = 0;
-        $typesAttached    = 0;
-        $existingProgramBatch = [];
-        $existingTypeBatch    = [];
+        $programsAttached     = 0;
+        $typesAttached        = 0;
+        $existingProgramBatch     = [];
+        $existingTypeBatch        = [];
+        $existingAffiliationBatch = [];
 
         foreach ($existingUpdates as $pid => $updates) {
             foreach (array_unique($updates['programs'] ?? []) as $programId) {
@@ -352,12 +398,22 @@ class ParticipantImportController extends Controller
                     $existingTypeBatch = [];
                 }
             }
+            foreach (array_unique($updates['affiliations'] ?? []) as $affiliationId) {
+                $existingAffiliationBatch[] = ['participant_id' => $pid, 'affiliation_id' => $affiliationId, 'created_at' => $now, 'updated_at' => $now];
+                if (count($existingAffiliationBatch) === self::BATCH_SIZE) {
+                    DB::table('affiliation_participant')->insertOrIgnore($existingAffiliationBatch);
+                    $existingAffiliationBatch = [];
+                }
+            }
         }
         if (! empty($existingProgramBatch)) {
             DB::table('participant_program')->insertOrIgnore($existingProgramBatch);
         }
         if (! empty($existingTypeBatch)) {
             DB::table('participant_type_participant')->insertOrIgnore($existingTypeBatch);
+        }
+        if (! empty($existingAffiliationBatch)) {
+            DB::table('affiliation_participant')->insertOrIgnore($existingAffiliationBatch);
         }
 
         session(['import_skipped' => $skipped]);

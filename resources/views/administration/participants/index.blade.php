@@ -2,10 +2,16 @@
 
 <div class="flex h-full w-full flex-1 flex-col gap-6 p-1 sm:p-4 md:p-6"
      x-data="{
-         activeTab: '{{ session('active_tab', 'bulk') }}',
+         activeTab: new URLSearchParams(window.location.search).get('tab') || '{{ session('active_tab', 'bulk') }}',
          role: '{{ old('role', '') }}',
          showRoleDependent() { return ['Estudiante', 'Graduado'].includes(this.role); },
          showAffiliation()   { return this.role === 'Docente'; },
+         setTab(tab) {
+             this.activeTab = tab;
+             const url = new URL(window.location);
+             url.searchParams.set('tab', tab);
+             window.history.replaceState({}, '', url);
+         },
      }">
 
     {{-- Header --}}
@@ -82,7 +88,7 @@
     <div class="border-b border-neutral-200 dark:border-zinc-700">
         <nav class="flex gap-1">
             <button
-                @click="activeTab = 'bulk'"
+                @click="setTab('bulk')"
                 :class="activeTab === 'bulk'
                     ? 'border-b-2 border-[#3b82f6] text-[#3b82f6] dark:text-blue-400'
                     : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
@@ -91,13 +97,22 @@
                 Carga masiva Excel
             </button>
             <button
-                @click="activeTab = 'single'"
+                @click="setTab('single')"
                 :class="activeTab === 'single'
                     ? 'border-b-2 border-[#3b82f6] text-[#3b82f6] dark:text-blue-400'
                     : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
                 class="flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors cursor-pointer">
                 <flux:icon.user-plus class="size-4" />
                 Registro individual
+            </button>
+            <button
+                @click="setTab('list')"
+                :class="activeTab === 'list'
+                    ? 'border-b-2 border-[#3b82f6] text-[#3b82f6] dark:text-blue-400'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
+                class="flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors cursor-pointer">
+                <flux:icon.users class="size-4" />
+                Lista de participantes
             </button>
         </nav>
     </div>
@@ -396,6 +411,23 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    {{-- ===================== TAB: LISTA DE PARTICIPANTES ===================== --}}
+    <div x-show="activeTab === 'list'" x-transition>
+        <div class="border border-neutral-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm overflow-hidden">
+
+            <div class="px-4 sm:px-6 py-4 border-b border-neutral-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900">
+                <h2 class="text-base font-semibold text-gray-900 dark:text-white">Lista de participantes</h2>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                    Todos los participantes registrados en el sistema con sus estamentos, programas y vinculación.
+                </p>
+            </div>
+
+            <div class="px-4 sm:px-6 py-6">
+                @livewire('admin.participants-list')
+            </div>
         </div>
     </div>
 
