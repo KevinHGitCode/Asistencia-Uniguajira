@@ -18,12 +18,42 @@
                 {{ $programs->count() }} {{ $programs->count() === 1 ? 'programa registrado' : 'programas registrados' }}
             </p>
         </div>
-        <button @click="openCreate()"
-            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#2563eb] text-white text-sm font-medium transition-colors shadow-sm self-start sm:self-auto cursor-pointer hover:bg-[#1d4ed8]">
-            <flux:icon.plus class="size-4" />
-            Nuevo Programa
-        </button>
+        <div class="flex items-center gap-2 self-start sm:self-auto">
+            <a href="{{ route('programs.download-template') }}"
+                class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-700 dark:text-gray-200 text-sm font-medium transition-colors shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-700">
+                <flux:icon.arrow-down-tray class="size-4" />
+                Plantilla
+            </a>
+            <label for="import-trigger"
+                class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-emerald-200 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 text-sm font-medium transition-colors shadow-sm hover:bg-emerald-100 dark:hover:bg-emerald-900/50 cursor-pointer">
+                <flux:icon.arrow-up-tray class="size-4" />
+                Importar Excel
+            </label>
+            <button @click="openCreate()"
+                class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#2563eb] text-white text-sm font-medium transition-colors shadow-sm cursor-pointer hover:bg-[#1d4ed8]">
+                <flux:icon.plus class="size-4" />
+                Nuevo Programa
+            </button>
+        </div>
     </div>
+
+    {{-- Formulario de importación oculto --}}
+    <form id="import-form" action="{{ route('programs.import') }}" method="POST" enctype="multipart/form-data" class="hidden">
+        @csrf
+        <input id="import-trigger" type="file" name="excel_file" accept=".xlsx,.xls,.csv"
+            onchange="document.getElementById('import-form').submit()">
+    </form>
+
+    @if($errors->has('excel_file'))
+        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 6000)"
+            x-transition:leave="transition ease-in duration-300"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            class="flex items-center gap-3 px-4 py-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">
+            <flux:icon.x-circle class="size-5 shrink-0" />
+            {{ $errors->first('excel_file') }}
+        </div>
+    @endif
 
     {{-- Flash: success --}}
     @if(session('success'))
@@ -38,14 +68,14 @@
     @endif
 
     {{-- Flash: error --}}
-    @if(session('error') || $errors->has('name') || $errors->has('campus') || $errors->has('program_type'))
+    @if(session('error') || $errors->has('name') || $errors->has('program_type'))
         <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)"
             x-transition:leave="transition ease-in duration-300"
             x-transition:leave-start="opacity-100"
             x-transition:leave-end="opacity-0"
             class="flex items-center gap-3 px-4 py-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">
             <flux:icon.x-circle class="size-5 shrink-0" />
-            {{ session('error') ?? $errors->first('name') ?? $errors->first('campus') ?? $errors->first('program_type') }}
+            {{ session('error') ?? $errors->first('name') ?? $errors->first('program_type') }}
         </div>
     @endif
 
@@ -68,8 +98,7 @@
                     <tr class="border-b border-neutral-100 dark:border-zinc-800 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                         <th class="px-4 sm:px-6 py-3 text-left font-medium">#</th>
                         <th class="px-4 sm:px-6 py-3 text-left font-medium">Programa</th>
-                        <th class="px-4 sm:px-6 py-3 text-left font-medium hidden sm:table-cell">Sede</th>
-                        <th class="px-4 sm:px-6 py-3 text-center font-medium hidden md:table-cell">Tipo</th>
+                        <th class="px-4 sm:px-6 py-3 text-left font-medium hidden sm:table-cell">Tipo</th>
                         <th class="px-4 sm:px-6 py-3 text-center font-medium">Participantes</th>
                         <th class="px-4 sm:px-6 py-3 text-center font-medium hidden sm:table-cell">Creado</th>
                         <th class="px-4 sm:px-6 py-3 text-right font-medium">Acciones</th>
@@ -78,7 +107,7 @@
                 <tbody class="divide-y divide-neutral-100 dark:divide-zinc-800">
                     @forelse($programs as $program)
                         <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
-                            x-show="search === '' || '{{ strtolower($program->name) }} {{ strtolower($program->campus ?? '') }}'.includes(search.toLowerCase())"
+                            x-show="search === '' || '{{ strtolower($program->name) }}'.includes(search.toLowerCase())"
                             x-transition>
                             <td class="px-4 sm:px-6 py-4 text-gray-400 dark:text-zinc-500 font-mono text-xs">
                                 {{ $loop->iteration }}
@@ -90,9 +119,6 @@
                                 </div>
                             </td>
                             <td class="px-4 sm:px-6 py-4 text-gray-500 dark:text-gray-400 hidden sm:table-cell">
-                                {{ $program->campus ?? '—' }}
-                            </td>
-                            <td class="px-4 sm:px-6 py-4 text-center text-gray-500 dark:text-gray-400 hidden md:table-cell">
                                 {{ $program->program_type ?? '—' }}
                             </td>
                             <td class="px-4 sm:px-6 py-4 text-center">
@@ -106,7 +132,7 @@
                             <td class="px-4 sm:px-6 py-4">
                                 <div class="flex items-center justify-end gap-2">
                                     <button
-                                        @click="openEdit({{ $program->id }}, '{{ addslashes($program->name) }}', '{{ addslashes($program->campus ?? '') }}', '{{ addslashes($program->program_type ?? '') }}')"
+                                        @click="openEdit({{ $program->id }}, '{{ addslashes($program->name) }}', '{{ addslashes($program->program_type ?? '') }}')"
                                         class="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 dark:hover:text-blue-400 transition-colors cursor-pointer"
                                         title="Editar">
                                         <flux:icon.pencil-square class="size-4" />
@@ -127,7 +153,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-6 py-16 text-center">
+                            <td colspan="6" class="px-6 py-16 text-center">
                                 <div class="flex flex-col items-center gap-3 text-gray-400 dark:text-zinc-500">
                                     <flux:icon.book-open class="size-12 opacity-30" />
                                     <p class="text-sm">No hay programas registrados aún.</p>
