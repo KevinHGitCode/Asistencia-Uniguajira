@@ -63,11 +63,11 @@ class DatabaseSeeder extends Seeder
         // Otros seeders
         $this->call([
             AreasSeeder::class,
-            // $this->call(EventSeeder::class);
-            // $this->call(ProgramSeeder::class);
-            // $this->call(AffiliationSeeder::class);
-            // $this->call(ParticipantSeeder::class);
-            // $this->call(AttendanceSeeder::class);
+            // EventSeeder::class,
+            // ProgramSeeder::class,
+            // AffiliationSeeder::class,
+            // ParticipantSeeder::class,
+            // AttendanceSeeder::class,
             FormatSeeder::class,
         ]);
     }
