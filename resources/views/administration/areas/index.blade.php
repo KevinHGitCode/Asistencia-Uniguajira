@@ -99,7 +99,7 @@
                             </td>
                             <td class="px-4 sm:px-6 py-4 hidden sm:table-cell">
                                 @if($area->dependency)
-                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-[#cc5e50]">
+                                    <span class="inline-flex text-white items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-[#cc5e50]">
                                         <flux:icon.building-office-2 class="size-3" />
                                         {{ $area->dependency->name }}
                                     </span>

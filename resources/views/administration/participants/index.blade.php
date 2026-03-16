@@ -55,21 +55,56 @@
     {{-- Resultado de importación --}}
     @if(session('import_result'))
         @php $result = session('import_result'); @endphp
-        <div class="flex flex-col sm:flex-row gap-3">
-            <div class="flex-1 flex items-center gap-3 px-4 py-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 text-sm">
-                <flux:icon.check-circle class="size-5 shrink-0" />
-                <span>
-                    <strong>{{ $result['saved'] }}</strong> {{ $result['saved'] === 1 ? 'participante nuevo guardado' : 'participantes nuevos guardados' }}.
-                    @if(($result['programs_attached'] ?? 0) > 0)
-                        <strong>{{ $result['programs_attached'] }}</strong> {{ $result['programs_attached'] === 1 ? 'carrera nueva adjuntada' : 'carreras nuevas adjuntadas' }} a participantes existentes.
-                    @endif
-                    @if(($result['types_attached'] ?? 0) > 0)
-                        <strong>{{ $result['types_attached'] }}</strong> {{ $result['types_attached'] === 1 ? 'estamento nuevo adjuntado' : 'estamentos nuevos adjuntados' }} a participantes existentes.
-                    @endif
-                </span>
-            </div>
-            @if($result['skipped'] > 0)
-                <div class="flex-1 flex items-center justify-between gap-3 px-4 py-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 text-sm">
+        <div class="flex flex-col gap-3">
+            {{-- Nuevos guardados --}}
+            @if(($result['saved'] ?? 0) > 0)
+                <div class="flex items-center gap-3 px-4 py-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 text-sm">
+                    <flux:icon.check-circle class="size-5 shrink-0" />
+                    <span>
+                        <strong>{{ $result['saved'] }}</strong> {{ $result['saved'] === 1 ? 'participante nuevo guardado' : 'participantes nuevos guardados' }}.
+                    </span>
+                </div>
+            @endif
+
+            {{-- Actualizaciones de existentes --}}
+            @if(($result['updated_participants'] ?? 0) > 0)
+                <div class="flex items-center gap-3 px-4 py-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-400 text-sm">
+                    <flux:icon.arrow-path class="size-5 shrink-0" />
+                    <span>
+                        <strong>{{ $result['updated_participants'] }}</strong> {{ $result['updated_participants'] === 1 ? 'participante existente actualizado' : 'participantes existentes actualizados' }}.
+                        @if(($result['types_activated'] ?? 0) > 0)
+                            · {{ $result['types_activated'] }} {{ $result['types_activated'] === 1 ? 'estamento activado' : 'estamentos activados' }}
+                        @endif
+                        @if(($result['types_deactivated'] ?? 0) > 0)
+                            · {{ $result['types_deactivated'] }} {{ $result['types_deactivated'] === 1 ? 'estamento desactivado' : 'estamentos desactivados' }}
+                        @endif
+                        @if(($result['programs_activated'] ?? 0) > 0)
+                            · {{ $result['programs_activated'] }} {{ $result['programs_activated'] === 1 ? 'programa activado' : 'programas activados' }}
+                        @endif
+                        @if(($result['programs_deactivated'] ?? 0) > 0)
+                            · {{ $result['programs_deactivated'] }} {{ $result['programs_deactivated'] === 1 ? 'programa desactivado' : 'programas desactivados' }}
+                        @endif
+                        @if(($result['affiliations_activated'] ?? 0) > 0)
+                            · {{ $result['affiliations_activated'] }} {{ $result['affiliations_activated'] === 1 ? 'vinculación activada' : 'vinculaciones activadas' }}
+                        @endif
+                        @if(($result['affiliations_deactivated'] ?? 0) > 0)
+                            · {{ $result['affiliations_deactivated'] }} {{ $result['affiliations_deactivated'] === 1 ? 'vinculación desactivada' : 'vinculaciones desactivadas' }}
+                        @endif
+                    </span>
+                </div>
+            @endif
+
+            {{-- Sin cambios (solo nuevos = 0, actualizados = 0) --}}
+            @if(($result['saved'] ?? 0) === 0 && ($result['updated_participants'] ?? 0) === 0 && ($result['skipped'] ?? 0) === 0)
+                <div class="flex items-center gap-3 px-4 py-3 rounded-lg bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-gray-600 dark:text-gray-400 text-sm">
+                    <flux:icon.information-circle class="size-5 shrink-0" />
+                    <span>No se encontraron cambios para procesar.</span>
+                </div>
+            @endif
+
+            {{-- Omitidos --}}
+            @if(($result['skipped'] ?? 0) > 0)
+                <div class="flex items-center justify-between gap-3 px-4 py-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 text-sm">
                     <div class="flex items-center gap-3">
                         <flux:icon.exclamation-triangle class="size-5 shrink-0" />
                         <span><strong>{{ $result['skipped'] }}</strong> {{ $result['skipped'] === 1 ? 'fila omitida' : 'filas omitidas' }}.</span>

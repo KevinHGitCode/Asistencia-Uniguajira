@@ -25,7 +25,7 @@ class ProgramController extends Controller
         $this->validateProgram($request);
 
         Program::create([
-            'name'         => ucfirst(strtolower(trim($request->name))),
+            'name'         => self::normalizeName(trim($request->name)),
             'program_type' => $request->program_type ?: null,
         ]);
 
@@ -38,7 +38,7 @@ class ProgramController extends Controller
         $this->validateProgram($request, $program->id);
 
         $program->update([
-            'name'         => ucfirst(strtolower(trim($request->name))),
+            'name'         => self::normalizeName(trim($request->name)),
             'program_type' => $request->program_type ?: null,
         ]);
 
@@ -82,7 +82,6 @@ class ProgramController extends Controller
             return back()->withErrors(['excel_file' => 'El archivo está vacío.']);
         }
 
-        // Leer cabeceras
         $headerRow = array_map(fn ($h) => trim((string) ($h ?? '')), array_values((array) $rows[0]));
         $nameIndex = array_search('Nombre', $headerRow);
 
@@ -94,9 +93,9 @@ class ProgramController extends Controller
 
         array_shift($rows);
 
-        // Cache de nombres normalizados ya en BD
+        // Cache: clave SIN acentos y en minúsculas → true
         $existingSet = array_flip(
-            Program::all(['name'])->map(fn ($p) => strtolower(trim($p->name)))->toArray()
+            Program::all(['name'])->map(fn ($p) => self::comparisonKey($p->name))->toArray()
         );
 
         $created = 0;
@@ -113,8 +112,8 @@ class ProgramController extends Controller
                 continue;
             }
 
-            $normalized = ucfirst(strtolower($rawName));
-            $nameKey    = strtolower($normalized);
+            $normalized = self::normalizeName($rawName);
+            $nameKey    = self::comparisonKey($normalized);
 
             if (isset($existingSet[$nameKey])) {
                 $skipped++;
@@ -125,10 +124,10 @@ class ProgramController extends Controller
             $programType = null;
             if ($typeIndex !== false) {
                 $rawType     = trim((string) ($values[$typeIndex] ?? ''));
-                $programType = $typeMap[strtolower($rawType)] ?? null;
+                $programType = $typeMap[mb_strtolower($rawType, 'UTF-8')] ?? null;
             }
 
-            $existingSet[$nameKey] = true; // evitar duplicados en el mismo archivo
+            $existingSet[$nameKey] = true;
             $batch[] = [
                 'name'         => $normalized,
                 'program_type' => $programType,
@@ -176,5 +175,52 @@ class ProgramController extends Controller
             'name.max'      => 'El nombre no puede superar los 200 caracteres.',
             'program_type.in' => 'El tipo de programa no es válido.',
         ]);
+    }
+
+    /**
+     * Normaliza un nombre con soporte UTF-8 (primera letra mayúscula, resto minúsculas).
+     */
+    private static function normalizeName(string $value): string
+    {
+        $lower = mb_strtolower(trim($value), 'UTF-8');
+
+        return mb_strtoupper(mb_substr($lower, 0, 1, 'UTF-8'), 'UTF-8')
+             . mb_substr($lower, 1, null, 'UTF-8');
+    }
+
+    /**
+     * Genera una clave de comparación: minúsculas + sin acentos + espacios normalizados.
+     *
+     * "Ingeniería de Sistemas" → "ingenieria de sistemas"
+     * "Ingenieria de sistemas"  → "ingenieria de sistemas"  (misma clave)
+     */
+    public static function comparisonKey(string $value): string
+    {
+        return self::stripAccents(mb_strtolower(trim($value), 'UTF-8'));
+    }
+
+    /**
+     * Elimina diacríticos/acentos de un string UTF-8.
+     *
+     * "ingeniería" → "ingenieria"
+     * "educación infantíl" → "educacion infantil"
+     */
+    public static function stripAccents(string $value): string
+    {
+        // Descomponer a NFD (letra + combining accent), luego quitar combining marks
+        if (class_exists(\Normalizer::class)) {
+            $decomposed = \Normalizer::normalize($value, \Normalizer::FORM_D);
+            if ($decomposed !== false) {
+                return preg_replace('/\pM/u', '', $decomposed);
+            }
+        }
+
+        // Fallback
+        if (function_exists('transliterator_transliterate')) {
+            return transliterator_transliterate('NFD; [:Nonspacing Mark:] Remove; NFC;', $value);
+        }
+
+        $converted = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value);
+        return $converted !== false ? $converted : $value;
     }
 }

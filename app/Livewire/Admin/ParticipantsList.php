@@ -19,7 +19,11 @@ class ParticipantsList extends Component
 
     public function render()
     {
-        $participants = Participant::with(['programs', 'types', 'affiliations'])
+        $participants = Participant::with([
+                'programs'     => fn ($q) => $q->wherePivot('is_active', 1),
+                'types'        => fn ($q) => $q->wherePivot('is_active', 1),
+                'affiliations' => fn ($q) => $q->wherePivot('is_active', 1),
+            ])
             ->when($this->search !== '', function ($q) {
                 $term = '%' . $this->search . '%';
                 $q->where(function ($inner) use ($term) {

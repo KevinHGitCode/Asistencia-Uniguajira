@@ -33,6 +33,19 @@
             </thead>
             <tbody class="bg-white dark:bg-zinc-900 divide-y divide-neutral-100 dark:divide-zinc-800">
                 @forelse ($participants as $participant)
+                    @php
+                        $typeNames       = $participant->types->pluck('name')->values();
+                        $primaryType     = $typeNames->first();
+                        $extraTypesCount = max(0, $typeNames->count() - 1);
+
+                        $programNames       = $participant->programs->pluck('name')->values();
+                        $primaryProgram     = $programNames->first();
+                        $extraProgramsCount = max(0, $programNames->count() - 1);
+
+                        $affiliationNames       = $participant->affiliations->pluck('name')->values();
+                        $primaryAffiliation     = $affiliationNames->first();
+                        $extraAffiliationsCount = max(0, $affiliationNames->count() - 1);
+                    @endphp
                     <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors">
                         <td class="px-4 py-3 font-mono text-xs text-gray-600 dark:text-zinc-400 whitespace-nowrap">
                             {{ $participant->document }}
@@ -45,38 +58,109 @@
                                 <p class="text-xs text-gray-400 dark:text-zinc-500">Cód. {{ $participant->student_code }}</p>
                             @endif
                         </td>
+
+                        {{-- Estamento(s) --}}
                         <td class="px-4 py-3">
-                            @if($participant->types->isNotEmpty())
-                                <div class="flex flex-wrap gap-1">
-                                    @foreach($participant->types as $type)
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300">
-                                            {{ $type->name }}
-                                        </span>
-                                    @endforeach
-                                </div>
-                            @else
-                                <span class="text-xs text-gray-400 dark:text-zinc-500">—</span>
-                            @endif
-                        </td>
-                        <td class="px-4 py-3 hidden md:table-cell">
-                            @if($participant->programs->isNotEmpty())
-                                <div class="space-y-0.5">
-                                    @foreach($participant->programs->take(2) as $prog)
-                                        <p class="text-xs text-gray-700 dark:text-zinc-300 truncate max-w-[200px]">
-                                            {{ $prog->name }}{{ $prog->campus ? ' – ' . $prog->campus : '' }}
-                                        </p>
-                                    @endforeach
-                                    @if($participant->programs->count() > 2)
-                                        <p class="text-xs text-gray-400 dark:text-zinc-500">+{{ $participant->programs->count() - 2 }} más</p>
+                            @if($typeNames->isNotEmpty())
+                                <div class="flex items-center gap-1.5" x-data="floatingTooltip()">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300 max-w-[10rem] truncate" title="{{ $primaryType }}">
+                                        {{ $primaryType }}
+                                    </span>
+                                    @if($extraTypesCount > 0)
+                                        <button type="button" x-ref="trigger"
+                                            @mouseenter="show($refs.trigger)"
+                                            @mouseleave="hide()"
+                                            class="inline-flex items-center rounded-full bg-teal-600 px-2 py-0.5 text-xs font-semibold text-white hover:brightness-110 focus:outline-none cursor-pointer">
+                                            +{{ $extraTypesCount }}
+                                        </button>
+                                        <template x-teleport="body">
+                                            <div x-show="open" x-transition.opacity.duration.150ms
+                                                 :style="`position:fixed;top:${y}px;left:${x}px;`"
+                                                 class="z-[9999] min-w-48 max-w-xs rounded-lg border border-neutral-200 bg-white p-3 text-xs text-zinc-700 shadow-lg dark:border-neutral-700 dark:bg-zinc-900 dark:text-zinc-200"
+                                                 @mouseenter="keep()" @mouseleave="hide()">
+                                                <p class="mb-2 font-semibold">Estamentos activos</p>
+                                                <ul class="space-y-1">
+                                                    @foreach ($typeNames as $typeName)
+                                                        <li>{{ $typeName }}</li>
+                                                    @endforeach
+                                                </ul>
+                                            </div>
+                                        </template>
                                     @endif
                                 </div>
                             @else
                                 <span class="text-xs text-gray-400 dark:text-zinc-500">—</span>
                             @endif
                         </td>
-                        <td class="px-4 py-3 hidden lg:table-cell text-xs text-gray-600 dark:text-zinc-400">
-                            {{ $participant->affiliations->first()?->name ?? '—' }}
+
+                        {{-- Programa(s) --}}
+                        <td class="px-4 py-3 hidden md:table-cell">
+                            @if($programNames->isNotEmpty())
+                                <div class="flex items-center gap-1.5" x-data="floatingTooltip()">
+                                    <span class="text-xs text-gray-700 dark:text-zinc-300 truncate max-w-[12rem]" title="{{ $primaryProgram }}">
+                                        {{ $primaryProgram }}
+                                    </span>
+                                    @if($extraProgramsCount > 0)
+                                        <button type="button" x-ref="trigger"
+                                            @mouseenter="show($refs.trigger)"
+                                            @mouseleave="hide()"
+                                            class="inline-flex items-center rounded-full bg-blue-600 px-2 py-0.5 text-xs font-semibold text-white hover:brightness-110 focus:outline-none cursor-pointer">
+                                            +{{ $extraProgramsCount }}
+                                        </button>
+                                        <template x-teleport="body">
+                                            <div x-show="open" x-transition.opacity.duration.150ms
+                                                 :style="`position:fixed;top:${y}px;left:${x}px;`"
+                                                 class="z-[9999] min-w-56 max-w-xs rounded-lg border border-neutral-200 bg-white p-3 text-xs text-zinc-700 shadow-lg dark:border-neutral-700 dark:bg-zinc-900 dark:text-zinc-200"
+                                                 @mouseenter="keep()" @mouseleave="hide()">
+                                                <p class="mb-2 font-semibold">Programas activos</p>
+                                                <ul class="space-y-1">
+                                                    @foreach ($programNames as $programName)
+                                                        <li>{{ $programName }}</li>
+                                                    @endforeach
+                                                </ul>
+                                            </div>
+                                        </template>
+                                    @endif
+                                </div>
+                            @else
+                                <span class="text-xs text-gray-400 dark:text-zinc-500">—</span>
+                            @endif
                         </td>
+
+                        {{-- Vinculación --}}
+                        <td class="px-4 py-3 hidden lg:table-cell">
+                            @if($affiliationNames->isNotEmpty())
+                                <div class="flex items-center gap-1.5" x-data="floatingTooltip()">
+                                    <span class="text-xs text-gray-600 dark:text-zinc-400 truncate max-w-[10rem]" title="{{ $primaryAffiliation }}">
+                                        {{ $primaryAffiliation }}
+                                    </span>
+                                    @if($extraAffiliationsCount > 0)
+                                        <button type="button" x-ref="trigger"
+                                            @mouseenter="show($refs.trigger)"
+                                            @mouseleave="hide()"
+                                            class="inline-flex items-center rounded-full bg-amber-600 px-2 py-0.5 text-xs font-semibold text-white hover:brightness-110 focus:outline-none cursor-pointer">
+                                            +{{ $extraAffiliationsCount }}
+                                        </button>
+                                        <template x-teleport="body">
+                                            <div x-show="open" x-transition.opacity.duration.150ms
+                                                 :style="`position:fixed;top:${y}px;left:${x}px;`"
+                                                 class="z-[9999] min-w-48 max-w-xs rounded-lg border border-neutral-200 bg-white p-3 text-xs text-zinc-700 shadow-lg dark:border-neutral-700 dark:bg-zinc-900 dark:text-zinc-200"
+                                                 @mouseenter="keep()" @mouseleave="hide()">
+                                                <p class="mb-2 font-semibold">Vinculaciones activas</p>
+                                                <ul class="space-y-1">
+                                                    @foreach ($affiliationNames as $affiliationName)
+                                                        <li>{{ $affiliationName }}</li>
+                                                    @endforeach
+                                                </ul>
+                                            </div>
+                                        </template>
+                                    @endif
+                                </div>
+                            @else
+                                <span class="text-xs text-gray-400 dark:text-zinc-500">—</span>
+                            @endif
+                        </td>
+
                         <td class="px-4 py-3 hidden lg:table-cell text-xs text-gray-500 dark:text-zinc-400 truncate max-w-[160px]">
                             {{ $participant->email ?? '—' }}
                         </td>
@@ -108,3 +192,50 @@
         {{ $participants->total() }} participante(s) en total
     </p>
 </div>
+
+@script
+<script>
+    Alpine.data('floatingTooltip', () => ({
+        open: false,
+        x: 0,
+        y: 0,
+        _timer: null,
+
+        show(el) {
+            clearTimeout(this._timer);
+            const rect = el.getBoundingClientRect();
+            let x = rect.left;
+            let y = rect.bottom + 6;
+
+            // Si se sale por la derecha, alinear al borde derecho del botón
+            if (x + 240 > window.innerWidth) {
+                x = rect.right - 240;
+            }
+            // Si queda negativo, pegarlo al borde izquierdo
+            if (x < 8) {
+                x = 8;
+            }
+            // Si se sale por abajo, mostrar encima del botón
+            if (y + 150 > window.innerHeight) {
+                y = rect.top - 6;
+                // El tooltip se posicionará con transform para subir
+                this._above = true;
+            } else {
+                this._above = false;
+            }
+
+            this.x = x;
+            this.y = y;
+            this.open = true;
+        },
+
+        keep() {
+            clearTimeout(this._timer);
+        },
+
+        hide() {
+            this._timer = setTimeout(() => { this.open = false; }, 150);
+        },
+    }));
+</script>
+@endscript
