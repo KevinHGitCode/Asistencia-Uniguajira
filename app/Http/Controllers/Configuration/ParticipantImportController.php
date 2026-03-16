@@ -107,11 +107,9 @@ class ParticipantImportController extends Controller
         $rows = $allRows;
 
         // ── Cachés de lookup ──────────────────────────────────────────────
-        $programHash     = [];
-        $programByNameHash = []; // fallback: name only → first matching program id
-        foreach (Program::all(['id', 'name', 'campus']) as $program) {
-            $key = strtolower($program->name) . '|' . strtolower($program->campus ?? '');
-            $programHash[$key] = $program->id;
+        // Programas indexados por nombre normalizado (campus ignorado)
+        $programByNameHash = [];
+        foreach (Program::all(['id', 'name']) as $program) {
             $nameKey = strtolower(trim($program->name));
             if (! isset($programByNameHash[$nameKey])) {
                 $programByNameHash[$nameKey] = $program->id;
@@ -205,14 +203,19 @@ class ParticipantImportController extends Controller
             $roleName = $typeData['name'];  // nombre canónico de la BD
             $typeId   = $typeData['id'];
 
-            // Resolver program_id
+            // Resolver program_id (campus ignorado, nombre normalizado)
             $programId = null;
             if (! empty($programName)) {
-                $parts      = explode(' - ', (string) $programName, 2);
-                $programKey = strtolower(trim($parts[0])) . '|' . strtolower(trim($parts[1] ?? ''));
-                $programId  = $programHash[$programKey]
-                    ?? $programByNameHash[strtolower(trim($parts[0]))]
-                    ?? null;
+                $rawProgramName = trim(explode(' - ', (string) $programName, 2)[0]);
+                $nameKey        = strtolower($rawProgramName);
+                if (! isset($programByNameHash[$nameKey])) {
+                    $skipped[] = $this->skippedRow(
+                        $rawValues, $headers,
+                        "Programa no encontrado: \"{$rawProgramName}\""
+                    );
+                    continue;
+                }
+                $programId = $programByNameHash[$nameKey];
             }
 
             // Resolver affiliation_id

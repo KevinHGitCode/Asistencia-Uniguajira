@@ -51,18 +51,6 @@
 
                 <div class="flex flex-col gap-1.5">
                     <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Sede
-                    </label>
-                    <input type="text" name="campus" x-model="formCampus"
-                        maxlength="100" placeholder="Ej: Riohacha"
-                        class="px-3 py-2 rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-[#2563eb] transition" />
-                    @error('campus')
-                        <p class="text-xs text-red-500">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
                         Tipo de programa
                     </label>
                     <select name="program_type" x-model="formType"

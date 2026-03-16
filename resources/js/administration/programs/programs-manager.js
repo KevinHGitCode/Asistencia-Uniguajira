@@ -4,7 +4,6 @@ document.addEventListener('alpine:init', () => {
         showForm: false,
         editingId: null,
         formName: '',
-        formCampus: '',
         formType: '',
         showDelete: false,
         deleteId: null,
@@ -13,15 +12,13 @@ document.addEventListener('alpine:init', () => {
         openCreate() {
             this.editingId = null;
             this.formName = '';
-            this.formCampus = '';
             this.formType = '';
             this.showForm = true;
         },
 
-        openEdit(id, name, campus, type) {
+        openEdit(id, name, type) {
             this.editingId = id;
             this.formName = name ?? '';
-            this.formCampus = campus ?? '';
             this.formType = type ?? '';
             this.showForm = true;
         },
