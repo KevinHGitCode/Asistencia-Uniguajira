@@ -15,10 +15,6 @@ return new class extends Migration
             $table->string('first_name', 100);
             $table->string('last_name', 100);
             $table->string('email')->nullable()->unique();
-            // Estamento
-            $table->foreignId('participant_type_id')->nullable()->constrained('participant_types')->nullOnDelete();
-            // Vinculacion
-            $table->foreignId('affiliation_id')->nullable()->constrained('affiliations')->nullOnDelete();
             $table->timestamps();
         });
     }

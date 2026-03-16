@@ -258,10 +258,6 @@ class ParticipantImportController extends Controller
                 'first_name'     => $firstName,
                 'last_name'      => $lastName,
                 'email'          => $email ?: null,
-                'role'           => $roleName,
-                'affiliation_id' => $affiliationId,
-                'gender'         => null,
-                'priority_group' => null,
                 'created_at'     => $now,
                 'updated_at'     => $now,
             ];
