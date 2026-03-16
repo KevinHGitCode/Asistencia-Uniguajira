@@ -2,758 +2,216 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Event;
+use App\Models\User;
+use App\Services\StatisticsService;
+use App\Traits\AppliesStatisticsFilters;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use App\Models\Event;
-use App\Models\Attendance;
-use App\Models\Participant;
-use App\Traits\AppliesStatisticsFilters;
 
 class StatisticsController extends Controller
 {
     use AppliesStatisticsFilters;
 
-    /** ConcatenaciÃƒÂ³n compatible con SQLite (tests) y MySQL (producciÃƒÂ³n). */
-    private function concatFullName(): string
+    // ── Endpoints de resumen (1 request = todos los datos del módulo) ────────
+
+    /**
+     * Todos los datos para el módulo "Por Asistencias".
+     */
+    public function asistenciasSummary(Request $request): JsonResponse
     {
-        return DB::connection()->getDriverName() === 'sqlite'
-            ? "(participants.first_name || ' ' || participants.last_name)"
-            : "CONCAT(participants.first_name, ' ', participants.last_name)";
+        $filters = $this->scopeToUser($this->getFilters($request), Auth::user());
+
+        if ($filters === null) {
+            return response()->json([
+                'counters' => ['events' => 0, 'attendances' => 0, 'participants' => 0],
+                'charts'   => [
+                    'attendancesByProgram' => [],
+                    'topEvents'            => [],
+                    'topParticipants'      => [],
+                    'byRole'               => [],
+                    'bySex'                => [],
+                    'byGroup'              => [],
+                ],
+            ]);
+        }
+
+        $s = new StatisticsService($filters);
+
+        return response()->json([
+            'counters' => [
+                'events'       => $s->totalEvents(),
+                'attendances'  => $s->totalAttendances(),
+                'participants' => $s->totalParticipants(),
+            ],
+            'charts' => [
+                'attendancesByProgram' => $s->attendancesByProgram(),
+                'topEvents'            => $s->topEvents(),
+                'topParticipants'      => $s->topParticipants(),
+                'byRole'               => $s->attendancesByType(),
+                'bySex'                => $s->attendancesByDetailField('gender'),
+                'byGroup'              => $s->attendancesByDetailField('priority_group'),
+            ],
+        ]);
     }
 
-    // NÃƒÂºmero total de eventos
+    /**
+     * Todos los datos para el módulo "Por Participantes".
+     */
+    public function participantesSummary(Request $request): JsonResponse
+    {
+        $filters = $this->scopeToUser($this->getFilters($request), Auth::user());
+
+        if ($filters === null) {
+            return response()->json([
+                'counters' => ['events' => 0, 'participants' => 0],
+                'charts'   => [
+                    'participantsByProgram' => [],
+                    'byRole'               => [],
+                    'bySex'                => [],
+                    'byGroup'              => [],
+                ],
+            ]);
+        }
+
+        $s = new StatisticsService($filters);
+
+        return response()->json([
+            'counters' => [
+                'events'       => $s->totalEvents(),
+                'participants' => $s->totalParticipants(),
+            ],
+            'charts' => [
+                'participantsByProgram' => $s->participantsByProgram(),
+                'byRole'                => $s->participantsByType(),
+                'bySex'                 => $s->participantsByDetailField('gender'),
+                'byGroup'               => $s->participantsByDetailField('priority_group'),
+            ],
+        ]);
+    }
+
+    // ── Endpoints individuales (compatibilidad con rutas existentes) ─────────
+
     public function totalEvents(Request $request)
     {
-        $filters = $this->getFilters($request);
-        $query = Event::query();
-
-        if (!empty($filters['dateFrom'])) {
-            $query->where('date', '>=', $filters['dateFrom']);
-        }
-        if (!empty($filters['dateTo'])) {
-            $query->where('date', '<=', $filters['dateTo']);
-        }
-        if (!empty($filters['userIds']) && is_array($filters['userIds'])) {
-            $query->whereIn('user_id', $filters['userIds']);
-        }
-        if (!empty($filters['dependencyIds']) && is_array($filters['dependencyIds'])) {
-            $query->whereHas('user', function($q) use ($filters) {
-                $q->whereIn('dependency_id', $filters['dependencyIds']);
-            });
-        }
-        $this->applyEventIds($query, $filters, 'id');
-
-        return $query->count();
+        return $this->svc($request)->totalEvents();
     }
 
-    // NÃƒÂºmero de eventos por rol de usuario (eventos creados por cada rol: admin o user)
-    public function eventsByRole(Request $request)
-    {
-        $filters = $this->getFilters($request);
-        $query = DB::table('events')
-            ->join('users', 'events.user_id', '=', 'users.id');
-        
-        if (!empty($filters['dateFrom'])) {
-            $query->where('events.date', '>=', $filters['dateFrom']);
-        }
-        if (!empty($filters['dateTo'])) {
-            $query->where('events.date', '<=', $filters['dateTo']);
-        }
-        if (!empty($filters['userIds']) && is_array($filters['userIds'])) {
-            $query->whereIn('events.user_id', $filters['userIds']);
-        }
-        if (!empty($filters['dependencyIds']) && is_array($filters['dependencyIds'])) {
-            $query->whereIn('users.dependency_id', $filters['dependencyIds']);
-        }
-        
-        return $query->select('users.role', DB::raw('COUNT(*) as count'))
-            ->groupBy('users.role')
-            ->orderByDesc('count')
-            ->get();
-    }
-
-    // NÃƒÂºmero de eventos por usuario (eventos creados por cada usuario)
-    public function eventsByUser(Request $request)
-    {
-        $filters = $this->getFilters($request);
-        $query = DB::table('events')
-            ->join('users', 'events.user_id', '=', 'users.id');
-        
-        if (!empty($filters['dateFrom'])) {
-            $query->where('events.date', '>=', $filters['dateFrom']);
-        }
-        if (!empty($filters['dateTo'])) {
-            $query->where('events.date', '<=', $filters['dateTo']);
-        }
-        if (!empty($filters['userIds']) && is_array($filters['userIds'])) {
-            $query->whereIn('events.user_id', $filters['userIds']);
-        }
-        if (!empty($filters['dependencyIds']) && is_array($filters['dependencyIds'])) {
-            $query->whereIn('users.dependency_id', $filters['dependencyIds']);
-        }
-        
-        return $query->select('users.name', DB::raw('COUNT(*) as count'))
-            ->groupBy('users.id', 'users.name')
-            ->orderByDesc('count')
-            ->get();
-    }
-
-    // NÃƒÂºmero total de asistencias
     public function totalAttendances(Request $request)
     {
-        $filters = $this->getFilters($request);
-        $query = Attendance::query();
-
-        $hasFilters = !empty($filters['dateFrom']) || !empty($filters['dateTo'])
-            || (!empty($filters['userIds'])       && count($filters['userIds']) > 0)
-            || (!empty($filters['dependencyIds']) && count($filters['dependencyIds']) > 0)
-            || !empty($filters['eventIds']);
-
-        if ($hasFilters) {
-            $query->join('events', 'attendances.event_id', '=', 'events.id');
-
-            if (!empty($filters['dateFrom'])) {
-                $query->where('events.date', '>=', $filters['dateFrom']);
-            }
-            if (!empty($filters['dateTo'])) {
-                $query->where('events.date', '<=', $filters['dateTo']);
-            }
-            if (!empty($filters['userIds']) && count($filters['userIds']) > 0) {
-                $query->whereIn('events.user_id', $filters['userIds']);
-            }
-            if (!empty($filters['dependencyIds']) && count($filters['dependencyIds']) > 0) {
-                $query->join('users', 'events.user_id', '=', 'users.id')
-                    ->whereIn('users.dependency_id', $filters['dependencyIds']);
-            }
-            $this->applyEventIds($query, $filters);
-        }
-
-        return $query->count();
+        return $this->svc($request)->totalAttendances();
     }
 
-    // NÃƒÂºmero total de participantes (solo los que tienen al menos una asistencia)
     public function totalParticipants(Request $request)
     {
-        $filters = $this->getFilters($request);
-
-        $hasFilter = !empty($filters['dateFrom']) || !empty($filters['dateTo'])
-            || !empty($filters['eventIds']);
-
-        if ($hasFilter) {
-            $query = DB::table('participants')
-                ->join('attendances', 'participants.id', '=', 'attendances.participant_id')
-                ->join('events',      'attendances.event_id', '=', 'events.id');
-
-            if (!empty($filters['dateFrom'])) {
-                $query->where('events.date', '>=', $filters['dateFrom']);
-            }
-            if (!empty($filters['dateTo'])) {
-                $query->where('events.date', '<=', $filters['dateTo']);
-            }
-            $this->applyEventIds($query, $filters);
-
-            return $query->distinct()->count('participants.id');
-        }
-
-        // Sin filtros: solo los que tienen al menos una asistencia
-        return Participant::whereHas('attendances')->count();
+        return $this->svc($request)->totalParticipants();
     }
 
-    // Asistencias por programa
     public function attendancesByProgram(Request $request)
     {
-        $filters = $this->getFilters($request);
-        $query = DB::table('attendances')
-            ->join('attendance_details', 'attendances.id', '=', 'attendance_details.attendance_id')
-            ->join('programs', 'attendance_details.program_id', '=', 'programs.id')
-            ->join('events', 'attendances.event_id', '=', 'events.id');
-
-        if (!empty($filters['dateFrom'])) {
-            $query->where('events.date', '>=', $filters['dateFrom']);
-        }
-        if (!empty($filters['dateTo'])) {
-            $query->where('events.date', '<=', $filters['dateTo']);
-        }
-        if (!empty($filters['userIds']) && count($filters['userIds']) > 0) {
-            $query->whereIn('events.user_id', $filters['userIds']);
-        }
-        if (!empty($filters['dependencyIds']) && count($filters['dependencyIds']) > 0) {
-            $query->join('users', 'events.user_id', '=', 'users.id')
-                ->whereIn('users.dependency_id', $filters['dependencyIds']);
-        }
-        $this->applyEventIds($query, $filters);
-
-        return $query->select('programs.name as program', DB::raw('COUNT(*) as count'))
-            ->groupBy('programs.name')
-            ->orderByDesc('count')
-            ->get();
+        return $this->svc($request)->attendancesByProgram();
     }
 
-    // Participantes por programa (solo los que han asistido al menos una vez, filtrable por fecha)
     public function participantsByProgram(Request $request)
     {
-        $filters = $this->getFilters($request);
-
-        $query = DB::table('participants')
-            ->join('participant_program', 'participants.id',              '=', 'participant_program.participant_id')
-            ->join('programs',            'participant_program.program_id', '=', 'programs.id')
-            ->join('attendances',         'participants.id',               '=', 'attendances.participant_id')
-            ->join('events',              'attendances.event_id',          '=', 'events.id');
-
-        if (!empty($filters['dateFrom'])) {
-            $query->where('events.date', '>=', $filters['dateFrom']);
-        }
-        if (!empty($filters['dateTo'])) {
-            $query->where('events.date', '<=', $filters['dateTo']);
-        }
-        $this->applyEventIds($query, $filters);
-
-        return $query->select('programs.name as program', DB::raw('COUNT(DISTINCT participants.id) as count'))
-            ->groupBy('programs.name')
-            ->orderByDesc('count')
-            ->get();
+        return $this->svc($request)->participantsByProgram();
     }
 
-    // Eventos vs tiempo
     public function eventsOverTime(Request $request)
     {
-        $filters = $this->getFilters($request);
-        $query = Event::query();
-        
-        if (!empty($filters['dateFrom'])) {
-            $query->where('date', '>=', $filters['dateFrom']);
-        }
-        if (!empty($filters['dateTo'])) {
-            $query->where('date', '<=', $filters['dateTo']);
-        }
-        if (!empty($filters['userIds']) && is_array($filters['userIds']) && count($filters['userIds']) > 0) {
-            $query->whereIn('user_id', $filters['userIds']);
-        }
-        if (!empty($filters['dependencyIds']) && is_array($filters['dependencyIds']) && count($filters['dependencyIds']) > 0) {
-            $query->whereHas('user', function($q) use ($filters) {
-                $q->whereIn('dependency_id', $filters['dependencyIds']);
-            });
-        }
-        
-        return $query->select(DB::raw('DATE(date) as date'), DB::raw('COUNT(*) as count'))
-            ->groupBy('date')
-            ->orderBy('date')
-            ->get();
+        return $this->svc($request)->eventsOverTime();
     }
 
-    // Asistencias vs tiempo
     public function attendancesOverTime(Request $request)
     {
-        $filters = $this->getFilters($request);
-        $query = DB::table('attendances')
-            ->join('events', 'attendances.event_id', '=', 'events.id');
-        
-        if (!empty($filters['dateFrom'])) {
-            $query->where('events.date', '>=', $filters['dateFrom']);
-        }
-        if (!empty($filters['dateTo'])) {
-            $query->where('events.date', '<=', $filters['dateTo']);
-        }
-        if (!empty($filters['userIds']) && is_array($filters['userIds']) && count($filters['userIds']) > 0) {
-            $query->whereIn('events.user_id', $filters['userIds']);
-        }
-        if (!empty($filters['dependencyIds']) && is_array($filters['dependencyIds']) && count($filters['dependencyIds']) > 0) {
-            $query->join('users', 'events.user_id', '=', 'users.id')
-                ->whereIn('users.dependency_id', $filters['dependencyIds']);
-        }
-        
-        return $query->select(DB::raw('DATE(events.date) as date'), DB::raw('COUNT(*) as count'))
-            ->groupBy('date')
-            ->orderBy('date')
-            ->get();
+        return $this->svc($request)->attendancesOverTime();
     }
 
-    // Eventos con mÃƒÂ¡s asistencias
     public function topEvents(Request $request)
     {
-        $filters = $this->getFilters($request);
-        $query = DB::table('attendances')
-            ->join('events', 'attendances.event_id', '=', 'events.id');
-        
-        if (!empty($filters['dateFrom'])) {
-            $query->where('events.date', '>=', $filters['dateFrom']);
-        }
-        if (!empty($filters['dateTo'])) {
-            $query->where('events.date', '<=', $filters['dateTo']);
-        }
-        if (!empty($filters['userIds']) && is_array($filters['userIds']) && count($filters['userIds']) > 0) {
-            $query->whereIn('events.user_id', $filters['userIds']);
-        }
-        if (!empty($filters['dependencyIds']) && is_array($filters['dependencyIds']) && count($filters['dependencyIds']) > 0) {
-            $query->join('users', 'events.user_id', '=', 'users.id')
-                ->whereIn('users.dependency_id', $filters['dependencyIds']);
-        }
-        $this->applyEventIds($query, $filters);
-
-        return $query->select('events.title', DB::raw('COUNT(*) as count'))
-            ->groupBy('events.title')
-            ->orderByDesc('count')
-            ->limit(5)
-            ->get();
+        return $this->svc($request)->topEvents();
     }
 
-    // Participantes con mÃƒÂ¡s asistencias
     public function topParticipants(Request $request)
     {
-        $filters = $this->getFilters($request);
-
-        $query = DB::table('attendances')
-            ->join('participants', 'attendances.participant_id', '=', 'participants.id')
-            ->join('events', 'attendances.event_id', '=', 'events.id');
-
-        if (!empty($filters['dateFrom'])) {
-            $query->where('events.date', '>=', $filters['dateFrom']);
-        }
-        if (!empty($filters['dateTo'])) {
-            $query->where('events.date', '<=', $filters['dateTo']);
-        }
-        $this->applyEventIds($query, $filters);
-
-        return $query->select(DB::raw($this->concatFullName() . " as name"), DB::raw('COUNT(*) as count'))
-            ->groupBy('participants.id', 'participants.first_name', 'participants.last_name')
-            ->orderByDesc('count')
-            ->limit(5)
-            ->get();
+        return $this->svc($request)->topParticipants();
     }
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ DemogrÃƒÂ¡ficos por ASISTENCIAS (cuentan registros, no personas ÃƒÂºnicas) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+    public function topUsers(Request $request)
+    {
+        return $this->svc($request)->topUsers();
+    }
 
-    // Asistencias por estamento del participante
+    public function eventsByRole(Request $request)
+    {
+        return $this->svc($request)->eventsByUserRole();
+    }
+
+    public function eventsByUser(Request $request)
+    {
+        return $this->svc($request)->eventsByUser();
+    }
+
     public function attendancesByRole(Request $request)
     {
-        $filters = $this->getFilters($request);
-
-        $query = DB::table('attendances')
-            ->join('attendance_details', 'attendances.id',                        '=', 'attendance_details.attendance_id')
-            ->join('participant_types',  'attendance_details.participant_type_id', '=', 'participant_types.id')
-            ->join('events',             'attendances.event_id',                   '=', 'events.id');
-
-        if (!empty($filters['dateFrom'])) {
-            $query->where('events.date', '>=', $filters['dateFrom']);
-        }
-        if (!empty($filters['dateTo'])) {
-            $query->where('events.date', '<=', $filters['dateTo']);
-        }
-        $this->applyEventIds($query, $filters);
-
-        return $query->select('participant_types.name as label', DB::raw('COUNT(*) as count'))
-            ->groupBy('participant_types.name')
-            ->orderByDesc('count')
-            ->get();
+        return $this->svc($request)->attendancesByType();
     }
 
-    // Asistencias por sexo del participante
     public function attendancesBySex(Request $request)
     {
-        $filters = $this->getFilters($request);
-
-        $query = DB::table('attendances')
-            ->join('participants', 'attendances.participant_id', '=', 'participants.id')
-            ->join('events',       'attendances.event_id',       '=', 'events.id');
-
-        if (!empty($filters['dateFrom'])) {
-            $query->where('events.date', '>=', $filters['dateFrom']);
-        }
-        if (!empty($filters['dateTo'])) {
-            $query->where('events.date', '<=', $filters['dateTo']);
-        }
-        $this->applyEventIds($query, $filters);
-
-        return $query->select(
-                DB::raw("COALESCE(participants.gender, 'Sin datos') as label"),
-                DB::raw('COUNT(*) as count')
-            )
-            ->groupBy('participants.gender')
-            ->orderByDesc('count')
-            ->get();
+        return $this->svc($request)->attendancesByDetailField('gender');
     }
 
-    // Asistencias por grupo priorizado del participante
     public function attendancesByGroup(Request $request)
     {
-        $filters = $this->getFilters($request);
-
-        $query = DB::table('attendances')
-            ->join('participants', 'attendances.participant_id', '=', 'participants.id')
-            ->join('events',       'attendances.event_id',       '=', 'events.id');
-
-        if (!empty($filters['dateFrom'])) {
-            $query->where('events.date', '>=', $filters['dateFrom']);
-        }
-        if (!empty($filters['dateTo'])) {
-            $query->where('events.date', '<=', $filters['dateTo']);
-        }
-        $this->applyEventIds($query, $filters);
-
-        return $query->select(
-                DB::raw("COALESCE(participants.priority_group, 'Sin datos') as label"),
-                DB::raw('COUNT(*) as count')
-            )
-            ->groupBy('participants.priority_group')
-            ->orderByDesc('count')
-            ->get();
+        return $this->svc($request)->attendancesByDetailField('priority_group');
     }
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ DemogrÃƒÂ¡ficos por PARTICIPANTES (cuentan personas ÃƒÂºnicas) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
-
-    // Participantes por estamento (rol: Estudiante / Docente)
     public function participantsByRole(Request $request)
     {
-        $filters = $this->getFilters($request);
-
-        $query = DB::table('attendances')
-            ->join('attendance_details', 'attendances.id',                        '=', 'attendance_details.attendance_id')
-            ->join('participant_types',  'attendance_details.participant_type_id', '=', 'participant_types.id')
-            ->join('events',             'attendances.event_id',                   '=', 'events.id');
-
-        if (!empty($filters['dateFrom'])) {
-            $query->where('events.date', '>=', $filters['dateFrom']);
-        }
-        if (!empty($filters['dateTo'])) {
-            $query->where('events.date', '<=', $filters['dateTo']);
-        }
-        $this->applyEventIds($query, $filters);
-
-        return $query->select('participant_types.name as label', DB::raw('COUNT(DISTINCT attendances.participant_id) as count'))
-            ->groupBy('participant_types.name')
-            ->orderByDesc('count')
-            ->get();
+        return $this->svc($request)->participantsByType();
     }
 
-    // Participantes por sexo
     public function participantsBySex(Request $request)
     {
-        $filters = $this->getFilters($request);
-
-        $query = DB::table('participants')
-            ->join('attendances', 'participants.id', '=', 'attendances.participant_id')
-            ->join('events',      'attendances.event_id', '=', 'events.id');
-
-        if (!empty($filters['dateFrom'])) {
-            $query->where('events.date', '>=', $filters['dateFrom']);
-        }
-        if (!empty($filters['dateTo'])) {
-            $query->where('events.date', '<=', $filters['dateTo']);
-        }
-        $this->applyEventIds($query, $filters);
-
-        return $query->select(
-                DB::raw("COALESCE(participants.gender, 'Sin datos') as label"),
-                DB::raw('COUNT(DISTINCT participants.id) as count')
-            )
-            ->groupBy('participants.gender')
-            ->orderByDesc('count')
-            ->get();
+        return $this->svc($request)->participantsByDetailField('gender');
     }
 
-    // Participantes por grupo priorizado
     public function participantsByGroup(Request $request)
     {
-        $filters = $this->getFilters($request);
-
-        $query = DB::table('participants')
-            ->join('attendances', 'participants.id', '=', 'attendances.participant_id')
-            ->join('events',      'attendances.event_id', '=', 'events.id');
-
-        if (!empty($filters['dateFrom'])) {
-            $query->where('events.date', '>=', $filters['dateFrom']);
-        }
-        if (!empty($filters['dateTo'])) {
-            $query->where('events.date', '<=', $filters['dateTo']);
-        }
-        $this->applyEventIds($query, $filters);
-
-        return $query->select(
-                DB::raw("COALESCE(participants.priority_group, 'Sin datos') as label"),
-                DB::raw('COUNT(DISTINCT participants.id) as count')
-            )
-            ->groupBy('participants.priority_group')
-            ->orderByDesc('count')
-            ->get();
+        return $this->svc($request)->participantsByDetailField('priority_group');
     }
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬ Endpoints de resumen (1 request = todos los datos del mÃƒÂ³dulo) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+    // ── Helpers privados ────────────────────────────────────────────────────
 
-    /**
-     * Retorna en una sola llamada todos los datos que necesita el mÃƒÂ³dulo
-     * "Por Asistencias": contadores + grÃƒÂ¡ficos + demogrÃƒÂ¡ficos.
-     */
-    public function asistenciasSummary(Request $request)
+    private function svc(Request $request): StatisticsService
     {
-        $filters = $this->getFilters($request);
-
-        $user = Auth::user();
-        if ($user && $user->role !== 'admin') {
-            $filters = $this->applyUserScope($filters, $user->id);
-            if ($filters === null) {
-                return response()->json([
-                    'counters' => ['events' => 0, 'attendances' => 0, 'participants' => 0],
-                    'charts'   => [
-                        'attendancesByProgram' => [],
-                        'topEvents'            => [],
-                        'topParticipants'      => [],
-                        'byRole'               => [],
-                        'bySex'                => [],
-                        'byGroup'              => [],
-                    ],
-                ]);
-            }
-        }
-
-        return response()->json([
-            'counters' => [
-                'events'       => $this->sumTotalEvents($filters),
-                'attendances'  => $this->sumTotalAttendances($filters),
-                'participants' => $this->sumTotalParticipants($filters),
-            ],
-            'charts' => [
-                'attendancesByProgram' => $this->sumAttendancesByProgram($filters),
-                'topEvents'            => $this->sumTopEvents($filters),
-                'topParticipants'      => $this->sumTopParticipants($filters),
-                'byRole'  => $this->sumAttendancesDemoByType($filters),
-                'bySex'   => $this->sumAttendancesDemoByField($filters, 'participants.gender',            'Sin datos'),
-                'byGroup' => $this->sumAttendancesDemoByField($filters, 'participants.priority_group', 'Sin datos'),
-            ],
-        ]);
+        return new StatisticsService($this->getFilters($request));
     }
 
     /**
-     * Retorna en una sola llamada todos los datos que necesita el mÃƒÂ³dulo
-     * "Por Participantes": contadores + grÃƒÂ¡ficos + demogrÃƒÂ¡ficos.
+     * Si el usuario no es admin, restringe los filtros a sus propios eventos.
+     * Retorna null si el usuario no tiene ningún evento (resultado = ceros).
      */
-    public function participantesSummary(Request $request)
+    private function scopeToUser(array $filters, ?User $user): ?array
     {
-        $filters = $this->getFilters($request);
-
-        $user = Auth::user();
-        if ($user && $user->role !== 'admin') {
-            $filters = $this->applyUserScope($filters, $user->id);
-            if ($filters === null) {
-                return response()->json([
-                    'counters' => ['events' => 0, 'participants' => 0],
-                    'charts'   => [
-                        'participantsByProgram' => [],
-                        'byRole'               => [],
-                        'bySex'                => [],
-                        'byGroup'              => [],
-                    ],
-                ]);
-            }
+        if (! $user || $user->role === 'admin') {
+            return $filters;
         }
 
-        return response()->json([
-            'counters' => [
-                'events'       => $this->sumTotalEvents($filters),
-                'participants' => $this->sumTotalParticipants($filters),
-            ],
-            'charts' => [
-                'participantsByProgram' => $this->sumParticipantsByProgram($filters),
-                'byRole'  => $this->sumParticipantsDemoByType($filters),
-                'bySex'   => $this->sumParticipantsDemoByField($filters, 'participants.gender',            'Sin datos'),
-                'byGroup' => $this->sumParticipantsDemoByField($filters, 'participants.priority_group', 'Sin datos'),
-            ],
-        ]);
-    }
-
-    // Ã¢â€â‚¬Ã¢â€â‚¬ Helpers privados para los endpoints de resumen Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
-
-    /**
-     * Restringe los filtros al alcance del usuario: solo eventos creados por ÃƒÂ©l.
-     * Retorna null si el usuario no tiene eventos (resultado debe ser ceros en todos los campos).
-     */
-    private function applyUserScope(array $filters, int $userId): ?array
-    {
-        $userEventIds = Event::where('user_id', $userId)->pluck('id')->toArray();
+        $userEventIds = Event::where('user_id', $user->id)->pluck('id')->toArray();
 
         if (empty($userEventIds)) {
             return null;
         }
 
-        if (!empty($filters['eventIds'])) {
+        if (! empty($filters['eventIds'])) {
             $intersection = array_values(array_intersect($filters['eventIds'], $userEventIds));
+
             return empty($intersection) ? null : array_merge($filters, ['eventIds' => $intersection]);
         }
 
         return array_merge($filters, ['eventIds' => $userEventIds]);
-    }
-
-    private function sumTotalEvents(array $filters): int
-    {
-        $q = Event::query();
-        if (!empty($filters['dateFrom'])) $q->where('date', '>=', $filters['dateFrom']);
-        if (!empty($filters['dateTo']))   $q->where('date', '<=', $filters['dateTo']);
-        if (!empty($filters['userIds']))  $q->whereIn('user_id', $filters['userIds']);
-        $this->applyEventIds($q, $filters, 'id');
-        return $q->count();
-    }
-
-    private function sumTotalAttendances(array $filters): int
-    {
-        $hasFilters = !empty($filters['dateFrom']) || !empty($filters['dateTo']) || !empty($filters['eventIds']);
-        $q = Attendance::query();
-        if ($hasFilters) {
-            $q->join('events', 'attendances.event_id', '=', 'events.id');
-            if (!empty($filters['dateFrom'])) $q->where('events.date', '>=', $filters['dateFrom']);
-            if (!empty($filters['dateTo']))   $q->where('events.date', '<=', $filters['dateTo']);
-            $this->applyEventIds($q, $filters);
-        }
-        return $q->count();
-    }
-
-    private function sumTotalParticipants(array $filters): int
-    {
-        $hasFilter = !empty($filters['dateFrom']) || !empty($filters['dateTo']) || !empty($filters['eventIds']);
-        if ($hasFilter) {
-            $q = DB::table('participants')
-                ->join('attendances', 'participants.id', '=', 'attendances.participant_id')
-                ->join('events', 'attendances.event_id', '=', 'events.id');
-            if (!empty($filters['dateFrom'])) $q->where('events.date', '>=', $filters['dateFrom']);
-            if (!empty($filters['dateTo']))   $q->where('events.date', '<=', $filters['dateTo']);
-            $this->applyEventIds($q, $filters);
-            return $q->distinct()->count('participants.id');
-        }
-        return Participant::whereHas('attendances')->count();
-    }
-
-    private function sumAttendancesByProgram(array $filters)
-    {
-        $q = DB::table('attendances')
-            ->join('attendance_details', 'attendances.id',                  '=', 'attendance_details.attendance_id')
-            ->join('programs',           'attendance_details.program_id',   '=', 'programs.id')
-            ->join('events',             'attendances.event_id',            '=', 'events.id');
-        if (!empty($filters['dateFrom'])) $q->where('events.date', '>=', $filters['dateFrom']);
-        if (!empty($filters['dateTo']))   $q->where('events.date', '<=', $filters['dateTo']);
-        $this->applyEventIds($q, $filters);
-        return $q->select('programs.name as name', DB::raw('COUNT(*) as value'))
-            ->groupBy('programs.name')->orderByDesc('value')->get();
-    }
-
-    private function sumTopEvents(array $filters)
-    {
-        $q = DB::table('attendances')
-            ->join('events', 'attendances.event_id', '=', 'events.id');
-        if (!empty($filters['dateFrom'])) $q->where('events.date', '>=', $filters['dateFrom']);
-        if (!empty($filters['dateTo']))   $q->where('events.date', '<=', $filters['dateTo']);
-        $this->applyEventIds($q, $filters);
-        return $q->select('events.title as name', DB::raw('COUNT(*) as value'))
-            ->groupBy('events.title')->orderByDesc('value')->limit(5)->get();
-    }
-
-    private function sumTopParticipants(array $filters)
-    {
-        $q = DB::table('attendances')
-            ->join('participants', 'attendances.participant_id', '=', 'participants.id')
-            ->join('events',       'attendances.event_id',       '=', 'events.id');
-        if (!empty($filters['dateFrom'])) $q->where('events.date', '>=', $filters['dateFrom']);
-        if (!empty($filters['dateTo']))   $q->where('events.date', '<=', $filters['dateTo']);
-        $this->applyEventIds($q, $filters);
-        return $q->select(
-                DB::raw($this->concatFullName() . ' as name'),
-                DB::raw('COUNT(*) as value')
-            )
-            ->groupBy('participants.id', 'participants.first_name', 'participants.last_name')
-            ->orderByDesc('value')->limit(5)->get();
-    }
-
-    private function sumAttendancesDemoByField(array $filters, string $col, ?string $coalesce = null)
-    {
-        $q = DB::table('attendances')
-            ->join('participants', 'attendances.participant_id', '=', 'participants.id')
-            ->join('events',       'attendances.event_id',       '=', 'events.id');
-        if (!empty($filters['dateFrom'])) $q->where('events.date', '>=', $filters['dateFrom']);
-        if (!empty($filters['dateTo']))   $q->where('events.date', '<=', $filters['dateTo']);
-        $this->applyEventIds($q, $filters);
-        $expr = $coalesce ? DB::raw("COALESCE({$col}, '{$coalesce}') as name") : DB::raw("{$col} as name");
-        return $q->select($expr, DB::raw('COUNT(*) as value'))
-            ->groupBy($col)->orderByDesc('value')->get();
-    }
-
-    private function sumParticipantsByProgram(array $filters)
-    {
-        $q = DB::table('participants')
-            ->join('participant_program', 'participants.id',               '=', 'participant_program.participant_id')
-            ->join('programs',            'participant_program.program_id', '=', 'programs.id')
-            ->join('attendances',         'participants.id',               '=', 'attendances.participant_id')
-            ->join('events',              'attendances.event_id',          '=', 'events.id');
-        if (!empty($filters['dateFrom'])) $q->where('events.date', '>=', $filters['dateFrom']);
-        if (!empty($filters['dateTo']))   $q->where('events.date', '<=', $filters['dateTo']);
-        $this->applyEventIds($q, $filters);
-        return $q->select('programs.name as name', DB::raw('COUNT(DISTINCT participants.id) as value'))
-            ->groupBy('programs.name')->orderByDesc('value')->get();
-    }
-
-    private function sumParticipantsDemoByField(array $filters, string $col, ?string $coalesce = null)
-    {
-        $q = DB::table('participants')
-            ->join('attendances', 'participants.id',         '=', 'attendances.participant_id')
-            ->join('events',      'attendances.event_id',   '=', 'events.id');
-        if (!empty($filters['dateFrom'])) $q->where('events.date', '>=', $filters['dateFrom']);
-        if (!empty($filters['dateTo']))   $q->where('events.date', '<=', $filters['dateTo']);
-        $this->applyEventIds($q, $filters);
-        $expr = $coalesce ? DB::raw("COALESCE({$col}, '{$coalesce}') as name") : DB::raw("{$col} as name");
-        return $q->select($expr, DB::raw('COUNT(DISTINCT participants.id) as value'))
-            ->groupBy($col)->orderByDesc('value')->get();
-    }
-
-    /** Asistencias agrupadas por estamento (via attendance_details → participant_types). */
-    private function sumAttendancesDemoByType(array $filters)
-    {
-        $q = DB::table('attendances')
-            ->join('attendance_details', 'attendances.id',                        '=', 'attendance_details.attendance_id')
-            ->join('participant_types',  'attendance_details.participant_type_id', '=', 'participant_types.id')
-            ->join('events',             'attendances.event_id',                   '=', 'events.id');
-        if (!empty($filters['dateFrom'])) $q->where('events.date', '>=', $filters['dateFrom']);
-        if (!empty($filters['dateTo']))   $q->where('events.date', '<=', $filters['dateTo']);
-        $this->applyEventIds($q, $filters);
-        return $q->select('participant_types.name as name', DB::raw('COUNT(*) as value'))
-            ->groupBy('participant_types.name')->orderByDesc('value')->get();
-    }
-
-    /** Participantes únicos agrupados por estamento (via attendance_details → participant_types). */
-    private function sumParticipantsDemoByType(array $filters)
-    {
-        $q = DB::table('attendances')
-            ->join('attendance_details', 'attendances.id',                        '=', 'attendance_details.attendance_id')
-            ->join('participant_types',  'attendance_details.participant_type_id', '=', 'participant_types.id')
-            ->join('events',             'attendances.event_id',                   '=', 'events.id');
-        if (!empty($filters['dateFrom'])) $q->where('events.date', '>=', $filters['dateFrom']);
-        if (!empty($filters['dateTo']))   $q->where('events.date', '<=', $filters['dateTo']);
-        $this->applyEventIds($q, $filters);
-        return $q->select('participant_types.name as name', DB::raw('COUNT(DISTINCT attendances.participant_id) as value'))
-            ->groupBy('participant_types.name')->orderByDesc('value')->get();
-    }
-
-    // Usuarios con mÃƒÂ¡s asistencias
-    public function topUsers(Request $request)
-    {
-        $filters = $this->getFilters($request);
-        $query = DB::table('attendances')
-            ->join('events', 'attendances.event_id', '=', 'events.id')
-            ->join('users', 'events.user_id', '=', 'users.id');
-        
-        if (!empty($filters['dateFrom'])) {
-            $query->where('events.date', '>=', $filters['dateFrom']);
-        }
-        if (!empty($filters['dateTo'])) {
-            $query->where('events.date', '<=', $filters['dateTo']);
-        }
-        if (!empty($filters['userIds']) && is_array($filters['userIds']) && count($filters['userIds']) > 0) {
-            $query->whereIn('events.user_id', $filters['userIds']);
-        }
-        if (!empty($filters['dependencyIds']) && is_array($filters['dependencyIds']) && count($filters['dependencyIds']) > 0) {
-            $query->whereIn('users.dependency_id', $filters['dependencyIds']);
-        }
-        
-        return $query->select('users.name', DB::raw('COUNT(*) as count'))
-            ->groupBy('users.id', 'users.name')
-            ->orderByDesc('count')
-            ->limit(5)
-            ->get();
     }
 }

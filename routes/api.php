@@ -83,34 +83,37 @@ Route::middleware(['web', 'auth'])->get('/mis-eventos-json', function () {
 // Ruta para obtener datos de programas específicos del evento
 Route::get('/statistics/event/{event}/programs', function ($event) {
     return DB::table('attendances')
-        ->join('participants', 'attendances.participant_id', '=', 'participants.id')
-        ->join('programs', 'participants.program_id', '=', 'programs.id')
+        ->join('attendance_details', 'attendances.id', '=', 'attendance_details.attendance_id')
+        ->join('programs', 'attendance_details.program_id', '=', 'programs.id')
         ->select('programs.name as program', DB::raw('COUNT(*) as count'))
         ->where('attendances.event_id', $event)
         ->groupBy('programs.name')
+        ->orderByDesc('count')
         ->get();
 });
 
-// Ruta para obtener datos de roles específicos del evento
+// Ruta para obtener estamentos específicos del evento
 Route::get('/statistics/event/{event}/roles', function ($event) {
     return DB::table('attendances')
-        ->join('participants', 'attendances.participant_id', '=', 'participants.id')
-        ->select('participants.role as role', DB::raw('COUNT(*) as count'))
+        ->join('attendance_details', 'attendances.id', '=', 'attendance_details.attendance_id')
+        ->join('participant_types', 'attendance_details.participant_type_id', '=', 'participant_types.id')
+        ->select('participant_types.name as role', DB::raw('COUNT(*) as count'))
         ->where('attendances.event_id', $event)
-        ->groupBy('participants.role')
+        ->groupBy('participant_types.name')
+        ->orderByDesc('count')
         ->get();
 });
 
-// Distribución por sexo de un evento específico
+// Distribución por género de un evento específico
 Route::get('/statistics/event/{event}/sex', function ($event) {
     return DB::table('attendances')
-        ->join('participants', 'attendances.participant_id', '=', 'participants.id')
+        ->join('attendance_details', 'attendances.id', '=', 'attendance_details.attendance_id')
         ->select(
-            DB::raw("COALESCE(participants.sexo, 'Sin datos') as label"),
+            DB::raw("COALESCE(attendance_details.gender, 'Sin datos') as label"),
             DB::raw('COUNT(*) as count')
         )
         ->where('attendances.event_id', $event)
-        ->groupBy('participants.sexo')
+        ->groupBy('attendance_details.gender')
         ->orderByDesc('count')
         ->get();
 });
@@ -118,13 +121,13 @@ Route::get('/statistics/event/{event}/sex', function ($event) {
 // Distribución por grupo priorizado de un evento específico
 Route::get('/statistics/event/{event}/group', function ($event) {
     return DB::table('attendances')
-        ->join('participants', 'attendances.participant_id', '=', 'participants.id')
+        ->join('attendance_details', 'attendances.id', '=', 'attendance_details.attendance_id')
         ->select(
-            DB::raw("COALESCE(participants.grupo_priorizado, 'Sin datos') as label"),
+            DB::raw("COALESCE(attendance_details.priority_group, 'Sin datos') as label"),
             DB::raw('COUNT(*) as count')
         )
         ->where('attendances.event_id', $event)
-        ->groupBy('participants.grupo_priorizado')
+        ->groupBy('attendance_details.priority_group')
         ->orderByDesc('count')
         ->get();
 });
@@ -165,7 +168,7 @@ Route::middleware(['web', 'auth'])->get('/statistics/compare/events', function (
 
 // Datos comparativos para los eventos seleccionados (asistencias + demografía)
 Route::get('/statistics/compare/data', function (Request $request) {
-    $eventIds = array_filter((array) $request->get('eventIds', []));
+    $eventIds = array_values(array_filter(array_map('intval', (array) $request->get('eventIds', []))));
 
     if (empty($eventIds)) {
         return ['attendances' => [], 'byRole' => [], 'bySex' => [], 'byGroup' => []];
@@ -184,25 +187,41 @@ Route::get('/statistics/compare/data', function (Request $request) {
         ->orderBy('events.date')
         ->get();
 
-    $demo = fn (string $col) => DB::table('attendances')
-        ->join('participants', 'attendances.participant_id', '=', 'participants.id')
+    // Demografía desde attendance_details (datos capturados en el momento del registro)
+    $demoDetail = fn (string $col) => DB::table('attendances')
         ->join('events', 'attendances.event_id', '=', 'events.id')
+        ->join('attendance_details', 'attendances.id', '=', 'attendance_details.attendance_id')
         ->select(
             'events.id as event_id',
             'events.title as event_title',
-            DB::raw("COALESCE({$col}, 'Sin datos') as label"),
+            DB::raw("COALESCE(attendance_details.{$col}, 'Sin datos') as label"),
             DB::raw('COUNT(*) as count')
         )
         ->whereIn('attendances.event_id', $eventIds)
-        ->groupBy('events.id', 'events.title', $col)
+        ->groupBy('events.id', 'events.title', "attendance_details.{$col}")
+        ->orderBy('events.date')
+        ->get();
+
+    $byRole = DB::table('attendances')
+        ->join('events', 'attendances.event_id', '=', 'events.id')
+        ->join('attendance_details', 'attendances.id', '=', 'attendance_details.attendance_id')
+        ->join('participant_types', 'attendance_details.participant_type_id', '=', 'participant_types.id')
+        ->select(
+            'events.id as event_id',
+            'events.title as event_title',
+            'participant_types.name as label',
+            DB::raw('COUNT(*) as count')
+        )
+        ->whereIn('attendances.event_id', $eventIds)
+        ->groupBy('events.id', 'events.title', 'participant_types.id', 'participant_types.name')
         ->orderBy('events.date')
         ->get();
 
     return [
         'attendances' => $attendances,
-        'byRole'      => $demo('participants.role'),
-        'bySex'       => $demo('participants.sexo'),
-        'byGroup'     => $demo('participants.grupo_priorizado'),
+        'byRole'      => $byRole,
+        'bySex'       => $demoDetail('gender'),
+        'byGroup'     => $demoDetail('priority_group'),
     ];
 });
 
@@ -275,21 +294,28 @@ Route::get('/participants', function () {
     return Participant::all();
 });
 
-// Get participants by program ID
+// Get participants by program ID (via pivot)
 Route::get('/participants/program/{program_id}', function ($program_id) {
-    return Participant::where('program_id', $program_id)->get();
-});
-
-// Get count of participants by program
-Route::get('/participants/count-by-program', function () {
-    return Participant::select('program_id', DB::raw('COUNT(*) as count'))
-        ->groupBy('program_id')
+    return DB::table('participants')
+        ->join('participant_program', 'participants.id', '=', 'participant_program.participant_id')
+        ->where('participant_program.program_id', $program_id)
+        ->select('participants.*')
         ->get();
 });
 
-// Get all roles
+// Get count of participants by program (via pivot)
+Route::get('/participants/count-by-program', function () {
+    return DB::table('participant_program')
+        ->join('programs', 'participant_program.program_id', '=', 'programs.id')
+        ->select('programs.name as program', DB::raw('COUNT(DISTINCT participant_program.participant_id) as count'))
+        ->groupBy('programs.id', 'programs.name')
+        ->orderByDesc('count')
+        ->get();
+});
+
+// Get all estamentos (participant types)
 Route::get('/roles', function () {
-    return Participant::select('role')->distinct()->get();
+    return \App\Models\ParticipantType::orderBy('name')->get(['id', 'name']);
 });
 
 // Get all programs
