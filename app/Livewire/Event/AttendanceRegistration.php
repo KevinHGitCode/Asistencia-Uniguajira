@@ -2,7 +2,6 @@
 
 namespace App\Livewire\Event;
 
-use App\Models\Address;
 use App\Models\Attendance;
 use App\Models\AttendanceDetail;
 use App\Models\Event;
@@ -146,7 +145,7 @@ class AttendanceRegistration extends Component
 
         $term = trim($this->identification);
 
-        $participant = Participant::with(['programs', 'affiliation', 'types'])
+        $participant = Participant::with(['programs', 'affiliations', 'types'])
             ->where(function ($q) use ($term) {
                 $q->where('document', $term)
                   ->orWhere('student_code', $term);
@@ -186,7 +185,7 @@ class AttendanceRegistration extends Component
             'email'       => $participant->email,
             'has_email'   => ! empty($participant->email),
             'role'        => $participant->role,
-            'affiliation' => $participant->affiliation?->name,
+            'affiliation' => $participant->affiliations->first()?->name,
             'programs'    => $programs,
             'types'       => $types,
         ];
@@ -405,24 +404,16 @@ class AttendanceRegistration extends Component
                 'participant_id' => $this->participantData['id'],
             ]);
 
-            $address = null;
-            if ($this->detailMunicipio || $this->detailBarrio || $this->detailDireccion) {
-                $address = Address::create([
-                    'municipio' => $this->detailMunicipio ?: 'Sin especificar',
-                    'barrio'    => $this->detailBarrio    ?: null,
-                    'direccion' => $this->detailDireccion ?: null,
-                ]);
-            }
-
             AttendanceDetail::create([
-                'attendance_id'    => $attendance->id,
-                'sexo'             => $this->detailSexo            ?: null,
-                'telefono'         => $this->detailTelefono        ?: null,
-                'municipio'        => $this->detailMunicipio       ?: null,
-                'barrio'           => $this->detailBarrio          ?: null,
-                'direccion'        => $this->detailDireccion       ?: null,
-                'grupo_priorizado' => $this->detailGrupoPriorizado ?: null,
-                'program_id'       => $this->selectedProgramId,
+                'attendance_id'       => $attendance->id,
+                'gender'              => $this->detailGender        ?: null,
+                'telefono'            => $this->detailTelefono      ?: null,
+                'municipio'           => $this->detailMunicipio     ?: null,
+                'barrio'              => $this->detailBarrio        ?: null,
+                'direccion'           => $this->detailDireccion     ?: null,
+                'priority_group'      => $this->detailPriorityGroup ?: null,
+                'program_id'          => $this->selectedProgramId,
+                'participant_type_id' => $this->selectedTypeId,
             ]);
 
             $this->successRegisteredAt = $attendance->created_at->format('h:i A');
@@ -507,10 +498,14 @@ class AttendanceRegistration extends Component
                 'last_name'      => trim($this->newLastName),
                 'email'          => $this->newEmail          ?: null,
                 'role'           => $this->newRole,
-                'affiliation_id' => $affiliationId,
                 'gender'         => $this->newGender         ?: null,
                 'priority_group' => $this->newPriorityGroup  ?: null,
             ]);
+
+            // Attach affiliation via pivot
+            if ($affiliationId) {
+                $participant->affiliations()->attach($affiliationId);
+            }
 
             // Attach to type pivot
             $type = ParticipantType::where('name', $this->newRole)->first();
@@ -535,7 +530,7 @@ class AttendanceRegistration extends Component
 
     private function loadLastDefaults(): void
     {
-        $lastDetail = AttendanceDetail::with('address')->latest()->first();
+        $lastDetail = AttendanceDetail::latest()->first();
 
         if (! $lastDetail) {
             return;
@@ -543,13 +538,10 @@ class AttendanceRegistration extends Component
 
         $this->detailGender        = $lastDetail->gender         ?? '';
         $this->detailTelefono      = $lastDetail->telefono       ?? '';
+        $this->detailMunicipio     = $lastDetail->municipio      ?? '';
+        $this->detailBarrio        = $lastDetail->barrio         ?? '';
+        $this->detailDireccion     = $lastDetail->direccion      ?? '';
         $this->detailPriorityGroup = $lastDetail->priority_group ?? '';
-
-        if ($lastDetail->address) {
-            $this->detailMunicipio = $lastDetail->address->municipio ?? '';
-            $this->detailBarrio    = $lastDetail->address->barrio    ?? '';
-            $this->detailDireccion = $lastDetail->address->direccion ?? '';
-        }
     }
 
     private function resetNewParticipantForm(): void

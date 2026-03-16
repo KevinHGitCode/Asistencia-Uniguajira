@@ -10,7 +10,9 @@ class AttendanceDetail extends Model
         'attendance_id',
         'gender',
         'telefono',
-        'address_id',
+        'municipio',
+        'barrio',
+        'direccion',
         'priority_group',
         'program_id',
         'participant_type_id',
@@ -19,11 +21,6 @@ class AttendanceDetail extends Model
     public function attendance()
     {
         return $this->belongsTo(Attendance::class);
-    }
-
-    public function address()
-    {
-        return $this->belongsTo(Address::class);
     }
 
     /**
