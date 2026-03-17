@@ -119,6 +119,40 @@ SESSION_DRIVER=database
 QUEUE_CONNECTION=database
 ```
 
+## Módulo de administración — patrón de vistas
+
+Todas las vistas en `resources/views/administration/` (excepto `formats/`) siguen el patrón de **2 pestañas**:
+
+| Pestaña | Contenido |
+|---|---|
+| **Listado** | Tabla de registros con búsqueda en tiempo real (Alpine.js) |
+| **Importar / Exportar** | Drop zone para Excel + botón de descarga del listado actual |
+
+El botón "Nuevo X" se mantiene en el header, no como pestaña.
+
+### Clases de exportación (`app/Exports/`)
+
+| Clase | Uso |
+|---|---|
+| `DependencyExport` | Descarga el listado actual de dependencias |
+| `AreaExport` | Descarga el listado actual de áreas |
+| `ProgramExport` | Descarga el listado actual de programas (Nombre + Tipo) |
+| `AffiliationExport` | Descarga el listado actual de afiliaciones |
+| `ParticipantTypeExport` | Descarga el listado actual de estamentos |
+| `*TemplateExport` | Plantillas vacías para carga masiva |
+
+### Importación masiva — rutas
+
+Todas bajo `/administracion` con middleware `auth + verified + role:admin`:
+
+| Entidad | Import POST | Template GET | Export GET |
+|---|---|---|---|
+| Dependencias | `dependencies.import` | `dependencies.download-template` | `dependencies.download-export` |
+| Áreas | `areas.import` | `areas.download-template` | `areas.download-export` |
+| Programas | `programs.import` | `programs.download-template` | `programs.download-export` |
+| Afiliaciones | `affiliations.import` | `affiliations.download-template` | `affiliations.download-export` |
+| Estamentos | `participant-types.import` | `participant-types.download-template` | `participant-types.download-export` |
+
 ## Notas importantes
 
 - La base de datos SQLite local está en `database/database.sqlite`

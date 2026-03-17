@@ -201,6 +201,14 @@ class DependencyController extends Controller
         );
     }
 
+    public function downloadExport()
+    {
+        return Excel::download(
+            new \App\Exports\DependencyExport(),
+            'dependencias.xlsx'
+        );
+    }
+
     /**
      * Normaliza un nombre con soporte UTF-8 (primera letra mayúscula, resto minúsculas).
      */

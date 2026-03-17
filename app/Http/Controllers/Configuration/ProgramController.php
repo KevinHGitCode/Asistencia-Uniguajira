@@ -158,6 +158,14 @@ class ProgramController extends Controller
         );
     }
 
+    public function downloadExport()
+    {
+        return Excel::download(
+            new \App\Exports\ProgramExport(),
+            'programas.xlsx'
+        );
+    }
+
     private function validateProgram(Request $request, ?int $ignoreId = null): void
     {
         $uniqueRule = Rule::unique('programs', 'name');

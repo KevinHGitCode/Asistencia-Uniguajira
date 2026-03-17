@@ -15,7 +15,6 @@ use App\Http\Controllers\Configuration\AdministrationController;
 use App\Http\Controllers\Configuration\AffiliationController;
 use App\Http\Controllers\Configuration\AreaController;
 use App\Http\Controllers\Configuration\DependencyController;
-use App\Http\Controllers\Configuration\EstamentoController;
 use App\Http\Controllers\Configuration\ParticipantTypeController;
 use App\Http\Controllers\Configuration\ProgramController;
 use App\Http\Controllers\Configuration\FormatController;
@@ -138,6 +137,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])
         Route::get('/dependencies/create', [DependencyController::class, 'create'])->name('dependencies.create');
         Route::post('/dependencies/import', [DependencyController::class, 'importExcel'])->name('dependencies.import');
         Route::get('/dependencies/download-template', [DependencyController::class, 'downloadTemplate'])->name('dependencies.download-template');
+        Route::get('/dependencies/download-export', [DependencyController::class, 'downloadExport'])->name('dependencies.download-export');
         Route::post('/dependencies', [DependencyController::class, 'store'])->name('dependencies.store');
         // Route::get('/dependencies/edit/{dependency}', [DependencyController::class, 'edit'])->name('dependencies.edit');
         Route::post('/dependencies/edit/{dependency}', [DependencyController::class, 'update'])->name('dependencies.update');
@@ -148,6 +148,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])
         Route::get('/areas/create', [AreaController::class, 'create'])->name('areas.create');
         Route::post('/areas/import', [AreaController::class, 'importExcel'])->name('areas.import');
         Route::get('/areas/download-template', [AreaController::class, 'downloadTemplate'])->name('areas.download-template');
+        Route::get('/areas/download-export', [AreaController::class, 'downloadExport'])->name('areas.download-export');
         Route::post('/areas', [AreaController::class, 'store'])->name('areas.store');
         Route::get('/areas/edit/{area}', [AreaController::class, 'edit'])->name('areas.edit');
         Route::post('/areas/edit/{area}', [AreaController::class, 'update'])->name('areas.update');
@@ -170,11 +171,15 @@ Route::middleware(['auth', 'verified', 'role:admin'])
         Route::post('/affiliations', [AffiliationController::class, 'store'])->name('affiliations.store');
         Route::post('/affiliations/edit/{affiliation}', [AffiliationController::class, 'update'])->name('affiliations.update');
         Route::delete('/affiliations/{affiliation}', [AffiliationController::class, 'destroy'])->name('affiliations.destroy');
+        Route::post('/affiliations/import', [AffiliationController::class, 'importExcel'])->name('affiliations.import');
+        Route::get('/affiliations/download-template', [AffiliationController::class, 'downloadTemplate'])->name('affiliations.download-template');
+        Route::get('/affiliations/download-export', [AffiliationController::class, 'downloadExport'])->name('affiliations.download-export');
 
         // Rutas de programas
         Route::get('/programs', [ProgramController::class, 'index'])->name('programs.index');
         Route::post('/programs/import', [ProgramController::class, 'importExcel'])->name('programs.import');
         Route::get('/programs/download-template', [ProgramController::class, 'downloadTemplate'])->name('programs.download-template');
+        Route::get('/programs/download-export', [ProgramController::class, 'downloadExport'])->name('programs.download-export');
         Route::post('/programs', [ProgramController::class, 'store'])->name('programs.store');
         Route::post('/programs/edit/{program}', [ProgramController::class, 'update'])->name('programs.update');
         Route::delete('/programs/{program}', [ProgramController::class, 'destroy'])->name('programs.destroy');
@@ -184,6 +189,9 @@ Route::middleware(['auth', 'verified', 'role:admin'])
         Route::post('/participant-types', [ParticipantTypeController::class, 'store'])->name('participant-types.store');
         Route::post('/participant-types/edit/{participantType}', [ParticipantTypeController::class, 'update'])->name('participant-types.update');
         Route::delete('/participant-types/{participantType}', [ParticipantTypeController::class, 'destroy'])->name('participant-types.destroy');
+        Route::post('/participant-types/import', [ParticipantTypeController::class, 'importExcel'])->name('participant-types.import');
+        Route::get('/participant-types/download-template', [ParticipantTypeController::class, 'downloadTemplate'])->name('participant-types.download-template');
+        Route::get('/participant-types/download-export', [ParticipantTypeController::class, 'downloadExport'])->name('participant-types.download-export');
 
         // Rutas de importación / registro de participantes
         Route::get('/participants', [ParticipantImportController::class, 'index'])->name('participants-import.index');

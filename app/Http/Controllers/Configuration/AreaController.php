@@ -187,6 +187,14 @@ class AreaController extends Controller
         );
     }
 
+    public function downloadExport()
+    {
+        return Excel::download(
+            new \App\Exports\AreaExport(),
+            'areas.xlsx'
+        );
+    }
+
     /**
      * Normaliza un nombre con soporte UTF-8 (primera letra mayúscula, resto minúsculas).
      */
