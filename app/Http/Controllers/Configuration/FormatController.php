@@ -21,6 +21,11 @@ class FormatController extends Controller
         return view('administration.formats.index', compact('formats', 'dependencies'));
     }
 
+    // public function create()
+    // {
+    //     return redirect()->route('formats.index');
+    // }
+
     public function store(Request $request)
     {
         $request->validate([

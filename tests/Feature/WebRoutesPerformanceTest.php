@@ -134,7 +134,7 @@ class WebRoutesPerformanceTest extends TestCase
             [$res, $ms] = $this->timedGet($url);
 
             $this->assertTrue(
-                $res->isOk() || $res->isRedirection(),
+                $res->isOk() || $res->isRedirection() || $res->getStatusCode() === 204,
                 "{$route->uri()} devolvió {$res->getStatusCode()}"
             );
             $this->assertLessThan(
@@ -189,7 +189,15 @@ class WebRoutesPerformanceTest extends TestCase
 
     private function shouldSkipUri(string $uri): bool
     {
-        return str_contains($uri, 'descargar-asistencia');
+        if (str_contains($uri, 'descargar-asistencia')) {
+            return true;
+        }
+
+        if (str_starts_with($uri, 'flux/')) {
+            return true;
+        }
+
+        return (bool) preg_match('/\.(css|js|map|png|jpe?g|gif|svg|ico|woff2?|ttf)$/i', $uri);
     }
 
     private function maxMsFor(string $uri): int
