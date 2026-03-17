@@ -93,94 +93,94 @@ class StatisticsController extends Controller
 
     // ── Endpoints individuales (compatibilidad con rutas existentes) ─────────
 
-    public function totalEvents(Request $request)
+    public function totalEvents(Request $request): JsonResponse
     {
-        return $this->svc($request)->totalEvents();
+        return response()->json($this->svc($request)->totalEvents());
     }
 
-    public function totalAttendances(Request $request)
+    public function totalAttendances(Request $request): JsonResponse
     {
-        return $this->svc($request)->totalAttendances();
+        return response()->json($this->svc($request)->totalAttendances());
     }
 
-    public function totalParticipants(Request $request)
+    public function totalParticipants(Request $request): JsonResponse
     {
-        return $this->svc($request)->totalParticipants();
+        return response()->json($this->svc($request)->totalParticipants());
     }
 
-    public function attendancesByProgram(Request $request)
+    public function attendancesByProgram(Request $request): JsonResponse
     {
-        return $this->svc($request)->attendancesByProgram();
+        return response()->json($this->svc($request)->attendancesByProgram());
     }
 
-    public function participantsByProgram(Request $request)
+    public function participantsByProgram(Request $request): JsonResponse
     {
-        return $this->svc($request)->participantsByProgram();
+        return response()->json($this->svc($request)->participantsByProgram());
     }
 
-    public function eventsOverTime(Request $request)
+    public function eventsOverTime(Request $request): JsonResponse
     {
-        return $this->svc($request)->eventsOverTime();
+        return response()->json($this->svc($request)->eventsOverTime());
     }
 
-    public function attendancesOverTime(Request $request)
+    public function attendancesOverTime(Request $request): JsonResponse
     {
-        return $this->svc($request)->attendancesOverTime();
+        return response()->json($this->svc($request)->attendancesOverTime());
     }
 
-    public function topEvents(Request $request)
+    public function topEvents(Request $request): JsonResponse
     {
-        return $this->svc($request)->topEvents();
+        return response()->json($this->svc($request)->topEvents());
     }
 
-    public function topParticipants(Request $request)
+    public function topParticipants(Request $request): JsonResponse
     {
-        return $this->svc($request)->topParticipants();
+        return response()->json($this->svc($request)->topParticipants());
     }
 
-    public function topUsers(Request $request)
+    public function topUsers(Request $request): JsonResponse
     {
-        return $this->svc($request)->topUsers();
+        return response()->json($this->svc($request)->topUsers());
     }
 
-    public function eventsByRole(Request $request)
+    public function eventsByRole(Request $request): JsonResponse
     {
-        return $this->svc($request)->eventsByUserRole();
+        return response()->json($this->svc($request)->eventsByUserRole());
     }
 
-    public function eventsByUser(Request $request)
+    public function eventsByUser(Request $request): JsonResponse
     {
-        return $this->svc($request)->eventsByUser();
+        return response()->json($this->svc($request)->eventsByUser());
     }
 
-    public function attendancesByRole(Request $request)
+    public function attendancesByRole(Request $request): JsonResponse
     {
-        return $this->svc($request)->attendancesByType();
+        return response()->json($this->svc($request)->attendancesByType());
     }
 
-    public function attendancesBySex(Request $request)
+    public function attendancesBySex(Request $request): JsonResponse
     {
-        return $this->svc($request)->attendancesByDetailField('gender');
+        return response()->json($this->svc($request)->attendancesByDetailField('gender'));
     }
 
-    public function attendancesByGroup(Request $request)
+    public function attendancesByGroup(Request $request): JsonResponse
     {
-        return $this->svc($request)->attendancesByDetailField('priority_group');
+        return response()->json($this->svc($request)->attendancesByDetailField('priority_group'));
     }
 
-    public function participantsByRole(Request $request)
+    public function participantsByRole(Request $request): JsonResponse
     {
-        return $this->svc($request)->participantsByType();
+        return response()->json($this->svc($request)->participantsByType());
     }
 
-    public function participantsBySex(Request $request)
+    public function participantsBySex(Request $request): JsonResponse
     {
-        return $this->svc($request)->participantsByDetailField('gender');
+        return response()->json($this->svc($request)->participantsByDetailField('gender'));
     }
 
-    public function participantsByGroup(Request $request)
+    public function participantsByGroup(Request $request): JsonResponse
     {
-        return $this->svc($request)->participantsByDetailField('priority_group');
+        return response()->json($this->svc($request)->participantsByDetailField('priority_group'));
     }
 
     // ── Helpers privados ────────────────────────────────────────────────────
