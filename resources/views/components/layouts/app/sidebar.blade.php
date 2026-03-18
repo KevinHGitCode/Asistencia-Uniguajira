@@ -9,6 +9,26 @@
     <flux:sidebar sticky stashable class="border-e border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
         <flux:sidebar.toggle class="lg:hidden" icon="x-mark" />
 
+        {{-- Debounce wrapper: prevents rapid multi-clicks on wire:navigate links.
+             Default cooldown: 500ms. Statistics links use data-debounce="1000".
+             Any link can override via data-debounce="<ms>". --}}
+        <div x-data="{
+            _t: {},
+            _check(e) {
+                const a = e.target.closest('[wire\\:navigate]');
+                if (!a) return;
+                const href = a.getAttribute('href') || a.textContent.trim();
+                const delay = Number(a.dataset.debounce ?? 500);
+                const now = Date.now();
+                if (this._t[href] && now - this._t[href] < delay) {
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                } else {
+                    this._t[href] = now;
+                }
+            }
+        }" @click.capture="_check($event)">
+
         <a href="{{ route('dashboard') }}" class="me-5 flex items-center space-x-2 rtl:space-x-reverse hover:scale-103 transition-transform" wire:navigate>
             <x-app-logo />
         </a>
@@ -47,7 +67,7 @@
 
                     {{-- Fila: enlace overview + botón toggle --}}
                     <div class="flex items-center">
-                        <a href="{{ route('statistics') }}" wire:navigate
+                        <a href="{{ route('statistics') }}" wire:navigate data-debounce="1000"
                            @class([
                                'h-10 lg:h-8 flex flex-1 min-w-0 items-center gap-3 rounded-lg pl-3 pr-1 text-sm font-medium leading-none border transition-colors duration-150 hover:scale-103',
                                'text-zinc-500 dark:text-white/80 border-transparent hover:text-zinc-800 hover:bg-zinc-800/5 dark:hover:text-white dark:hover:bg-white/[7%]' => !request()->routeIs('statistics'),
@@ -86,19 +106,19 @@
                         {{-- Línea vertical decorativa --}}
                         <div class="absolute inset-y-1 left-[11px] w-px rounded-full bg-zinc-200 dark:bg-white/20"></div>
 
-                        <flux:navlist.item :href="route('statistics.asistencias')" :current="request()->routeIs('statistics.asistencias')" wire:navigate>
+                        <flux:navlist.item :href="route('statistics.asistencias')" :current="request()->routeIs('statistics.asistencias')" wire:navigate data-debounce="1000">
                             {{ __('Por Asistencias') }}
                         </flux:navlist.item>
 
-                        <flux:navlist.item :href="route('statistics.participantes')" :current="request()->routeIs('statistics.participantes')" wire:navigate>
+                        <flux:navlist.item :href="route('statistics.participantes')" :current="request()->routeIs('statistics.participantes')" wire:navigate data-debounce="1000">
                             {{ __('Por Participantes') }}
                         </flux:navlist.item>
 
-                        <flux:navlist.item :href="route('statistics.compara-eventos')" :current="request()->routeIs('statistics.compara-eventos')" wire:navigate>
+                        <flux:navlist.item :href="route('statistics.compara-eventos')" :current="request()->routeIs('statistics.compara-eventos')" wire:navigate data-debounce="1000">
                             {{ __('Compara Eventos') }}
                         </flux:navlist.item>
                         @if(auth()->user()->role === 'admin')
-                            <flux:navlist.item :href="route('statistics.usuarios')" :current="request()->routeIs('statistics.usuarios')" wire:navigate>
+                            <flux:navlist.item :href="route('statistics.usuarios')" :current="request()->routeIs('statistics.usuarios')" wire:navigate data-debounce="1000">
                                 {{ __('Por Usuarios') }}
                             </flux:navlist.item>
                         @endif
@@ -203,6 +223,8 @@
 
             </flux:navlist.group>
         </flux:navlist>
+
+        </div>{{-- end debounce wrapper --}}
 
         <flux:spacer />
 
