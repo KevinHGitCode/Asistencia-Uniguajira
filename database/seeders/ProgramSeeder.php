@@ -2,15 +2,17 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use Maatwebsite\Excel\Facades\Excel;
+use App\Http\Controllers\Configuration\ProgramController;
 use App\Models\Program;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ProgramSeeder extends Seeder
 {
     public function run(): void
     {
-        $path = database_path('seeders/files/BASE DE DATOS MAICAO.xlsx');
+        $path = database_path('seeders/files/seed.xlsx');
         if (! file_exists($path)) {
             return;
         }
@@ -46,8 +48,14 @@ class ProgramSeeder extends Seeder
             return isset($colIndex[$col]) ? ($raw[$colIndex[$col]] ?? null) : null;
         };
 
+        // Cache de programas existentes usando la misma clave de comparación del controlador
+        $existingSet = array_flip(
+            Program::all(['name'])->map(fn ($p) => ProgramController::comparisonKey($p->name))->toArray()
+        );
+
         $programsToInsert = [];
-        $now = now();
+        $now = now()->toDateTimeString();
+
         foreach ($rows as $row) {
             $rawValues = array_values((array) $row);
             if (empty(array_filter($rawValues, fn ($v) => $v !== null && $v !== ''))) {
@@ -68,44 +76,56 @@ class ProgramSeeder extends Seeder
             }
 
             $parts = array_map('trim', explode(' - ', (string) $programNameRaw, 2));
-            $programName = $parts[0] ?? '';
-            $campus = $parts[1] ?? null;
-            if ($programName === '') {
+            $rawName = $parts[0] ?? '';
+            $rawCampus = $parts[1] ?? null;
+            if ($rawName === '') {
                 continue;
             }
 
-            $programName = ucwords(strtolower($programName));
-            $campus = $campus ? ucwords(strtolower($campus)) : null;
+            // Normalización UTF-8 idéntica al controlador
+            $programName = ProgramController::normalizeName($rawName);
+            $campus = $rawCampus ? ProgramController::normalizeName($rawCampus) : null;
 
             $programType = null;
             if ($programTypeRaw !== null && trim((string) $programTypeRaw) !== '') {
-                $programType = match (strtolower(trim((string) $programTypeRaw))) {
+                $programType = match (mb_strtolower(trim((string) $programTypeRaw), 'UTF-8')) {
                     'pregrado' => 'Pregrado',
                     'posgrado', 'postgrado' => 'Posgrado',
                     default => null,
                 };
             }
 
-            $key = strtolower($programName) . '|' . strtolower($campus ?? '');
-            if (! isset($programsToInsert[$key])) {
-                $programsToInsert[$key] = [
+            // Clave de comparación sin acentos (igual que importExcel del controlador)
+            $nameKey = ProgramController::comparisonKey($programName);
+            $campusKey = $campus ? ProgramController::comparisonKey($campus) : '';
+            $compositeKey = $nameKey . '|' . $campusKey;
+
+            if (isset($existingSet[$nameKey])) {
+                // Ya existe en BD o ya se procesó en este lote, saltar
+                continue;
+            }
+
+            // Marcar como existente para que filas posteriores con tildes/espacios
+            // diferentes no se dupliquen (misma lógica que importExcel)
+            $existingSet[$nameKey] = true;
+
+            if (! isset($programsToInsert[$compositeKey])) {
+                $programsToInsert[$compositeKey] = [
                     'name' => $programName,
                     'campus' => $campus,
                     'program_type' => $programType,
                     'created_at' => $now,
                     'updated_at' => $now,
                 ];
-            } elseif ($programsToInsert[$key]['program_type'] === null && $programType !== null) {
-                $programsToInsert[$key]['program_type'] = $programType;
+            } elseif ($programsToInsert[$compositeKey]['program_type'] === null && $programType !== null) {
+                $programsToInsert[$compositeKey]['program_type'] = $programType;
             }
         }
 
         if (! empty($programsToInsert)) {
-            Program::upsert(
-                array_values($programsToInsert),
-                ['name', 'campus'],
-                ['program_type', 'updated_at']
-            );
+            foreach (array_chunk(array_values($programsToInsert), 500) as $chunk) {
+                DB::table('programs')->insert($chunk);
+            }
         }
     }
 }

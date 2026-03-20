@@ -188,7 +188,7 @@ class ProgramController extends Controller
     /**
      * Normaliza un nombre con soporte UTF-8 (primera letra mayúscula, resto minúsculas).
      */
-    private static function normalizeName(string $value): string
+    public static function normalizeName(string $value): string
     {
         $lower = mb_strtolower(trim($value), 'UTF-8');
         $lower = preg_replace('/\s+/u', ' ', $lower);

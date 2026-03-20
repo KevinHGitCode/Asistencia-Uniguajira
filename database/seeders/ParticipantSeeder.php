@@ -15,7 +15,7 @@ class ParticipantSeeder extends Seeder
 
     public function run(): void
     {
-        $path = database_path('seeders/files/BASE DE DATOS MAICAO.xlsx');
+        $path = database_path('seeders/files/seed.xlsx');
         if (! file_exists($path)) {
             return;
         }
