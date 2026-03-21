@@ -1,18 +1,26 @@
 import { createRoot } from 'react-dom/client';
 import EventChartsApp from './EventChartsApp.jsx';
 
-let root = null;
+let root             = null;
+let mountedContainer = null; // referencia al nodo DOM actual
 
 /**
- * Mount the event charts React app
+ * Mount the event charts React app.
+ *
+ * Detecta si wire:navigate reemplazó el contenedor (nuevo nodo DOM)
+ * y en ese caso crea un root nuevo en lugar de reutilizar el anterior.
  */
 function mount(eventId) {
   const container = document.getElementById('event-charts-react-root');
   if (!container) return;
 
-  if (!root) {
-    root = createRoot(container);
+  // Si el contenedor cambió (wire:navigate reemplazó el DOM), recrear el root
+  if (!root || mountedContainer !== container) {
+    if (root) root.unmount();
+    root             = createRoot(container);
+    mountedContainer = container;
   }
+
   root.render(<EventChartsApp eventId={eventId} />);
 }
 
@@ -22,7 +30,8 @@ function mount(eventId) {
 function unmount() {
   if (root) {
     root.unmount();
-    root = null;
+    root             = null;
+    mountedContainer = null;
   }
 }
 
@@ -36,7 +45,7 @@ mount(eventId);
 document.addEventListener('livewire:navigated', () => {
   const container = document.getElementById('event-charts-react-root');
   const newEventId = container?.dataset?.eventId;
-  
+
   if (container && newEventId) {
     mount(newEventId);
   } else {

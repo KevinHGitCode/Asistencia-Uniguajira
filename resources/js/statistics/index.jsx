@@ -18,13 +18,15 @@ const APPS = {
   'admin-eventos':   AdminEventosApp,
 };
 
-let root        = null;
-let mountedModule = null; // módulo actualmente montado
+let root             = null;
+let mountedModule    = null;
+let mountedContainer = null; // referencia al nodo DOM actual
 
 /**
  * Monta (o re-monta) la sub-app correspondiente al módulo indicado en data-module.
- * Si el mismo módulo ya está montado, no hace nada (evita re-fetches innecesarios).
- * Solo crea un root nuevo cuando cambia el módulo (navegación entre sub-módulos).
+ *
+ * Detecta si wire:navigate reemplazó el contenedor (nuevo nodo DOM) incluso cuando
+ * el módulo es el mismo (click en la página actual), y en ese caso re-monta.
  */
 function mount() {
   const container = document.getElementById('statistics-react-root');
@@ -34,17 +36,18 @@ function mount() {
   const App    = APPS[module];
   if (!App) return;
 
-  // Si el mismo módulo ya está montado, no remontar (evita re-fetch innecesario)
-  if (root && mountedModule === module) return;
+  // Si el mismo módulo ya está montado Y el contenedor es el mismo nodo DOM, no remontar
+  if (root && mountedModule === module && mountedContainer === container) return;
 
-  // Desmontar root anterior (transición entre sub-módulos vía wire:navigate)
+  // Desmontar root anterior (transición entre sub-módulos o DOM reemplazado)
   if (root) {
     root.unmount();
     root = null;
   }
 
-  root          = createRoot(container);
-  mountedModule = module;
+  root             = createRoot(container);
+  mountedModule    = module;
+  mountedContainer = container;
   root.render(<App />);
 }
 
@@ -54,7 +57,9 @@ function mount() {
 function unmount() {
   if (root) {
     root.unmount();
-    root = null;
+    root             = null;
+    mountedModule    = null;
+    mountedContainer = null;
   }
 }
 
