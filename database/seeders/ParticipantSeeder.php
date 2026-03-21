@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Http\Controllers\Configuration\ProgramController;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
@@ -55,12 +56,10 @@ class ParticipantSeeder extends Seeder
             return isset($colIndex[$col]) ? ($raw[$colIndex[$col]] ?? null) : null;
         };
 
-        $programHash = [];
+        // ── Cachés usando comparisonKey (igual que el controlador) ─────
         $programByNameHash = [];
-        foreach (Program::all(['id', 'name', 'campus']) as $program) {
-            $key = strtolower($program->name) . '|' . strtolower($program->campus ?? '');
-            $programHash[$key] = $program->id;
-            $nameKey = strtolower(trim($program->name));
+        foreach (Program::all(['id', 'name']) as $program) {
+            $nameKey = ProgramController::comparisonKey($program->name);
             if (! isset($programByNameHash[$nameKey])) {
                 $programByNameHash[$nameKey] = $program->id;
             }
@@ -68,17 +67,17 @@ class ParticipantSeeder extends Seeder
 
         $affiliationHash = [];
         foreach (Affiliation::all(['id', 'name']) as $aff) {
-            $affiliationHash[strtolower($aff->name)] = $aff->id;
+            $affiliationHash[ProgramController::comparisonKey($aff->name)] = $aff->id;
         }
 
         $typeHash = [];
         foreach (ParticipantType::all(['id', 'name']) as $type) {
-            $typeHash[strtolower($type->name)] = ['id' => $type->id, 'name' => $type->name];
+            $typeHash[ProgramController::comparisonKey($type->name)] = ['id' => $type->id, 'name' => $type->name];
         }
 
         $defaultType = null;
-        if (isset($typeHash['comunidad externa'])) {
-            $defaultType = $typeHash['comunidad externa'];
+        if (isset($typeHash[ProgramController::comparisonKey('Comunidad Externa')])) {
+            $defaultType = $typeHash[ProgramController::comparisonKey('Comunidad Externa')];
         } elseif (! empty($typeHash)) {
             $defaultType = array_values($typeHash)[0];
         }
@@ -122,9 +121,10 @@ class ParticipantSeeder extends Seeder
             }
             $affiliationType = $get($rawValues, 'Vinculacion');
 
+            // ── Tipo de estamento (con comparisonKey) ─────────────────
             $typeId = null;
             if ($roleName !== '') {
-                $roleKey = strtolower($roleName);
+                $roleKey = ProgramController::comparisonKey($roleName);
                 if (! isset($typeHash[$roleKey])) {
                     $normalizedName = ucwords(strtolower($roleName));
                     $type = ParticipantType::create(['name' => $normalizedName]);
@@ -135,20 +135,21 @@ class ParticipantSeeder extends Seeder
                 $typeId = $defaultType['id'];
             }
 
+            // ── Programa (con comparisonKey, igual que el controlador) ─
             $programId = null;
             if (! empty($programName)) {
-                $parts = explode(' - ', (string) $programName, 2);
-                $programKey = strtolower(trim($parts[0])) . '|' . strtolower(trim($parts[1] ?? ''));
-                $programId = $programHash[$programKey]
-                    ?? $programByNameHash[strtolower(trim($parts[0]))]
-                    ?? null;
+                $rawProgramName = trim(explode(' - ', (string) $programName, 2)[0]);
+                $nameKey = ProgramController::comparisonKey($rawProgramName);
+                $programId = $programByNameHash[$nameKey] ?? null;
             }
 
+            // ── Vinculación (con comparisonKey) ───────────────────────
             $affiliationId = null;
             if (! empty($affiliationType) && $affiliationType !== '0' && $affiliationType !== 0) {
-                $affKey = strtolower(trim((string) $affiliationType));
+                $affKey = ProgramController::comparisonKey($affiliationType);
                 if (! isset($affiliationHash[$affKey])) {
-                    $aff = Affiliation::create(['name' => trim((string) $affiliationType)]);
+                    $cleanName = preg_replace('/\s+/u', ' ', trim((string) $affiliationType));
+                    $aff = Affiliation::create(['name' => $cleanName]);
                     $affiliationHash[$affKey] = $aff->id;
                 }
                 $affiliationId = $affiliationHash[$affKey];
