@@ -16,6 +16,9 @@ use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 
+use App\Mail\AttendanceRegisteredMail;
+use Illuminate\Support\Facades\Mail;
+
 class AttendanceRegistration extends Component
 {
     #[Locked]
@@ -448,6 +451,18 @@ class AttendanceRegistration extends Component
                 'address'             => $this->detailAddress       ?: null,
                 'priority_group'      => $this->detailPriorityGroup ?: null,
             ]);
+
+            // Enviar correo al participante si tiene email
+            $participantEmail = $this->participantData['email'] ?? $this->detailEmail ?? null;
+            if ($participantEmail) {
+                try {
+                    $event = Event::with(['dependency', 'area'])->find($this->eventId);
+                    $participant = Participant::find($this->participantData['id']);
+                    Mail::to($participantEmail)->send(new AttendanceRegisteredMail($attendance, $event, $participant));
+                } catch (\Exception $e) {
+                    Log::warning('No se pudo enviar correo de asistencia: ' . $e->getMessage());
+                }
+            }
 
             $this->successRegisteredAt = $attendance->created_at->format('h:i A');
             $this->totalAttendances    = Attendance::where('participant_id', $this->participantData['id'])->count();

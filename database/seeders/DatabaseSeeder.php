@@ -22,7 +22,7 @@ class DatabaseSeeder extends Seeder
             ['name' => 'carlos', 'email' => 'carlos@example.com'],
             ['name' => 'luis', 'email' => 'luis@example.com'],
             ['name' => 'kevin', 'email' => 'kevin@example.com'],
-            ['name' => 'daniel', 'email' => 'daniel@example.com'],
+            ['name' => 'daniel', 'email' => 'dandressierra@uniguajira.edu.co'],
             ['name' => 'renzo', 'email' => 'renzo@example.com'],
         ];
 

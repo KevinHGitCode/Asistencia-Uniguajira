@@ -9,6 +9,10 @@ use Livewire\Attributes\On;
 use Illuminate\Support\Facades\Auth;
 use Flux\Flux;
 
+use App\Mail\EventModifiedMail;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+
 class EditEventModal extends Component
 {
     public $dependencies;
@@ -139,6 +143,8 @@ class EditEventModal extends Component
             $areaId = $area->id;
         }
 
+        $original = $event->only(['title', 'description', 'date', 'start_time', 'end_time', 'location', 'dependency_id', 'area_id']);
+
         $event->update([
             'title'         => $this->title,
             'description'   => $this->description,
@@ -149,6 +155,25 @@ class EditEventModal extends Component
             'start_time'    => $this->start_time ?: null,
             'end_time'      => $this->end_time ?: null,
         ]);
+
+        // Detectar cambios y enviar correo
+        $changes = [];
+        foreach ($original as $field => $oldValue) {
+            $newValue = $event->$field;
+            if ((string) $oldValue !== (string) $newValue) {
+                $changes[$field] = ['old' => $oldValue ?? '—', 'new' => $newValue ?? '—'];
+            }
+        }
+
+        if (!empty($changes) && $event->user?->email) {
+            try {
+                $event->load(['dependency', 'area', 'user']);
+                Mail::to($event->user->email)->send(new EventModifiedMail($event, $changes));
+            } catch (\Exception $e) {
+                Log::warning('No se pudo enviar correo de evento modificado: ' . $e->getMessage());
+            }
+        }
+
 
         Flux::modal('edit-event-modal')->close();
 

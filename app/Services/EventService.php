@@ -7,6 +7,10 @@ use App\Models\Event;
 use App\Models\User;
 use Illuminate\Validation\ValidationException;
 
+use App\Mail\EventCreatedMail;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+
 class EventService
 {
     public function create(array $data, User $user): Event
@@ -41,7 +45,7 @@ class EventService
             . '-' . date('Ymd', strtotime($data['date']))
             . '-' . uniqid();
 
-        return Event::create([
+        $event = Event::create([
             'title'         => $data['title'],
             'description'   => $data['description'] ?? null,
             'location'      => $data['location'] ?? null,
@@ -53,5 +57,16 @@ class EventService
             'user_id'       => $user->id,
             'link'          => $slug,
         ]);
+
+        if ($user->email) {
+            try {
+                $event->load(['dependency', 'area', 'user']);
+                Mail::to($user->email)->send(new EventCreatedMail($event));
+            } catch (\Exception $e) {
+                Log::warning('No se pudo enviar correo de evento creado: ' . $e->getMessage());
+            }
+        }
+
+        return $event;
     }
 }
