@@ -64,7 +64,7 @@ confirmation.blade.php
                     </div>
                     @endif
 
-                    @php $confirmAffiliation = $participant->affiliations->first(); @endphp
+                    @php $confirmAffiliation = $participant->activeRoles->first()?->affiliation; @endphp
                     @if($confirmAffiliation)
                     <div class="border-b border-gray-200 dark:border-gray-700 pb-3">
                         <p class="text-sm text-gray-500 dark:text-gray-400">Tipo de Vinculación</p>
@@ -74,7 +74,7 @@ confirmation.blade.php
                     </div>
                     @endif
 
-                    @php $confirmProgram = $attendance->detail?->program ?? $participant->programs->first(); @endphp
+                    @php $confirmProgram = $attendance->detail?->participantRole?->program ?? $participant->activeRoles->first()?->program; @endphp
                     @if($confirmProgram)
                     <div class="pb-3">
                         <p class="text-sm text-gray-500 dark:text-gray-400">Programa Académico</p>

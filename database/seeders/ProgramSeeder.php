@@ -10,6 +10,8 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class ProgramSeeder extends Seeder
 {
+    private const PROGRAM_TYPES = ['pregrado', 'posgrado', 'postgrado'];
+
     public function run(): void
     {
         $path = database_path('seeders/files/seed.xlsx');
@@ -48,7 +50,6 @@ class ProgramSeeder extends Seeder
             return isset($colIndex[$col]) ? ($raw[$colIndex[$col]] ?? null) : null;
         };
 
-        // Cache de programas existentes usando la misma clave de comparación del controlador
         $existingSet = array_flip(
             Program::all(['name'])->map(fn ($p) => ProgramController::comparisonKey($p->name))->toArray()
         );
@@ -62,6 +63,14 @@ class ProgramSeeder extends Seeder
                 continue;
             }
 
+            $programTypeRaw = $get($rawValues, 'Tipo_progama');
+
+            // Solo insertar programas académicos, no dependencias
+            $programTypeNorm = mb_strtolower(trim((string) ($programTypeRaw ?? '')), 'UTF-8');
+            if (! in_array($programTypeNorm, self::PROGRAM_TYPES, true)) {
+                continue;
+            }
+
             $programNameRaw = $get($rawValues, 'Programa o Dependencia');
             if ($programNameRaw === null || trim((string) $programNameRaw) === '') {
                 $maybeProgram = $get($rawValues, 'Correo');
@@ -70,7 +79,6 @@ class ProgramSeeder extends Seeder
                     $programNameRaw = $maybeProgram;
                 }
             }
-            $programTypeRaw = $get($rawValues, 'Tipo_progama');
             if ($programNameRaw === null || trim((string) $programNameRaw) === '') {
                 continue;
             }
@@ -82,31 +90,23 @@ class ProgramSeeder extends Seeder
                 continue;
             }
 
-            // Normalización UTF-8 idéntica al controlador
             $programName = ProgramController::normalizeName($rawName);
             $campus = $rawCampus ? ProgramController::normalizeName($rawCampus) : null;
 
-            $programType = null;
-            if ($programTypeRaw !== null && trim((string) $programTypeRaw) !== '') {
-                $programType = match (mb_strtolower(trim((string) $programTypeRaw), 'UTF-8')) {
-                    'pregrado' => 'Pregrado',
-                    'posgrado', 'postgrado' => 'Posgrado',
-                    default => null,
-                };
-            }
+            $programType = match ($programTypeNorm) {
+                'pregrado' => 'Pregrado',
+                'posgrado', 'postgrado' => 'Posgrado',
+                default => null,
+            };
 
-            // Clave de comparación sin acentos (igual que importExcel del controlador)
             $nameKey = ProgramController::comparisonKey($programName);
             $campusKey = $campus ? ProgramController::comparisonKey($campus) : '';
             $compositeKey = $nameKey . '|' . $campusKey;
 
             if (isset($existingSet[$nameKey])) {
-                // Ya existe en BD o ya se procesó en este lote, saltar
                 continue;
             }
 
-            // Marcar como existente para que filas posteriores con tildes/espacios
-            // diferentes no se dupliquen (misma lógica que importExcel)
             $existingSet[$nameKey] = true;
 
             if (! isset($programsToInsert[$compositeKey])) {

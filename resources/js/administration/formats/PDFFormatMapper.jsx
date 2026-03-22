@@ -32,7 +32,7 @@ const CHECKBOX_FIELDS = [
   },
   {
     id: "role_checkbox", label: "Cargo (casillas)", configId: "role",
-    options: ["Estudiante", "Docente", "Administrativo", "Graduado", "Comunidad Externa"],
+    options: ["Estudiante", "Docente", "Administrativos", "Graduado", "Comunidad Externa"],
   },
 ];
 

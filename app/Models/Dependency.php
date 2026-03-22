@@ -11,16 +11,12 @@ class Dependency extends Model
 
     protected $fillable = ['name'];
 
-    // Muchos a muchos: una dependencia puede tener varios usuarios,
-    // y un usuario puede estar en varias dependencias.
     public function users()
     {
         return $this->belongsToMany(User::class, 'dependency_user')
                     ->withTimestamps();
     }
 
-
-    // Una dependencia tiene muchos eventos
     public function events()
     {
         return $this->hasMany(Event::class);
@@ -36,4 +32,14 @@ class Dependency extends Model
         return $this->belongsToMany(Format::class, 'dependency_format');
     }
 
+    public function participantRoles()
+    {
+        return $this->hasMany(ParticipantRole::class);
+    }
+
+    public function participants()
+    {
+        return $this->belongsToMany(Participant::class, 'participant_roles')
+            ->wherePivot('is_active', true);
+    }
 }

@@ -9,6 +9,7 @@ use App\Models\AttendanceDetail;
 use App\Models\Dependency;
 use App\Models\Event;
 use App\Models\Participant;
+use App\Models\ParticipantRole;
 use App\Models\ParticipantType;
 use App\Models\Program;
 use App\Models\User;
@@ -57,9 +58,13 @@ class ApiRoutesPerformanceTest extends TestCase
             'email' => 'ana.perez@example.com',
         ]);
 
-        $participant->programs()->syncWithoutDetaching([$program->id]);
-        $participant->types()->syncWithoutDetaching([$participantType->id]);
-        $participant->affiliations()->syncWithoutDetaching([$affiliation->id]);
+        $role = ParticipantRole::create([
+            'participant_id'      => $participant->id,
+            'participant_type_id' => $participantType->id,
+            'program_id'          => $program->id,
+            'affiliation_id'      => $affiliation->id,
+            'is_active'           => true,
+        ]);
 
         $event = Event::create([
             'title' => 'Evento Demo',
@@ -80,11 +85,10 @@ class ApiRoutesPerformanceTest extends TestCase
         ]);
 
         AttendanceDetail::create([
-            'attendance_id' => $attendance->id,
-            'gender' => 'Femenino',
-            'priority_group' => 'Ninguno',
-            'program_id' => $program->id,
-            'participant_type_id' => $participantType->id,
+            'attendance_id'       => $attendance->id,
+            'participant_role_id' => $role->id,
+            'gender'              => 'Femenino',
+            'priority_group'      => 'Ninguno',
         ]);
 
         $this->paramValues = [
@@ -194,7 +198,6 @@ class ApiRoutesPerformanceTest extends TestCase
 
     private function shouldSkipUri(string $uri): bool
     {
-        // MySQL-only DATE_FORMAT() en esta ruta (falla en SQLite de tests)
         if ($this->dbDriver === 'sqlite' && $uri === 'api/mis-eventos-json') {
             return true;
         }

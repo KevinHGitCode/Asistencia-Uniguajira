@@ -210,10 +210,10 @@ return [
             ],
             'role' => [
                 'Docente' => ['x' => 278.69, 'y_offset' => 1.76],
-                'Administrativo' => ['x' => 290.45, 'y_offset' => 2.06],
                 'Estudiante' => ['x' => 302.51, 'y_offset' => 2.35],
                 'Graduado' => ['x' => 313.97, 'y_offset' => 2.06],
                 'Comunidad Externa' => ['x' => 328.38, 'y_offset' => 1.76],
+                'Administrativos' => ['x' => 291.04, 'y_offset' => 2.05],
             ],
             'gender' => [
                 'Femenino' => ['x' => 97.6, 'y_offset' => 2.35],

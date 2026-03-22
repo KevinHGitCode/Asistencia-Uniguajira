@@ -63,11 +63,11 @@ class DatabaseSeeder extends Seeder
         // Otros seeders
         $this->call([
             AreasSeeder::class,
-            EventSeeder::class,
-            ProgramSeeder::class,
-            AffiliationSeeder::class,
-            ParticipantSeeder::class,
-            AttendanceSeeder::class,
+            // EventSeeder::class,
+            // ProgramSeeder::class,
+            // AffiliationSeeder::class,
+            // ParticipantSeeder::class,
+            // AttendanceSeeder::class,
             FormatSeeder::class,
         ]);
     }

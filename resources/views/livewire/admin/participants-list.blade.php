@@ -34,15 +34,17 @@
             <tbody class="bg-white dark:bg-zinc-900 divide-y divide-neutral-100 dark:divide-zinc-800">
                 @forelse ($participants as $participant)
                     @php
-                        $typeNames       = $participant->types->pluck('name')->values();
-                        $primaryType     = $typeNames->first();
-                        $extraTypesCount = max(0, $typeNames->count() - 1);
+                        $typeNames              = $participant->activeRoles->pluck('type.name')->filter()->unique()->values();
+                        $primaryType            = $typeNames->first();
+                        $extraTypesCount        = max(0, $typeNames->count() - 1);
 
-                        $programNames       = $participant->programs->pluck('name')->values();
-                        $primaryProgram     = $programNames->first();
-                        $extraProgramsCount = max(0, $programNames->count() - 1);
+                        $programNames           = $participant->activeRoles->pluck('program.name')->filter()->unique()->values();
+                        $dependencyNames        = $participant->activeRoles->pluck('dependency.name')->filter()->unique()->values();
+                        $allProgramDep          = $programNames->merge($dependencyNames)->values();
+                        $primaryProgram         = $allProgramDep->first();
+                        $extraProgramsCount     = max(0, $allProgramDep->count() - 1);
 
-                        $affiliationNames       = $participant->affiliations->pluck('name')->values();
+                        $affiliationNames       = $participant->activeRoles->pluck('affiliation.name')->filter()->unique()->values();
                         $primaryAffiliation     = $affiliationNames->first();
                         $extraAffiliationsCount = max(0, $affiliationNames->count() - 1);
                     @endphp
@@ -114,8 +116,8 @@
                                                  @mouseenter="keep()" @mouseleave="hide()">
                                                 <p class="mb-2 font-semibold">Programas activos</p>
                                                 <ul class="space-y-1">
-                                                    @foreach ($programNames as $programName)
-                                                        <li>{{ $programName }}</li>
+                                                    @foreach ($allProgramDep as $name)
+                                                        <li>{{ $name }}</li>
                                                     @endforeach
                                                 </ul>
                                             </div>

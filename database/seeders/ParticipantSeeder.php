@@ -3,16 +3,19 @@
 namespace Database\Seeders;
 
 use App\Http\Controllers\Configuration\ProgramController;
+use App\Models\Affiliation;
+use App\Models\Dependency;
+use App\Models\ParticipantType;
+use App\Models\Program;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Models\Affiliation;
-use App\Models\Program;
-use App\Models\ParticipantType;
 
 class ParticipantSeeder extends Seeder
 {
     private const BATCH_SIZE = 500;
+
+    private const PROGRAM_TYPES = ['pregrado', 'posgrado', 'postgrado'];
 
     public function run(): void
     {
@@ -41,14 +44,9 @@ class ParticipantSeeder extends Seeder
             array_shift($rows);
         } else {
             $colIndex = [
-                'Documento' => 0,
-                'Nombres' => 1,
-                'Apellidos' => 2,
-                'Tipo de Estamento' => 3,
-                'Correo' => 4,
-                'Programa o Dependencia' => 5,
-                'Tipo_progama' => 6,
-                'Vinculacion' => 7,
+                'Documento' => 0, 'Nombres' => 1, 'Apellidos' => 2,
+                'Tipo de Estamento' => 3, 'Correo' => 4,
+                'Programa o Dependencia' => 5, 'Tipo_progama' => 6, 'Vinculacion' => 7,
             ];
         }
 
@@ -56,36 +54,35 @@ class ParticipantSeeder extends Seeder
             return isset($colIndex[$col]) ? ($raw[$colIndex[$col]] ?? null) : null;
         };
 
-        // ── Cachés usando comparisonKey (igual que el controlador) ─────
+        // ── Cachés ────────────────────────────────────────────────────────
         $programByNameHash = [];
-        foreach (Program::all(['id', 'name']) as $program) {
-            $nameKey = ProgramController::comparisonKey($program->name);
-            if (! isset($programByNameHash[$nameKey])) {
-                $programByNameHash[$nameKey] = $program->id;
+        foreach (Program::all(['id', 'name']) as $p) {
+            $k = ProgramController::comparisonKey($p->name);
+            if (! isset($programByNameHash[$k])) {
+                $programByNameHash[$k] = $p->id;
             }
         }
 
+        $dependencyHash = [];
+        foreach (Dependency::all(['id', 'name']) as $d) {
+            $dependencyHash[ProgramController::comparisonKey($d->name)] = $d->id;
+        }
+
         $affiliationHash = [];
-        foreach (Affiliation::all(['id', 'name']) as $aff) {
-            $affiliationHash[ProgramController::comparisonKey($aff->name)] = $aff->id;
+        foreach (Affiliation::all(['id', 'name']) as $a) {
+            $affiliationHash[ProgramController::comparisonKey($a->name)] = $a->id;
         }
 
         $typeHash = [];
-        foreach (ParticipantType::all(['id', 'name']) as $type) {
-            $typeHash[ProgramController::comparisonKey($type->name)] = ['id' => $type->id, 'name' => $type->name];
+        foreach (ParticipantType::all(['id', 'name']) as $t) {
+            $typeHash[ProgramController::comparisonKey($t->name)] = ['id' => $t->id, 'name' => $t->name];
         }
 
-        $defaultType = null;
-        if (isset($typeHash[ProgramController::comparisonKey('Comunidad Externa')])) {
-            $defaultType = $typeHash[ProgramController::comparisonKey('Comunidad Externa')];
-        } elseif (! empty($typeHash)) {
-            $defaultType = array_values($typeHash)[0];
-        }
+        $defaultType = $typeHash[ProgramController::comparisonKey('Comunidad Externa')]
+            ?? (! empty($typeHash) ? array_values($typeHash)[0] : null);
 
-        $participantMap = [];
-        $programMap = [];
-        $typeMap = [];
-        $affiliationMap = [];
+        $participantMap  = [];
+        $rolesMap        = [];
         $emailToDocument = [];
 
         foreach ($rows as $row) {
@@ -99,12 +96,14 @@ class ParticipantSeeder extends Seeder
                 continue;
             }
 
-            $firstName = ucwords(strtolower(trim((string) ($get($rawValues, 'Nombres') ?? ''))));
-            $lastName = ucwords(strtolower(trim((string) ($get($rawValues, 'Apellidos') ?? ''))));
-            $roleName = trim((string) ($get($rawValues, 'Tipo de Estamento') ?? ''));
-            $emailRaw = $get($rawValues, 'Correo');
-            $programName = $get($rawValues, 'Programa o Dependencia');
-            $email = null;
+            $firstName       = ucwords(strtolower(trim((string) ($get($rawValues, 'Nombres') ?? ''))));
+            $lastName        = ucwords(strtolower(trim((string) ($get($rawValues, 'Apellidos') ?? ''))));
+            $roleName        = trim((string) ($get($rawValues, 'Tipo de Estamento') ?? ''));
+            $emailRaw        = $get($rawValues, 'Correo');
+            $programName     = $get($rawValues, 'Programa o Dependencia');
+            $programTypeRaw  = $get($rawValues, 'Tipo_progama');
+            $affiliationType = $get($rawValues, 'Vinculacion');
+            $email           = null;
 
             if ($emailRaw !== null && trim((string) $emailRaw) !== '') {
                 $emailCandidate = strtolower(trim((string) $emailRaw));
@@ -119,31 +118,47 @@ class ParticipantSeeder extends Seeder
                     $programName = $emailRaw;
                 }
             }
-            $affiliationType = $get($rawValues, 'Vinculacion');
 
-            // ── Tipo de estamento (con comparisonKey) ─────────────────
+            // ── Tipo de estamento ─────────────────────────────────────────
             $typeId = null;
             if ($roleName !== '') {
                 $roleKey = ProgramController::comparisonKey($roleName);
                 if (! isset($typeHash[$roleKey])) {
-                    $normalizedName = ucwords(strtolower($roleName));
-                    $type = ParticipantType::create(['name' => $normalizedName]);
+                    $type = ParticipantType::create(['name' => ucwords(strtolower($roleName))]);
                     $typeHash[$roleKey] = ['id' => $type->id, 'name' => $type->name];
                 }
-                $typeId = $typeHash[$roleKey]['id'] ?? null;
+                $typeId = $typeHash[$roleKey]['id'];
             } elseif ($defaultType) {
                 $typeId = $defaultType['id'];
             }
 
-            // ── Programa (con comparisonKey, igual que el controlador) ─
-            $programId = null;
-            if (! empty($programName)) {
-                $rawProgramName = trim(explode(' - ', (string) $programName, 2)[0]);
-                $nameKey = ProgramController::comparisonKey($rawProgramName);
-                $programId = $programByNameHash[$nameKey] ?? null;
+            // ── Programa o Dependencia ────────────────────────────────────
+            $isProgramType = in_array(
+                mb_strtolower(trim((string) ($programTypeRaw ?? '')), 'UTF-8'),
+                self::PROGRAM_TYPES,
+                true
+            );
+
+            $programId    = null;
+            $dependencyId = null;
+
+            if (! empty($programName) && trim((string) $programName) !== '') {
+                $rawName = trim(explode(' - ', (string) $programName, 2)[0]);
+                $nameKey = ProgramController::comparisonKey($rawName);
+
+                if ($isProgramType) {
+                    $programId = $programByNameHash[$nameKey] ?? null;
+                } else {
+                    if (! isset($dependencyHash[$nameKey])) {
+                        $cleanName = preg_replace('/\s+/u', ' ', trim((string) $programName));
+                        $dep = Dependency::create(['name' => ProgramController::normalizeName($cleanName)]);
+                        $dependencyHash[$nameKey] = $dep->id;
+                    }
+                    $dependencyId = $dependencyHash[$nameKey];
+                }
             }
 
-            // ── Vinculación (con comparisonKey) ───────────────────────
+            // ── Vinculación ───────────────────────────────────────────────
             $affiliationId = null;
             if (! empty($affiliationType) && $affiliationType !== '0' && $affiliationType !== 0) {
                 $affKey = ProgramController::comparisonKey($affiliationType);
@@ -155,49 +170,52 @@ class ParticipantSeeder extends Seeder
                 $affiliationId = $affiliationHash[$affKey];
             }
 
+            // ── Construir el rol ──────────────────────────────────────────
+            $roleKey = ($typeId ?? 0) . '|' . ($programId ?? 0) . '|' . ($dependencyId ?? 0) . '|' . ($affiliationId ?? 0);
+
+            if (! isset($rolesMap[$document])) {
+                $rolesMap[$document] = [];
+            }
+            if (! isset($rolesMap[$document][$roleKey])) {
+                $rolesMap[$document][$roleKey] = [
+                    'participant_type_id' => $typeId,
+                    'program_id'          => $programId,
+                    'dependency_id'       => $dependencyId,
+                    'affiliation_id'      => $affiliationId,
+                ];
+            }
+
+            // ── Participante (primera aparición) ──────────────────────────
             if (isset($participantMap[$document])) {
                 if ($email && empty($participantMap[$document]['email'])) {
                     $participantMap[$document]['email'] = $email;
-                }
-                if ($programId && ! in_array($programId, $programMap[$document] ?? [], true)) {
-                    $programMap[$document][] = $programId;
-                }
-                if ($typeId && ! in_array($typeId, $typeMap[$document] ?? [], true)) {
-                    $typeMap[$document][] = $typeId;
-                }
-                if ($affiliationId && ! in_array($affiliationId, $affiliationMap[$document] ?? [], true)) {
-                    $affiliationMap[$document][] = $affiliationId;
                 }
                 continue;
             }
 
             $participantMap[$document] = [
-                'document' => $document,
+                'document'     => $document,
                 'student_code' => null,
-                'first_name' => $firstName,
-                'last_name' => $lastName,
-                'email' => $email ?: null,
-                'created_at' => now()->toDateTimeString(),
-                'updated_at' => now()->toDateTimeString(),
+                'first_name'   => $firstName,
+                'last_name'    => $lastName,
+                'email'        => $email ?: null,
+                'created_at'   => now()->toDateTimeString(),
+                'updated_at'   => now()->toDateTimeString(),
             ];
-
-            $programMap[$document] = $programId ? [$programId] : [];
-            $typeMap[$document] = $typeId ? [$typeId] : [];
-            $affiliationMap[$document] = $affiliationId ? [$affiliationId] : [];
         }
 
         if (empty($participantMap)) {
             return;
         }
 
-        $now = now()->toDateTimeString();
-        $batch = [];
+        $now       = now()->toDateTimeString();
+        $batch     = [];
         $documents = [];
 
         foreach ($participantMap as $doc => $data) {
             $data['created_at'] = $now;
             $data['updated_at'] = $now;
-            $batch[] = $data;
+            $batch[]     = $data;
             $documents[] = $doc;
 
             if (count($batch) === self::BATCH_SIZE) {
@@ -214,73 +232,35 @@ class ParticipantSeeder extends Seeder
             ->pluck('id', 'document')
             ->toArray();
 
-        $programBatch = [];
-        $typeBatch = [];
-        $affiliationBatch = [];
+        $roleBatch = [];
 
         foreach ($documents as $doc) {
-            $participantId = $docToId[$doc] ?? null;
-            if (! $participantId) {
+            $pid = $docToId[$doc] ?? null;
+            if (! $pid) {
                 continue;
             }
 
-            foreach (array_unique($programMap[$doc] ?? []) as $programId) {
-                if (! $programId) {
-                    continue;
-                }
-                $programBatch[] = [
-                    'participant_id' => $participantId,
-                    'program_id' => $programId,
-                    'created_at' => $now,
-                    'updated_at' => $now,
+            foreach ($rolesMap[$doc] ?? [] as $role) {
+                $roleBatch[] = [
+                    'participant_id'      => $pid,
+                    'participant_type_id' => $role['participant_type_id'],
+                    'program_id'          => $role['program_id'],
+                    'dependency_id'       => $role['dependency_id'],
+                    'affiliation_id'      => $role['affiliation_id'],
+                    'is_active'           => true,
+                    'created_at'          => $now,
+                    'updated_at'          => $now,
                 ];
-                if (count($programBatch) === self::BATCH_SIZE) {
-                    DB::table('participant_program')->insertOrIgnore($programBatch);
-                    $programBatch = [];
-                }
-            }
 
-            foreach (array_unique($typeMap[$doc] ?? []) as $typeId) {
-                if (! $typeId) {
-                    continue;
-                }
-                $typeBatch[] = [
-                    'participant_id' => $participantId,
-                    'participant_type_id' => $typeId,
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ];
-                if (count($typeBatch) === self::BATCH_SIZE) {
-                    DB::table('participant_type_participant')->insertOrIgnore($typeBatch);
-                    $typeBatch = [];
-                }
-            }
-
-            foreach (array_unique($affiliationMap[$doc] ?? []) as $affiliationId) {
-                if (! $affiliationId) {
-                    continue;
-                }
-                $affiliationBatch[] = [
-                    'participant_id' => $participantId,
-                    'affiliation_id' => $affiliationId,
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ];
-                if (count($affiliationBatch) === self::BATCH_SIZE) {
-                    DB::table('affiliation_participant')->insertOrIgnore($affiliationBatch);
-                    $affiliationBatch = [];
+                if (count($roleBatch) === self::BATCH_SIZE) {
+                    DB::table('participant_roles')->insert($roleBatch);
+                    $roleBatch = [];
                 }
             }
         }
 
-        if (! empty($programBatch)) {
-            DB::table('participant_program')->insertOrIgnore($programBatch);
-        }
-        if (! empty($typeBatch)) {
-            DB::table('participant_type_participant')->insertOrIgnore($typeBatch);
-        }
-        if (! empty($affiliationBatch)) {
-            DB::table('affiliation_participant')->insertOrIgnore($affiliationBatch);
+        if (! empty($roleBatch)) {
+            DB::table('participant_roles')->insert($roleBatch);
         }
     }
 }

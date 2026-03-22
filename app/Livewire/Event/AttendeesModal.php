@@ -22,7 +22,16 @@ class AttendeesModal extends Component
     {
         $event = Event::findOrFail($this->eventId);
         
-        $this->attendees = Attendance::with(['participant.affiliations', 'participant.programs', 'participant.types', 'detail.program', 'detail.participantType'])
+        $this->attendees = Attendance::with([
+            'participant.activeRoles.type',
+            'participant.activeRoles.program',
+            'participant.activeRoles.dependency',
+            'participant.activeRoles.affiliation',
+            'detail.participantRole.type',
+            'detail.participantRole.program',
+            'detail.participantRole.dependency',
+            'detail.participantRole.affiliation',
+        ])
             ->where('event_id', $this->eventId)
             ->orderBy('created_at', 'desc')
             ->get();

@@ -6,9 +6,12 @@ use App\Models\Attendance;
 use App\Models\AttendanceDetail;
 use App\Models\Event;
 use App\Models\Participant;
+use App\Models\ParticipantRole;
 use App\Models\ParticipantType;
 use App\Models\Program;
 use App\Models\Affiliation;
+use App\Models\Dependency;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
@@ -22,7 +25,7 @@ class AttendanceRegistration extends Component
 
     public string $activeTab = 'asistencia';
 
-    // 'search' | 'register_external' | 'found' | 'select_type' | 'select_program' | 'details' | 'duplicate' | 'success'
+    // 'search' | 'register_external' | 'found' | 'select_type' | 'select_role' | 'details' | 'duplicate' | 'success'
     public string $step = 'search';
 
     public string $identification = '';
@@ -34,9 +37,9 @@ class AttendanceRegistration extends Component
     public ?string $successRegisteredAt   = null;
     public int     $totalAttendances      = 0;
 
-    // Tipo y programa seleccionados para esta asistencia
-    public ?int $selectedTypeId    = null;
-    public ?int $selectedProgramId = null;
+    // Selección para esta asistencia
+    public ?int $selectedTypeId = null;
+    public ?int $selectedRoleId = null;
 
     // Campos del detalle de asistencia
     public string $detailGender        = '';
@@ -61,10 +64,12 @@ class AttendanceRegistration extends Component
     public string $newRole           = '';
     public string $newAffiliation    = '';
     public ?int   $newProgramId      = null;
+    public ?int   $newDependencyId   = null;
     public string $newGender         = '';
     public string $newPriorityGroup  = '';
 
     public array $programs        = [];
+    public array $dependencies    = [];
     public array $affiliations    = [];
     public array $participantTypes = [];
 
@@ -107,6 +112,11 @@ class AttendanceRegistration extends Component
             ])
             ->toArray();
 
+        $this->dependencies = Dependency::orderBy('name')
+            ->get(['id', 'name'])
+            ->map(fn ($d) => ['id' => $d->id, 'name' => $d->name])
+            ->toArray();
+
         $this->affiliations = Affiliation::orderBy('name')
             ->get(['id', 'name'])
             ->map(fn ($a) => ['id' => $a->id, 'name' => $a->name])
@@ -145,7 +155,7 @@ class AttendanceRegistration extends Component
 
         $term = trim($this->identification);
 
-        $participant = Participant::with(['programs', 'affiliations', 'types'])
+        $participant = Participant::with(['activeRoles.type', 'activeRoles.program', 'activeRoles.dependency', 'activeRoles.affiliation'])
             ->where(function ($q) use ($term) {
                 $q->where('document', $term)
                   ->orWhere('student_code', $term);
@@ -157,28 +167,34 @@ class AttendanceRegistration extends Component
             return;
         }
 
-        $programs = $participant->programs->map(fn ($p) => [
-            'id'        => $p->id,
-            'name'      => $p->name,
-            'campus'    => $p->campus,
-            'full_name' => $p->name . ($p->campus ? ' - ' . $p->campus : ''),
+        $roles = $participant->activeRoles->map(fn ($r) => [
+            'id'              => $r->id,
+            'type_id'         => $r->participant_type_id,
+            'type_name'       => $r->type?->name ?? '',
+            'program_id'      => $r->program_id,
+            'program_name'    => $r->program?->name ?? null,
+            'program_campus'  => $r->program?->campus ?? null,
+            'dependency_id'   => $r->dependency_id,
+            'dependency_name' => $r->dependency?->name ?? null,
+            'affiliation_name' => $r->affiliation?->name ?? null,
         ])->values()->toArray();
 
-        $types = $participant->types->map(fn ($t) => [
-            'id'   => $t->id,
-            'name' => $t->name,
-        ])->values()->toArray();
+        // Tipos únicos derivados de los roles
+        $types = collect($roles)
+            ->unique('type_id')
+            ->map(fn ($r) => ['id' => $r['type_id'], 'name' => $r['type_name']])
+            ->values()
+            ->toArray();
 
         $this->participantData = [
-            'id'          => $participant->id,
-            'first_name'  => $participant->first_name,
-            'last_name'   => $participant->last_name,
-            'document'    => $participant->document,
-            'email'       => $participant->email,
-            'has_email'   => ! empty($participant->email),
-            'affiliation' => $participant->affiliations->first()?->name,
-            'programs'    => $programs,
-            'types'       => $types,
+            'id'         => $participant->id,
+            'first_name' => $participant->first_name,
+            'last_name'  => $participant->last_name,
+            'document'   => $participant->document,
+            'email'      => $participant->email,
+            'has_email'  => ! empty($participant->email),
+            'roles'      => $roles,
+            'types'      => $types,
         ];
 
         $existing = Attendance::where('event_id', $this->eventId)
@@ -218,28 +234,46 @@ class AttendanceRegistration extends Component
                 'email'      => $this->externalEmail ?: null,
             ]);
 
-            // Attach to type pivot
             $type = ParticipantType::where('name', 'Comunidad Externa')->first();
+            $role = null;
+
             if ($type) {
-                $participant->types()->attach($type->id);
-                $typeData = [['id' => $type->id, 'name' => $type->name]];
-            } else {
-                $typeData = [];
+                $role = ParticipantRole::create([
+                    'participant_id'      => $participant->id,
+                    'participant_type_id' => $type->id,
+                    'program_id'          => null,
+                    'dependency_id'       => null,
+                    'affiliation_id'      => null,
+                    'is_active'           => true,
+                ]);
             }
 
+            $roleData = $role ? [[
+                'id'               => $role->id,
+                'type_id'          => $type->id,
+                'type_name'        => $type->name,
+                'program_id'       => null,
+                'program_name'     => null,
+                'program_campus'   => null,
+                'dependency_id'    => null,
+                'dependency_name'  => null,
+                'affiliation_name' => null,
+            ]] : [];
+
+            $typeData = $type ? [['id' => $type->id, 'name' => $type->name]] : [];
+
             $this->participantData = [
-                'id'          => $participant->id,
-                'first_name'  => $participant->first_name,
-                'last_name'   => $participant->last_name,
-                'document'    => $participant->document,
-                'email'       => $participant->email,
-                'has_email'   => ! empty($participant->email),
-                'affiliation' => null,
-                'programs'    => [],
-                'types'       => $typeData,
+                'id'         => $participant->id,
+                'first_name' => $participant->first_name,
+                'last_name'  => $participant->last_name,
+                'document'   => $participant->document,
+                'email'      => $participant->email,
+                'has_email'  => ! empty($participant->email),
+                'roles'      => $roleData,
+                'types'      => $typeData,
             ];
 
-            $this->selectedTypeId = $type?->id;
+            $this->selectedRoleId = $role?->id;
 
             $this->externalFirstName = '';
             $this->externalLastName  = '';
@@ -261,30 +295,32 @@ class AttendanceRegistration extends Component
             return;
         }
 
-        $types    = $this->participantData['types'] ?? [];
-        $programs = $this->participantData['programs'] ?? [];
+        $types = $this->participantData['types'] ?? [];
+        $roles = $this->participantData['roles'] ?? [];
 
-        // If multiple types → ask which one
+        // Múltiples tipos → preguntar cuál
         if (count($types) > 1) {
             $this->selectedTypeId = null;
+            $this->selectedRoleId = null;
             $this->step = 'select_type';
             return;
         }
 
-        // Single type or no type → pre-select
+        // Un solo tipo → seleccionar automáticamente
         $this->selectedTypeId = ! empty($types) ? $types[0]['id'] : null;
-        $typeName = ! empty($types) ? $types[0]['name'] : '';
 
-        // If type requires program and has multiple programs → ask program
-        if (count($programs) > 1 && in_array($typeName, ['Estudiante', 'Graduado'])) {
-            $this->selectedProgramId = null;
-            $this->step = 'select_program';
+        // Filtrar roles de ese tipo
+        $rolesForType = array_values(array_filter($roles, fn ($r) => $r['type_id'] === $this->selectedTypeId));
+
+        // Múltiples roles para ese tipo → preguntar cuál
+        if (count($rolesForType) > 1) {
+            $this->selectedRoleId = null;
+            $this->step = 'select_role';
             return;
         }
 
-        $this->selectedProgramId = (! empty($programs) && in_array($typeName, ['Estudiante', 'Graduado']))
-            ? $programs[0]['id']
-            : null;
+        // Un solo rol → seleccionar automáticamente
+        $this->selectedRoleId = ! empty($rolesForType) ? $rolesForType[0]['id'] : null;
 
         $this->loadLastDefaults();
         $this->step = 'details';
@@ -307,39 +343,42 @@ class AttendanceRegistration extends Component
             ]
         );
 
-        // Get selected type name
-        $selectedType = collect($this->participantData['types'])->firstWhere('id', $this->selectedTypeId);
-        $typeName = $selectedType['name'] ?? '';
-        $programs = $this->participantData['programs'] ?? [];
+        $roles = $this->participantData['roles'] ?? [];
+        $rolesForType = array_values(array_filter($roles, fn ($r) => $r['type_id'] === $this->selectedTypeId));
 
-        if (count($programs) > 1 && in_array($typeName, ['Estudiante', 'Graduado'])) {
-            $this->selectedProgramId = null;
-            $this->step = 'select_program';
+        // Múltiples roles para ese tipo → preguntar cuál
+        if (count($rolesForType) > 1) {
+            $this->selectedRoleId = null;
+            $this->step = 'select_role';
             return;
         }
 
-        $this->selectedProgramId = (! empty($programs) && in_array($typeName, ['Estudiante', 'Graduado']))
-            ? $programs[0]['id']
-            : null;
+        // Un solo rol → seleccionar automáticamente
+        $this->selectedRoleId = ! empty($rolesForType) ? $rolesForType[0]['id'] : null;
 
         $this->loadLastDefaults();
         $this->step = 'details';
     }
 
-    public function confirmProgramSelection(): void
+    public function confirmRoleSelection(): void
     {
         if (! $this->participantData) {
             $this->backToSearch();
             return;
         }
 
-        $validIds = array_column($this->participantData['programs'] ?? [], 'id');
+        // Solo roles del tipo seleccionado son válidos
+        $rolesForType = array_filter(
+            $this->participantData['roles'] ?? [],
+            fn ($r) => $r['type_id'] === $this->selectedTypeId
+        );
+        $validIds = array_column($rolesForType, 'id');
 
         $this->validate(
-            ['selectedProgramId' => 'required|integer|in:' . implode(',', $validIds)],
+            ['selectedRoleId' => 'required|integer|in:' . implode(',', $validIds)],
             [
-                'selectedProgramId.required' => 'Selecciona el programa con el que registras asistencia.',
-                'selectedProgramId.in'       => 'El programa seleccionado no es valido.',
+                'selectedRoleId.required' => 'Selecciona el programa o dependencia con el que registras asistencia.',
+                'selectedRoleId.in'       => 'La seleccion no es valida.',
             ]
         );
 
@@ -395,14 +434,13 @@ class AttendanceRegistration extends Component
 
             AttendanceDetail::create([
                 'attendance_id'       => $attendance->id,
+                'participant_role_id' => $this->selectedRoleId,
                 'gender'              => $this->detailGender        ?: null,
                 'phone'               => $this->detailPhone         ?: null,
                 'city'                => $this->detailCity          ?: null,
                 'neighborhood'        => $this->detailNeighborhood  ?: null,
                 'address'             => $this->detailAddress       ?: null,
                 'priority_group'      => $this->detailPriorityGroup ?: null,
-                'program_id'          => $this->selectedProgramId,
-                'participant_type_id' => $this->selectedTypeId,
             ]);
 
             $this->successRegisteredAt = $attendance->created_at->format('h:i A');
@@ -423,7 +461,7 @@ class AttendanceRegistration extends Component
         $this->successRegisteredAt   = null;
         $this->totalAttendances      = 0;
         $this->selectedTypeId        = null;
-        $this->selectedProgramId     = null;
+        $this->selectedRoleId        = null;
         $this->step                  = 'search';
 
         $this->detailGender        = '';
@@ -455,6 +493,7 @@ class AttendanceRegistration extends Component
                 'newRole'           => ['required', 'string', \Illuminate\Validation\Rule::in($validTypeNames)],
                 'newAffiliation'    => 'nullable|string|max:100',
                 'newProgramId'      => 'nullable|exists:programs,id',
+                'newDependencyId'   => 'nullable|exists:dependencies,id',
                 'newGender'         => 'nullable|string|max:50',
                 'newPriorityGroup'  => 'nullable|string|max:150',
             ],
@@ -475,7 +514,7 @@ class AttendanceRegistration extends Component
 
         try {
             $affiliationId = null;
-            if ($this->newRole === 'Docente' && ! empty($this->newAffiliation)) {
+            if (! empty($this->newAffiliation)) {
                 $affiliation   = Affiliation::firstOrCreate(['name' => trim($this->newAffiliation)]);
                 $affiliationId = $affiliation->id;
             }
@@ -490,19 +529,17 @@ class AttendanceRegistration extends Component
                 'priority_group' => $this->newPriorityGroup  ?: null,
             ]);
 
-            // Attach affiliation via pivot
-            if ($affiliationId) {
-                $participant->affiliations()->attach($affiliationId);
-            }
-
-            // Attach to type pivot
             $type = ParticipantType::where('name', $this->newRole)->first();
-            if ($type) {
-                $participant->types()->attach($type->id);
-            }
 
-            if ($this->newProgramId && in_array($this->newRole, ['Estudiante', 'Graduado'])) {
-                $participant->programs()->attach($this->newProgramId);
+            if ($type) {
+                ParticipantRole::create([
+                    'participant_id'      => $participant->id,
+                    'participant_type_id' => $type->id,
+                    'program_id'          => $this->newProgramId ?: null,
+                    'dependency_id'       => $this->newDependencyId ?: null,
+                    'affiliation_id'      => $affiliationId,
+                    'is_active'           => true,
+                ]);
             }
 
             $this->identification = $participant->document;
@@ -516,6 +553,22 @@ class AttendanceRegistration extends Component
         }
     }
 
+    /**
+     * Devuelve los roles filtrados por el tipo seleccionado.
+     * Usado en la vista para mostrar las opciones en select_role.
+     */
+    public function getRolesForSelectedTypeProperty(): array
+    {
+        if (! $this->participantData || ! $this->selectedTypeId) {
+            return [];
+        }
+
+        return array_values(array_filter(
+            $this->participantData['roles'] ?? [],
+            fn ($r) => $r['type_id'] === $this->selectedTypeId
+        ));
+    }
+
     private function loadLastDefaults(): void
     {
         if (! $this->participantData) {
@@ -527,7 +580,6 @@ class AttendanceRegistration extends Component
         })->latest()->first();
 
         if (! $lastDetail) {
-            // Reset to empty so stale typing from a previous search doesn't linger
             $this->detailGender        = '';
             $this->detailPhone         = '';
             $this->detailCity          = '';
@@ -555,6 +607,7 @@ class AttendanceRegistration extends Component
         $this->newRole          = ! empty($this->participantTypes) ? $this->participantTypes[0]['name'] : '';
         $this->newAffiliation   = '';
         $this->newProgramId     = null;
+        $this->newDependencyId  = null;
         $this->newGender        = '';
         $this->newPriorityGroup = '';
         $this->resetValidation();

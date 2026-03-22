@@ -66,9 +66,7 @@
                                             {{ $attendance->participant->first_name }} {{ $attendance->participant->last_name }}
                                         </h4>
                                         @php
-                                            $modalTypeName = $attendance->detail?->participantType?->name
-                                                ?? $attendance->participant->types->first()?->name
-                                                ?? '';
+                                            $modalTypeName = $attendance->detail?->participantRole?->type?->name ?? '';
                                         @endphp
                                         @if($modalTypeName !== '')
                                             <span class="px-2 py-0.5 text-xs font-medium rounded-full
@@ -98,18 +96,20 @@
                                         @endif
 
                                         @php
-                                            $modalProgram = $attendance->detail?->program
-                                                ?? $attendance->participant->programs->first();
-                                            $modalAffiliation = $attendance->participant->affiliations->first();
+                                            $modalProgram = $attendance->detail?->participantRole?->program;
+                                            $modalDependency = $attendance->detail?->participantRole?->dependency;
+                                            $modalAffiliation = $attendance->detail?->participantRole?->affiliation;
                                         @endphp
                                         @if($modalProgram)
-                                        <p class="flex items-center gap-1">
-                                            <svg class="size-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/>
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/>
-                                            </svg>
-                                            <span>{{ $modalProgram->name }}</span>
-                                        </p>
+                                            <p class="flex items-center gap-1">
+                                                {{-- ícono existente --}}
+                                                <span>{{ $modalProgram->name }}</span>
+                                            </p>
+                                        @elseif($modalDependency)
+                                            <p class="flex items-center gap-1">
+                                                {{-- mismo ícono --}}
+                                                <span>{{ $modalDependency->name }}</span>
+                                            </p>
                                         @endif
 
                                         @if($modalAffiliation)
@@ -151,22 +151,33 @@
 
             <!-- Footer con estadísticas -->
             @if($totalAttendees > 0)
-            <div class="border-t border-zinc-200 dark:border-zinc-700 pt-4">
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="text-center p-3 bg-green-50 dark:bg-green-950 rounded-lg">
-                        <p class="text-xs text-green-600 dark:text-green-400 mb-1">Estudiantes</p>
-                        <p class="text-2xl font-bold text-green-700 dark:text-green-300">
-                            {{ $attendees->filter(fn($a) => ($a->detail?->participantType?->name ?? $a->participant->types->first()?->name) === 'Estudiante')->count() }}
-                        </p>
-                    </div>
-                    <div class="text-center p-3 bg-purple-50 dark:bg-purple-950 rounded-lg">
-                        <p class="text-xs text-purple-600 dark:text-purple-400 mb-1">Docentes</p>
-                        <p class="text-2xl font-bold text-purple-700 dark:text-purple-300">
-                            {{ $attendees->filter(fn($a) => ($a->detail?->participantType?->name ?? $a->participant->types->first()?->name) === 'Docente')->count() }}
-                        </p>
+                @php
+                    $typeCounts = $attendees
+                        ->groupBy(fn($a) => $a->detail?->participantRole?->type?->name ?? 'Sin estamento')
+                        ->map->count()
+                        ->sortDesc();
+
+                    $typeColors = [
+                        'Estudiante'      => ['bg' => 'bg-green-50 dark:bg-green-950', 'label' => 'text-green-600 dark:text-green-400', 'count' => 'text-green-700 dark:text-green-300'],
+                        'Docente'         => ['bg' => 'bg-purple-50 dark:bg-purple-950', 'label' => 'text-purple-600 dark:text-purple-400', 'count' => 'text-purple-700 dark:text-purple-300'],
+                        'Graduado'        => ['bg' => 'bg-amber-50 dark:bg-amber-950', 'label' => 'text-amber-600 dark:text-amber-400', 'count' => 'text-amber-700 dark:text-amber-300'],
+                        'Administrativos' => ['bg' => 'bg-blue-50 dark:bg-blue-950', 'label' => 'text-blue-600 dark:text-blue-400', 'count' => 'text-blue-700 dark:text-blue-300'],
+                    ];
+
+                    $defaultColor = ['bg' => 'bg-zinc-50 dark:bg-zinc-800', 'label' => 'text-zinc-600 dark:text-zinc-400', 'count' => 'text-zinc-700 dark:text-zinc-300'];
+                @endphp
+
+                <div class="border-t border-zinc-200 dark:border-zinc-700 pt-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        @foreach($typeCounts as $typeName => $count)
+                            @php $color = $typeColors[$typeName] ?? $defaultColor; @endphp
+                            <div class="text-center p-3 {{ $color['bg'] }} rounded-lg">
+                                <p class="text-xs {{ $color['label'] }} mb-1">{{ $typeName }}</p>
+                                <p class="text-2xl font-bold {{ $color['count'] }}">{{ $count }}</p>
+                            </div>
+                        @endforeach
                     </div>
                 </div>
-            </div>
             @endif
 
             <!-- Botones de acción -->

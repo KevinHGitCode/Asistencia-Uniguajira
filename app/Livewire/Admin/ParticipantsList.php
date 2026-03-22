@@ -20,9 +20,10 @@ class ParticipantsList extends Component
     public function render()
     {
         $participants = Participant::with([
-                'programs'     => fn ($q) => $q->wherePivot('is_active', 1),
-                'types'        => fn ($q) => $q->wherePivot('is_active', 1),
-                'affiliations' => fn ($q) => $q->wherePivot('is_active', 1),
+            'activeRoles.type',
+            'activeRoles.program',
+            'activeRoles.dependency',
+            'activeRoles.affiliation',
             ])
             ->when($this->search !== '', function ($q) {
                 $term = '%' . $this->search . '%';

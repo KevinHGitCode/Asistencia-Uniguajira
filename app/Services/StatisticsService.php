@@ -45,7 +45,8 @@ class StatisticsService
     public function attendancesByProgram(): Collection
     {
         return $this->detailsBase()
-            ->join('programs', 'attendance_details.program_id', '=', 'programs.id')
+            ->join('participant_roles', 'attendance_details.participant_role_id', '=', 'participant_roles.id')
+            ->join('programs', 'participant_roles.program_id', '=', 'programs.id')
             ->select('programs.name as name', DB::raw('COUNT(*) as value'))
             ->groupBy('programs.name')
             ->orderByDesc('value')
@@ -55,7 +56,8 @@ class StatisticsService
     public function participantsByProgram(): Collection
     {
         return $this->detailsBase()
-            ->join('programs', 'attendance_details.program_id', '=', 'programs.id')
+            ->join('participant_roles', 'attendance_details.participant_role_id', '=', 'participant_roles.id')
+            ->join('programs', 'participant_roles.program_id', '=', 'programs.id')
             ->select('programs.name as name', DB::raw('COUNT(DISTINCT attendances.participant_id) as value'))
             ->groupBy('programs.name')
             ->orderByDesc('value')
@@ -67,7 +69,8 @@ class StatisticsService
     public function attendancesByType(): Collection
     {
         return $this->detailsBase()
-            ->join('participant_types', 'attendance_details.participant_type_id', '=', 'participant_types.id')
+            ->join('participant_roles', 'attendance_details.participant_role_id', '=', 'participant_roles.id')
+            ->join('participant_types', 'participant_roles.participant_type_id', '=', 'participant_types.id')
             ->select('participant_types.name as name', DB::raw('COUNT(*) as value'))
             ->groupBy('participant_types.name')
             ->orderByDesc('value')
@@ -77,7 +80,8 @@ class StatisticsService
     public function participantsByType(): Collection
     {
         return $this->detailsBase()
-            ->join('participant_types', 'attendance_details.participant_type_id', '=', 'participant_types.id')
+            ->join('participant_roles', 'attendance_details.participant_role_id', '=', 'participant_roles.id')
+            ->join('participant_types', 'participant_roles.participant_type_id', '=', 'participant_types.id')
             ->select('participant_types.name as name', DB::raw('COUNT(DISTINCT attendances.participant_id) as value'))
             ->groupBy('participant_types.name')
             ->orderByDesc('value')

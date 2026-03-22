@@ -84,7 +84,8 @@ Route::middleware(['web', 'auth'])->get('/mis-eventos-json', function () {
 Route::get('/statistics/event/{event}/programs', function ($event) {
     return DB::table('attendances')
         ->join('attendance_details', 'attendances.id', '=', 'attendance_details.attendance_id')
-        ->join('programs', 'attendance_details.program_id', '=', 'programs.id')
+        ->join('participant_roles', 'attendance_details.participant_role_id', '=', 'participant_roles.id')
+        ->join('programs', 'participant_roles.program_id', '=', 'programs.id')
         ->select('programs.name as program', DB::raw('COUNT(*) as count'))
         ->where('attendances.event_id', $event)
         ->groupBy('programs.name')
@@ -96,7 +97,8 @@ Route::get('/statistics/event/{event}/programs', function ($event) {
 Route::get('/statistics/event/{event}/roles', function ($event) {
     return DB::table('attendances')
         ->join('attendance_details', 'attendances.id', '=', 'attendance_details.attendance_id')
-        ->join('participant_types', 'attendance_details.participant_type_id', '=', 'participant_types.id')
+        ->join('participant_roles', 'attendance_details.participant_role_id', '=', 'participant_roles.id')
+        ->join('participant_types', 'participant_roles.participant_type_id', '=', 'participant_types.id')
         ->select('participant_types.name as role', DB::raw('COUNT(*) as count'))
         ->where('attendances.event_id', $event)
         ->groupBy('participant_types.name')
@@ -205,7 +207,8 @@ Route::get('/statistics/compare/data', function (Request $request) {
     $byRole = DB::table('attendances')
         ->join('events', 'attendances.event_id', '=', 'events.id')
         ->join('attendance_details', 'attendances.id', '=', 'attendance_details.attendance_id')
-        ->join('participant_types', 'attendance_details.participant_type_id', '=', 'participant_types.id')
+        ->join('participant_roles', 'attendance_details.participant_role_id', '=', 'participant_roles.id')
+        ->join('participant_types', 'participant_roles.participant_type_id', '=', 'participant_types.id')
         ->select(
             'events.id as event_id',
             'events.title as event_title',
@@ -297,17 +300,20 @@ Route::get('/participants', function () {
 // Get participants by program ID (via pivot)
 Route::get('/participants/program/{program_id}', function ($program_id) {
     return DB::table('participants')
-        ->join('participant_program', 'participants.id', '=', 'participant_program.participant_id')
-        ->where('participant_program.program_id', $program_id)
+        ->join('participant_roles', 'participants.id', '=', 'participant_roles.participant_id')
+        ->where('participant_roles.program_id', $program_id)
+        ->where('participant_roles.is_active', 1)
         ->select('participants.*')
+        ->distinct()
         ->get();
 });
 
 // Get count of participants by program (via pivot)
 Route::get('/participants/count-by-program', function () {
-    return DB::table('participant_program')
-        ->join('programs', 'participant_program.program_id', '=', 'programs.id')
-        ->select('programs.name as program', DB::raw('COUNT(DISTINCT participant_program.participant_id) as count'))
+    return DB::table('participant_roles')
+        ->join('programs', 'participant_roles.program_id', '=', 'programs.id')
+        ->where('participant_roles.is_active', 1)
+        ->select('programs.name as program', DB::raw('COUNT(DISTINCT participant_roles.participant_id) as count'))
         ->groupBy('programs.id', 'programs.name')
         ->orderByDesc('count')
         ->get();

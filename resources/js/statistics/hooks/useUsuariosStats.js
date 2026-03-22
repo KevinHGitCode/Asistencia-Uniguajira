@@ -54,9 +54,9 @@ export function useUsuariosStats() {
           events: totalEvents,
         },
         charts: {
-          topUsers:     topUsers.map(d => ({ name: d.name, value: d.count })),
-          eventsByRole: eventsByRole.map(d => ({ name: d.role, value: d.count })),
-          eventsByUser: eventsByUser.map(d => ({ name: d.name, value: d.count })),
+          topUsers:     topUsers,
+          eventsByRole: eventsByRole,
+          eventsByUser: eventsByUser,
         },
         loading: false,
         error:   null,

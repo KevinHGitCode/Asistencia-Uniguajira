@@ -186,7 +186,7 @@ class AttendancePdfService
             }
 
             if (isset($cols['role'])) {
-                $roleText = $detail?->participantType?->name ?? $p->types->first()?->name ?? '';
+                $roleText = $detail?->participantRole?->type?->name ?? '';
                 // Si tiene 'x' y 'w', es texto
                 if (isset($cols['role']['x']) && isset($cols['role']['w'])) {
                     $pdf->SetFont('Arial', '', $cols['role']['fontSize'] ?? 12);
@@ -211,7 +211,7 @@ class AttendancePdfService
             if (isset($cols['program'])) {
                 $pdf->SetFont('Arial', '', $cols['program']['fontSize'] ?? 12);
                 $pdf->SetXY($cols['program']['x'], $y);
-                $programName = $detail?->program?->name ?? $p->programs->first()?->name ?? '';
+                $programName = $detail?->participantRole?->program?->name ?? $detail?->participantRole?->dependency?->name ?? '';
                 $pdf->Cell($cols['program']['w'], $cols['program']['h'] ?? 7.8,
                     $this->toIso($this->truncateText($programName, $cols['program']['limit'])),
                     0, 0, $cols['program']['align']

@@ -11,7 +11,7 @@
     "name": "index"
   },
   "resources/css/app.css": {
-    "file": "assets/app-BwC8Go3j.css",
+    "file": "assets/app-P94xnIFd.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "names": [
@@ -74,7 +74,7 @@
     "isDynamicEntry": true
   },
   "resources/js/events/index.jsx": {
-    "file": "assets/index-CQhRMCJq.js",
+    "file": "assets/index-BDV7GHT6.js",
     "name": "index",
     "src": "resources/js/events/index.jsx",
     "isEntry": true,
@@ -84,7 +84,7 @@
     ]
   },
   "resources/js/statistics/index.jsx": {
-    "file": "assets/index-BJXRhK48.js",
+    "file": "assets/index-BpSt4dP8.js",
     "name": "index",
     "src": "resources/js/statistics/index.jsx",
     "isEntry": true,

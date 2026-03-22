@@ -9,6 +9,7 @@ use App\Models\Dependency;
 use App\Models\Event;
 use App\Models\Format;
 use App\Models\Participant;
+use App\Models\ParticipantRole;
 use App\Models\ParticipantType;
 use App\Models\Program;
 use App\Models\User;
@@ -54,9 +55,13 @@ class WebRoutesPerformanceTest extends TestCase
             'email' => 'ana.perez@example.com',
         ]);
 
-        $participant->programs()->syncWithoutDetaching([$program->id]);
-        $participant->types()->syncWithoutDetaching([$participantType->id]);
-        $participant->affiliations()->syncWithoutDetaching([$affiliation->id]);
+        ParticipantRole::create([
+            'participant_id'      => $participant->id,
+            'participant_type_id' => $participantType->id,
+            'program_id'          => $program->id,
+            'affiliation_id'      => $affiliation->id,
+            'is_active'           => true,
+        ]);
 
         $format = Format::create([
             'name' => 'General',

@@ -72,7 +72,7 @@ class DashboardStatsTest extends TestCase
         $eventoAdmin = Event::factory()->create(['user_id' => $admin->id, 'date' => '2026-02-01']);
         $eventoOtro  = Event::factory()->create(['user_id' => $otro->id,  'date' => '2026-02-01']);
 
-        $p = Participant::factory()->create(['program_id' => $prog->id]);
+        $p = Participant::factory()->create();
         Attendance::create(['event_id' => $eventoAdmin->id, 'participant_id' => $p->id]);
         Attendance::create(['event_id' => $eventoOtro->id,  'participant_id' => $p->id]);
 
@@ -87,9 +87,9 @@ class DashboardStatsTest extends TestCase
         $prog  = Program::factory()->create();
         $event = Event::factory()->create(['user_id' => $admin->id, 'date' => '2026-02-01']);
 
-        $p1 = Participant::factory()->create(['program_id' => $prog->id]);
-        $p2 = Participant::factory()->create(['program_id' => $prog->id]);
-        Participant::factory()->create(['program_id' => $prog->id]); // sin asistencia → no cuenta
+        $p1 = Participant::factory()->create();
+        $p2 = Participant::factory()->create();
+        Participant::factory()->create(); // sin asistencia → no cuenta
 
         Attendance::create(['event_id' => $event->id, 'participant_id' => $p1->id]);
         Attendance::create(['event_id' => $event->id, 'participant_id' => $p2->id]);
@@ -125,9 +125,9 @@ class DashboardStatsTest extends TestCase
         $miEvento   = Event::factory()->create(['user_id' => $user->id,  'date' => '2026-02-01']);
         $otroEvento = Event::factory()->create(['user_id' => $admin->id, 'date' => '2026-02-01']);
 
-        $p1 = Participant::factory()->create(['program_id' => $prog->id]);
-        $p2 = Participant::factory()->create(['program_id' => $prog->id]);
-        $p3 = Participant::factory()->create(['program_id' => $prog->id]);
+        $p1 = Participant::factory()->create();
+        $p2 = Participant::factory()->create();
+        $p3 = Participant::factory()->create();
 
         // 2 asistencias a MI evento, 1 al evento ajeno → debe ver 2
         Attendance::create(['event_id' => $miEvento->id,   'participant_id' => $p1->id]);
@@ -148,8 +148,8 @@ class DashboardStatsTest extends TestCase
         $miEvento   = Event::factory()->create(['user_id' => $user->id,  'date' => '2026-02-01']);
         $otroEvento = Event::factory()->create(['user_id' => $admin->id, 'date' => '2026-02-01']);
 
-        $alice = Participant::factory()->create(['program_id' => $prog->id]);
-        $bob   = Participant::factory()->create(['program_id' => $prog->id]);
+        $alice = Participant::factory()->create();
+        $bob   = Participant::factory()->create();
 
         // Alice asiste a MI evento, Bob asiste al evento ajeno → debe ver 1
         Attendance::create(['event_id' => $miEvento->id,   'participant_id' => $alice->id]);
@@ -165,7 +165,7 @@ class DashboardStatsTest extends TestCase
         // Alice asiste a 3 eventos del mismo usuario → cuenta como 1 participante
         $user = User::factory()->create(['role' => 'user']);
         $prog = Program::factory()->create();
-        $alice = Participant::factory()->create(['program_id' => $prog->id]);
+        $alice = Participant::factory()->create();
 
         for ($i = 0; $i < 3; $i++) {
             $event = Event::factory()->create(['user_id' => $user->id, 'date' => '2026-02-01']);

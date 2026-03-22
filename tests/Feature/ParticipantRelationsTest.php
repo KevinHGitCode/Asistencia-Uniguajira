@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Affiliation;
 use App\Models\Participant;
+use App\Models\ParticipantRole;
 use App\Models\ParticipantType;
 use App\Models\Program;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -13,7 +14,7 @@ class ParticipantRelationsTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_participant_can_have_multiple_programs_and_are_persisted(): void
+    public function test_participant_can_have_multiple_roles_with_programs(): void
     {
         $participant = Participant::create([
             'document'   => 'P-0001',
@@ -22,21 +23,34 @@ class ParticipantRelationsTest extends TestCase
             'email'      => 'ana.perez@example.com',
         ]);
 
+        $type     = ParticipantType::create(['name' => 'Estudiante']);
         $programA = Program::create(['name' => 'Ingenieria', 'campus' => 'Riohacha']);
         $programB = Program::create(['name' => 'Derecho', 'campus' => 'Maicao']);
 
-        $participant->programs()->syncWithoutDetaching([$programA->id, $programB->id]);
+        ParticipantRole::create([
+            'participant_id'      => $participant->id,
+            'participant_type_id' => $type->id,
+            'program_id'          => $programA->id,
+            'is_active'           => true,
+        ]);
 
-        $this->assertDatabaseHas('participant_program', [
+        ParticipantRole::create([
+            'participant_id'      => $participant->id,
+            'participant_type_id' => $type->id,
+            'program_id'          => $programB->id,
+            'is_active'           => true,
+        ]);
+
+        $this->assertDatabaseHas('participant_roles', [
             'participant_id' => $participant->id,
             'program_id'     => $programA->id,
         ]);
-        $this->assertDatabaseHas('participant_program', [
+        $this->assertDatabaseHas('participant_roles', [
             'participant_id' => $participant->id,
             'program_id'     => $programB->id,
         ]);
 
-        $this->assertCount(2, $participant->programs()->get());
+        $this->assertCount(2, $participant->activeRoles);
     }
 
     public function test_participant_can_have_multiple_types_and_affiliations(): void
@@ -50,32 +64,51 @@ class ParticipantRelationsTest extends TestCase
 
         $typeA = ParticipantType::create(['name' => 'Estudiante']);
         $typeB = ParticipantType::create(['name' => 'Docente']);
+        $affA  = Affiliation::create(['name' => 'Planta']);
+        $affB  = Affiliation::create(['name' => 'Ocasional']);
 
-        $affA = Affiliation::create(['name' => 'Planta']);
-        $affB = Affiliation::create(['name' => 'Ocasional']);
+        $programA = Program::create(['name' => 'Ingenieria', 'campus' => 'Riohacha']);
 
-        $participant->types()->syncWithoutDetaching([$typeA->id, $typeB->id]);
-        $participant->affiliations()->syncWithoutDetaching([$affA->id, $affB->id]);
+        ParticipantRole::create([
+            'participant_id'      => $participant->id,
+            'participant_type_id' => $typeA->id,
+            'program_id'          => $programA->id,
+            'is_active'           => true,
+        ]);
 
-        $this->assertDatabaseHas('participant_type_participant', [
+        ParticipantRole::create([
+            'participant_id'      => $participant->id,
+            'participant_type_id' => $typeB->id,
+            'program_id'          => $programA->id,
+            'affiliation_id'      => $affA->id,
+            'is_active'           => true,
+        ]);
+
+        ParticipantRole::create([
+            'participant_id'      => $participant->id,
+            'participant_type_id' => $typeB->id,
+            'program_id'          => $programA->id,
+            'affiliation_id'      => $affB->id,
+            'is_active'           => true,
+        ]);
+
+        $this->assertDatabaseHas('participant_roles', [
             'participant_id'      => $participant->id,
             'participant_type_id' => $typeA->id,
         ]);
-        $this->assertDatabaseHas('participant_type_participant', [
+        $this->assertDatabaseHas('participant_roles', [
             'participant_id'      => $participant->id,
             'participant_type_id' => $typeB->id,
+            'affiliation_id'      => $affA->id,
+        ]);
+        $this->assertDatabaseHas('participant_roles', [
+            'participant_id'      => $participant->id,
+            'participant_type_id' => $typeB->id,
+            'affiliation_id'      => $affB->id,
         ]);
 
-        $this->assertDatabaseHas('affiliation_participant', [
-            'participant_id' => $participant->id,
-            'affiliation_id' => $affA->id,
-        ]);
-        $this->assertDatabaseHas('affiliation_participant', [
-            'participant_id' => $participant->id,
-            'affiliation_id' => $affB->id,
-        ]);
-
-        $this->assertCount(2, $participant->types()->get());
-        $this->assertCount(2, $participant->affiliations()->get());
+        $this->assertCount(3, $participant->activeRoles);
+        $types = $participant->activeRoles->pluck('type.name')->unique();
+        $this->assertCount(2, $types);
     }
 }

@@ -2,9 +2,11 @@
 
 namespace Database\Factories;
 
-use App\Models\Participant;
-use App\Models\Program;
 use App\Models\Affiliation;
+use App\Models\Participant;
+use App\Models\ParticipantRole;
+use App\Models\ParticipantType;
+use App\Models\Program;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -16,99 +18,128 @@ class ParticipantFactory extends Factory
 
     public function definition(): array
     {
-        $role = fake()->randomElement(['Estudiante', 'Docente', 'Administrativos', 'Graduado']);
-
-        $affiliationId = null;
-        if ($role === 'Docente') {
-            $affiliationName = fake()->randomElement(['Catedratico', 'Ocasional', 'Planta']);
-            $affiliationId = Affiliation::firstOrCreate(['name' => $affiliationName])->id;
-        }
-
         return [
-            'document'         => fake()->unique()->numerify('##########'),
-            'student_code'     => in_array($role, ['Estudiante', 'Graduado']) && fake()->boolean(65)
-                                    ? fake()->unique()->numerify('##########')
-                                    : null,
-            'first_name'       => fake('es_CO')->firstName(),
-            'last_name'        => fake('es_CO')->lastName(),
-            'email'            => fake()->optional(0.85)->unique()->safeEmail(),
-            'role'             => $role,
-            'affiliation_id'   => $affiliationId,
-            'sexo'             => fake()->randomElement(['Masculino', 'Femenino', 'No binario', null]),
-            'grupo_priorizado' => fake()->randomElement([
-                'Víctimas del conflicto armado',
-                'Población con discapacidad',
-                'Comunidades indígenas',
-                'Ninguno', null, null,
-            ]),
+            'document'     => fake()->unique()->numerify('##########'),
+            'student_code' => fake()->boolean(40) ? fake()->unique()->numerify('##########') : null,
+            'first_name'   => fake('es_CO')->firstName(),
+            'last_name'    => fake('es_CO')->lastName(),
+            'email'        => fake()->boolean(85) ? fake()->unique()->safeEmail() : null,
         ];
     }
 
-    /**
-     * Adjunta 1-2 programas al participante después de crearlo
-     * (solo para roles Estudiante y Graduado).
-     */
     public function configure(): static
     {
         return $this->afterCreating(function (Participant $participant) {
-            if (in_array($participant->role, ['Estudiante', 'Graduado'])) {
-                $count    = fake()->randomElement([1, 1, 1, 2]); // 75% uno, 25% dos
-                $programs = Program::inRandomOrder()->limit($count)->pluck('id');
-                $participant->programs()->syncWithoutDetaching($programs);
+            $roleName = fake()->randomElement(['Estudiante', 'Docente', 'Administrativos', 'Graduado']);
+            $type = ParticipantType::firstOrCreate(['name' => $roleName]);
+
+            $programId    = null;
+            $affiliationId = null;
+
+            if (in_array($roleName, ['Estudiante', 'Graduado'])) {
+                $program = Program::inRandomOrder()->first();
+                $programId = $program?->id;
             }
+
+            if ($roleName === 'Docente') {
+                $affiliation = Affiliation::firstOrCreate([
+                    'name' => fake()->randomElement(['Catedratico', 'Ocasional', 'Planta']),
+                ]);
+                $affiliationId = $affiliation->id;
+
+                // Docentes pueden tener múltiples programas
+                $count = fake()->randomElement([1, 1, 2]);
+                $programs = Program::inRandomOrder()->limit($count)->pluck('id');
+                foreach ($programs as $pid) {
+                    ParticipantRole::create([
+                        'participant_id'      => $participant->id,
+                        'participant_type_id' => $type->id,
+                        'program_id'          => $pid,
+                        'affiliation_id'      => $affiliationId,
+                        'is_active'           => true,
+                    ]);
+                }
+                return;
+            }
+
+            ParticipantRole::create([
+                'participant_id'      => $participant->id,
+                'participant_type_id' => $type->id,
+                'program_id'          => $programId,
+                'affiliation_id'      => $affiliationId,
+                'is_active'           => true,
+            ]);
         });
     }
 
     public function estudiante(): static
     {
         return $this->state(fn () => [
-            'role'            => 'Estudiante',
-            'student_code'    => fake()->unique()->numerify('##########'),
-            'affiliation_id'  => null,
+            'student_code' => fake()->unique()->numerify('##########'),
         ])->afterCreating(function (Participant $participant) {
+            $type = ParticipantType::firstOrCreate(['name' => 'Estudiante']);
             $program = Program::inRandomOrder()->first();
-            if ($program) {
-                $participant->programs()->syncWithoutDetaching([$program->id]);
-            }
+            ParticipantRole::create([
+                'participant_id'      => $participant->id,
+                'participant_type_id' => $type->id,
+                'program_id'          => $program?->id,
+                'is_active'           => true,
+            ]);
         });
     }
 
     public function docente(): static
     {
         return $this->state(fn () => [
-            'role'           => 'Docente',
-            'student_code'   => null,
-            'affiliation_id' => Affiliation::firstOrCreate([
+            'student_code' => null,
+        ])->afterCreating(function (Participant $participant) {
+            $type = ParticipantType::firstOrCreate(['name' => 'Docente']);
+            $affiliation = Affiliation::firstOrCreate([
                 'name' => fake()->randomElement(['Catedratico', 'Ocasional', 'Planta']),
-            ])->id,
-        ]);
+            ]);
+            $program = Program::inRandomOrder()->first();
+            ParticipantRole::create([
+                'participant_id'      => $participant->id,
+                'participant_type_id' => $type->id,
+                'program_id'          => $program?->id,
+                'affiliation_id'      => $affiliation->id,
+                'is_active'           => true,
+            ]);
+        });
     }
 
     public function administrativo(): static
     {
         return $this->state(fn () => [
-            'role'           => 'Administrativo',
-            'student_code'   => null,
-            'affiliation_id' => null,
-        ]);
+            'student_code' => null,
+        ])->afterCreating(function (Participant $participant) {
+            $type = ParticipantType::firstOrCreate(['name' => 'Administrativos']);
+            ParticipantRole::create([
+                'participant_id'      => $participant->id,
+                'participant_type_id' => $type->id,
+                'is_active'           => true,
+            ]);
+        });
     }
 
     public function graduado(): static
     {
         return $this->state(fn () => [
-            'role'         => 'Graduado',
             'student_code' => fake()->unique()->numerify('##########'),
-            'affiliation_id' => null,
         ])->afterCreating(function (Participant $participant) {
+            $type = ParticipantType::firstOrCreate(['name' => 'Graduado']);
             $program = Program::inRandomOrder()->first();
-            if ($program) {
-                $participant->programs()->syncWithoutDetaching([$program->id]);
-            }
+            ParticipantRole::create([
+                'participant_id'      => $participant->id,
+                'participant_type_id' => $type->id,
+                'program_id'          => $program?->id,
+                'is_active'           => true,
+            ]);
         });
     }
 
     public function sinGrupoPriorizado(): static
     {
-        return $this->state(fn () => ['grupo_priorizado' => null]);
+        return $this->state(fn () => []);
     }
 }

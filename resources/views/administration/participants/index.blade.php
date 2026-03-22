@@ -72,23 +72,14 @@
                     <flux:icon.arrow-path class="size-5 shrink-0" />
                     <span>
                         <strong>{{ $result['updated_participants'] }}</strong> {{ $result['updated_participants'] === 1 ? 'participante existente actualizado' : 'participantes existentes actualizados' }}.
-                        @if(($result['types_activated'] ?? 0) > 0)
-                            · {{ $result['types_activated'] }} {{ $result['types_activated'] === 1 ? 'estamento activado' : 'estamentos activados' }}
+                        @if(($result['roles_activated'] ?? 0) > 0)
+                            · {{ $result['roles_activated'] }} {{ $result['roles_activated'] === 1 ? 'rol activado' : 'roles activados' }}
                         @endif
-                        @if(($result['types_deactivated'] ?? 0) > 0)
-                            · {{ $result['types_deactivated'] }} {{ $result['types_deactivated'] === 1 ? 'estamento desactivado' : 'estamentos desactivados' }}
+                        @if(($result['roles_deactivated'] ?? 0) > 0)
+                            · {{ $result['roles_deactivated'] }} {{ $result['roles_deactivated'] === 1 ? 'rol desactivado' : 'roles desactivados' }}
                         @endif
-                        @if(($result['programs_activated'] ?? 0) > 0)
-                            · {{ $result['programs_activated'] }} {{ $result['programs_activated'] === 1 ? 'programa activado' : 'programas activados' }}
-                        @endif
-                        @if(($result['programs_deactivated'] ?? 0) > 0)
-                            · {{ $result['programs_deactivated'] }} {{ $result['programs_deactivated'] === 1 ? 'programa desactivado' : 'programas desactivados' }}
-                        @endif
-                        @if(($result['affiliations_activated'] ?? 0) > 0)
-                            · {{ $result['affiliations_activated'] }} {{ $result['affiliations_activated'] === 1 ? 'vinculación activada' : 'vinculaciones activadas' }}
-                        @endif
-                        @if(($result['affiliations_deactivated'] ?? 0) > 0)
-                            · {{ $result['affiliations_deactivated'] }} {{ $result['affiliations_deactivated'] === 1 ? 'vinculación desactivada' : 'vinculaciones desactivadas' }}
+                        @if(($result['roles_created'] ?? 0) > 0)
+                            · {{ $result['roles_created'] }} {{ $result['roles_created'] === 1 ? 'rol nuevo creado' : 'roles nuevos creados' }}
                         @endif
                     </span>
                 </div>

@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use App\Models\Event;
-use App\Models\Participant;
 use App\Models\ParticipantType;
 use App\Models\Program;
 
@@ -56,91 +55,83 @@ class AttendanceSeeder extends Seeder
                 ->limit(fake()->numberBetween(self::MIN_PROGRAMS, self::MAX_PROGRAMS))
                 ->pluck('id');
 
+            // ── Estudiantes por programa ───────────────────────────────────
             foreach ($programIds as $programId) {
-                $studentQuery = Participant::query()
-                    ->whereHas('programs', fn ($q) => $q->where('program_id', $programId));
-
-                if ($studentTypeId) {
-                    $studentQuery->whereHas('types', fn ($q) => $q->where('participant_type_id', $studentTypeId));
-                }
-
-                if (! empty($selected)) {
-                    $studentQuery->whereNotIn('id', array_keys($selected));
-                }
-
-                $studentIds = $studentQuery->inRandomOrder()
+                // Buscar roles activos de estudiantes en este programa
+                $roles = DB::table('participant_roles')
+                    ->where('program_id', $programId)
+                    ->where('is_active', 1)
+                    ->when($studentTypeId, fn ($q) => $q->where('participant_type_id', $studentTypeId))
+                    ->when(! empty($selected), fn ($q) => $q->whereNotIn('participant_id', array_keys($selected)))
+                    ->inRandomOrder()
                     ->limit(fake()->numberBetween(self::MIN_STUDENTS, self::MAX_STUDENTS))
-                    ->pluck('id');
+                    ->get(['id', 'participant_id']);
 
-                foreach ($studentIds as $participantId) {
-                    if (isset($selected[$participantId])) {
+                foreach ($roles as $role) {
+                    if (isset($selected[$role->participant_id])) {
                         continue;
                     }
-                    $selected[$participantId] = true;
+                    $selected[$role->participant_id] = true;
 
                     $attendanceId = DB::table('attendances')->insertGetId([
-                        'event_id' => $event->id,
-                        'participant_id' => $participantId,
-                        'created_at' => $now,
-                        'updated_at' => $now,
+                        'event_id'       => $event->id,
+                        'participant_id' => $role->participant_id,
+                        'created_at'     => $now,
+                        'updated_at'     => $now,
                     ]);
 
                     DB::table('attendance_details')->insert([
-                        'attendance_id' => $attendanceId,
-                        'gender' => self::GENDERS[array_rand(self::GENDERS)],
-                        'phone' => $faker->numerify('3#########'),
-                        'city' => $faker->city(),
-                        'neighborhood' => $faker->streetName(),
-                        'address' => $faker->streetAddress(),
-                        'priority_group' => self::PRIORITY_GROUPS[array_rand(self::PRIORITY_GROUPS)],
-                        'program_id' => $programId,
-                        'participant_type_id' => $studentTypeId,
-                        'created_at' => $now,
-                        'updated_at' => $now,
+                        'attendance_id'       => $attendanceId,
+                        'participant_role_id' => $role->id,
+                        'gender'              => self::GENDERS[array_rand(self::GENDERS)],
+                        'phone'               => $faker->numerify('3#########'),
+                        'city'                => $faker->city(),
+                        'neighborhood'        => $faker->streetName(),
+                        'address'             => $faker->streetAddress(),
+                        'priority_group'      => self::PRIORITY_GROUPS[array_rand(self::PRIORITY_GROUPS)],
+                        'created_at'          => $now,
+                        'updated_at'          => $now,
                     ]);
                 }
             }
 
+            // ── Docentes ──────────────────────────────────────────────────
             if (! $teacherTypeId) {
                 continue;
             }
 
-            $teacherQuery = Participant::query()
-                ->whereHas('types', fn ($q) => $q->where('participant_type_id', $teacherTypeId));
-
-            if (! empty($selected)) {
-                $teacherQuery->whereNotIn('id', array_keys($selected));
-            }
-
-            $teacherIds = $teacherQuery->inRandomOrder()
+            $teacherRoles = DB::table('participant_roles')
+                ->where('participant_type_id', $teacherTypeId)
+                ->where('is_active', 1)
+                ->when(! empty($selected), fn ($q) => $q->whereNotIn('participant_id', array_keys($selected)))
+                ->inRandomOrder()
                 ->limit(fake()->numberBetween(self::MIN_TEACHERS, self::MAX_TEACHERS))
-                ->pluck('id');
+                ->get(['id', 'participant_id']);
 
-            foreach ($teacherIds as $participantId) {
-                if (isset($selected[$participantId])) {
+            foreach ($teacherRoles as $role) {
+                if (isset($selected[$role->participant_id])) {
                     continue;
                 }
-                $selected[$participantId] = true;
+                $selected[$role->participant_id] = true;
 
                 $attendanceId = DB::table('attendances')->insertGetId([
-                    'event_id' => $event->id,
-                    'participant_id' => $participantId,
-                    'created_at' => $now,
-                    'updated_at' => $now,
+                    'event_id'       => $event->id,
+                    'participant_id' => $role->participant_id,
+                    'created_at'     => $now,
+                    'updated_at'     => $now,
                 ]);
 
                 DB::table('attendance_details')->insert([
-                    'attendance_id' => $attendanceId,
-                    'gender' => self::GENDERS[array_rand(self::GENDERS)],
-                    'phone' => $faker->numerify('3#########'),
-                    'city' => $faker->city(),
-                    'neighborhood' => $faker->streetName(),
-                    'address' => $faker->streetAddress(),
-                    'priority_group' => self::PRIORITY_GROUPS[array_rand(self::PRIORITY_GROUPS)],
-                    'program_id' => null,
-                    'participant_type_id' => $teacherTypeId,
-                    'created_at' => $now,
-                    'updated_at' => $now,
+                    'attendance_id'       => $attendanceId,
+                    'participant_role_id' => $role->id,
+                    'gender'              => self::GENDERS[array_rand(self::GENDERS)],
+                    'phone'               => $faker->numerify('3#########'),
+                    'city'                => $faker->city(),
+                    'neighborhood'        => $faker->streetName(),
+                    'address'             => $faker->streetAddress(),
+                    'priority_group'      => self::PRIORITY_GROUPS[array_rand(self::PRIORITY_GROUPS)],
+                    'created_at'          => $now,
+                    'updated_at'          => $now,
                 ]);
             }
         }
