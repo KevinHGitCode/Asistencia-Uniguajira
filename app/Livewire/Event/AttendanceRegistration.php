@@ -28,6 +28,8 @@ class AttendanceRegistration extends Component
     // 'search' | 'register_external' | 'found' | 'select_type' | 'select_role' | 'details' | 'duplicate' | 'success'
     public string $step = 'search';
 
+    public bool $acceptsDataTreatment = false;
+
     public string $identification = '';
 
     #[Locked]
@@ -146,10 +148,14 @@ class AttendanceRegistration extends Component
     public function search(): void
     {
         $this->validate(
-            ['identification' => 'required|string|max:20'],
+            [
+                'identification' => 'required|string|max:20',
+                'acceptsDataTreatment' => 'accepted',
+            ],
             [
                 'identification.required' => 'Ingresa tu documento o codigo estudiantil.',
                 'identification.max'      => 'El codigo no puede superar los 20 caracteres.',
+                'acceptsDataTreatment.accepted' => 'Debes aceptar el tratamiento de datos personales.',
             ],
         );
 
@@ -455,6 +461,7 @@ class AttendanceRegistration extends Component
 
     public function backToSearch(): void
     {
+        $this->acceptsDataTreatment = false;
         $this->identification        = '';
         $this->participantData       = null;
         $this->duplicateRegisteredAt = null;

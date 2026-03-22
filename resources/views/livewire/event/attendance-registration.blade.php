@@ -105,6 +105,39 @@
                         @enderror
                     </div>
 
+                    {{-- Tratamiento de datos --}}
+                    <div class="mb-4">
+                        <label class="flex items-start gap-2.5 cursor-pointer group">
+                            <input
+                                type="checkbox"
+                                wire:model="acceptsDataTreatment"
+                                class="mt-0.5 h-4 w-4 shrink-0 rounded border-neutral-300 text-[#62a9b6]
+                                    focus:ring-[#62a9b6]/25 dark:border-zinc-600 dark:bg-zinc-700
+                                    accent-[#62a9b6]"
+                            />
+                            <span class="text-xs text-gray-500 dark:text-zinc-400 leading-relaxed">
+                                Acepto el
+                                <a href="https://drive.google.com/file/d/14hSAIC_e-6vtsq4kQ6ifCKP4MVKNOsFu/view?usp=sharing"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="text-[#62a9b6] underline hover:text-[#4d94a0] font-medium">
+                                    tratamiento de datos personales
+                                </a>
+                                de la Universidad de La Guajira.
+                            </span>
+                        </label>
+                        @error('acceptsDataTreatment')
+                            <p class="mt-1.5 flex items-center gap-1 text-xs text-red-500 dark:text-red-400">
+                                <svg class="h-3.5 w-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd"
+                                        d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"
+                                        clip-rule="evenodd"/>
+                                </svg>
+                                {{ $message }}
+                            </p>
+                        @enderror
+                    </div>
+
                     <button
                         wire:click="search"
                         wire:loading.attr="disabled"

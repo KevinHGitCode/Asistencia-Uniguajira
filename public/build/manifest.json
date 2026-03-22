@@ -11,7 +11,7 @@
     "name": "index"
   },
   "resources/css/app.css": {
-    "file": "assets/app-P94xnIFd.css",
+    "file": "assets/app-Cxmgaq7T.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "names": [
@@ -19,7 +19,7 @@
     ]
   },
   "resources/js/administration/formats/pdf-mapper.jsx": {
-    "file": "assets/pdf-mapper-EwDrnFqY.js",
+    "file": "assets/pdf-mapper-dp8P4Ivs.js",
     "name": "pdf-mapper",
     "src": "resources/js/administration/formats/pdf-mapper.jsx",
     "isEntry": true,
