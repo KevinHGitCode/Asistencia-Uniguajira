@@ -51,48 +51,72 @@
         ──────────────────────────────────────────────────────────────── --}}
         @if ($step === 'search')
             <div wire:transition
-                 class="rounded-2xl border border-neutral-200 bg-white shadow-sm
-                        dark:border-zinc-700 dark:bg-zinc-800">
+                 class="relative overflow-hidden rounded-2xl border border-neutral-200/80 bg-white
+                        shadow-[0_10px_30px_-10px_rgba(0,0,0,.15),0_2px_6px_-2px_rgba(0,0,0,.05)]
+                        dark:border-zinc-700/80 dark:bg-zinc-800
+                        dark:shadow-[0_20px_45px_-15px_rgba(0,0,0,.55),0_2px_8px_-2px_rgba(0,0,0,.3)]">
+
+                {{-- Barra de acento superior de marca --}}
+                <span class="pointer-events-none absolute inset-x-0 top-0 h-1"
+                      style="background: linear-gradient(90deg, #62a9b6 0%, #4d94a0 45%, #cc5e50 100%);"></span>
+
                 <div class="px-6 pt-8 pb-6">
 
                     <div class="mb-6 text-center">
-                        <div class="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full"
-                             style="background: rgba(98,169,182,.12)">
-                            <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24"
-                                 stroke="currentColor" stroke-width="1.8" style="color: #62a9b6">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                      d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"/>
-                            </svg>
+                        {{-- Ícono con halo suave --}}
+                        <div class="relative mx-auto mb-4 flex h-16 w-16 items-center justify-center">
+                            <span class="absolute inset-0 rounded-full"
+                                  style="background: radial-gradient(closest-side, rgba(98,169,182,.28), transparent 75%);"></span>
+                            <span class="absolute inset-2 rounded-full ring-1 ring-[#62a9b6]/30"></span>
+                            <div class="relative flex h-12 w-12 items-center justify-center rounded-full shadow-md"
+                                 style="background: linear-gradient(135deg, #62a9b6 0%, #4d94a0 100%);">
+                                <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24"
+                                     stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                          d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"/>
+                                </svg>
+                            </div>
                         </div>
-                        <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100">Ingresa tu documento</h2>
-                        <p class="mt-1 text-sm text-gray-500 dark:text-zinc-400">
+                        <h2 class="text-xl font-extrabold tracking-tight text-gray-800 dark:text-gray-100">
+                            Ingresa tu documento
+                        </h2>
+                        <p class="mx-auto mt-1.5 max-w-[260px] text-sm text-gray-500 dark:text-zinc-400">
                             Buscaremos tu perfil para confirmar la asistencia
                         </p>
                     </div>
 
                     <div class="mb-4">
                         <label for="ar-identification"
-                               class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Documento o código estudiantil
+                               class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-zinc-400">
+                            Documento de identidad
                         </label>
-                        <input
-                            id="ar-identification"
-                            wire:model="identification"
-                            wire:keydown.enter="search"
-                            type="text"
-                            inputmode="numeric"
-                            autocomplete="off"
-                            spellcheck="false"
-                            placeholder="Ej: 1073456789"
-                            class="w-full rounded-xl border px-4 py-3.5 text-xl font-semibold tracking-wider
-                                   bg-white dark:bg-zinc-700
-                                   text-gray-900 dark:text-gray-100
-                                   placeholder-gray-300 dark:placeholder-zinc-500
-                                   transition focus:outline-none focus:ring-2
-                                   {{ $errors->has('identification')
-                                        ? 'border-red-400 focus:border-red-400 focus:ring-red-300/40 dark:border-red-600'
-                                        : 'border-neutral-300 dark:border-zinc-600 focus:border-[#62a9b6] focus:ring-[#62a9b6]/25' }}"
-                        />
+                        <div class="relative">
+                            {{-- Ícono dentro del input --}}
+                            <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-300 dark:text-zinc-500">
+                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                          d="M3.75 7.5a2.25 2.25 0 0 1 2.25-2.25h12a2.25 2.25 0 0 1 2.25 2.25v9a2.25 2.25 0 0 1-2.25 2.25h-12A2.25 2.25 0 0 1 3.75 16.5v-9Zm3 2.25h4.5m-4.5 3h3m3.75-3h3m-3 3h3"/>
+                                </svg>
+                            </span>
+                            <input
+                                id="ar-identification"
+                                wire:model="identification"
+                                wire:keydown.enter="search"
+                                type="text"
+                                inputmode="numeric"
+                                autocomplete="off"
+                                spellcheck="false"
+                                placeholder="Ej: 1073456789"
+                                class="w-full rounded-xl border pl-11 pr-4 py-3.5 text-lg font-semibold tracking-wider
+                                       bg-gray-50 dark:bg-zinc-700/70
+                                       text-gray-900 dark:text-gray-100
+                                       placeholder-gray-300 dark:placeholder-zinc-500
+                                       transition focus:outline-none focus:ring-4 focus:bg-white dark:focus:bg-zinc-700
+                                       {{ $errors->has('identification')
+                                            ? 'border-red-400 focus:border-red-400 focus:ring-red-300/30 dark:border-red-600'
+                                            : 'border-neutral-200 dark:border-zinc-600 focus:border-[#62a9b6] focus:ring-[#62a9b6]/15' }}"
+                            />
+                        </div>
                         @error('identification')
                             <p class="mt-1.5 flex items-center gap-1 text-sm text-red-500 dark:text-red-400">
                                 <svg class="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -106,7 +130,8 @@
                     </div>
 
                     {{-- Tratamiento de datos --}}
-                    <div class="mb-4">
+                    <div class="mb-5 rounded-xl bg-gray-50 px-3.5 py-3 ring-1 ring-inset ring-gray-100
+                                dark:bg-zinc-700/30 dark:ring-zinc-700">
                         <label class="flex items-start gap-2.5 cursor-pointer group">
                             <input
                                 type="checkbox"
@@ -115,12 +140,12 @@
                                     focus:ring-[#62a9b6]/25 dark:border-zinc-600 dark:bg-zinc-700
                                     accent-[#62a9b6]"
                             />
-                            <span class="text-xs text-gray-500 dark:text-zinc-400 leading-relaxed">
+                            <span class="text-xs text-gray-600 dark:text-zinc-300 leading-relaxed">
                                 Acepto el
                                 <a href="https://drive.google.com/file/d/14hSAIC_e-6vtsq4kQ6ifCKP4MVKNOsFu/view?usp=sharing"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                class="text-[#62a9b6] underline hover:text-[#4d94a0] font-medium">
+                                class="text-[#62a9b6] underline hover:text-[#4d94a0] font-semibold">
                                     tratamiento de datos personales
                                 </a>
                                 de la Universidad de La Guajira.
@@ -143,9 +168,11 @@
                         wire:loading.attr="disabled"
                         wire:target="search"
                         type="button"
-                        class="w-full rounded-xl py-3.5 px-6 text-base font-bold text-white shadow
-                               transition-all duration-200 hover:opacity-90 active:scale-[.98]
-                               disabled:cursor-not-allowed disabled:opacity-60"
+                        class="group relative w-full overflow-hidden rounded-xl py-3.5 px-6 text-base font-bold text-white
+                               shadow-lg shadow-[#62a9b6]/20
+                               transition-all duration-200 hover:shadow-xl hover:shadow-[#62a9b6]/30 hover:-translate-y-0.5
+                               active:translate-y-0 active:scale-[.98]
+                               disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
                         style="background: linear-gradient(90deg, #62a9b6 0%, #4d94a0 100%)">
                         <span wire:loading.remove wire:target="search"
                               class="flex items-center justify-center gap-2">
@@ -154,7 +181,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round"
                                       d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"/>
                             </svg>
-                            Buscar
+                            Buscar mi perfil
                         </span>
                         <span wire:loading wire:target="search"
                               class="flex items-center justify-center gap-2">
@@ -169,10 +196,15 @@
                     </button>
                 </div>
 
-                <p class="border-t border-neutral-100 px-6 py-3 text-center text-xs
-                           text-gray-400 dark:border-zinc-700 dark:text-zinc-500">
-                    Puedes usar tu número de cédula o tu código estudiantil
-                </p>
+                <div class="flex items-center justify-center gap-2 border-t border-neutral-100 bg-gray-50/60 px-6 py-3
+                            text-xs text-gray-500 dark:border-zinc-700 dark:bg-zinc-900/30 dark:text-zinc-400">
+                    <svg class="h-3.5 w-3.5 text-[#62a9b6]" fill="none" viewBox="0 0 24 24"
+                         stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+                    </svg>
+                    Usa tu documento de identidad para registrarte
+                </div>
             </div>
         @endif
 
