@@ -19,11 +19,11 @@ class DatabaseSeeder extends Seeder
 
         // Lista de administradores
         $admins = [
-            ['name' => 'carlos', 'email' => 'carlos@example.com'],
-            ['name' => 'luis', 'email' => 'luis@example.com'],
-            ['name' => 'kevin', 'email' => 'kevin@example.com'],
+            ['name' => 'carlos', 'email' => 'carlos@uniguajira.edu.co'],
+            ['name' => 'luis', 'email' => 'lfelipezapata@uniguajira.edu.co'],
+            ['name' => 'kevin', 'email' => 'khafiddiaz@uniguajira.edu.co'],
             ['name' => 'daniel', 'email' => 'dandressierra@uniguajira.edu.co'],
-            ['name' => 'renzo', 'email' => 'renzo@example.com'],
+            ['name' => 'renzo', 'email' => 'rdamiansanchez@uniguajira.edu.co'],
         ];
 
         foreach ($admins as $admin) {
@@ -63,11 +63,11 @@ class DatabaseSeeder extends Seeder
         // Otros seeders
         $this->call([
             AreasSeeder::class,
-            EventSeeder::class,
-            ProgramSeeder::class,
-            AffiliationSeeder::class,
-            ParticipantSeeder::class,
-            AttendanceSeeder::class,
+            // EventSeeder::class,
+            // ProgramSeeder::class,
+            // AffiliationSeeder::class,
+            // ParticipantSeeder::class,
+            // AttendanceSeeder::class,
             FormatSeeder::class,
         ]);
     }
