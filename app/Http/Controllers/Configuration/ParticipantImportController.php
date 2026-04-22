@@ -224,7 +224,10 @@ class ParticipantImportController extends Controller
                     }
                 } else {
                     if (! isset($dependencyHash[$nameKey])) {
-                        $cleanName = preg_replace('/\s+/u', ' ', $programName);
+                        // Misma normalización que usa el cargue masivo de dependencias:
+                        // trim, whitespace colapsado y primera letra en mayúscula
+                        // (resto en minúsculas), con soporte UTF-8.
+                        $cleanName = DependencyController::normalizeName($programName);
                         $dep = Dependency::create(['name' => $cleanName]);
                         $dependencyHash[$nameKey] = $dep->id;
                     }
