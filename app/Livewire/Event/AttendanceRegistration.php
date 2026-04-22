@@ -404,15 +404,17 @@ class AttendanceRegistration extends Component
             : ['detailEmail' => 'nullable|email|max:255|unique:participants,email'];
 
         $this->validate(array_merge([
-            'detailGender'        => 'nullable|string|max:50',
+            'detailGender'        => 'required|string|max:50',
             'detailPhone'         => 'nullable|string|max:20',
             'detailCity'          => 'nullable|string|max:100',
             'detailNeighborhood'  => 'nullable|string|max:100',
             'detailAddress'       => 'nullable|string|max:255',
-            'detailPriorityGroup' => 'nullable|string|max:150',
+            'detailPriorityGroup' => 'required|string|max:150',
         ], $emailRules), [
-            'detailEmail.email'  => 'Ingresa un correo electronico valido.',
-            'detailEmail.unique' => 'Este correo ya esta registrado en el sistema.',
+            'detailGender.required'        => 'Selecciona tu genero.',
+            'detailPriorityGroup.required' => 'Selecciona un grupo priorizado.',
+            'detailEmail.email'            => 'Ingresa un correo electronico valido.',
+            'detailEmail.unique'           => 'Este correo ya esta registrado en el sistema.',
         ]);
 
         $existing = Attendance::where('event_id', $this->eventId)

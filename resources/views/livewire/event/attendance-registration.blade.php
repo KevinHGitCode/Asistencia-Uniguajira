@@ -690,14 +690,22 @@
                     <div class="space-y-3">
 
                         {{-- Género --}}
-                        <div>
-                            <label class="{{ $labelClass }}">Género</label>
-                            <select wire:model="detailGender" class="{{ $selectClass }}">
+                        <div wire:key="field-detail-gender">
+                            <label class="{{ $labelClass }}">
+                                Género <span class="text-red-500">*</span>
+                            </label>
+                            <select wire:model="detailGender"
+                                    wire:key="select-detail-gender"
+                                    class="{{ $selectClass }} {{ $errors->has('detailGender') ? 'border-red-400 focus:border-red-500 focus:ring-red-300/40' : '' }}">
                                 <option value="">— Seleccionar —</option>
                                 @foreach (\App\Livewire\Event\AttendanceRegistration::GENDER_OPTIONS as $opcion)
                                     <option value="{{ $opcion }}">{{ $opcion }}</option>
                                 @endforeach
                             </select>
+                            <p wire:key="error-detail-gender"
+                               class="mt-1 text-xs text-red-500 dark:text-red-400 {{ $errors->has('detailGender') ? '' : 'hidden' }}">
+                                {{ $errors->first('detailGender') }}
+                            </p>
                         </div>
 
                         {{-- Teléfono --}}
@@ -746,14 +754,22 @@
                         </div>
 
                         {{-- Grupo priorizado --}}
-                        <div>
-                            <label class="{{ $labelClass }}">Grupo priorizado</label>
-                            <select wire:model="detailPriorityGroup" class="{{ $selectClass }}">
+                        <div wire:key="field-detail-priority-group">
+                            <label class="{{ $labelClass }}">
+                                Grupo priorizado <span class="text-red-500">*</span>
+                            </label>
+                            <select wire:model="detailPriorityGroup"
+                                    wire:key="select-detail-priority-group"
+                                    class="{{ $selectClass }} {{ $errors->has('detailPriorityGroup') ? 'border-red-400 focus:border-red-500 focus:ring-red-300/40' : '' }}">
                                 <option value="">— Seleccionar —</option>
                                 @foreach (\App\Livewire\Event\AttendanceRegistration::GRUPOS_PRIORIZADOS as $grupo)
                                     <option value="{{ $grupo }}">{{ $grupo }}</option>
                                 @endforeach
                             </select>
+                            <p wire:key="error-detail-priority-group"
+                               class="mt-1 text-xs text-red-500 dark:text-red-400 {{ $errors->has('detailPriorityGroup') ? '' : 'hidden' }}">
+                                {{ $errors->first('detailPriorityGroup') }}
+                            </p>
                         </div>
 
                         {{-- Correo (solo si no tiene email registrado) --}}
@@ -1018,3 +1034,4 @@
 
 
 </div>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
