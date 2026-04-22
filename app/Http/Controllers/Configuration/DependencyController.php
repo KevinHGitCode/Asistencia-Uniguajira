@@ -141,7 +141,7 @@ class DependencyController extends Controller
 
         foreach ($rows as $row) {
             $values  = array_values((array) $row);
-            $rawName = trim((string) ($values[$nameIndex] ?? ''));
+            $rawName = self::normalizeExcelText($values[$nameIndex] ?? null);
 
             if ($rawName === '') {
                 $skipped++;
@@ -215,6 +215,7 @@ class DependencyController extends Controller
     private static function normalizeName(string $value): string
     {
         $lower = mb_strtolower(trim($value), 'UTF-8');
+        $lower = preg_replace('/\s+/u', ' ', $lower);
 
         return mb_strtoupper(mb_substr($lower, 0, 1, 'UTF-8'), 'UTF-8')
              . mb_substr($lower, 1, null, 'UTF-8');
@@ -225,7 +226,45 @@ class DependencyController extends Controller
      */
     private static function comparisonKey(string $value): string
     {
-        return self::stripAccents(mb_strtolower(trim($value), 'UTF-8'));
+        $lower = mb_strtolower(trim($value), 'UTF-8');
+        $lower = preg_replace('/\s+/u', ' ', $lower);
+
+        return self::stripAccents($lower);
+    }
+
+    /**
+     * Normaliza texto crudo proveniente de Excel y corrige mojibake frecuente.
+     */
+    private static function normalizeExcelText(mixed $value): string
+    {
+        if ($value === null) {
+            return '';
+        }
+
+        $text = trim((string) $value);
+        if ($text === '') {
+            return '';
+        }
+
+        $text = strtr($text, [
+            'Ã¡' => 'á',
+            'Ã©' => 'é',
+            'Ã­' => 'í',
+            'Ã³' => 'ó',
+            'Ãº' => 'ú',
+            'Ã' => 'Á',
+            'Ã‰' => 'É',
+            'Ã' => 'Í',
+            'Ã“' => 'Ó',
+            'Ãš' => 'Ú',
+            'Ã±' => 'ñ',
+            'Ã‘' => 'Ñ',
+            'Ã¼' => 'ü',
+            'Ãœ' => 'Ü',
+            'Â'  => '',
+        ]);
+
+        return preg_replace('/\s+/u', ' ', $text) ?? $text;
     }
 
     /**
