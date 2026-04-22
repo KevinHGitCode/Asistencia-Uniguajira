@@ -95,6 +95,7 @@
                             <th class="px-4 sm:px-6 py-3 text-left font-medium">Nombre</th>
                             <th class="px-4 sm:px-6 py-3 text-center font-medium hidden sm:table-cell">Áreas</th>
                             <th class="px-4 sm:px-6 py-3 text-center font-medium hidden sm:table-cell">Eventos</th>
+                            <th class="px-4 sm:px-6 py-3 text-center font-medium">Participantes</th>
                             <th class="px-4 sm:px-6 py-3 text-center font-medium">Creada</th>
                             <th class="px-4 sm:px-6 py-3 text-right font-medium">Acciones</th>
                         </tr>
@@ -125,6 +126,11 @@
                                         {{ $dependency->events_count ?? 0 }}
                                     </span>
                                 </td>
+                                <td class="px-4 sm:px-6 py-4 text-center">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-white bg-[#2563eb]">
+                                        {{ $dependency->participants_count ?? 0 }}
+                                    </span>
+                                </td>
                                 <td class="px-4 sm:px-6 py-4 text-center text-gray-500 dark:text-gray-400 text-xs">
                                     {{ $dependency->created_at->format('d/m/Y') }}
                                 </td>
@@ -147,7 +153,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="px-6 py-16 text-center">
+                                <td colspan="7" class="px-6 py-16 text-center">
                                     <div class="flex flex-col items-center gap-3 text-gray-400 dark:text-zinc-500">
                                         <flux:icon.building-office-2 class="size-12 opacity-30" />
                                         <p class="text-sm">No hay dependencias registradas aún.</p>

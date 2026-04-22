@@ -17,7 +17,7 @@ class DependencyController extends Controller
     {
         // obtener dependencias con sus eventos relacionada
         $dependencies = Dependency::with('areas')
-            ->withCount(['areas', 'events'])
+            ->withCount(['areas', 'events', 'participants'])
             ->get();
 
         return view('administration.dependencies.index', compact('dependencies'));
