@@ -36,6 +36,11 @@ class DependencyController extends Controller
      */
     public function store(Request $request)
     {
+        $normalizedName = self::normalizeName(
+            self::normalizeExcelText($request->name)
+        );
+        $request->merge(['name' => $normalizedName]);
+
         $request->validate([
             'name' => 'required|string|max:255|unique:dependencies,name',
         ], [
@@ -44,7 +49,7 @@ class DependencyController extends Controller
         ]);
 
         $dependency = Dependency::create([
-            'name' => $request->name,
+            'name' => $normalizedName,
         ]);
 
         $formatGeneral = \App\Models\Format::where('slug', 'general')->first();
@@ -76,6 +81,11 @@ class DependencyController extends Controller
      */
     public function update(Request $request, Dependency $dependency)
     {
+        $normalizedName = self::normalizeName(
+            self::normalizeExcelText($request->name)
+        );
+        $request->merge(['name' => $normalizedName]);
+
         $request->validate([
             'name' => 'required|string|max:255|unique:dependencies,name,' . $dependency->id,
         ], [
@@ -84,7 +94,7 @@ class DependencyController extends Controller
         ]);
 
         $dependency->update([
-            'name' => $request->name,
+            'name' => $normalizedName,
         ]);
 
         return redirect()->route('dependencies.index')->with('success', 'Dependencia actualizada exitosamente.');
