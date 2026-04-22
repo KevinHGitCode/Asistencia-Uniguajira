@@ -223,15 +223,18 @@ class ParticipantImportController extends Controller
                         continue;
                     }
                 } else {
-                    if (! isset($dependencyHash[$nameKey])) {
-                        // Misma normalización que usa el cargue masivo de dependencias:
-                        // trim, whitespace colapsado y primera letra en mayúscula
-                        // (resto en minúsculas), con soporte UTF-8.
-                        $cleanName = DependencyController::normalizeName($programName);
-                        $dep = Dependency::create(['name' => $cleanName]);
-                        $dependencyHash[$nameKey] = $dep->id;
-                    }
-                    $dependencyId = $dependencyHash[$nameKey];
+                    // TEMPORAL: Creación de dependencias desde el cargue masivo
+                    // de participantes deshabilitada. Si la dependencia ya existe
+                    // en BD se asocia; si no, el rol queda sin dependencia.
+                    // if (! isset($dependencyHash[$nameKey])) {
+                    //     // Misma normalización que usa el cargue masivo de dependencias:
+                    //     // trim, whitespace colapsado y primera letra en mayúscula
+                    //     // (resto en minúsculas), con soporte UTF-8.
+                    //     $cleanName = DependencyController::normalizeName($programName);
+                    //     $dep = Dependency::create(['name' => $cleanName]);
+                    //     $dependencyHash[$nameKey] = $dep->id;
+                    // }
+                    $dependencyId = $dependencyHash[$nameKey] ?? null;
                 }
             }
 
