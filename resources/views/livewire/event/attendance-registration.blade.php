@@ -567,7 +567,7 @@
                         @foreach ($rolesForType as $role)
                             @php
                                 $roleLabel = $role['program_name']
-                                    ? $role['program_name'] . ($role['program_campus'] ? ' - ' . $role['program_campus'] : '')
+                                    ? $role['program_name']
                                     : ($role['dependency_name'] ?? $role['affiliation_name'] ?? '—');
                             @endphp
                             <label class="flex cursor-pointer items-center gap-3 rounded-xl border p-3.5 transition

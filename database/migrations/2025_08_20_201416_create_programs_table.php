@@ -14,13 +14,9 @@ return new class extends Migration
         // Programas
         Schema::create('programs', function (Blueprint $table) {
             $table->id();
-            $table->string('name', 100);
+            $table->string('name', 255);
             $table->enum('program_type', ['Pregrado', 'Posgrado'])->nullable();
-            $table->string('campus', 100)->nullable();
             $table->timestamps();
-
-            // Clave única para la combinación de nombre y campus
-            $table->unique(['name', 'campus']);
         });
     }
 

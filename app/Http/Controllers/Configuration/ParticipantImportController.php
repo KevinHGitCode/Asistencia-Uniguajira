@@ -31,7 +31,7 @@ class ParticipantImportController extends Controller
 
     public function index()
     {
-        $programs     = Program::orderBy('name')->get(['id', 'name', 'campus']);
+        $programs     = Program::orderBy('name')->get(['id', 'name']);
         $dependencies = Dependency::orderBy('name')->get(['id', 'name']);
         $affiliations = Affiliation::orderBy('name')->get(['id', 'name']);
         $estamentos   = ParticipantType::orderBy('name')->get(['id', 'name']);
@@ -58,6 +58,9 @@ class ParticipantImportController extends Controller
             'excel_file.required' => 'Debes seleccionar un archivo Excel.',
             'excel_file.mimes'    => 'El archivo debe ser .xlsx, .xls o .csv.',
             'excel_file.max'      => 'El archivo no debe superar los 20 MB.',
+            'excel_file.uploaded' => 'No se pudo subir el archivo Excel. Verifica el tamano del archivo y vuelve a intentarlo.',
+        ], [
+            'excel_file' => 'archivo Excel',
         ]);
 
         $sheets  = Excel::toArray([], $request->file('excel_file'));
@@ -157,14 +160,23 @@ class ParticipantImportController extends Controller
             }
 
             $document        = trim((string) ($get($rawValues, 'Documento') ?? ''));
-            $firstName       = mb_convert_case(mb_strtolower(trim((string) ($get($rawValues, 'Nombres') ?? '')), 'UTF-8'), MB_CASE_TITLE, 'UTF-8');
-            $lastName        = mb_convert_case(mb_strtolower(trim((string) ($get($rawValues, 'Apellidos') ?? '')), 'UTF-8'), MB_CASE_TITLE, 'UTF-8');
-            $roleName        = trim((string) ($get($rawValues, 'Tipo de Estamento') ?? ''));
-            $emailRaw        = $get($rawValues, 'Correo');
-            $email           = $emailRaw ? mb_strtolower(trim((string) $emailRaw), 'UTF-8') : null;
-            $programName     = $get($rawValues, 'Programa o Dependencia');
-            $programTypeRaw  = $get($rawValues, 'Tipo_progama');
-            $affiliationType = $get($rawValues, 'Vinculacion');
+            $firstNameRaw    = self::normalizeExcelText($get($rawValues, 'Nombres'));
+            $lastNameRaw     = self::normalizeExcelText($get($rawValues, 'Apellidos'));
+            $roleName        = self::normalizeExcelText($get($rawValues, 'Tipo de Estamento'));
+            $emailRaw        = self::normalizeExcelText($get($rawValues, 'Correo'));
+            $programName     = self::normalizeExcelText($get($rawValues, 'Programa o Dependencia'));
+            $programTypeRaw  = self::normalizeExcelText($get($rawValues, 'Tipo_progama'));
+            $affiliationType = self::normalizeExcelText($get($rawValues, 'Vinculacion'));
+
+            $firstName = $firstNameRaw === ''
+                ? ''
+                : mb_convert_case(mb_strtolower($firstNameRaw, 'UTF-8'), MB_CASE_TITLE, 'UTF-8');
+            $lastName = $lastNameRaw === ''
+                ? ''
+                : mb_convert_case(mb_strtolower($lastNameRaw, 'UTF-8'), MB_CASE_TITLE, 'UTF-8');
+            $email = $emailRaw !== ''
+                ? mb_strtolower($emailRaw, 'UTF-8')
+                : null;
 
             if ($document === '') {
                 $skipped[] = $this->skippedRow($rawValues, $headers, 'Documento vacío');
@@ -187,7 +199,7 @@ class ParticipantImportController extends Controller
 
             // ── Determinar si es programa o dependencia ───────────────────
             $isProgramType = in_array(
-                mb_strtolower(trim((string) ($programTypeRaw ?? '')), 'UTF-8'),
+                mb_strtolower($programTypeRaw, 'UTF-8'),
                 self::PROGRAM_TYPES,
                 true
             );
@@ -195,22 +207,24 @@ class ParticipantImportController extends Controller
             $programId    = null;
             $dependencyId = null;
 
-            if (! empty($programName) && trim((string) $programName) !== '') {
-                $rawProgramName = trim(explode(' - ', (string) $programName, 2)[0]);
+            if ($programName !== '') {
+                $rawProgramName = $programName;
                 $nameKey        = ProgramController::comparisonKey($rawProgramName);
 
                 if ($isProgramType) {
-                    if (! isset($programByNameHash[$nameKey])) {
+                    $programId = $programByNameHash[$nameKey]
+                        ?? $this->findClosestProgramId($rawProgramName, $programByNameHash);
+
+                    if (! $programId) {
                         $skipped[] = $this->skippedRow(
                             $rawValues, $headers,
                             "Programa no encontrado: \"{$rawProgramName}\""
                         );
                         continue;
                     }
-                    $programId = $programByNameHash[$nameKey];
                 } else {
                     if (! isset($dependencyHash[$nameKey])) {
-                        $cleanName = preg_replace('/\s+/u', ' ', trim((string) $programName));
+                        $cleanName = preg_replace('/\s+/u', ' ', $programName);
                         $dep = Dependency::create(['name' => $cleanName]);
                         $dependencyHash[$nameKey] = $dep->id;
                     }
@@ -220,10 +234,10 @@ class ParticipantImportController extends Controller
 
             // ── Resolver vinculación ──────────────────────────────────────
             $affiliationId = null;
-            if (! empty($affiliationType) && $affiliationType !== '0' && $affiliationType !== 0) {
+            if ($affiliationType !== '' && $affiliationType !== '0' && $affiliationType !== 0) {
                 $affKey = ProgramController::comparisonKey($affiliationType);
                 if (! isset($affiliationHash[$affKey])) {
-                    $cleanName = preg_replace('/\s+/u', ' ', trim((string) $affiliationType));
+                    $cleanName = preg_replace('/\s+/u', ' ', $affiliationType);
                     $aff = Affiliation::create(['name' => $cleanName]);
                     $affiliationHash[$affKey] = $aff->id;
                 }
@@ -486,6 +500,69 @@ class ParticipantImportController extends Controller
 
         return redirect()->route('participants-import.index')
             ->with('success', 'Participante registrado exitosamente.');
+    }
+
+    private static function normalizeExcelText(mixed $value): string
+    {
+        if ($value === null) {
+            return '';
+        }
+
+        $text = trim((string) $value);
+        if ($text === '') {
+            return '';
+        }
+
+        // Reparar mojibake frecuente en archivos Excel exportados con codificacion mixta.
+        $text = strtr($text, [
+            'Ã¡' => 'á',
+            'Ã©' => 'é',
+            'Ã­' => 'í',
+            'Ã³' => 'ó',
+            'Ãº' => 'ú',
+            'Ã' => 'Á',
+            'Ã‰' => 'É',
+            'Ã' => 'Í',
+            'Ã“' => 'Ó',
+            'Ãš' => 'Ú',
+            'Ã±' => 'ñ',
+            'Ã‘' => 'Ñ',
+            'Ã¼' => 'ü',
+            'Ãœ' => 'Ü',
+            'Â'  => '',
+        ]);
+
+        return preg_replace('/\s+/u', ' ', $text) ?? $text;
+    }
+
+    private function findClosestProgramId(string $programName, array $programByNameHash): ?int
+    {
+        $targetKey = ProgramController::comparisonKey($programName);
+        $targetCompact = preg_replace('/[^a-z0-9]+/i', '', $targetKey) ?? '';
+
+        if ($targetCompact === '') {
+            return null;
+        }
+
+        $bestId = null;
+        $bestDistance = PHP_INT_MAX;
+
+        foreach ($programByNameHash as $key => $id) {
+            $candidateCompact = preg_replace('/[^a-z0-9]+/i', '', (string) $key) ?? '';
+            if ($candidateCompact === '') {
+                continue;
+            }
+
+            $distance = levenshtein($targetCompact, $candidateCompact);
+
+            // Acepta coincidencias muy cercanas (errores de codificacion/letras puntuales).
+            if ($distance <= 3 && $distance < $bestDistance) {
+                $bestDistance = $distance;
+                $bestId = $id;
+            }
+        }
+
+        return $bestId;
     }
 
     private function skippedRow(array $raw, array $headers, string $motivo): array

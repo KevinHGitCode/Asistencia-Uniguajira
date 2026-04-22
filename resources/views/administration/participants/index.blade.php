@@ -377,7 +377,7 @@
                         <option value="">Sin programa</option>
                         @foreach($programs as $program)
                             <option value="{{ $program->id }}" {{ old('program_id') == $program->id ? 'selected' : '' }}>
-                                {{ $program->name }}{{ $program->campus ? ' - ' . $program->campus : '' }}
+                                {{ $program->name }}
                             </option>
                         @endforeach
                     </select>

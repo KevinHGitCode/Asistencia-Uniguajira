@@ -24,8 +24,8 @@ class ParticipantRelationsTest extends TestCase
         ]);
 
         $type     = ParticipantType::create(['name' => 'Estudiante']);
-        $programA = Program::create(['name' => 'Ingenieria', 'campus' => 'Riohacha']);
-        $programB = Program::create(['name' => 'Derecho', 'campus' => 'Maicao']);
+        $programA = Program::create(['name' => 'Ingenieria']);
+        $programB = Program::create(['name' => 'Derecho']);
 
         ParticipantRole::create([
             'participant_id'      => $participant->id,
@@ -67,7 +67,7 @@ class ParticipantRelationsTest extends TestCase
         $affA  = Affiliation::create(['name' => 'Planta']);
         $affB  = Affiliation::create(['name' => 'Ocasional']);
 
-        $programA = Program::create(['name' => 'Ingenieria', 'campus' => 'Riohacha']);
+        $programA = Program::create(['name' => 'Ingenieria']);
 
         ParticipantRole::create([
             'participant_id'      => $participant->id,

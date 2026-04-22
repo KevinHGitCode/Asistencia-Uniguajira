@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Configuration;
 
+use App\Exports\SkippedProgramsExport;
 use App\Http\Controllers\Controller;
 use App\Models\Program;
 use Illuminate\Http\Request;
@@ -79,59 +80,62 @@ class ProgramController extends Controller
         $rows   = $sheets[0] ?? [];
 
         if (empty($rows)) {
-            return back()->withErrors(['excel_file' => 'El archivo está vacío.']);
+            return back()->withErrors(['excel_file' => 'El archivo esta vacio.']);
         }
 
         $headerRow = array_map(fn ($h) => trim((string) ($h ?? '')), array_values((array) $rows[0]));
         $nameIndex = array_search('Nombre', $headerRow);
 
         if ($nameIndex === false) {
-            return back()->withErrors(['excel_file' => 'El archivo no tiene la columna requerida: «Nombre».']);
+            return back()->withErrors(['excel_file' => 'El archivo no tiene la columna requerida: "Nombre".']);
         }
 
         $typeIndex = array_search('Tipo', $headerRow);
 
         array_shift($rows);
 
-        // Cache: clave SIN acentos y en minúsculas → true
+        // Cache: clave sin acentos y en minusculas.
         $existingSet = array_flip(
             Program::all(['name'])->map(fn ($p) => self::comparisonKey($p->name))->toArray()
         );
 
         $created = 0;
-        $skipped = 0;
-        $batch   = [];
-        $now     = now()->toDateTimeString();
+        $skippedRows = [];
+        $batch = [];
+        $now = now()->toDateTimeString();
+        $typeMap = ['pregrado' => 'Pregrado', 'posgrado' => 'Posgrado'];
 
         foreach ($rows as $row) {
-            $values  = array_values((array) $row);
+            $values = array_values((array) $row);
             $rawName = trim((string) ($values[$nameIndex] ?? ''));
+            $rawType = $typeIndex !== false ? trim((string) ($values[$typeIndex] ?? '')) : '';
 
             if ($rawName === '') {
-                $skipped++;
+                $skippedRows[] = $this->skippedRow($rawName, $rawType, 'Nombre vacio');
                 continue;
             }
 
-            $normalized = self::normalizeName($rawName);
-            $nameKey    = self::comparisonKey($normalized);
+            $programName = self::normalizeName($rawName);
+            $nameKey = self::comparisonKey($programName);
 
             if (isset($existingSet[$nameKey])) {
-                $skipped++;
+                $skippedRows[] = $this->skippedRow(
+                    $programName,
+                    $rawType,
+                    "Programa duplicado o ya existente: \"{$programName}\""
+                );
                 continue;
             }
 
-            $typeMap     = ['pregrado' => 'Pregrado', 'posgrado' => 'Posgrado'];
             $programType = null;
-            if ($typeIndex !== false) {
-                $rawType     = trim((string) ($values[$typeIndex] ?? ''));
+            if ($rawType !== '') {
                 $programType = $typeMap[mb_strtolower($rawType, 'UTF-8')] ?? null;
             }
 
             $existingSet[$nameKey] = true;
             $batch[] = [
-                'name'         => $normalized,
+                'name'         => $programName,
                 'program_type' => $programType,
-                'campus'       => null,
                 'created_at'   => $now,
                 'updated_at'   => $now,
             ];
@@ -142,12 +146,35 @@ class ProgramController extends Controller
             DB::table('programs')->insert($chunk);
         }
 
+        session(['programs_import_skipped' => $skippedRows]);
+
+        $skipped = count($skippedRows);
         $msg = "Se importaron {$created} programa(s) nuevos.";
         if ($skipped > 0) {
-            $msg .= " Se omitieron {$skipped} fila(s) (vacías o ya existentes).";
+            $msg .= " Se omitieron {$skipped} fila(s) (vacias o ya existentes).";
         }
 
-        return redirect()->route('programs.index')->with('success', $msg);
+        return redirect()->route('programs.index')
+            ->with('success', $msg)
+            ->with('import_result', [
+                'created' => $created,
+                'skipped' => $skipped,
+            ]);
+    }
+
+    public function downloadSkipped()
+    {
+        $skipped = session('programs_import_skipped', []);
+
+        if (empty($skipped)) {
+            return redirect()->route('programs.index')
+                ->with('error', 'No hay datos omitidos disponibles para descargar.');
+        }
+
+        return Excel::download(
+            new SkippedProgramsExport($skipped),
+            'programas_omitidos_' . now()->format('Ymd_His') . '.xlsx'
+        );
     }
 
     public function downloadTemplate()
@@ -181,12 +208,12 @@ class ProgramController extends Controller
             'name.required' => 'El nombre del programa es obligatorio.',
             'name.unique'   => 'Ya existe un programa con ese nombre.',
             'name.max'      => 'El nombre no puede superar los 200 caracteres.',
-            'program_type.in' => 'El tipo de programa no es válido.',
+            'program_type.in' => 'El tipo de programa no es valido.',
         ]);
     }
 
     /**
-     * Normaliza un nombre con soporte UTF-8 (primera letra mayúscula, resto minúsculas).
+     * Normaliza un nombre con soporte UTF-8 (primera letra mayuscula, resto minusculas).
      */
     public static function normalizeName(string $value): string
     {
@@ -198,30 +225,23 @@ class ProgramController extends Controller
     }
 
     /**
-     * Genera una clave de comparación: minúsculas + sin acentos + espacios normalizados.
-     *
-     * "Ingeniería de Sistemas"  → "ingenieria de sistemas"
-     * "Ingenieria de sistemas"   → "ingenieria de sistemas"  (misma clave)
-     * "PROFESIONAL  -  APOYO..." → "profesional - apoyo..."  (espacios normalizados)
+     * Genera una clave de comparacion: minusculas + sin acentos + espacios normalizados.
      */
     public static function comparisonKey(string $value): string
     {
         $lower = mb_strtolower(trim($value), 'UTF-8');
-        // Colapsar múltiples espacios/tabs en uno solo
+        // Colapsar multiples espacios/tabs en uno solo.
         $normalized = preg_replace('/\s+/u', ' ', $lower);
 
         return self::stripAccents($normalized);
     }
 
     /**
-     * Elimina diacríticos/acentos de un string UTF-8.
-     *
-     * "ingeniería" → "ingenieria"
-     * "educación infantíl" → "educacion infantil"
+     * Elimina diacriticos/acentos de un string UTF-8.
      */
     public static function stripAccents(string $value): string
     {
-        // Descomponer a NFD (letra + combining accent), luego quitar combining marks
+        // Descomponer a NFD (letra + combining accent), luego quitar combining marks.
         if (class_exists(\Normalizer::class)) {
             $decomposed = \Normalizer::normalize($value, \Normalizer::FORM_D);
             if ($decomposed !== false) {
@@ -229,12 +249,21 @@ class ProgramController extends Controller
             }
         }
 
-        // Fallback
+        // Fallback.
         if (function_exists('transliterator_transliterate')) {
             return transliterator_transliterate('NFD; [:Nonspacing Mark:] Remove; NFC;', $value);
         }
 
         $converted = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value);
         return $converted !== false ? $converted : $value;
+    }
+
+    private function skippedRow(string $name, string $type, string $motivo): array
+    {
+        return [
+            'Nombre'  => $name !== '' ? $name : null,
+            'Tipo'    => $type !== '' ? $type : null,
+            '_motivo' => $motivo,
+        ];
     }
 }

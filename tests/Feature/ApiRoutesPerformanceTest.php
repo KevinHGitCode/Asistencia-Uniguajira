@@ -44,7 +44,6 @@ class ApiRoutesPerformanceTest extends TestCase
 
         $program = Program::create([
             'name' => 'Ingenieria',
-            'campus' => 'Riohacha',
             'program_type' => 'Pregrado',
         ]);
 

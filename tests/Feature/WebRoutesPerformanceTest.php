@@ -41,7 +41,6 @@ class WebRoutesPerformanceTest extends TestCase
 
         $program = Program::create([
             'name' => 'Ingenieria',
-            'campus' => 'Riohacha',
             'program_type' => 'Pregrado',
         ]);
 

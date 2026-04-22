@@ -178,6 +178,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])
         // Rutas de programas
         Route::get('/programs', [ProgramController::class, 'index'])->name('programs.index');
         Route::post('/programs/import', [ProgramController::class, 'importExcel'])->name('programs.import');
+        Route::get('/programs/download-skipped', [ProgramController::class, 'downloadSkipped'])->name('programs.download-skipped');
         Route::get('/programs/download-template', [ProgramController::class, 'downloadTemplate'])->name('programs.download-template');
         Route::get('/programs/download-export', [ProgramController::class, 'downloadExport'])->name('programs.download-export');
         Route::post('/programs', [ProgramController::class, 'store'])->name('programs.store');

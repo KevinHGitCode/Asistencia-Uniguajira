@@ -15,8 +15,7 @@ class ProgramFactory extends Factory
     public function definition(): array
     {
         return [
-            'name'   => fake('es_CO')->unique()->bs(),
-            'campus' => fake('es_CO')->city(),
+            'name' => fake('es_CO')->unique()->bs(),
         ];
     }
 }

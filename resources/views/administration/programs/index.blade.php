@@ -37,6 +37,23 @@
         </div>
     @endif
 
+    @if((session('import_result.skipped') ?? 0) > 0)
+        <div class="flex items-center justify-between gap-3 px-4 py-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 text-sm">
+            <div class="flex items-center gap-3">
+                <flux:icon.exclamation-triangle class="size-5 shrink-0" />
+                <span>
+                    <strong>{{ session('import_result.skipped') }}</strong>
+                    {{ session('import_result.skipped') === 1 ? 'fila omitida' : 'filas omitidas' }} durante la importacion.
+                </span>
+            </div>
+            <a href="{{ route('programs.download-skipped') }}"
+               class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium transition-colors shrink-0">
+                <flux:icon.arrow-down-tray class="size-3.5" />
+                Descargar omitidos
+            </a>
+        </div>
+    @endif
+
     {{-- Flash: error --}}
     @if(session('error') || $errors->has('name') || $errors->has('program_type') || $errors->has('excel_file'))
         <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)"

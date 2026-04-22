@@ -108,12 +108,11 @@ class AttendanceRegistration extends Component
         ];
 
         $this->programs = Program::orderBy('name')
-            ->get(['id', 'name', 'campus'])
+            ->get(['id', 'name'])
             ->map(fn ($p) => [
                 'id'        => $p->id,
                 'name'      => $p->name,
-                'campus'    => $p->campus,
-                'full_name' => $p->name . ($p->campus ? ' - ' . $p->campus : ''),
+                'full_name' => $p->name,
             ])
             ->toArray();
 
@@ -182,7 +181,6 @@ class AttendanceRegistration extends Component
             'type_name'       => $r->type?->name ?? '',
             'program_id'      => $r->program_id,
             'program_name'    => $r->program?->name ?? null,
-            'program_campus'  => $r->program?->campus ?? null,
             'dependency_id'   => $r->dependency_id,
             'dependency_name' => $r->dependency?->name ?? null,
             'affiliation_name' => $r->affiliation?->name ?? null,
@@ -263,7 +261,6 @@ class AttendanceRegistration extends Component
                 'type_name'        => $type->name,
                 'program_id'       => null,
                 'program_name'     => null,
-                'program_campus'   => null,
                 'dependency_id'    => null,
                 'dependency_name'  => null,
                 'affiliation_name' => null,

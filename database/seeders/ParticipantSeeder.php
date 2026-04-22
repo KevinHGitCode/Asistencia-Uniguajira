@@ -96,17 +96,23 @@ class ParticipantSeeder extends Seeder
                 continue;
             }
 
-            $firstName       = ucwords(strtolower(trim((string) ($get($rawValues, 'Nombres') ?? ''))));
-            $lastName        = ucwords(strtolower(trim((string) ($get($rawValues, 'Apellidos') ?? ''))));
-            $roleName        = trim((string) ($get($rawValues, 'Tipo de Estamento') ?? ''));
-            $emailRaw        = $get($rawValues, 'Correo');
-            $programName     = $get($rawValues, 'Programa o Dependencia');
-            $programTypeRaw  = $get($rawValues, 'Tipo_progama');
-            $affiliationType = $get($rawValues, 'Vinculacion');
+            $firstNameRaw    = self::normalizeExcelText($get($rawValues, 'Nombres'));
+            $lastNameRaw     = self::normalizeExcelText($get($rawValues, 'Apellidos'));
+            $roleName        = self::normalizeExcelText($get($rawValues, 'Tipo de Estamento'));
+            $emailRaw        = self::normalizeExcelText($get($rawValues, 'Correo'));
+            $programName     = self::normalizeExcelText($get($rawValues, 'Programa o Dependencia'));
+            $programTypeRaw  = self::normalizeExcelText($get($rawValues, 'Tipo_progama'));
+            $affiliationType = self::normalizeExcelText($get($rawValues, 'Vinculacion'));
             $email           = null;
+            $firstName       = $firstNameRaw === ''
+                ? ''
+                : mb_convert_case(mb_strtolower($firstNameRaw, 'UTF-8'), MB_CASE_TITLE, 'UTF-8');
+            $lastName        = $lastNameRaw === ''
+                ? ''
+                : mb_convert_case(mb_strtolower($lastNameRaw, 'UTF-8'), MB_CASE_TITLE, 'UTF-8');
 
-            if ($emailRaw !== null && trim((string) $emailRaw) !== '') {
-                $emailCandidate = strtolower(trim((string) $emailRaw));
+            if ($emailRaw !== '') {
+                $emailCandidate = mb_strtolower($emailRaw, 'UTF-8');
                 if (str_contains($emailCandidate, '@')) {
                     $existingDoc = $emailToDocument[$emailCandidate] ?? null;
                     if ($existingDoc !== null && $existingDoc !== $document) {
@@ -114,7 +120,7 @@ class ParticipantSeeder extends Seeder
                     }
                     $emailToDocument[$emailCandidate] = $document;
                     $email = $emailCandidate;
-                } elseif ($programName === null || trim((string) $programName) === '') {
+                } elseif ($programName === '') {
                     $programName = $emailRaw;
                 }
             }
@@ -124,7 +130,9 @@ class ParticipantSeeder extends Seeder
             if ($roleName !== '') {
                 $roleKey = ProgramController::comparisonKey($roleName);
                 if (! isset($typeHash[$roleKey])) {
-                    $type = ParticipantType::create(['name' => ucwords(strtolower($roleName))]);
+                    $type = ParticipantType::create([
+                        'name' => mb_convert_case(mb_strtolower($roleName, 'UTF-8'), MB_CASE_TITLE, 'UTF-8'),
+                    ]);
                     $typeHash[$roleKey] = ['id' => $type->id, 'name' => $type->name];
                 }
                 $typeId = $typeHash[$roleKey]['id'];
@@ -134,7 +142,7 @@ class ParticipantSeeder extends Seeder
 
             // ── Programa o Dependencia ────────────────────────────────────
             $isProgramType = in_array(
-                mb_strtolower(trim((string) ($programTypeRaw ?? '')), 'UTF-8'),
+                mb_strtolower($programTypeRaw, 'UTF-8'),
                 self::PROGRAM_TYPES,
                 true
             );
@@ -142,15 +150,16 @@ class ParticipantSeeder extends Seeder
             $programId    = null;
             $dependencyId = null;
 
-            if (! empty($programName) && trim((string) $programName) !== '') {
-                $rawName = trim(explode(' - ', (string) $programName, 2)[0]);
+            if ($programName !== '') {
+                $rawName = $programName;
                 $nameKey = ProgramController::comparisonKey($rawName);
 
                 if ($isProgramType) {
-                    $programId = $programByNameHash[$nameKey] ?? null;
+                    $programId = $programByNameHash[$nameKey]
+                        ?? $this->findClosestProgramId($rawName, $programByNameHash);
                 } else {
                     if (! isset($dependencyHash[$nameKey])) {
-                        $cleanName = preg_replace('/\s+/u', ' ', trim((string) $programName));
+                        $cleanName = preg_replace('/\s+/u', ' ', $programName);
                         $dep = Dependency::create(['name' => ProgramController::normalizeName($cleanName)]);
                         $dependencyHash[$nameKey] = $dep->id;
                     }
@@ -160,10 +169,10 @@ class ParticipantSeeder extends Seeder
 
             // ── Vinculación ───────────────────────────────────────────────
             $affiliationId = null;
-            if (! empty($affiliationType) && $affiliationType !== '0' && $affiliationType !== 0) {
+            if ($affiliationType !== '' && $affiliationType !== '0' && $affiliationType !== 0) {
                 $affKey = ProgramController::comparisonKey($affiliationType);
                 if (! isset($affiliationHash[$affKey])) {
-                    $cleanName = preg_replace('/\s+/u', ' ', trim((string) $affiliationType));
+                    $cleanName = preg_replace('/\s+/u', ' ', $affiliationType);
                     $aff = Affiliation::create(['name' => $cleanName]);
                     $affiliationHash[$affKey] = $aff->id;
                 }
@@ -262,5 +271,65 @@ class ParticipantSeeder extends Seeder
         if (! empty($roleBatch)) {
             DB::table('participant_roles')->insert($roleBatch);
         }
+    }
+
+    private static function normalizeExcelText(mixed $value): string
+    {
+        if ($value === null) {
+            return '';
+        }
+
+        $text = trim((string) $value);
+        if ($text === '') {
+            return '';
+        }
+
+        $text = strtr($text, [
+            'Ã¡' => 'á',
+            'Ã©' => 'é',
+            'Ã­' => 'í',
+            'Ã³' => 'ó',
+            'Ãº' => 'ú',
+            'Ã' => 'Á',
+            'Ã‰' => 'É',
+            'Ã' => 'Í',
+            'Ã“' => 'Ó',
+            'Ãš' => 'Ú',
+            'Ã±' => 'ñ',
+            'Ã‘' => 'Ñ',
+            'Ã¼' => 'ü',
+            'Ãœ' => 'Ü',
+            'Â'  => '',
+        ]);
+
+        return preg_replace('/\s+/u', ' ', $text) ?? $text;
+    }
+
+    private function findClosestProgramId(string $programName, array $programByNameHash): ?int
+    {
+        $targetKey = ProgramController::comparisonKey($programName);
+        $targetCompact = preg_replace('/[^a-z0-9]+/i', '', $targetKey) ?? '';
+
+        if ($targetCompact === '') {
+            return null;
+        }
+
+        $bestId = null;
+        $bestDistance = PHP_INT_MAX;
+
+        foreach ($programByNameHash as $key => $id) {
+            $candidateCompact = preg_replace('/[^a-z0-9]+/i', '', (string) $key) ?? '';
+            if ($candidateCompact === '') {
+                continue;
+            }
+
+            $distance = levenshtein($targetCompact, $candidateCompact);
+            if ($distance <= 3 && $distance < $bestDistance) {
+                $bestDistance = $distance;
+                $bestId = $id;
+            }
+        }
+
+        return $bestId;
     }
 }

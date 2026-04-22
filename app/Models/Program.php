@@ -12,7 +12,6 @@ class Program extends Model
     protected $fillable = [
         'name',
         'program_type',
-        'campus',
     ];
 
     public function participants()

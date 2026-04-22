@@ -83,15 +83,12 @@ class ProgramSeeder extends Seeder
                 continue;
             }
 
-            $parts = array_map('trim', explode(' - ', (string) $programNameRaw, 2));
-            $rawName = $parts[0] ?? '';
-            $rawCampus = $parts[1] ?? null;
+            $rawName = trim((string) $programNameRaw);
             if ($rawName === '') {
                 continue;
             }
 
             $programName = ProgramController::normalizeName($rawName);
-            $campus = $rawCampus ? ProgramController::normalizeName($rawCampus) : null;
 
             $programType = match ($programTypeNorm) {
                 'pregrado' => 'Pregrado',
@@ -100,8 +97,7 @@ class ProgramSeeder extends Seeder
             };
 
             $nameKey = ProgramController::comparisonKey($programName);
-            $campusKey = $campus ? ProgramController::comparisonKey($campus) : '';
-            $compositeKey = $nameKey . '|' . $campusKey;
+            $compositeKey = $nameKey;
 
             if (isset($existingSet[$nameKey])) {
                 continue;
@@ -112,7 +108,6 @@ class ProgramSeeder extends Seeder
             if (! isset($programsToInsert[$compositeKey])) {
                 $programsToInsert[$compositeKey] = [
                     'name' => $programName,
-                    'campus' => $campus,
                     'program_type' => $programType,
                     'created_at' => $now,
                     'updated_at' => $now,

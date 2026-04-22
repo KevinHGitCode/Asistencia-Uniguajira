@@ -12,7 +12,7 @@ class ParticipantTypeSeeder extends Seeder
         $defaults = [
             'Estudiante',
             'Docente',
-            'Administrativos',
+            'Administrativo',
             'Graduado',
             'Comunidad Externa',
             'Bolsa',

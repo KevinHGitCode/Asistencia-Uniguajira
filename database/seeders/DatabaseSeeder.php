@@ -13,7 +13,7 @@ class DatabaseSeeder extends Seeder
     {
         // Seeders base
         $this->call([
-            DependenciesSeeder::class,
+            // DependenciesSeeder::class,
             ParticipantTypeSeeder::class,
         ]);
 
@@ -36,33 +36,33 @@ class DatabaseSeeder extends Seeder
         }
 
         // Usuario con dependencia
-        $kevinUser = User::create([
-            'name' => 'kevin User',
-            'email' => 'kevin.user@example.com',
-            'password' => Hash::make('12345678'),
-            'role' => 'user',
-        ]);
+        // $kevinUser = User::create([
+        //     'name' => 'kevin User',
+        //     'email' => 'kevin.user@example.com',
+        //     'password' => Hash::make('12345678'),
+        //     'role' => 'user',
+        // ]);
 
-        $kevinUser->dependencies()->sync([
-            Dependency::where('name', 'Bienestar Universitario')->first()->id,
-        ]);
+        // $kevinUser->dependencies()->sync([
+        //     Dependency::where('name', 'Bienestar Universitario')->first()->id,
+        // ]);
 
-        // Usuario con varias dependencias
-        $user = User::create([
-            'name' => 'user',
-            'email' => 'user@example.com',
-            'password' => Hash::make('12345678'),
-            'role' => 'user',
-        ]);
+        // // Usuario con varias dependencias
+        // $user = User::create([
+        //     'name' => 'user',
+        //     'email' => 'user@example.com',
+        //     'password' => Hash::make('12345678'),
+        //     'role' => 'user',
+        // ]);
 
-        $user->dependencies()->sync([
-            Dependency::where('name', 'Gestión Documental')->first()->id,
-            Dependency::where('name', 'Gestión Administrativa y Financiera')->first()->id,
-        ]);
+        // $user->dependencies()->sync([
+        //     Dependency::where('name', 'Gestión Documental')->first()->id,
+        //     Dependency::where('name', 'Gestión Administrativa y Financiera')->first()->id,
+        // ]);
 
         // Otros seeders
         $this->call([
-            AreasSeeder::class,
+            // AreasSeeder::class,
             // EventSeeder::class,
             // ProgramSeeder::class,
             // AffiliationSeeder::class,
