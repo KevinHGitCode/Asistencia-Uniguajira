@@ -27,6 +27,7 @@
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider">Nombre</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider">Estamento(s)</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider hidden md:table-cell">Programa(s)</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider hidden md:table-cell">Dependencia(s)</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider hidden lg:table-cell">Vinculación</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider hidden lg:table-cell">Correo</th>
                 </tr>
@@ -39,10 +40,12 @@
                         $extraTypesCount        = max(0, $typeNames->count() - 1);
 
                         $programNames           = $participant->activeRoles->pluck('program.name')->filter()->unique()->values();
+                        $primaryProgram         = $programNames->first();
+                        $extraProgramsCount     = max(0, $programNames->count() - 1);
+
                         $dependencyNames        = $participant->activeRoles->pluck('dependency.name')->filter()->unique()->values();
-                        $allProgramDep          = $programNames->merge($dependencyNames)->values();
-                        $primaryProgram         = $allProgramDep->first();
-                        $extraProgramsCount     = max(0, $allProgramDep->count() - 1);
+                        $primaryDependency      = $dependencyNames->first();
+                        $extraDependenciesCount = max(0, $dependencyNames->count() - 1);
 
                         $affiliationNames       = $participant->activeRoles->pluck('affiliation.name')->filter()->unique()->values();
                         $primaryAffiliation     = $affiliationNames->first();
@@ -116,7 +119,41 @@
                                                  @mouseenter="keep()" @mouseleave="hide()">
                                                 <p class="mb-2 font-semibold">Programas activos</p>
                                                 <ul class="space-y-1">
-                                                    @foreach ($allProgramDep as $name)
+                                                    @foreach ($programNames as $name)
+                                                        <li>{{ $name }}</li>
+                                                    @endforeach
+                                                </ul>
+                                            </div>
+                                        </template>
+                                    @endif
+                                </div>
+                            @else
+                                <span class="text-xs text-gray-400 dark:text-zinc-500">—</span>
+                            @endif
+                        </td>
+
+                        {{-- Dependencia(s) --}}
+                        <td class="px-4 py-3 hidden md:table-cell">
+                            @if($dependencyNames->isNotEmpty())
+                                <div class="flex items-center gap-1.5" x-data="floatingTooltip()">
+                                    <span class="text-xs text-gray-700 dark:text-zinc-300 truncate max-w-[12rem]" title="{{ $primaryDependency }}">
+                                        {{ $primaryDependency }}
+                                    </span>
+                                    @if($extraDependenciesCount > 0)
+                                        <button type="button" x-ref="trigger"
+                                            @mouseenter="show($refs.trigger)"
+                                            @mouseleave="hide()"
+                                            class="inline-flex items-center rounded-full bg-indigo-600 px-2 py-0.5 text-xs font-semibold text-white hover:brightness-110 focus:outline-none cursor-pointer">
+                                            +{{ $extraDependenciesCount }}
+                                        </button>
+                                        <template x-teleport="body">
+                                            <div x-show="open" x-transition.opacity.duration.150ms
+                                                 :style="`position:fixed;top:${y}px;left:${x}px;`"
+                                                 class="z-[9999] min-w-56 max-w-xs rounded-lg border border-neutral-200 bg-white p-3 text-xs text-zinc-700 shadow-lg dark:border-neutral-700 dark:bg-zinc-900 dark:text-zinc-200"
+                                                 @mouseenter="keep()" @mouseleave="hide()">
+                                                <p class="mb-2 font-semibold">Dependencias activas</p>
+                                                <ul class="space-y-1">
+                                                    @foreach ($dependencyNames as $name)
                                                         <li>{{ $name }}</li>
                                                     @endforeach
                                                 </ul>
@@ -169,7 +206,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="px-4 py-10 text-center text-sm text-gray-400 dark:text-zinc-500">
+                        <td colspan="7" class="px-4 py-10 text-center text-sm text-gray-400 dark:text-zinc-500">
                             @if($search !== '')
                                 No se encontraron participantes con "<strong>{{ $search }}</strong>".
                             @else

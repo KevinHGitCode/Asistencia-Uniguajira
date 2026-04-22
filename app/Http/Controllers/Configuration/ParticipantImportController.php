@@ -29,6 +29,12 @@ class ParticipantImportController extends Controller
 
     private const PROGRAM_TYPES = ['pregrado', 'posgrado', 'postgrado'];
 
+    /**
+     * Estamentos que deben ligarse a una Dependencia (no a un Programa).
+     * Se compara por comparisonKey (lowercase, sin acentos, whitespace colapsado).
+     */
+    private const DEPENDENCY_ROLE_KEYS = ['administrativo'];
+
     public function index()
     {
         $programs     = Program::orderBy('name')->get(['id', 'name']);
@@ -50,7 +56,11 @@ class ParticipantImportController extends Controller
     public function import(Request $request)
     {
         set_time_limit(0);
-        ini_set('memory_limit', '512M');
+        // Subimos el límite de memoria. Si el servidor ignora este ini_set
+        // (por ejemplo por configuración de hosting), igual el resto del
+        // método está pensado para no cargar toda la tabla participants en
+        // memoria de una sola vez.
+        ini_set('memory_limit', '1024M');
 
         $request->validate([
             'excel_file' => 'required|file|mimes:xlsx,xls,csv|max:20480',
@@ -125,22 +135,74 @@ class ParticipantImportController extends Controller
             $typeHash[ProgramController::comparisonKey($t->name)] = ['id' => $t->id, 'name' => $t->name];
         }
 
-        $existingDocToId = DB::table('participants')->pluck('id', 'document')->toArray();
-        $existingEmails  = DB::table('participants')
-            ->whereNotNull('email')->pluck('email')->flip()->toArray();
+        // ── Pre-escaneo del Excel para saber qué documentos/correos
+        //    aparecen realmente en el archivo. Así las consultas a BD solo
+        //    traen los registros relevantes, en lugar de toda la tabla
+        //    participants (que en producción podría tener decenas de miles
+        //    de filas y agotar la memoria en fetchAll). ───────────────────
+        $excelDocs   = [];
+        $excelEmails = [];
 
-        // ── Roles activos actuales de participantes existentes ─────────────
+        foreach ($rows as $row) {
+            $rawValues = array_values((array) $row);
+            if (empty(array_filter($rawValues, fn ($v) => $v !== null && $v !== ''))) {
+                continue;
+            }
+
+            $doc = trim((string) ($get($rawValues, 'Documento') ?? ''));
+            if ($doc !== '') {
+                $excelDocs[$doc] = true;
+            }
+
+            $emailRaw = self::normalizeExcelText($get($rawValues, 'Correo'));
+            if ($emailRaw !== '') {
+                $excelEmails[mb_strtolower($emailRaw, 'UTF-8')] = true;
+            }
+        }
+
+        // ── Solo pedimos a la BD los participantes cuyos documentos están
+        //    en el Excel. El whereIn se trocea en lotes para no superar el
+        //    límite de parámetros de SQLite (SQLITE_MAX_VARIABLE_NUMBER).
+        $existingDocToId = [];
+        foreach (array_chunk(array_keys($excelDocs), 500) as $docChunk) {
+            $existingDocToId += DB::table('participants')
+                ->whereIn('document', $docChunk)
+                ->pluck('id', 'document')
+                ->toArray();
+        }
+
+        // ── Correos ya existentes. Solo interesa conocer los correos que
+        //    podrían colisionar con los del Excel; no tiene sentido cargar
+        //    la tabla entera. ─────────────────────────────────────────────
+        $existingEmails = [];
+        foreach (array_chunk(array_keys($excelEmails), 500) as $emailChunk) {
+            $emails = DB::table('participants')
+                ->whereNotNull('email')
+                ->whereIn('email', $emailChunk)
+                ->pluck('email')
+                ->toArray();
+
+            foreach ($emails as $e) {
+                $existingEmails[$e] = true;
+            }
+        }
+
+        // ── Roles activos: solo de los participantes que sí aparecen en el
+        //    Excel. Con esto reducimos de cientos de miles de filas a unos
+        //    pocos miles, y además troceamos el whereIn. ─────────────────
         $activeRoles = [];
 
         if (! empty($existingDocToId)) {
-            DB::table('participant_roles')
-                ->whereIn('participant_id', array_values($existingDocToId))
-                ->where('is_active', 1)
-                ->get(['id', 'participant_id', 'participant_type_id', 'program_id', 'dependency_id', 'affiliation_id'])
-                ->each(function ($r) use (&$activeRoles) {
-                    $key = ($r->participant_type_id ?? 0) . '|' . ($r->program_id ?? 0) . '|' . ($r->dependency_id ?? 0) . '|' . ($r->affiliation_id ?? 0);
-                    $activeRoles[$r->participant_id][$key] = $r->id;
-                });
+            foreach (array_chunk(array_values($existingDocToId), 500) as $idChunk) {
+                DB::table('participant_roles')
+                    ->whereIn('participant_id', $idChunk)
+                    ->where('is_active', 1)
+                    ->get(['id', 'participant_id', 'participant_type_id', 'program_id', 'dependency_id', 'affiliation_id'])
+                    ->each(function ($r) use (&$activeRoles) {
+                        $key = ($r->participant_type_id ?? 0) . '|' . ($r->program_id ?? 0) . '|' . ($r->dependency_id ?? 0) . '|' . ($r->affiliation_id ?? 0);
+                        $activeRoles[$r->participant_id][$key] = $r->id;
+                    });
+            }
         }
 
         $now = now()->toDateTimeString();
@@ -197,7 +259,15 @@ class ParticipantImportController extends Controller
             }
             $typeId = $typeData['id'];
 
-            // ── Determinar si es programa o dependencia ───────────────────
+            // ── Determinar si este estamento se liga a Dependencia en vez
+            //    de a Programa (caso: Administrativo). ──────────────────────
+            $isDependencyRole = in_array(
+                $roleKey,
+                self::DEPENDENCY_ROLE_KEYS,
+                true
+            );
+
+            // Para el resto de estamentos se decide por la columna Tipo_progama
             $isProgramType = in_array(
                 mb_strtolower($programTypeRaw, 'UTF-8'),
                 self::PROGRAM_TYPES,
@@ -207,7 +277,30 @@ class ParticipantImportController extends Controller
             $programId    = null;
             $dependencyId = null;
 
-            if ($programName !== '') {
+            if ($isDependencyRole) {
+                // ── Estamento que se liga a Dependencia (Administrativo) ──
+                // Si la dependencia viene vacía o no existe en BD, se salta
+                // la fila y se reporta en el Excel de omitidos (mismo criterio
+                // que cuando un programa no existe para Estudiante/Docente).
+                if ($programName === '') {
+                    $skipped[] = $this->skippedRow(
+                        $rawValues, $headers,
+                        'Dependencia vacía para estamento Administrativo'
+                    );
+                    continue;
+                }
+
+                $nameKey      = ProgramController::comparisonKey($programName);
+                $dependencyId = $dependencyHash[$nameKey] ?? null;
+
+                if (! $dependencyId) {
+                    $skipped[] = $this->skippedRow(
+                        $rawValues, $headers,
+                        "Dependencia no encontrada: \"{$programName}\""
+                    );
+                    continue;
+                }
+            } elseif ($programName !== '') {
                 $rawProgramName = $programName;
                 $nameKey        = ProgramController::comparisonKey($rawProgramName);
 

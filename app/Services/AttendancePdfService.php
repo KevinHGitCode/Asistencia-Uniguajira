@@ -211,7 +211,27 @@ class AttendancePdfService
             if (isset($cols['program'])) {
                 $pdf->SetFont('Arial', '', $cols['program']['fontSize'] ?? 12);
                 $pdf->SetXY($cols['program']['x'], $y);
-                $programName = $detail?->participantRole?->program?->name ?? $detail?->participantRole?->dependency?->name ?? '';
+
+                // El mismo campo del formato se reutiliza para Programa o
+                // Dependencia: si el participante registró la asistencia con
+                // un rol de estamento que pertenece a Dependencia (p. ej.
+                // "Administrativo"), se imprime el nombre de la dependencia;
+                // de lo contrario, el programa académico.
+                $role             = $detail?->participantRole;
+                $roleTypeName     = $role?->type?->name ?? '';
+                $roleTypeKey      = mb_strtolower(trim($roleTypeName), 'UTF-8');
+                $dependencyRoles  = ['administrativo'];
+
+                if (in_array($roleTypeKey, $dependencyRoles, true)) {
+                    $programName = $role?->dependency?->name
+                        ?? $role?->program?->name
+                        ?? '';
+                } else {
+                    $programName = $role?->program?->name
+                        ?? $role?->dependency?->name
+                        ?? '';
+                }
+
                 $pdf->Cell($cols['program']['w'], $cols['program']['h'] ?? 7.8,
                     $this->toIso($this->truncateText($programName, $cols['program']['limit'])),
                     0, 0, $cols['program']['align']
