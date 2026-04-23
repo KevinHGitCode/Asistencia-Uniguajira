@@ -149,18 +149,75 @@
                         </div>
                         
                         <div class="flex items-center justify-center mt-8 mb-4">
-                            <div class="border border-neutral-200 dark:border-neutral-700 p-4 rounded-2xl bg-white">
+                            <div id="qr-code-container" class="border border-neutral-200 dark:border-neutral-700 p-4 rounded-2xl bg-white">
                                 {!! QrCode::size(200)->generate(route('events.access', $event->link)) !!}
-                            </div>  
+                            </div>
                         </div>
 
-                        <div wire:ignore class="flex items-center justify-center">
+                        @php
+                            $eventLink = route('events.access', $event->link);
+                            $shareText = '¡Te invito al evento "' . $event->title . '"! Regístrate aquí: ' . $eventLink;
+                            $emailSubject = 'Invitación al evento: ' . $event->title;
+                            $emailBody = "Hola,\n\nTe invito a registrarte al evento \"" . $event->title . "\".\n\n"
+                                . "Fecha: " . \Carbon\Carbon::parse($event->date)->format('d/m/Y') . "\n"
+                                . "Hora: " . \Carbon\Carbon::parse($event->start_time)->format('h:i A') . "\n"
+                                . ($event->location ? "Ubicación: " . $event->location . "\n" : '')
+                                . "\nAccede con el siguiente enlace:\n" . $eventLink . "\n";
+
+                            // Nombre de archivo del QR: usa el título del evento tal cual,
+                            // removiendo solo los caracteres inválidos para nombres de archivo.
+                            $qrFilename = trim(preg_replace('/\s+/', ' ', preg_replace('/[\/\\\\:*?"<>|]/', '', $event->title)));
+                            $qrFilename = ($qrFilename !== '' ? $qrFilename : 'qr-evento') . '.png';
+                        @endphp
+
+                        <div wire:ignore class="flex flex-wrap items-center justify-center gap-2"
+                             data-qr-filename="{{ $qrFilename }}"
+                             data-share-text="{{ $shareText }}"
+                             data-whatsapp-url="https://wa.me/?text={{ urlencode($shareText) }}"
+                             data-gmail-url="https://mail.google.com/mail/?view=cm&fs=1&tf=1&su={{ rawurlencode($emailSubject) }}&body={{ rawurlencode($emailBody) }}">
                             <button
                                 id="copy-link-button"
-                                data-link="{{ route('events.access', $event->link) }}"
-                                class="px-3 py-2 border-1 border-gray-200 dark:border-white dark:text-white rounded-md transition-all duration-300 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-400 text-sm font-medium">
+                                data-link="{{ $eventLink }}"
+                                class="px-3 py-2 border border-gray-200 dark:border-white dark:text-white rounded-md transition-all duration-300 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-400 text-sm font-medium inline-flex items-center gap-1">
                                 🔗 Copiar Enlace
                             </button>
+
+                            <button
+                                id="share-whatsapp-button"
+                                type="button"
+                                class="px-3 py-2 border border-gray-200 dark:border-white dark:text-white rounded-md transition-all duration-300 cursor-pointer hover:bg-green-50 dark:hover:bg-green-900/20 hover:border-green-500 text-sm font-medium inline-flex items-center gap-1">
+                                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                    <path d="M20.52 3.48A11.93 11.93 0 0012.04 0C5.5 0 .2 5.3.2 11.84c0 2.09.55 4.13 1.6 5.93L0 24l6.39-1.68a11.83 11.83 0 005.65 1.44h.01c6.54 0 11.84-5.3 11.84-11.84 0-3.16-1.23-6.13-3.47-8.44zM12.05 21.6h-.01a9.82 9.82 0 01-5-1.37l-.36-.21-3.79 1 1.01-3.69-.23-.38a9.82 9.82 0 01-1.5-5.11c0-5.43 4.42-9.85 9.86-9.85 2.63 0 5.1 1.03 6.96 2.89a9.78 9.78 0 012.88 6.97c0 5.43-4.42 9.85-9.82 9.85zm5.4-7.37c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.64.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.49-1.77-1.66-2.07-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51l-.57-.01c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.49 0 1.47 1.07 2.89 1.22 3.09.15.2 2.1 3.2 5.08 4.49.71.31 1.26.49 1.7.63.71.23 1.36.2 1.87.12.57-.09 1.76-.72 2.01-1.41.25-.69.25-1.29.17-1.41-.07-.12-.27-.2-.57-.35z"/>
+                                </svg>
+                                WhatsApp
+                            </button>
+
+                            <button
+                                id="share-email-button"
+                                type="button"
+                                class="px-3 py-2 border border-gray-200 dark:border-white dark:text-white rounded-md transition-all duration-300 cursor-pointer hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-500 text-sm font-medium inline-flex items-center gap-1">
+                                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                    <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"/>
+                                </svg>
+                                Gmail
+                            </button>
+
+                            <button
+                                id="download-qr-button"
+                                type="button"
+                                data-filename="{{ $qrFilename }}"
+                                class="px-3 py-2 border border-gray-200 dark:border-white dark:text-white rounded-md transition-all duration-300 cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:border-purple-500 text-sm font-medium inline-flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/>
+                                </svg>
+                                Descargar QR
+                            </button>
+                        </div>
+
+                        {{-- Toast de aviso para compartir --}}
+                        <div id="share-toast"
+                             class="fixed top-6 left-1/2 -translate-x-1/2 z-50 hidden max-w-sm px-4 py-3 rounded-lg shadow-lg bg-zinc-900 text-white text-sm border border-zinc-700">
+                            <span id="share-toast-message"></span>
                         </div>
 
 
@@ -248,26 +305,238 @@
     {{-- Modal de confirmación para eliminar --}}
     <x-events.delete-modal :event="$event" />
 
-    {{-- Script para copiar el enlace al portapapeles --}}
+    {{-- Script para copiar el enlace, compartir y descargar el QR --}}
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const button = document.getElementById('copy-link-button');
-            if (!button) return;
+            // --- Copiar enlace ---
+            const copyBtn = document.getElementById('copy-link-button');
+            if (copyBtn) {
+                copyBtn.addEventListener('click', function() {
+                    const link = copyBtn.getAttribute('data-link');
+                    if (navigator.clipboard && window.isSecureContext) {
+                        navigator.clipboard.writeText(link)
+                            .then(() => showCopied(copyBtn))
+                            .catch(() => fallbackCopy(link, copyBtn));
+                    } else {
+                        fallbackCopy(link, copyBtn);
+                    }
+                });
+            }
 
-            button.addEventListener('click', function() {
-                const link = button.getAttribute('data-link');
-                
-                if (navigator.clipboard && window.isSecureContext) {
-                    navigator.clipboard.writeText(link).then(() => {
-                        showCopied(button);
-                    }).catch(() => {
-                        fallbackCopy(link, button);
-                    });
-                } else {
-                    fallbackCopy(link, button);
+            // --- Generar QR como PNG Blob ---
+            function getQrPngBlob() {
+                return new Promise(function(resolve, reject) {
+                    const container = document.getElementById('qr-code-container');
+                    if (!container) return reject(new Error('Contenedor no encontrado'));
+                    const svg = container.querySelector('svg');
+                    if (!svg) return reject(new Error('SVG no encontrado'));
+
+                    const clone = svg.cloneNode(true);
+                    if (!clone.getAttribute('xmlns')) clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+                    if (!clone.getAttribute('xmlns:xlink')) clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+
+                    let width = parseInt(clone.getAttribute('width'), 10);
+                    let height = parseInt(clone.getAttribute('height'), 10);
+                    if (!width || !height) {
+                        const rect = svg.getBoundingClientRect();
+                        width = Math.ceil(rect.width) || 400;
+                        height = Math.ceil(rect.height) || 400;
+                    }
+
+                    const scale = 2;
+                    const svgString = new XMLSerializer().serializeToString(clone);
+                    const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+                    const url = URL.createObjectURL(svgBlob);
+
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width * scale;
+                        canvas.height = height * scale;
+                        const ctx = canvas.getContext('2d');
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        URL.revokeObjectURL(url);
+                        canvas.toBlob(function(blob) {
+                            if (!blob) return reject(new Error('Blob vacío'));
+                            resolve(blob);
+                        }, 'image/png');
+                    };
+                    img.onerror = function() {
+                        URL.revokeObjectURL(url);
+                        reject(new Error('No se pudo cargar el SVG'));
+                    };
+                    img.src = url;
+                });
+            }
+
+            function downloadBlob(blob, filename) {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+            }
+
+            async function copyImageToClipboard(blob) {
+                if (!navigator.clipboard || !window.ClipboardItem) return false;
+                try {
+                    await navigator.clipboard.write([
+                        new ClipboardItem({ 'image/png': blob })
+                    ]);
+                    return true;
+                } catch (e) {
+                    return false;
                 }
-            });
+            }
+
+            // Devuelve true si Web Share API puede compartir archivos
+            function canShareFiles(file) {
+                return !!(navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share);
+            }
+
+            // Obtiene el contenedor con los atributos de datos
+            const shareContainer = document.querySelector('[data-whatsapp-url]');
+            const qrFilename = shareContainer ? shareContainer.getAttribute('data-qr-filename') : 'qr-evento.png';
+            const shareText = shareContainer ? shareContainer.getAttribute('data-share-text') : '';
+            const whatsappUrl = shareContainer ? shareContainer.getAttribute('data-whatsapp-url') : '#';
+            const gmailUrl = shareContainer ? shareContainer.getAttribute('data-gmail-url') : '#';
+
+            // Handler genérico: intenta compartir archivo nativamente; si no, descarga + copia + abre servicio
+            async function shareWithQr(options) {
+                const { serviceUrl, serviceName, fallbackMessage, button } = options;
+                setButtonLoading(button, true);
+
+                let blob;
+                try {
+                    blob = await getQrPngBlob();
+                } catch (err) {
+                    setButtonLoading(button, false);
+                    // Sin QR no podemos hacer nada mejor que abrir solo la URL
+                    window.open(serviceUrl, '_blank', 'noopener,noreferrer');
+                    return;
+                }
+
+                const file = new File([blob], qrFilename, { type: 'image/png' });
+
+                // 1) Intentar Web Share API con archivo (ideal para móvil)
+                if (canShareFiles(file)) {
+                    try {
+                        await navigator.share({
+                            text: shareText,
+                            files: [file],
+                        });
+                        setButtonLoading(button, false);
+                        return;
+                    } catch (err) {
+                        if (err && err.name === 'AbortError') {
+                            setButtonLoading(button, false);
+                            return;
+                        }
+                        // Si falla (ej. permiso), caemos al fallback
+                    }
+                }
+
+                // 2) Fallback: descargar QR + copiar al portapapeles + abrir el servicio
+                downloadBlob(blob, qrFilename);
+                const copied = await copyImageToClipboard(blob);
+
+                const popup = window.open(serviceUrl, '_blank', 'noopener,noreferrer');
+                if (!popup) {
+                    // Bloqueado por popup blocker
+                    showToast('Permite ventanas emergentes para abrir ' + serviceName + '. El QR ya fue descargado.', 5000);
+                } else if (copied) {
+                    showToast('QR descargado y copiado. Pégalo (Ctrl+V) o adjúntalo en ' + serviceName + '.', 5000);
+                } else {
+                    showToast(fallbackMessage, 5000);
+                }
+
+                setButtonLoading(button, false);
+            }
+
+            // --- WhatsApp ---
+            const whatsappBtn = document.getElementById('share-whatsapp-button');
+            if (whatsappBtn) {
+                whatsappBtn.addEventListener('click', function() {
+                    shareWithQr({
+                        serviceUrl: whatsappUrl,
+                        serviceName: 'WhatsApp',
+                        fallbackMessage: 'QR descargado. Adjúntalo en WhatsApp con el ícono de clip.',
+                        button: whatsappBtn,
+                    });
+                });
+            }
+
+            // --- Gmail ---
+            const gmailBtn = document.getElementById('share-email-button');
+            if (gmailBtn) {
+                gmailBtn.addEventListener('click', function() {
+                    shareWithQr({
+                        serviceUrl: gmailUrl,
+                        serviceName: 'Gmail',
+                        fallbackMessage: 'QR descargado. Adjúntalo al correo con el ícono de clip.',
+                        button: gmailBtn,
+                    });
+                });
+            }
+
+            // --- Descargar QR ---
+            const downloadBtn = document.getElementById('download-qr-button');
+            if (downloadBtn) {
+                downloadBtn.addEventListener('click', async function() {
+                    setButtonLoading(downloadBtn, true);
+                    try {
+                        const blob = await getQrPngBlob();
+                        downloadBlob(blob, downloadBtn.getAttribute('data-filename') || qrFilename);
+                        showDownloaded(downloadBtn);
+                    } catch (err) {
+                        alert('No se pudo generar la imagen del QR.');
+                    } finally {
+                        setButtonLoading(downloadBtn, false);
+                    }
+                });
+            }
         });
+
+        function setButtonLoading(button, loading) {
+            if (!button) return;
+            if (loading) {
+                button.disabled = true;
+                button.dataset.originalOpacity = button.style.opacity || '';
+                button.style.opacity = '0.6';
+                button.style.cursor = 'wait';
+            } else {
+                button.disabled = false;
+                button.style.opacity = button.dataset.originalOpacity || '';
+                button.style.cursor = '';
+            }
+        }
+
+        function showToast(message, duration) {
+            const toast = document.getElementById('share-toast');
+            const msg = document.getElementById('share-toast-message');
+            if (!toast || !msg) return;
+            msg.textContent = message;
+            toast.classList.remove('hidden');
+            clearTimeout(window.__shareToastTimer);
+            window.__shareToastTimer = setTimeout(function() {
+                toast.classList.add('hidden');
+            }, duration || 3500);
+        }
+
+        function showDownloaded(button) {
+            const originalText = button.innerHTML;
+            button.innerHTML = '✓ Descargado';
+            button.classList.add('bg-green-100', 'dark:bg-green-900', 'border-green-400');
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.classList.remove('bg-green-100', 'dark:bg-green-900', 'border-green-400');
+            }, 2000);
+        }
 
         function fallbackCopy(text, button) {
             const textarea = document.createElement('textarea');
