@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $subject ?? 'Asistencia Uniguajira' }}</title>
+    <title>{{ $subject ?? 'AURA' }}</title>
 </head>
 <body style="margin:0;padding:0;background-color:#f4f4f5;font-family:'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f5;padding:32px 16px;">
@@ -15,7 +15,7 @@
                     <tr>
                         <td style="background: linear-gradient(135deg, #62a9b6 0%, #4d94a0 100%);padding:28px 32px;text-align:center;">
                             <h1 style="margin:0;color:#ffffff;font-size:20px;font-weight:700;letter-spacing:0.5px;">
-                                {{ $heading ?? 'Asistencia Uniguajira' }}
+                                {{ $heading ?? 'AURA' }}
                             </h1>
                             @if(isset($subheading))
                                 <p style="margin:8px 0 0;color:rgba(255,255,255,0.85);font-size:13px;">

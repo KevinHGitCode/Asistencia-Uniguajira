@@ -14,7 +14,7 @@
                 </div>
                 <div>
                     <h2 class="text-lg font-bold text-gray-900 dark:text-white leading-tight">
-                        {{ config('app.name', 'Asistencia Uniguajira') }}
+                        {{ config('app.name', 'AURA') }}
                     </h2>
                     <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
                         Universidad de La Guajira
@@ -128,7 +128,7 @@
 
             {{-- Footer note --}}
             <p class="text-center text-xs pb-1">
-                © {{ date('Y') }} Asistencia Uniguajira · Todos los derechos reservados
+                © {{ date('Y') }} AURA · Todos los derechos reservados
             </p>
 
         </div>

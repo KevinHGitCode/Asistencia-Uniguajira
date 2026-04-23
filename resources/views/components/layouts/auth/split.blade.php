@@ -14,16 +14,11 @@
 
                 <!-- Bienvenida y Features -->
                 <div class="relative z-20 my-auto p-3 space-y-4">
-                    <div class="space-y-2">
-                        <h1 class="flex items-center text-4xl font-bold leading-tight">
-                                <x-app-logo-icon />
-                                <span>Bienvenido a 
-                                    <span class="text-[#ad3728] drop-shadow-lg">
-                                        {{ config('app.name', 'Laravel') }}
-                                    </span>
-                                </span>
-                        </h1>
-                        <p class="text-sm text-gray-300 leading-relaxed">
+                    <div class="space-y-3">
+                        <div class="flex justify-center lg:justify-start">
+                            <x-app-logo-icon />
+                        </div>
+                        <p class="text-sm text-gray-300 leading-relaxed text-center lg:text-start">
                             Accede a tu cuenta y descubre todas las herramientas que tenemos para ti.
                         </p>
                     </div>
@@ -65,11 +60,9 @@
             <div class="h-full flex items-center">
                 <div class="absolute inset-0 z-[-20] bg-neutral-900/35"></div>
                 <div class="bg-neutral-900/70 mx-auto p-3 flex w-full flex-col justify-center space-y-6 sm:w-[400px] rounded-lg">
-                    <a class="z-20 flex flex-col items-center gap-2 font-medium lg:hidden">
-                        <span class="flex h-9 w-9 items-center justify-center rounded-md">
-                            <x-app-logo-icon />
-                        </span>
-                    </a>
+                    <div class="z-20 flex justify-center lg:hidden">
+                        <x-app-logo-icon />
+                    </div>
                     {{ $slot }}
                 </div>
             </div>

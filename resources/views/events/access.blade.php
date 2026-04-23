@@ -236,7 +236,7 @@
                 {{-- Footer --}}
                 <div class="flex items-center justify-between text-xs text-white/50">
                     <p>&copy; {{ date('Y') }} Universidad de La Guajira</p>
-                    <p class="font-mono tracking-wider">Asistencia Uniguajira</p>
+                    <p class="font-mono tracking-wider">AURA</p>
                 </div>
             </div>
         </aside>

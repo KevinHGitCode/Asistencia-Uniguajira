@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Asistencia Uniguajira'),
+    'name' => env('APP_NAME', 'AURA'),
 
     /*
     |--------------------------------------------------------------------------

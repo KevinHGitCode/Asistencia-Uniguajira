@@ -1,12 +1,30 @@
-<div class="flex aspect-square size-10 items-center justify-center rounded-md overflow-hidden">
-    <img 
-        src="{{ asset('images/logo-uniguajira-seo-150x150.webp') }}" 
-        alt="Logo Uniguajira" 
-        class="object-contain w-full h-full"
+{{-- Logo AURA para el sidebar: centrado y con buen tamaño en escritorio. --}}
+<div class="w-full flex items-center justify-center py-2">
+    <img
+        src="{{ asset('images/aura_blanco.png') }}"
+        alt="AURA"
+        class="aura-logo-sidebar hidden dark:block"
+    >
+    <img
+        src="{{ asset('images/aura_negro.png') }}"
+        alt="AURA"
+        class="aura-logo-sidebar block dark:hidden"
     >
 </div>
-<div class="grid flex-1 text-start text-sm">
-    <span class="mb-0.5 truncate leading-tight font-semibold">
-        {{ config('app.name', 'Laravel') }}
-    </span>
-</div>
+
+<style>
+    .aura-logo-sidebar {
+        width: auto;
+        height: 64px;
+        max-height: 64px;
+        object-fit: contain;
+    }
+
+    /* Escritorio: logo más grande */
+    @media (min-width: 1024px) {
+        .aura-logo-sidebar {
+            height: 88px;
+            max-height: 88px;
+        }
+    }
+</style>

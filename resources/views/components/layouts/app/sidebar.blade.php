@@ -29,9 +29,27 @@
             }
         }" @click.capture="_check($event)">
 
-        <a href="{{ route('dashboard') }}" class="me-5 flex items-center space-x-2 rtl:space-x-reverse hover:scale-103 transition-transform" wire:navigate>
+        <a href="{{ route('dashboard') }}" class="aura-sidebar-link group flex w-full items-center justify-center" wire:navigate>
             <x-app-logo />
         </a>
+
+        <style>
+            .aura-sidebar-link .aura-logo-sidebar {
+                transition: transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1),
+                            filter 300ms ease-out;
+                transform-origin: center;
+            }
+
+            .aura-sidebar-link:hover .aura-logo-sidebar {
+                transform: scale(1.18) rotate(-2deg);
+                filter: drop-shadow(0 6px 14px rgba(98, 169, 182, 0.55));
+            }
+
+            .aura-sidebar-link:active .aura-logo-sidebar {
+                transform: scale(1.08) rotate(-1deg);
+                transition-duration: 120ms;
+            }
+        </style>
 
         <flux:navlist variant="outline">
             <flux:navlist.group :heading="__('Platform')" class="grid">
