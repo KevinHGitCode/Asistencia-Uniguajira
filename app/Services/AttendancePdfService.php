@@ -37,6 +37,71 @@ class AttendancePdfService
             : $text;
     }
 
+    /**
+     * Imprime un texto ajustándolo automáticamente al tamaño de la celda:
+     *   1. Intenta con la fuente base (`fontSize` del mapeo).
+     *   2. Si no cabe en una sola línea, reduce el tamaño hasta `minFontSize`
+     *      (por defecto 6pt). Solo afecta a esta celda.
+     *   3. Si aun al mínimo sigue sin caber, usa `MultiCell` para partir
+     *      el texto en varias líneas (hasta 4) distribuidas dentro de la
+     *      altura de la celda, para que no se salga por abajo.
+     *
+     * Al terminar restaura la fuente base (Arial regular 12) para que las
+     * celdas siguientes no hereden el tamaño reducido.
+     */
+    private function printAutoFitText($pdf, array $col, float $y, string $text, string $style = '', ?float $h = null): void
+    {
+        $cw       = $col['w'] ?? 0;
+        $ch       = $h ?? ($col['h'] ?? 7.8);
+        $baseSize = $col['fontSize'] ?? 12;
+        $minSize  = $col['minFontSize'] ?? 6;
+        $align    = $col['align'] ?? 'L';
+        $cx       = $col['x'];
+
+        $textIso   = $this->toIso((string) $text);
+        $available = max(0, $cw - 0.6);
+
+        // 1) Fuente base
+        $pdf->SetFont('Arial', $style, $baseSize);
+        $textWidth = $textIso === '' ? 0 : $pdf->GetStringWidth($textIso);
+
+        if ($textWidth <= $available) {
+            $pdf->SetXY($cx, $y);
+            $pdf->Cell($cw, $ch, $textIso, 0, 0, $align);
+            $pdf->SetFont('Arial', '', 12);
+            return;
+        }
+
+        // 2) Reducir tamaño progresivamente
+        $fitSize = $baseSize;
+        for ($size = $baseSize - 1; $size >= $minSize; $size--) {
+            $pdf->SetFont('Arial', $style, $size);
+            $fitSize = $size;
+            if ($pdf->GetStringWidth($textIso) <= $available) {
+                break;
+            }
+        }
+
+        $pdf->SetFont('Arial', $style, $fitSize);
+
+        if ($pdf->GetStringWidth($textIso) <= $available) {
+            // Cabe en una sola línea con la fuente reducida.
+            $pdf->SetXY($cx, $y);
+            $pdf->Cell($cw, $ch, $textIso, 0, 0, $align);
+        } else {
+            // 3) Partir en varias líneas dentro de la altura de la celda.
+            $textWidth = $pdf->GetStringWidth($textIso);
+            $lines     = max(2, (int) ceil($textWidth / max(0.1, $available)));
+            $lines     = min($lines, 4);
+            $lineH     = $ch / $lines;
+
+            $pdf->SetXY($cx, $y);
+            $pdf->MultiCell($cw, $lineH, $textIso, 0, $align);
+        }
+
+        $pdf->SetFont('Arial', '', 12);
+    }
+
     public function generatePdf($event, string $formatSlug = 'default'): string
     {
 
@@ -67,80 +132,70 @@ class AttendancePdfService
             $header = $cfg['header'];
 
             if (isset($header['dependency'])) {
-                $pdf->SetFont('Arial', 'B', $header['dependency']['fontSize'] ?? 12);
-                $pdf->SetXY($header['dependency']['x'], $header['dependency']['y']);
-                $w = $header['dependency']['w'] ?? 0;
                 $text = mb_strtoupper($event->dependency->name ?? 'SIN DEPENDENCIA', 'UTF-8');
-                if (isset($header['dependency']['limit'])) $text = $this->truncateText($text, $header['dependency']['limit']);
-                $align = $header['dependency']['align'] ?? 'L';
-                $pdf->Cell($w, 8, $this->toIso($text), 0, 0, $align);
+                $this->printAutoFitText($pdf, $header['dependency'], $header['dependency']['y'], $text, 'B', 8);
             }
 
             if (isset($header['area']) && $event->area) {
-                $pdf->SetFont('Arial', 'B', $header['area']['fontSize'] ?? 12);
-                $pdf->SetXY($header['area']['x'], $header['area']['y']);
-                $w = $header['area']['w'] ?? 0;
                 $text = ' - ' . mb_strtoupper($event->area->name, 'UTF-8');
-                if (isset($header['area']['limit'])) $text = $this->truncateText($text, $header['area']['limit']);
-                $align = $header['area']['align'] ?? 'L';
-                $pdf->Cell($w, 8, $this->toIso($text), 0, 0, $align);
+                $this->printAutoFitText($pdf, $header['area'], $header['area']['y'], $text, 'B', 8);
             }
 
             if (isset($header['title'])) {
-                $pdf->SetFont('Arial', 'B', $header['title']['fontSize'] ?? 12);
-                $pdf->SetXY($header['title']['x'], $header['title']['y']);
-                $w = $header['title']['w'] ?? 0;
                 $text = mb_strtoupper($event->title ?? 'SIN TÍTULO', 'UTF-8');
-                if (isset($header['title']['limit'])) $text = $this->truncateText($text, $header['title']['limit']);
-                $align = $header['title']['align'] ?? 'L';
-                $pdf->Cell($w, 8, $this->toIso($text), 0, 0, $align);
+                $this->printAutoFitText($pdf, $header['title'], $header['title']['y'], $text, 'B', 8);
             }
 
             if (isset($cfg['date_format']) && isset($header['date_day']) && is_array($cfg['date_format'])) {
                 $date = Carbon::parse($event->date);
 
-                $pdf->SetFont('Arial', 'B', $header['date_day']['fontSize'] ?? 12);
-                $pdf->SetXY($header['date_day']['x'], $header['date_day']['y']);
-                $w = $header['date_day']['w'] ?? 0;
-                $text = $date->format($cfg['date_format']['day']);
-                if (isset($header['date_day']['limit'])) $text = $this->truncateText($text, $header['date_day']['limit']);
-                $align = $header['date_day']['align'] ?? 'L';
-                $pdf->Cell($w, 8, $text, 0, 0, $align);
+                $this->printAutoFitText(
+                    $pdf,
+                    $header['date_day'],
+                    $header['date_day']['y'],
+                    $date->format($cfg['date_format']['day']),
+                    'B',
+                    8
+                );
 
-                $pdf->SetFont('Arial', 'B', $header['date_month']['fontSize'] ?? 12);
-                $pdf->SetXY($header['date_month']['x'], $header['date_month']['y']);
-                $w = $header['date_month']['w'] ?? 0;
-                $text = $date->translatedFormat($cfg['date_format']['month']);
-                if (isset($header['date_month']['limit'])) $text = $this->truncateText($text, $header['date_month']['limit']);
-                $align = $header['date_month']['align'] ?? 'L';
-                $pdf->Cell($w, 8, $this->toIso($text), 0, 0, $align);
+                $this->printAutoFitText(
+                    $pdf,
+                    $header['date_month'],
+                    $header['date_month']['y'],
+                    $date->translatedFormat($cfg['date_format']['month']),
+                    'B',
+                    8
+                );
 
-                $pdf->SetFont('Arial', 'B', $header['date_year']['fontSize'] ?? 12);
-                $pdf->SetXY($header['date_year']['x'], $header['date_year']['y']);
-                $w = $header['date_year']['w'] ?? 0;
-                $text = $date->format($cfg['date_format']['year']);
-                if (isset($header['date_year']['limit'])) $text = $this->truncateText($text, $header['date_year']['limit']);
-                $align = $header['date_year']['align'] ?? 'L';
-                $pdf->Cell($w, 8, $text, 0, 0, $align);
+                $this->printAutoFitText(
+                    $pdf,
+                    $header['date_year'],
+                    $header['date_year']['y'],
+                    $date->format($cfg['date_format']['year']),
+                    'B',
+                    8
+                );
 
             } elseif (isset($cfg['date_format']) && isset($header['date']) && is_string($cfg['date_format'])) {
-                $pdf->SetFont('Arial', 'B', $header['date']['fontSize'] ?? 12);
-                $pdf->SetXY($header['date']['x'], $header['date']['y']);
-                $w = $header['date']['w'] ?? 0;
-                $text = Carbon::parse($event->date)->format($cfg['date_format']);
-                if (isset($header['date']['limit'])) $text = $this->truncateText($text, $header['date']['limit']);
-                $align = $header['date']['align'] ?? 'L';
-                $pdf->Cell($w, 8, $this->toIso($text), 0, 0, $align);
+                $this->printAutoFitText(
+                    $pdf,
+                    $header['date'],
+                    $header['date']['y'],
+                    Carbon::parse($event->date)->format($cfg['date_format']),
+                    'B',
+                    8
+                );
             }
 
             if (isset($header['responsible'])) {
-                $pdf->SetFont('Arial', 'B', $header['responsible']['fontSize'] ?? 12);
-                $pdf->SetXY($header['responsible']['x'], $header['responsible']['y']);
-                $w = $header['responsible']['w'] ?? 0;
-                $text = $event->user->name ?? '';
-                if (isset($header['responsible']['limit'])) $text = $this->truncateText($text, $header['responsible']['limit']);
-                $align = $header['responsible']['align'] ?? 'L';
-                $pdf->Cell($w, 8, $this->toIso($text), 0, 0, $align);
+                $this->printAutoFitText(
+                    $pdf,
+                    $header['responsible'],
+                    $header['responsible']['y'],
+                    $event->user->name ?? '',
+                    'B',
+                    8
+                );
             }
 
             $pdf->SetFont('Arial', '', 12);
@@ -162,39 +217,27 @@ class AttendancePdfService
             $y = round($cfg['startY'] + ($row * $cfg['rowHeight']), 2);
 
             if (isset($cols['number'])) {
-                $pdf->SetFont('Arial', '', $cols['number']['fontSize'] ?? 12);
-                $pdf->SetXY($cols['number']['x'], $y);
-                $pdf->Cell($cols['number']['w'], $cols['number']['h'] ?? 7.8, $i + 1, 0, 0, $cols['number']['align']);
+                $this->printAutoFitText($pdf, $cols['number'], $y, (string) ($i + 1));
             }
 
             if (isset($cols['name'])) {
-                $pdf->SetFont('Arial', '', $cols['name']['fontSize'] ?? 12);
-                $pdf->SetXY($cols['name']['x'], $y);
-                $pdf->Cell($cols['name']['w'], $cols['name']['h'] ?? 7.8,
-                    $this->toIso($this->truncateText(trim(($p->first_name ?? '') . ' ' . ($p->last_name ?? '')), $cols['name']['limit'])),
-                    0, 0, $cols['name']['align']
+                $this->printAutoFitText(
+                    $pdf,
+                    $cols['name'],
+                    $y,
+                    trim(($p->first_name ?? '') . ' ' . ($p->last_name ?? ''))
                 );
             }
 
             if (isset($cols['identification'])) {
-                $pdf->SetFont('Arial', '', $cols['identification']['fontSize'] ?? 12);
-                $pdf->SetXY($cols['identification']['x'], $y);
-                $pdf->Cell($cols['identification']['w'], $cols['identification']['h'] ?? 7.8,
-                    $this->toIso($this->truncateText($p->document ?? '', $cols['identification']['limit'])),
-                    0, 0, $cols['identification']['align']
-                );
+                $this->printAutoFitText($pdf, $cols['identification'], $y, (string) ($p->document ?? ''));
             }
 
             if (isset($cols['role'])) {
                 $roleText = $detail?->participantRole?->type?->name ?? '';
                 // Si tiene 'x' y 'w', es texto
                 if (isset($cols['role']['x']) && isset($cols['role']['w'])) {
-                    $pdf->SetFont('Arial', '', $cols['role']['fontSize'] ?? 12);
-                    $pdf->SetXY($cols['role']['x'], $y);
-                    $pdf->Cell($cols['role']['w'], $cols['role']['h'] ?? 7.8,
-                        $this->toIso($this->truncateText($roleText, $cols['role']['limit'])),
-                        0, 0, $cols['role']['align']
-                    );
+                    $this->printAutoFitText($pdf, $cols['role'], $y, $roleText);
                 // Si no, es tipo casilla
                 } else {
                     $pdf->SetFont('Arial', '', $cols['role']['fontSize'] ?? 12);
@@ -209,9 +252,6 @@ class AttendancePdfService
             }
 
             if (isset($cols['program'])) {
-                $pdf->SetFont('Arial', '', $cols['program']['fontSize'] ?? 12);
-                $pdf->SetXY($cols['program']['x'], $y);
-
                 // El mismo campo del formato se reutiliza para Programa o
                 // Dependencia: si el participante registró la asistencia con
                 // un rol de estamento que pertenece a Dependencia (p. ej.
@@ -232,67 +272,36 @@ class AttendancePdfService
                         ?? '';
                 }
 
-                $pdf->Cell($cols['program']['w'], $cols['program']['h'] ?? 7.8,
-                    $this->toIso($this->truncateText($programName, $cols['program']['limit'])),
-                    0, 0, $cols['program']['align']
-                );
+                $this->printAutoFitText($pdf, $cols['program'], $y, $programName);
             }
 
             if (isset($cols['email'])) {
-                $pdf->SetFont('Arial', '', $cols['email']['fontSize'] ?? 12);
-                $pdf->SetXY($cols['email']['x'], $y);
-                $pdf->Cell($cols['email']['w'], $cols['email']['h'] ?? 7.8,
-                    $this->toIso($this->truncateText($p->email ?? '', $cols['email']['limit'])),
-                    0, 0, $cols['email']['align']
-                );
+                $this->printAutoFitText($pdf, $cols['email'], $y, (string) ($p->email ?? ''));
             }
 
             if (isset($cols['phone'])) {
-                $pdf->SetFont('Arial', '', $cols['phone']['fontSize'] ?? 12);
-                $pdf->SetXY($cols['phone']['x'], $y);
                 $phoneText = $detail?->phone ?? $p->phone ?? '';
-                $pdf->Cell($cols['phone']['w'], $cols['phone']['h'] ?? 7.8,
-                    $this->toIso($this->truncateText($phoneText, $cols['phone']['limit'])),
-                    0, 0, $cols['phone']['align']
-                );
+                $this->printAutoFitText($pdf, $cols['phone'], $y, (string) $phoneText);
             }
 
             if (isset($cols['city'])) {
-                $pdf->SetFont('Arial', '', $cols['city']['fontSize'] ?? 12);
-                $pdf->SetXY($cols['city']['x'], $y);
-                $cityText = $detail?->city ?? '';
-                $pdf->Cell($cols['city']['w'], $cols['city']['h'] ?? 7.8,
-                    $this->toIso($this->truncateText($cityText, $cols['city']['limit'])),
-                    0, 0, $cols['city']['align']
-                );
+                $this->printAutoFitText($pdf, $cols['city'], $y, (string) ($detail?->city ?? ''));
             }
 
             if (isset($cols['neighborhood'])) {
-                $pdf->SetFont('Arial', '', $cols['neighborhood']['fontSize'] ?? 12);
-                $pdf->SetXY($cols['neighborhood']['x'], $y);
-                $neighborhoodText = $detail?->neighborhood ?? '';
-                $pdf->Cell($cols['neighborhood']['w'], $cols['neighborhood']['h'] ?? 7.8,
-                    $this->toIso($this->truncateText($neighborhoodText, $cols['neighborhood']['limit'])),
-                    0, 0, $cols['neighborhood']['align']
-                );
+                $this->printAutoFitText($pdf, $cols['neighborhood'], $y, (string) ($detail?->neighborhood ?? ''));
             }
 
             if (isset($cols['address'])) {
-                $pdf->SetFont('Arial', '', $cols['address']['fontSize'] ?? 12);
-                $pdf->SetXY($cols['address']['x'], $y);
-                $addressText = $detail?->address ?? '';
-                $pdf->Cell($cols['address']['w'], $cols['address']['h'] ?? 7.8,
-                    $this->toIso($this->truncateText($addressText, $cols['address']['limit'])),
-                    0, 0, $cols['address']['align']
-                );
+                $this->printAutoFitText($pdf, $cols['address'], $y, (string) ($detail?->address ?? ''));
             }
 
             if (isset($cols['time'])) {
-                $pdf->SetFont('Arial', '', $cols['time']['fontSize'] ?? 12);
-                $pdf->SetXY($cols['time']['x'], $y);
-                $pdf->Cell($cols['time']['w'], $cols['time']['h'] ?? 7.8,
-                    Carbon::parse($attendance->created_at)->format($cfg['time_format'] ?? 'h:i A'),
-                    0, 0, $cols['time']['align']
+                $this->printAutoFitText(
+                    $pdf,
+                    $cols['time'],
+                    $y,
+                    Carbon::parse($attendance->created_at)->format($cfg['time_format'] ?? 'h:i A')
                 );
             }
 
