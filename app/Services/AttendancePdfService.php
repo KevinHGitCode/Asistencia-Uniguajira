@@ -38,6 +38,63 @@ class AttendancePdfService
     }
 
     /**
+     * Busca la clave de un checkbox de "role" dentro del mapeo tolerando
+     * diferencias menores entre el nombre del estamento guardado en la BD
+     * y la clave definida en el formato: mayúsculas, acentos, espacios
+     * redundantes y variantes singular/plural (p. ej. "Administrativo" vs
+     * "Administrativos"). Devuelve la clave original del mapeo si encuentra
+     * coincidencia, o null si no hay.
+     */
+    private function findRoleCheckboxKey(array $roleMapping, string $roleText): ?string
+    {
+        // Coincidencia exacta primero (caso normal).
+        if ($roleText !== '' && isset($roleMapping[$roleText])) {
+            return $roleText;
+        }
+
+        $normalize = function (string $v): string {
+            $lower = mb_strtolower(trim($v), 'UTF-8');
+            $lower = preg_replace('/\s+/u', ' ', $lower);
+            if (class_exists(\Normalizer::class)) {
+                $decomposed = \Normalizer::normalize($lower, \Normalizer::FORM_D);
+                if ($decomposed !== false) {
+                    $lower = preg_replace('/\pM/u', '', $decomposed);
+                }
+            }
+            return $lower ?? '';
+        };
+
+        $stripPlural = fn (string $v): string => preg_replace('/(es|s)$/u', '', $v) ?? $v;
+
+        $target         = $normalize($roleText);
+        $targetSingular = $stripPlural($target);
+
+        if ($target === '') {
+            return null;
+        }
+
+        foreach ($roleMapping as $key => $val) {
+            // Saltar entradas que no sean casillas (sin coordenadas) como
+            // 'fontSize', 'align' globales, o propios 'x'/'w' de modo texto.
+            if (! is_array($val) || ! isset($val['x'])) {
+                continue;
+            }
+
+            $normKey         = $normalize((string) $key);
+            $normKeySingular = $stripPlural($normKey);
+
+            if ($target === $normKey
+                || $targetSingular === $normKey
+                || $target === $normKeySingular
+                || $targetSingular === $normKeySingular) {
+                return $key;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Imprime un texto ajustándolo automáticamente al tamaño de la celda:
      *   1. Intenta con la fuente base (`fontSize` del mapeo).
      *   2. Si no cabe en una sola línea, reduce el tamaño hasta `minFontSize`
@@ -241,10 +298,11 @@ class AttendancePdfService
                 // Si no, es tipo casilla
                 } else {
                     $pdf->SetFont('Arial', '', $cols['role']['fontSize'] ?? 12);
-                    if (isset($cols['role'][$roleText])) {
-                        $rx = $cols['role'][$roleText]['x'];
-                        $ry = $y + ($cols['role'][$roleText]['y_offset'] ?? 0);
-                        $align = $cols['role'][$roleText]['align'] ?? 'C';
+                    $matchedKey = $this->findRoleCheckboxKey($cols['role'], $roleText);
+                    if ($matchedKey !== null) {
+                        $rx = $cols['role'][$matchedKey]['x'];
+                        $ry = $y + ($cols['role'][$matchedKey]['y_offset'] ?? 0);
+                        $align = $cols['role'][$matchedKey]['align'] ?? 'C';
                         $pdf->SetXY($rx, $ry);
                         $pdf->Cell(5, 5, 'X', 0, 0, $align);
                     }
