@@ -15,16 +15,25 @@
 <style>
     .aura-logo-sidebar {
         width: auto;
-        height: 64px;
-        max-height: 64px;
+        height: 96px;
+        max-height: 96px;
+        max-width: 100%;
         object-fit: contain;
     }
 
     /* Escritorio: logo más grande */
     @media (min-width: 1024px) {
         .aura-logo-sidebar {
-            height: 88px;
-            max-height: 88px;
+            height: 130px;
+            max-height: 130px;
+        }
+    }
+
+    /* Monitores grandes */
+    @media (min-width: 1536px) {
+        .aura-logo-sidebar {
+            height: 150px;
+            max-height: 150px;
         }
     }
 </style>

@@ -91,29 +91,34 @@
             ──────────────────────────────────────────────────────────── --}}
             <div class="relative lg:hidden">
 
-                {{-- Fila superior: logo + título + badge en vivo --}}
-                <div class="flex items-start gap-3">
-                    <div class="shrink-0 rounded-xl bg-white/15 p-1.5 ring-1 ring-white/20 backdrop-blur-sm">
+                {{-- Fila superior: logos en su propia línea --}}
+                <div class="flex items-center justify-between gap-2">
+                    <div class="shrink-0 flex items-center gap-1.5 rounded-xl bg-white/15 px-2 py-1.5 ring-1 ring-white/20 backdrop-blur-sm">
                         <img
                             src="{{ asset('images/logo-uniguajira-blanco.webp') }}"
                             alt="Uniguajira"
-                            class="h-8 w-auto object-contain">
+                            class="h-7 sm:h-8 w-auto object-contain">
+                        <span class="block h-6 sm:h-7 w-px bg-white/30"></span>
+                        <img
+                            src="{{ asset('images/aura_blanco.png') }}"
+                            alt="AURA"
+                            class="h-7 sm:h-8 w-auto object-contain">
                     </div>
 
-                    <div class="min-w-0 flex-1">
-                        <div class="flex items-center gap-2">
-                            <p class="text-[9px] font-bold uppercase tracking-[.2em] text-white/70">
-                                Control de asistencia
-                            </p>
-                            <span class="inline-flex items-center gap-1 rounded-full bg-emerald-400/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-emerald-300 ring-1 ring-emerald-400/30">
-                                <span class="ev-access-live-dot h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
-                                En vivo
-                            </span>
-                        </div>
-                        <h1 class="mt-1 text-[15px] font-extrabold leading-snug text-white drop-shadow">
-                            {{ $event->title }}
-                        </h1>
-                    </div>
+                    <span class="inline-flex items-center gap-1 rounded-full bg-emerald-400/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-emerald-300 ring-1 ring-emerald-400/30">
+                        <span class="ev-access-live-dot h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
+                        En vivo
+                    </span>
+                </div>
+
+                {{-- Salto de línea: Control de asistencia + título del evento --}}
+                <div class="mt-3">
+                    <p class="text-[10px] font-bold uppercase tracking-[.2em] text-white/70">
+                        Control de asistencia
+                    </p>
+                    <h1 class="mt-1 text-[17px] font-extrabold leading-snug text-white drop-shadow">
+                        {{ $event->title }}
+                    </h1>
                 </div>
 
                 {{-- Fila de detalles compacta --}}
@@ -162,12 +167,17 @@
             <div class="relative hidden lg:flex lg:h-full lg:flex-col pb-10">
 
                 {{-- Logo fijo arriba --}}
-                <div class="flex items-center gap-3">
-                    <div class="rounded-2xl bg-white/15 px-4 py-2.5 ring-1 ring-white/20 backdrop-blur-sm">
+                <div class="flex flex-wrap items-center gap-3">
+                    <div class="flex min-w-0 max-w-full items-center gap-3 lg:gap-4 xl:gap-5 rounded-2xl bg-white/15 px-4 py-3 lg:px-5 xl:px-6 xl:py-4 ring-1 ring-white/20 backdrop-blur-sm">
                         <img
                             src="{{ asset('images/logo-uniguajira-blanco.webp') }}"
                             alt="Universidad de La Guajira"
-                            class="h-10 w-auto object-contain">
+                            class="h-10 lg:h-12 xl:h-16 2xl:h-20 w-auto object-contain">
+                        <span class="block h-8 lg:h-10 xl:h-14 2xl:h-16 w-px bg-white/30"></span>
+                        <img
+                            src="{{ asset('images/aura_blanco.png') }}"
+                            alt="AURA"
+                            class="h-10 lg:h-12 xl:h-16 2xl:h-20 w-auto object-contain">
                     </div>
                     <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-400/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-emerald-300 ring-1 ring-emerald-400/30">
                         <span class="ev-access-live-dot h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
