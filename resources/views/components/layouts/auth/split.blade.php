@@ -15,10 +15,10 @@
                 <!-- Bienvenida y Features -->
                 <div class="relative z-20 my-auto p-3 space-y-4">
                     <div class="space-y-3">
-                        <div class="flex justify-center lg:justify-start">
+                        <div class="flex justify-center">
                             <x-app-logo-icon />
                         </div>
-                        <p class="text-sm text-gray-300 leading-relaxed text-center lg:text-start">
+                        <p class="text-sm text-gray-300 leading-relaxed text-center">
                             Accede a tu cuenta y descubre todas las herramientas que tenemos para ti.
                         </p>
                     </div>
