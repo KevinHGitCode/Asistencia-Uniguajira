@@ -23,3 +23,16 @@ yarn-error.log
 /.zed
 settings.local.json
 *.xlsx
+
+# Base de datos local
+/database/*.sqlite
+/database/*.sqlite-journal
+
+# Formatos de asistencia (config local y PDFs)
+/config/attendance_formats.php
+/public/formats/
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
