@@ -45,7 +45,8 @@ class FormatController extends Controller
         $data = $request->only('name', 'slug');
 
         if ($request->hasFile('pdf_file')) {
-            $fileName = $request->file('pdf_file')->getClientOriginalName();
+            $extension = $request->file('pdf_file')->getClientOriginalExtension();
+            $fileName = $request->slug . '_' . time() . '.' . $extension;
             $request->file('pdf_file')->move(public_path('formats'), $fileName);
             $data['file'] = $fileName;
         }
@@ -82,7 +83,8 @@ class FormatController extends Controller
                 unlink(public_path("formats/{$format->file}"));
             }
 
-            $fileName = $request->file('pdf_file')->getClientOriginalName();
+            $extension = $request->file('pdf_file')->getClientOriginalExtension();
+            $fileName = $request->slug . '_' . time() . '.' . $extension;
             $request->file('pdf_file')->move(public_path('formats'), $fileName);
             $data['file'] = $fileName;
         }
