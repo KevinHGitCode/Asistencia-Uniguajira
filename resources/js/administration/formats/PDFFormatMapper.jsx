@@ -109,49 +109,49 @@ export default function PDFFormatMapper({ formatId, formatSlug, formatName, form
     loadPdf();
   }, [pdfReady, pdfUrl, scale]);
 
-  // Restore existing mapping
+  // Restore existing mapping — waits until PDF is fully rendered (pdfLoading === false)
+  const [mappingRestored, setMappingRestored] = useState(false);
   useEffect(() => {
-    if (!formatMapping || !pdfReady || !fileName) return;
-    if (typeof formatMapping !== 'object' || Object.keys(formatMapping).length === 0) return;
+    if (mappingRestored || pdfLoading || !pdfReady || !fileName) return;
+    if (!formatMapping || typeof formatMapping !== 'object' || Object.keys(formatMapping).length === 0) return;
     const cfg = formatMapping;
     if (cfg.startY || cfg.rowHeight || cfg.maxRows) setTableConfig({ startY: cfg.startY || 60, rowHeight: cfg.rowHeight || 8, maxRows: cfg.maxRows || 16 });
     if (cfg.date_format && typeof cfg.date_format === 'object') setDateFormat(cfg.date_format);
     if (cfg.time_format) setTimeFormat(cfg.time_format);
-    const timer = setTimeout(() => {
-      const m2p = (mm, axis) => Math.round(mm * (axis === "x" ? pageInfo.wPx / pageInfo.wMm : pageInfo.hPx / pageInfo.hMm));
-      if (cfg.header) {
-        const h = {};
-        Object.entries(cfg.header).forEach(([id, pos]) => {
-          if (HEADER_FIELDS.find(f => f.id === id)) {
-              const wMm = pos.w || 40;
-              h[id] = { xPx: m2p(pos.x, "x"), yPx: m2p(pos.y, "y"), fontSize: pos.fontSize || 12, wMm: wMm, limit: pos.limit || estimateLimit(wMm, pos.fontSize || 12), align: pos.align || "L" };
-          }
-        });
-        setPlacedHeaders(h);
-      }
-      if (cfg.columns) {
-        const cols = {}, cbs = {};
-        Object.entries(cfg.columns).forEach(([id, col]) => {
-          const isCb = !col.hasOwnProperty('x') && !col.hasOwnProperty('w');
-          if (isCb) {
-            let cbId = id;
-            const cbField = CHECKBOX_FIELDS.find(f => f.configId === id || f.id === id);
-            if (cbField) cbId = cbField.id;
-            const opts = {};
-            Object.entries(col).forEach(([optKey, optPos]) => {
-              if (typeof optPos === 'object' && optPos.x !== undefined) opts[optKey] = { xPx: m2p(optPos.x, "x"), yPx: m2p((cfg.startY || 60) + (optPos.y_offset || 0), "y"), wMm: 10 };
-            });
-            if (Object.keys(opts).length > 0) cbs[cbId] = opts;
-          } else if (COLUMN_FIELDS.find(f => f.id === id)) {
-            cols[id] = { xPx: m2p(col.x, "x"), yPx: m2p(cfg.startY || 60, "y"), w: col.w || 30, h: col.h || 7, align: col.align || "L", limit: col.limit || 25, fontSize: col.fontSize || 12 };
-          }
-        });
-        setPlacedColumns(cols);
-        setPlacedCheckboxes(cbs);
-      }
-    }, 600);
-    return () => clearTimeout(timer);
-  }, [formatMapping, pdfReady, fileName, pageInfo.wPx]);
+
+    const m2p = (mm, axis) => Math.round(mm * (axis === "x" ? pageInfo.wPx / pageInfo.wMm : pageInfo.hPx / pageInfo.hMm));
+    if (cfg.header) {
+      const h = {};
+      Object.entries(cfg.header).forEach(([id, pos]) => {
+        if (HEADER_FIELDS.find(f => f.id === id)) {
+            const wMm = pos.w || 40;
+            h[id] = { xPx: m2p(pos.x, "x"), yPx: m2p(pos.y, "y"), fontSize: pos.fontSize || 12, wMm: wMm, limit: pos.limit || estimateLimit(wMm, pos.fontSize || 12), align: pos.align || "L" };
+        }
+      });
+      setPlacedHeaders(h);
+    }
+    if (cfg.columns) {
+      const cols = {}, cbs = {};
+      Object.entries(cfg.columns).forEach(([id, col]) => {
+        const isCb = !col.hasOwnProperty('x') && !col.hasOwnProperty('w');
+        if (isCb) {
+          let cbId = id;
+          const cbField = CHECKBOX_FIELDS.find(f => f.configId === id || f.id === id);
+          if (cbField) cbId = cbField.id;
+          const opts = {};
+          Object.entries(col).forEach(([optKey, optPos]) => {
+            if (typeof optPos === 'object' && optPos.x !== undefined) opts[optKey] = { xPx: m2p(optPos.x, "x"), yPx: m2p((cfg.startY || 60) + (optPos.y_offset || 0), "y"), wMm: 10 };
+          });
+          if (Object.keys(opts).length > 0) cbs[cbId] = opts;
+        } else if (COLUMN_FIELDS.find(f => f.id === id)) {
+          cols[id] = { xPx: m2p(col.x, "x"), yPx: m2p(cfg.startY || 60, "y"), w: col.w || 30, h: col.h || 7, align: col.align || "L", limit: col.limit || 25, fontSize: col.fontSize || 12 };
+        }
+      });
+      setPlacedColumns(cols);
+      setPlacedCheckboxes(cbs);
+    }
+    setMappingRestored(true);
+  }, [formatMapping, pdfReady, pdfLoading, fileName, pageInfo.wPx, mappingRestored]);
 
   const pxToMm = useCallback((px, axis) => Math.round(px * (axis === "x" ? pageInfo.wMm / pageInfo.wPx : pageInfo.hMm / pageInfo.hPx) * 100) / 100, [pageInfo]);
   const mmToPx = useCallback((mm, axis) => Math.round(mm * (axis === "x" ? pageInfo.wPx / pageInfo.wMm : pageInfo.hPx / pageInfo.hMm)), [pageInfo]);
