@@ -161,7 +161,6 @@ Route::middleware(['auth', 'verified', 'role:admin'])
         Route::post('/formats', [FormatController::class, 'store'])->name('formats.store');
         Route::post('/formats/edit/{format}', [FormatController::class, 'update'])->name('formats.update');
         Route::post('/formats/delete/{format}', [FormatController::class, 'destroy'])->name('formats.destroy');
-        Route::post('/formats/{format}/dependencies', [FormatController::class, 'syncDependencies'])->name('formats.sync-dependencies');
 
         Route::get('/formats/{format}/mapper', [FormatController::class, 'mapper'])->name('formats.mapper');
         Route::post('/formats/{format}/mapping', [FormatController::class, 'saveMapping'])->name('formats.save-mapping');
