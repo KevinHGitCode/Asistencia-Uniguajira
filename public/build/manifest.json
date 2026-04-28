@@ -11,7 +11,7 @@
     "name": "index"
   },
   "resources/css/app.css": {
-    "file": "assets/app-Ch0DkLux.css",
+    "file": "assets/app-ClmQ8yNg.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "names": [
@@ -82,6 +82,12 @@
       "_index-BwNU8OnE.js",
       "_ProgramParticipantsPie-BiYipDsw.js"
     ]
+  },
+  "resources/js/events/show.js": {
+    "file": "assets/show-CjAZs2qn.js",
+    "name": "show",
+    "src": "resources/js/events/show.js",
+    "isEntry": true
   },
   "resources/js/statistics/index.jsx": {
     "file": "assets/index-BpSt4dP8.js",
