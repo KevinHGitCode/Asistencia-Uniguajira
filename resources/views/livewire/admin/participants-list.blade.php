@@ -20,16 +20,16 @@
 
     {{-- Tabla --}}
     <div class="overflow-x-auto rounded-xl border border-neutral-200 dark:border-zinc-700">
-        <table class="min-w-full divide-y divide-neutral-200 dark:divide-zinc-700 text-sm">
+        <table class="min-w-[900px] w-full divide-y divide-neutral-200 dark:divide-zinc-700 text-sm">
             <thead class="bg-zinc-50 dark:bg-zinc-800/60">
                 <tr>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider">Documento</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider">Nombre</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider">Estamento(s)</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider hidden md:table-cell">Programa(s)</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider hidden md:table-cell">Dependencia(s)</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider hidden lg:table-cell">Vinculación</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider hidden lg:table-cell">Correo</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider">Programa(s)</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider">Dependencia(s)</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider">Vinculación</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider">Correo</th>
                 </tr>
             </thead>
             <tbody class="bg-white dark:bg-zinc-900 divide-y divide-neutral-100 dark:divide-zinc-800">
@@ -99,7 +99,7 @@
                         </td>
 
                         {{-- Programa(s) --}}
-                        <td class="px-4 py-3 hidden md:table-cell">
+                        <td class="px-4 py-3">
                             @if($programNames->isNotEmpty())
                                 <div class="flex items-center gap-1.5" x-data="floatingTooltip()">
                                     <span class="text-xs text-gray-700 dark:text-zinc-300 truncate max-w-[12rem]" title="{{ $primaryProgram }}">
@@ -133,7 +133,7 @@
                         </td>
 
                         {{-- Dependencia(s) --}}
-                        <td class="px-4 py-3 hidden md:table-cell">
+                        <td class="px-4 py-3">
                             @if($dependencyNames->isNotEmpty())
                                 <div class="flex items-center gap-1.5" x-data="floatingTooltip()">
                                     <span class="text-xs text-gray-700 dark:text-zinc-300 truncate max-w-[12rem]" title="{{ $primaryDependency }}">
@@ -167,7 +167,7 @@
                         </td>
 
                         {{-- Vinculación --}}
-                        <td class="px-4 py-3 hidden lg:table-cell">
+                        <td class="px-4 py-3">
                             @if($affiliationNames->isNotEmpty())
                                 <div class="flex items-center gap-1.5" x-data="floatingTooltip()">
                                     <span class="text-xs text-gray-600 dark:text-zinc-400 truncate max-w-[10rem]" title="{{ $primaryAffiliation }}">
@@ -200,7 +200,7 @@
                             @endif
                         </td>
 
-                        <td class="px-4 py-3 hidden lg:table-cell text-xs text-gray-500 dark:text-zinc-400 truncate max-w-[160px]">
+                        <td class="px-4 py-3 text-xs text-gray-500 dark:text-zinc-400 whitespace-nowrap">
                             {{ $participant->email ?? '—' }}
                         </td>
                     </tr>
