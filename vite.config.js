@@ -14,6 +14,7 @@ export default defineConfig({
                 'resources/js/app.js',
                 'resources/js/statistics/index.jsx',
                 'resources/js/events/index.jsx',
+                'resources/js/events/show.js',
                 'resources/js/administration/formats/pdf-mapper.jsx',
             ],
             refresh: true,
