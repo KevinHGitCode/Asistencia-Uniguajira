@@ -138,14 +138,26 @@ class FormatController extends Controller
     private function updateConfigFile(string $slug, array $mapping): void
     {
         $configPath = config_path('attendance_formats.php');
-        $config = include $configPath;
+        $lockPath = $configPath . '.lock';
 
-        $config[$slug] = $mapping;
+        $lock = fopen($lockPath, 'c');
+        if (! flock($lock, LOCK_EX)) {
+            fclose($lock);
+            return;
+        }
 
-        $content = "<?php\n\nreturn " . $this->arrayToPhp($config, 0) . ";\n";
-        file_put_contents($configPath, $content);
+        try {
+            $config = file_exists($configPath) ? include $configPath : [];
+            $config[$slug] = $mapping;
 
-        Artisan::call('config:clear');
+            $content = "<?php\n\nreturn " . $this->arrayToPhp($config, 0) . ";\n";
+            file_put_contents($configPath, $content, LOCK_EX);
+
+            Artisan::call('config:clear');
+        } finally {
+            flock($lock, LOCK_UN);
+            fclose($lock);
+        }
     }
 
     private function arrayToPhp(array $array, int $depth = 0): string
@@ -207,15 +219,28 @@ class FormatController extends Controller
     private function removeFromConfigFile(string $slug): void
     {
         $configPath = config_path('attendance_formats.php');
-        $config = include $configPath;
+        $lockPath = $configPath . '.lock';
 
-        if (isset($config[$slug])) {
-            unset($config[$slug]);
+        $lock = fopen($lockPath, 'c');
+        if (! flock($lock, LOCK_EX)) {
+            fclose($lock);
+            return;
+        }
 
-            $content = "<?php\n\nreturn " . $this->arrayToPhp($config, 0) . ";\n";
-            file_put_contents($configPath, $content);
+        try {
+            $config = file_exists($configPath) ? include $configPath : [];
 
-            Artisan::call('config:clear');
+            if (isset($config[$slug])) {
+                unset($config[$slug]);
+
+                $content = "<?php\n\nreturn " . $this->arrayToPhp($config, 0) . ";\n";
+                file_put_contents($configPath, $content, LOCK_EX);
+
+                Artisan::call('config:clear');
+            }
+        } finally {
+            flock($lock, LOCK_UN);
+            fclose($lock);
         }
     }
 }

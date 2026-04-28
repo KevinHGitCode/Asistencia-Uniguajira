@@ -30,6 +30,7 @@ settings.local.json
 
 # Formatos de asistencia (config local y PDFs)
 /config/attendance_formats.php
+/config/attendance_formats.php.lock
 /public/formats/
 
 # OS
