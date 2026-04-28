@@ -269,12 +269,12 @@
 
             <div class="absolute inset-0 bg-black/50 dark:bg-black/70" wire:click="closeEdit"></div>
 
-            <div class="relative w-full max-w-lg bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-neutral-200 dark:border-zinc-700 z-10"
+            <div class="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-neutral-200 dark:border-zinc-700 z-10"
                  x-transition:enter="transition ease-out duration-200"
                  x-transition:enter-start="opacity-0 scale-95"
                  x-transition:enter-end="opacity-100 scale-100">
 
-                <div class="flex items-center justify-between px-6 py-4 border-b border-neutral-200 dark:border-zinc-700">
+                <div class="flex items-center justify-between px-6 py-4 border-b border-neutral-200 dark:border-zinc-700 sticky top-0 bg-white dark:bg-zinc-900 z-10">
                     <h3 class="text-base font-semibold text-gray-900 dark:text-white">Editar Participante</h3>
                     <button wire:click="closeEdit"
                         class="p-1 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer">
@@ -282,8 +282,9 @@
                     </button>
                 </div>
 
-                <form wire:submit="updateParticipant" class="px-6 py-5 flex flex-col gap-4">
+                <form wire:submit="updateParticipant" class="px-6 py-5 flex flex-col gap-5">
 
+                    {{-- ── Datos básicos ── --}}
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {{-- Documento --}}
                         <div class="flex flex-col gap-1.5">
@@ -342,6 +343,102 @@
                             class="px-3 py-2 rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition" />
                         @error('editEmail')
                             <p class="text-xs text-red-500">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    {{-- ── Roles / Estamentos ── --}}
+                    <div class="border-t border-neutral-200 dark:border-zinc-700 pt-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="text-sm font-semibold text-gray-900 dark:text-white">Roles / Estamentos</h4>
+                            <button type="button" wire:click="addRole"
+                                class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors cursor-pointer">
+                                <flux:icon.plus class="size-3.5" />
+                                Agregar rol
+                            </button>
+                        </div>
+
+                        <div class="flex flex-col gap-3">
+                            @foreach($editRoles as $index => $role)
+                                @php
+                                    $typeCategory = $this->getTypeCategory($role['participant_type_id']);
+                                @endphp
+                                <div class="relative rounded-xl border border-neutral-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 p-4" wire:key="role-{{ $index }}">
+
+                                    {{-- Botón eliminar rol --}}
+                                    @if(count($editRoles) > 1)
+                                        <button type="button" wire:click="removeRole({{ $index }})"
+                                            class="absolute top-2 right-2 p-1 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 dark:hover:text-red-400 transition-colors cursor-pointer"
+                                            title="Eliminar rol">
+                                            <flux:icon.x-mark class="size-4" />
+                                        </button>
+                                    @endif
+
+                                    <div class="flex flex-col gap-3">
+                                        {{-- Estamento --}}
+                                        <div class="flex flex-col gap-1.5">
+                                            <label class="text-xs font-medium text-gray-600 dark:text-gray-400">
+                                                Estamento <span class="text-red-500">*</span>
+                                            </label>
+                                            <select wire:model.live="editRoles.{{ $index }}.participant_type_id"
+                                                class="px-3 py-2 rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+                                                <option value="">Selecciona un estamento…</option>
+                                                @foreach($catalogTypes as $type)
+                                                    <option value="{{ $type['id'] }}">{{ $type['name'] }}</option>
+                                                @endforeach
+                                            </select>
+                                            @error("editRoles.{$index}.participant_type_id")
+                                                <p class="text-xs text-red-500">{{ $message }}</p>
+                                            @enderror
+                                        </div>
+
+                                        {{-- Programa (Estudiante, Graduado, Docente) --}}
+                                        @if($typeCategory === 'program')
+                                            <div class="flex flex-col gap-1.5">
+                                                <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Programa</label>
+                                                <select wire:model="editRoles.{{ $index }}.program_id"
+                                                    class="px-3 py-2 rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+                                                    <option value="">Sin programa</option>
+                                                    @foreach($catalogPrograms as $program)
+                                                        <option value="{{ $program['id'] }}">{{ $program['name'] }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                        @endif
+
+                                        {{-- Dependencia (Administrativo) --}}
+                                        @if($typeCategory === 'dependency')
+                                            <div class="flex flex-col gap-1.5">
+                                                <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Dependencia</label>
+                                                <select wire:model="editRoles.{{ $index }}.dependency_id"
+                                                    class="px-3 py-2 rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+                                                    <option value="">Sin dependencia</option>
+                                                    @foreach($catalogDependencies as $dep)
+                                                        <option value="{{ $dep['id'] }}">{{ $dep['name'] }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                        @endif
+
+                                        {{-- Vinculación (Estudiante, Graduado, Docente, Administrativo) --}}
+                                        @if(in_array($typeCategory, ['program', 'dependency']))
+                                            <div class="flex flex-col gap-1.5">
+                                                <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Vinculación</label>
+                                                <select wire:model="editRoles.{{ $index }}.affiliation_id"
+                                                    class="px-3 py-2 rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+                                                    <option value="">Sin vinculación</option>
+                                                    @foreach($catalogAffiliations as $aff)
+                                                        <option value="{{ $aff['id'] }}">{{ $aff['name'] }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+
+                        @error('editRoles')
+                            <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
                         @enderror
                     </div>
 
