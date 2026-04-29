@@ -121,14 +121,13 @@ class FormatController extends Controller
     {
         $request->validate([
             'mapping' => 'required|array',
-            'slug' => 'required|string',
         ]);
 
         $format->update([
             'mapping' => $request->mapping,
         ]);
 
-        $this->updateConfigFile($request->slug, $request->mapping);
+        $this->updateConfigFile($format->slug, $request->mapping);
 
         session()->flash('success', 'Mapeo del formato guardado correctamente.');
 

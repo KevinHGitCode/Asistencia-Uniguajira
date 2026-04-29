@@ -60,7 +60,7 @@ export default function PDFFormatMapper({ formatId, formatSlug, formatName, form
   const [pdfLoading, setPdfLoading] = useState(false);
   const [pageInfo, setPageInfo] = useState({ wMm: 297, hMm: 210, wPx: 800, hPx: 566 });
   const [scale, setScale] = useState(1.2);
-  const [slug, setSlug] = useState(formatSlug || "");
+  const slug = formatSlug || "";
   const [placedHeaders, setPlacedHeaders] = useState({});
   const [placedColumns, setPlacedColumns] = useState({});
   const [placedCheckboxes, setPlacedCheckboxes] = useState({});
@@ -396,7 +396,7 @@ export default function PDFFormatMapper({ formatId, formatSlug, formatName, form
     const cfg = generateConfig();
     setSaving(true);
     try {
-      const res = await fetch(saveUrl, { method: "POST", headers: { "Content-Type": "application/json", "X-CSRF-TOKEN": csrfToken }, body: JSON.stringify({ mapping: cfg, slug }) });
+      const res = await fetch(saveUrl, { method: "POST", headers: { "Content-Type": "application/json", "X-CSRF-TOKEN": csrfToken }, body: JSON.stringify({ mapping: cfg }) });
       const data = await res.json();
       if (data.success) {
           window.location.href = indexUrl || "/administracion/formats";
