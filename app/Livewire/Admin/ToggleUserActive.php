@@ -17,6 +17,8 @@ class ToggleUserActive extends Component
 
     public function toggleActive()
     {
+        abort_unless(auth()->user()?->role === 'admin', 403, 'Solo administradores pueden cambiar el estado de usuarios.');
+
         $this->user->update(['is_active' => !$this->user->is_active]);
 
         $status = $this->user->is_active ? 'activado' : 'desactivado';
