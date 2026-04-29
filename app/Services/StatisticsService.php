@@ -19,6 +19,15 @@ use Illuminate\Support\Facades\DB;
  */
 class StatisticsService
 {
+    /** Columnas permitidas en attendance_details para agrupación dinámica. */
+    private const ALLOWED_DETAIL_COLUMNS = [
+        'gender',
+        'priority_group',
+        'city',
+        'neighborhood',
+        'phone',
+    ];
+
     public function __construct(private readonly array $filters) {}
 
     // ── Contadores ──────────────────────────────────────────────────────────
@@ -93,32 +102,52 @@ class StatisticsService
     /**
      * Agrupa asistencias por un campo de attendance_details (gender, priority_group).
      * Los valores nulos aparecen como $fallback.
+     *
+     * @throws \InvalidArgumentException si $col no está en la whitelist.
      */
     public function attendancesByDetailField(string $col, string $fallback = 'Sin datos'): Collection
     {
+        $safeCol = $this->validateDetailColumn($col);
+
         return $this->detailsBase()
-            ->select(
-                DB::raw("COALESCE(attendance_details.{$col}, '{$fallback}') as name"),
-                DB::raw('COUNT(*) as value')
-            )
-            ->groupBy("attendance_details.{$col}")
+            ->selectRaw("COALESCE(attendance_details.{$safeCol}, ?) as name", [$fallback])
+            ->selectRaw('COUNT(*) as value')
+            ->groupBy("attendance_details.{$safeCol}")
             ->orderByDesc('value')
             ->get();
     }
 
     /**
      * Cuenta participantes únicos por un campo de attendance_details.
+     *
+     * @throws \InvalidArgumentException si $col no está en la whitelist.
      */
     public function participantsByDetailField(string $col, string $fallback = 'Sin datos'): Collection
     {
+        $safeCol = $this->validateDetailColumn($col);
+
         return $this->detailsBase()
-            ->select(
-                DB::raw("COALESCE(attendance_details.{$col}, '{$fallback}') as name"),
-                DB::raw('COUNT(DISTINCT attendances.participant_id) as value')
-            )
-            ->groupBy("attendance_details.{$col}")
+            ->selectRaw("COALESCE(attendance_details.{$safeCol}, ?) as name", [$fallback])
+            ->selectRaw('COUNT(DISTINCT attendances.participant_id) as value')
+            ->groupBy("attendance_details.{$safeCol}")
             ->orderByDesc('value')
             ->get();
+    }
+
+    /**
+     * Valida que el nombre de columna esté en la whitelist.
+     *
+     * @throws \InvalidArgumentException
+     */
+    private function validateDetailColumn(string $col): string
+    {
+        if (! in_array($col, self::ALLOWED_DETAIL_COLUMNS, true)) {
+            throw new \InvalidArgumentException(
+                "Columna '{$col}' no permitida. Permitidas: " . implode(', ', self::ALLOWED_DETAIL_COLUMNS)
+            );
+        }
+
+        return $col;
     }
 
     // ── Top listas ──────────────────────────────────────────────────────────

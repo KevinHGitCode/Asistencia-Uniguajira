@@ -193,7 +193,7 @@ class EventController extends Controller
         return response()->json($events);
     }
 
-    public function descargarAsistencia($id, $formatSlug = null, AttendancePdfService $pdfService)
+    public function descargarAsistencia(AttendancePdfService $pdfService, $id, $formatSlug = null)
     {
         $evento = Event::with([
             'asistencias.participant.activeRoles.type',
@@ -206,6 +206,21 @@ class EventController extends Controller
             'area',
             'user',
         ])->findOrFail($id);
+
+        // ── Autorización: admin, dueño o miembro de la dependencia ──
+        /** @var User $user */
+        $user = Auth::user();
+
+        $perteneceDependencia = $evento->dependency_id
+            && $user->dependencies()
+                ->where('dependencies.id', $evento->dependency_id)
+                ->exists();
+
+        if ($user->role !== 'admin'
+            && (int) $evento->user_id !== (int) $user->id
+            && ! $perteneceDependencia) {
+            abort(403, 'No tienes permiso para descargar la asistencia de este evento.');
+        }
 
         $formats = $evento->dependency->formats ?? collect();
 
