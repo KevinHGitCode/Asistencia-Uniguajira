@@ -12,6 +12,7 @@ if (container) {
         formatMapping: container.dataset.formatMapping ? JSON.parse(container.dataset.formatMapping) : null,
         saveUrl: container.dataset.saveUrl,
         pdfUrl: container.dataset.pdfUrl,
+        indexUrl: container.dataset.indexUrl,
         csrfToken: container.dataset.csrfToken,
     };
 

@@ -22,6 +22,7 @@
             data-format-mapping='@json($existingMapping ?? [])'
             data-save-url="{{ route('formats.save-mapping', $format) }}"
             data-pdf-url="{{ $format->file ? asset('formats/' . $format->file) : '' }}"
+            data-index-url="{{ route('formats.index') }}"
             data-csrf-token="{{ csrf_token() }}"
             style="height: 80vh; border-radius: 16px; overflow: hidden; border: 1px solid var(--color-zinc-700);">
         </div>

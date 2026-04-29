@@ -53,7 +53,7 @@ function isEditableTarget(target) {
   return tag === "input" || tag === "textarea" || tag === "select" || target.isContentEditable;
 }
 
-export default function PDFFormatMapper({ formatId, formatSlug, formatName, formatFile, formatMapping, saveUrl, pdfUrl, csrfToken } = {}) {
+export default function PDFFormatMapper({ formatId, formatSlug, formatName, formatFile, formatMapping, saveUrl, pdfUrl, indexUrl, csrfToken } = {}) {
   const canvasRef = useRef(null);
   const containerRef = useRef(null);
   const [pdfReady, setPdfReady] = useState(false);
@@ -399,7 +399,7 @@ export default function PDFFormatMapper({ formatId, formatSlug, formatName, form
       const res = await fetch(saveUrl, { method: "POST", headers: { "Content-Type": "application/json", "X-CSRF-TOKEN": csrfToken }, body: JSON.stringify({ mapping: cfg, slug }) });
       const data = await res.json();
       if (data.success) {
-          window.location.href = "/administracion/formats";
+          window.location.href = indexUrl || "/administracion/formats";
       } else {
           alert("Error: " + (data.message || "No se pudo guardar"));
       }
