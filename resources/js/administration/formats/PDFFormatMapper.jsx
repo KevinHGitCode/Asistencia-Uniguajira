@@ -381,8 +381,8 @@ export default function PDFFormatMapper({ formatId, formatSlug, formatName, form
     });
     Object.entries(placedCheckboxes).forEach(([fieldId, options]) => {
       const configKey = CHECKBOX_FIELDS.find(f => f.id === fieldId)?.configId || fieldId;
-      columns[configKey] = {};
-    Object.entries(options).forEach(([optKey, pos]) => {
+      columns[configKey] = { fontSize: 12 };
+      Object.entries(options).forEach(([optKey, pos]) => {
           const yOff = pxToMm(pos.yPx - mmToPx(tableConfig.startY, "y"), "y");
           columns[configKey][optKey] = { x: pxToMm(pos.xPx, "x") };
           if (Math.abs(yOff) > 0.5) columns[configKey][optKey].y_offset = yOff;

@@ -120,7 +120,22 @@ class FormatController extends Controller
     public function saveMapping(Request $request, Format $format)
     {
         $request->validate([
-            'mapping' => 'required|array',
+            'mapping'             => 'required|array',
+            'mapping.file'        => 'required|string',
+            'mapping.startY'      => 'required|numeric|min:0',
+            'mapping.rowHeight'   => 'required|numeric|min:1',
+            'mapping.maxRows'     => 'required|integer|min:1',
+            'mapping.columns'     => 'required|array|min:1',
+            'mapping.header'      => 'nullable|array',
+            'mapping.date_format' => 'nullable|array',
+            'mapping.time_format' => 'nullable|string',
+        ], [
+            'mapping.file.required'      => 'El mapeo debe tener un archivo PDF asociado.',
+            'mapping.startY.required'    => 'El inicio Y de la tabla es obligatorio.',
+            'mapping.rowHeight.required' => 'La altura de fila es obligatoria.',
+            'mapping.maxRows.required'   => 'El número máximo de filas es obligatorio.',
+            'mapping.columns.required'   => 'Debe haber al menos una columna mapeada.',
+            'mapping.columns.min'        => 'Debe haber al menos una columna mapeada.',
         ]);
 
         $format->update([
