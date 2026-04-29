@@ -40,10 +40,24 @@ class EventService
             $areaId = $area->id;
         }
 
-        // Generar slug
-        $slug = str_replace(' ', '-', strtolower($data['title']))
-            . '-' . date('Ymd', strtotime($data['date']))
-            . '-' . uniqid();
+        // Generar slug único con token criptográfico
+        $base = str_replace(' ', '-', strtolower($data['title']))
+            . '-' . date('Ymd', strtotime($data['date']));
+
+        $maxAttempts = 5;
+        $slug = null;
+
+        for ($i = 0; $i < $maxAttempts; $i++) {
+            $candidate = $base . '-' . bin2hex(random_bytes(6));
+            if (! Event::where('link', $candidate)->exists()) {
+                $slug = $candidate;
+                break;
+            }
+        }
+
+        if ($slug === null) {
+            throw new \RuntimeException('No se pudo generar un slug único para el evento.');
+        }
 
         $event = Event::create([
             'title'         => $data['title'],

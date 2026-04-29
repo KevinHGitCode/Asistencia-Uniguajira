@@ -33,7 +33,7 @@ class AttendeesModal extends Component
             'detail.participantRole.affiliation',
         ])
             ->where('event_id', $this->eventId)
-            ->orderBy('created_at', 'desc')
+            ->orderBy('created_at', 'asc')
             ->get();
         
         $this->totalAttendees = count($this->attendees);

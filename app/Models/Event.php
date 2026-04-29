@@ -31,7 +31,8 @@ class Event extends Model
 
     public function asistencias()
     {
-        return $this->hasMany(Attendance::class, 'event_id');
+        return $this->hasMany(Attendance::class, 'event_id')
+            ->orderBy('created_at', 'asc');
     }
 
     public function participantes()
