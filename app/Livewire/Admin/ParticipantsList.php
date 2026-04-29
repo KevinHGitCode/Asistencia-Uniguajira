@@ -4,6 +4,7 @@ namespace App\Livewire\Admin;
 
 use App\Models\Affiliation;
 use App\Models\Dependency;
+use App\Models\Attendance;
 use App\Models\Participant;
 use App\Models\ParticipantRole;
 use App\Models\ParticipantType;
@@ -257,6 +258,14 @@ class ParticipantsList extends Component
     public function deleteParticipant(): void
     {
         $participant = Participant::findOrFail($this->deletingId);
+
+        if (Attendance::where('participant_id', $participant->id)->exists()) {
+            $this->showDeleteModal = false;
+            $this->deletingId      = null;
+            $this->deletingName    = '';
+            session()->flash('participant-error', 'No se puede eliminar un participante que tiene asistencias registradas.');
+            return;
+        }
 
         DB::table('participant_roles')
             ->where('participant_id', $participant->id)

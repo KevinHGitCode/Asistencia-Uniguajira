@@ -11,6 +11,18 @@
         </div>
     @endif
 
+    {{-- Flash de error --}}
+    @if(session('participant-error'))
+        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)"
+            x-transition:leave="transition ease-in duration-300"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            class="mb-4 flex items-center gap-3 px-4 py-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">
+            <flux:icon.x-circle class="size-5 shrink-0" />
+            {{ session('participant-error') }}
+        </div>
+    @endif
+
     {{-- Buscador --}}
     <div class="mb-4">
         <div class="relative">
