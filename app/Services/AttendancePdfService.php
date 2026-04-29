@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Event;
 use setasign\Fpdi\Tfpdf\Fpdi;
 use Carbon\Carbon;
 
@@ -25,12 +26,12 @@ class AttendancePdfService
         return config("attendance_formats.{$formatSlug}") ?? config('attendance_formats.default');
     }
 
-    private function toIso($text): string
+    private function toIso(string $text): string
     {
         return iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $text);
     }
 
-    private function truncateText($text, $limit = 25): string
+    private function truncateText(string $text, int $limit = 25): string
     {
         return mb_strlen($text) > $limit
             ? mb_substr($text, 0, $limit - 3) . '...'
@@ -106,7 +107,7 @@ class AttendancePdfService
      * Al terminar restaura la fuente base (Arial regular 12) para que las
      * celdas siguientes no hereden el tamaño reducido.
      */
-    private function printAutoFitText($pdf, array $col, float $y, string $text, string $style = '', ?float $h = null): void
+    private function printAutoFitText(Fpdi $pdf, array $col, float $y, string $text, string $style = '', ?float $h = null): void
     {
         $cw       = $col['w'] ?? 0;
         $ch       = $h ?? ($col['h'] ?? 7.8);
@@ -159,7 +160,7 @@ class AttendancePdfService
         $pdf->SetFont('Arial', '', 12);
     }
 
-    public function generatePdf($event, string $formatSlug = 'default'): string
+    public function generatePdf(Event $event, string $formatSlug = 'default'): string
     {
 
         $cfg = $this->getConfig($formatSlug);
