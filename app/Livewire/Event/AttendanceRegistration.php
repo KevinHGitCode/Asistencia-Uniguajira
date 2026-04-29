@@ -417,41 +417,53 @@ class AttendanceRegistration extends Component
             'detailEmail.unique'           => 'Este correo ya esta registrado en el sistema.',
         ]);
 
-        $existing = Attendance::where('event_id', $this->eventId)
-            ->where('participant_id', $this->participantData['id'])
-            ->first();
-
-        if ($existing) {
-            $this->duplicateRegisteredAt = $existing->created_at->format('h:i A');
-            $this->step                  = 'duplicate';
-            return;
-        }
-
         try {
-            if (! ($this->participantData['has_email'] ?? true) && ! empty($this->detailEmail)) {
-                Participant::where('id', $this->participantData['id'])
-                    ->update(['email' => strtolower(trim($this->detailEmail))]);
-                $this->participantData['email']     = $this->detailEmail;
-                $this->participantData['has_email'] = true;
+            $result = DB::transaction(function () {
+                // Verificación atómica dentro de la transacción
+                $existing = Attendance::where('event_id', $this->eventId)
+                    ->where('participant_id', $this->participantData['id'])
+                    ->lockForUpdate()
+                    ->first();
+
+                if ($existing) {
+                    return ['duplicate' => true, 'registeredAt' => $existing->created_at->format('h:i A')];
+                }
+
+                if (! ($this->participantData['has_email'] ?? true) && ! empty($this->detailEmail)) {
+                    Participant::where('id', $this->participantData['id'])
+                        ->update(['email' => strtolower(trim($this->detailEmail))]);
+                    $this->participantData['email']     = $this->detailEmail;
+                    $this->participantData['has_email'] = true;
+                }
+
+                $attendance = Attendance::create([
+                    'event_id'       => $this->eventId,
+                    'participant_id' => $this->participantData['id'],
+                ]);
+
+                AttendanceDetail::create([
+                    'attendance_id'       => $attendance->id,
+                    'participant_role_id' => $this->selectedRoleId,
+                    'gender'              => $this->detailGender        ?: null,
+                    'phone'               => $this->detailPhone         ?: null,
+                    'city'                => $this->detailCity          ?: null,
+                    'neighborhood'        => $this->detailNeighborhood  ?: null,
+                    'address'             => $this->detailAddress       ?: null,
+                    'priority_group'      => $this->detailPriorityGroup ?: null,
+                ]);
+
+                return ['duplicate' => false, 'attendance' => $attendance];
+            });
+
+            if ($result['duplicate']) {
+                $this->duplicateRegisteredAt = $result['registeredAt'];
+                $this->step                  = 'duplicate';
+                return;
             }
 
-            $attendance = Attendance::create([
-                'event_id'       => $this->eventId,
-                'participant_id' => $this->participantData['id'],
-            ]);
+            $attendance = $result['attendance'];
 
-            AttendanceDetail::create([
-                'attendance_id'       => $attendance->id,
-                'participant_role_id' => $this->selectedRoleId,
-                'gender'              => $this->detailGender        ?: null,
-                'phone'               => $this->detailPhone         ?: null,
-                'city'                => $this->detailCity          ?: null,
-                'neighborhood'        => $this->detailNeighborhood  ?: null,
-                'address'             => $this->detailAddress       ?: null,
-                'priority_group'      => $this->detailPriorityGroup ?: null,
-            ]);
-
-            // Enviar correo al participante si tiene email
+            // Enviar correo fuera de la transacción para no bloquear
             $participantEmail = $this->participantData['email'] ?? $this->detailEmail ?? null;
             if ($participantEmail) {
                 try {
@@ -466,6 +478,14 @@ class AttendanceRegistration extends Component
             $this->successRegisteredAt = $attendance->created_at->format('h:i A');
             $this->totalAttendances    = Attendance::where('participant_id', $this->participantData['id'])->count();
             $this->step                = 'success';
+
+        } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
+            // El constraint unique de BD atrapó un duplicado concurrente
+            $existing = Attendance::where('event_id', $this->eventId)
+                ->where('participant_id', $this->participantData['id'])
+                ->first();
+            $this->duplicateRegisteredAt = $existing?->created_at?->format('h:i A') ?? now()->format('h:i A');
+            $this->step                  = 'duplicate';
 
         } catch (\Exception $e) {
             Log::error('AttendanceRegistration::confirmWithDetails - ' . $e->getMessage());
