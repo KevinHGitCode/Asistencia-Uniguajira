@@ -7,6 +7,7 @@ use App\Models\Format;
 use App\Models\Dependency;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Storage;
 
 class FormatController extends Controller
 {
@@ -30,7 +31,7 @@ class FormatController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'slug' => 'required|string|max:255|unique:formats,slug',
+            'slug' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z0-9_\-]+$/', 'unique:formats,slug'],
             'pdf_file' => 'nullable|file|mimes:pdf|max:5120',
             'dependencies' => 'nullable|array',
             'dependencies.*' => 'exists:dependencies,id',
@@ -38,6 +39,7 @@ class FormatController extends Controller
             'name.required' => 'El nombre del formato es obligatorio.',
             'slug.required' => 'El identificador es obligatorio.',
             'slug.unique'   => 'Ya existe un formato con ese identificador.',
+            'slug.regex'    => 'El identificador solo puede contener letras, números, guiones y guiones bajos.',
             'pdf_file.mimes' => 'El archivo debe ser un PDF.',
             'pdf_file.max'   => 'El archivo no debe superar los 5MB.',
         ]);
@@ -45,9 +47,8 @@ class FormatController extends Controller
         $data = $request->only('name', 'slug');
 
         if ($request->hasFile('pdf_file')) {
-            $extension = $request->file('pdf_file')->getClientOriginalExtension();
-            $fileName = $request->slug . '_' . time() . '.' . $extension;
-            $request->file('pdf_file')->move(public_path('formats'), $fileName);
+            $fileName = $request->slug . '_' . time() . '.pdf';
+            $request->file('pdf_file')->storeAs('', $fileName, 'formats');
             $data['file'] = $fileName;
         }
 
@@ -64,7 +65,7 @@ class FormatController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'slug' => 'required|string|max:255|unique:formats,slug,' . $format->id,
+            'slug' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z0-9_\-]+$/', 'unique:formats,slug,' . $format->id],
             'pdf_file' => 'nullable|file|mimes:pdf|max:5120',
             'dependencies' => 'nullable|array',
             'dependencies.*' => 'exists:dependencies,id',
@@ -72,6 +73,7 @@ class FormatController extends Controller
             'name.required' => 'El nombre del formato es obligatorio.',
             'slug.required' => 'El identificador es obligatorio.',
             'slug.unique'   => 'Ya existe un formato con ese identificador.',
+            'slug.regex'    => 'El identificador solo puede contener letras, números, guiones y guiones bajos.',
             'pdf_file.mimes' => 'El archivo debe ser un PDF.',
             'pdf_file.max'   => 'El archivo no debe superar los 5MB.',
         ]);
@@ -79,13 +81,12 @@ class FormatController extends Controller
         $data = $request->only('name', 'slug');
 
         if ($request->hasFile('pdf_file')) {
-            if ($format->file && file_exists(public_path("formats/{$format->file}"))) {
-                unlink(public_path("formats/{$format->file}"));
+            if ($format->file && Storage::disk('formats')->exists($format->file)) {
+                Storage::disk('formats')->delete($format->file);
             }
 
-            $extension = $request->file('pdf_file')->getClientOriginalExtension();
-            $fileName = $request->slug . '_' . time() . '.' . $extension;
-            $request->file('pdf_file')->move(public_path('formats'), $fileName);
+            $fileName = $request->slug . '_' . time() . '.pdf';
+            $request->file('pdf_file')->storeAs('', $fileName, 'formats');
             $data['file'] = $fileName;
         }
 
@@ -97,8 +98,8 @@ class FormatController extends Controller
 
     public function destroy(Format $format)
     {
-        if ($format->file && file_exists(public_path("formats/{$format->file}"))) {
-            unlink(public_path("formats/{$format->file}"));
+        if ($format->file && Storage::disk('formats')->exists($format->file)) {
+            Storage::disk('formats')->delete($format->file);
         }
 
         // Eliminar del config
