@@ -578,8 +578,6 @@ class ParticipantImportController extends Controller
             'last_name'      => mb_convert_case(mb_strtolower(trim($request->last_name), 'UTF-8'), MB_CASE_TITLE, 'UTF-8'),
             'email'          => $request->email ?: null,
             'student_code'   => $request->student_code ?: null,
-            'gender'         => $request->sexo ?: null,
-            'priority_group' => $request->priority_group ?: null,
         ]);
 
         $type = ParticipantType::where('name', $request->role)->first();

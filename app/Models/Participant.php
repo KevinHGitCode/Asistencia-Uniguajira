@@ -15,8 +15,6 @@ class Participant extends Model
         'first_name',
         'last_name',
         'email',
-        'gender',
-        'priority_group',
     ];
 
     public function activeRoles()

@@ -566,8 +566,6 @@ class AttendanceRegistration extends Component
                 'first_name'     => trim($this->newFirstName),
                 'last_name'      => trim($this->newLastName),
                 'email'          => $this->newEmail          ?: null,
-                'gender'         => $this->newGender         ?: null,
-                'priority_group' => $this->newPriorityGroup  ?: null,
             ]);
 
             $type = ParticipantType::where('name', $this->newRole)->first();
