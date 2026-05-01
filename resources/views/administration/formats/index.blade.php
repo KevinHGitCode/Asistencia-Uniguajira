@@ -147,13 +147,13 @@
                             <td class="px-4 sm:px-6 py-4">
                                 <div class="flex items-center justify-end gap-2">
                                     <button
-                                        @click="openEdit({{ $format->id }}, '{{ addslashes($format->name) }}', '{{ addslashes($format->slug) }}', {{ json_encode($format->dependencies->pluck('id')) }}, '{{ $format->file }}')"
+                                        @click="openEdit({{ $format->id }}, {{ Js::from($format->name) }}, {{ Js::from($format->slug) }}, {{ json_encode($format->dependencies->pluck('id')) }}, {{ Js::from($format->file) }})"
                                         class="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 dark:hover:text-blue-400 transition-colors cursor-pointer"
                                         title="Editar">
                                         <flux:icon.pencil-square class="size-4" />
                                     </button>
                                     <button
-                                        @click="openDelete({{ $format->id }}, '{{ addslashes($format->name) }}')"
+                                        @click="openDelete({{ $format->id }}, {{ Js::from($format->name) }})"
                                         class="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 dark:hover:text-red-400 transition-colors cursor-pointer"
                                         title="Eliminar">
                                         <flux:icon.trash class="size-4" />

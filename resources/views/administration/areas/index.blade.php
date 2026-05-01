@@ -136,13 +136,13 @@
                                 <td class="px-4 sm:px-6 py-4">
                                     <div class="flex items-center justify-end gap-2">
                                         <button
-                                            @click="openEdit({{ $area->id }}, '{{ addslashes($area->name) }}', {{ $area->dependency_id ?? 'null' }})"
+                                            @click="openEdit({{ $area->id }}, {{ Js::from($area->name) }}, {{ $area->dependency_id ?? 'null' }})"
                                             class="p-1.5 rounded-lg text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400 transition-colors cursor-pointer"
                                             title="Editar">
                                             <flux:icon.pencil-square class="size-4" />
                                         </button>
                                         <button
-                                            @click="openDelete({{ $area->id }}, '{{ addslashes($area->name) }}')"
+                                            @click="openDelete({{ $area->id }}, {{ Js::from($area->name) }})"
                                             class="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 dark:hover:text-red-400 transition-colors cursor-pointer"
                                             title="Eliminar">
                                             <flux:icon.trash class="size-4" />
