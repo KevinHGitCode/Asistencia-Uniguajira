@@ -164,65 +164,67 @@ class ParticipantsList extends Component
 
         $participant = Participant::findOrFail($this->editingId);
 
-        // Actualizar datos básicos
-        $participant->update([
-            'document'     => trim($this->editDocument),
-            'first_name'   => mb_convert_case(mb_strtolower(trim($this->editFirstName), 'UTF-8'), MB_CASE_TITLE, 'UTF-8'),
-            'last_name'    => mb_convert_case(mb_strtolower(trim($this->editLastName), 'UTF-8'), MB_CASE_TITLE, 'UTF-8'),
-            'email'        => $this->editEmail ?: null,
-            'student_code' => $this->editStudentCode ?: null,
-        ]);
+        DB::transaction(function () use ($participant) {
+            // Actualizar datos básicos
+            $participant->update([
+                'document'     => trim($this->editDocument),
+                'first_name'   => mb_convert_case(mb_strtolower(trim($this->editFirstName), 'UTF-8'), MB_CASE_TITLE, 'UTF-8'),
+                'last_name'    => mb_convert_case(mb_strtolower(trim($this->editLastName), 'UTF-8'), MB_CASE_TITLE, 'UTF-8'),
+                'email'        => $this->editEmail ?: null,
+                'student_code' => $this->editStudentCode ?: null,
+            ]);
 
-        // Sincronizar roles
-        $existingRoleIds = [];
+            // Sincronizar roles
+            $existingRoleIds = [];
 
-        foreach ($this->editRoles as $roleData) {
-            $typeCategory = $this->getTypeCategory($roleData['participant_type_id']);
+            foreach ($this->editRoles as $roleData) {
+                $typeCategory = $this->getTypeCategory($roleData['participant_type_id']);
 
-            $programId     = null;
-            $dependencyId  = null;
-            $affiliationId = null;
+                $programId     = null;
+                $dependencyId  = null;
+                $affiliationId = null;
 
-            if ($typeCategory === 'program') {
-                $programId     = $roleData['program_id'] ?: null;
-                $affiliationId = $roleData['affiliation_id'] ?: null;
-            }
-            if ($typeCategory === 'dependency') {
-                $dependencyId  = $roleData['dependency_id'] ?: null;
-                $affiliationId = $roleData['affiliation_id'] ?: null;
-            }
+                if ($typeCategory === 'program') {
+                    $programId     = $roleData['program_id'] ?: null;
+                    $affiliationId = $roleData['affiliation_id'] ?: null;
+                }
+                if ($typeCategory === 'dependency') {
+                    $dependencyId  = $roleData['dependency_id'] ?: null;
+                    $affiliationId = $roleData['affiliation_id'] ?: null;
+                }
 
-            if (!empty($roleData['id'])) {
-                // Actualizar rol existente
-                ParticipantRole::where('id', $roleData['id'])
-                    ->where('participant_id', $participant->id)
-                    ->update([
+                if (!empty($roleData['id'])) {
+                    // Actualizar rol existente
+                    ParticipantRole::where('id', $roleData['id'])
+                        ->where('participant_id', $participant->id)
+                        ->update([
+                            'participant_type_id' => $roleData['participant_type_id'],
+                            'program_id'          => $programId,
+                            'dependency_id'       => $dependencyId,
+                            'affiliation_id'      => $affiliationId,
+                            'is_active'           => true,
+                            'updated_at'          => now(),
+                        ]);
+                    $existingRoleIds[] = $roleData['id'];
+                } else {
+                    // Crear nuevo rol
+                    $newRole = ParticipantRole::create([
+                        'participant_id'      => $participant->id,
                         'participant_type_id' => $roleData['participant_type_id'],
                         'program_id'          => $programId,
                         'dependency_id'       => $dependencyId,
                         'affiliation_id'      => $affiliationId,
                         'is_active'           => true,
-                        'updated_at'          => now(),
                     ]);
-                $existingRoleIds[] = $roleData['id'];
-            } else {
-                // Crear nuevo rol
-                $newRole = ParticipantRole::create([
-                    'participant_id'      => $participant->id,
-                    'participant_type_id' => $roleData['participant_type_id'],
-                    'program_id'          => $programId,
-                    'dependency_id'       => $dependencyId,
-                    'affiliation_id'      => $affiliationId,
-                    'is_active'           => true,
-                ]);
-                $existingRoleIds[] = $newRole->id;
+                    $existingRoleIds[] = $newRole->id;
+                }
             }
-        }
 
-        // Desactivar roles que ya no están en la lista
-        ParticipantRole::where('participant_id', $participant->id)
-            ->whereNotIn('id', $existingRoleIds)
-            ->update(['is_active' => false]);
+            // Desactivar roles que ya no están en la lista
+            ParticipantRole::where('participant_id', $participant->id)
+                ->whereNotIn('id', $existingRoleIds)
+                ->update(['is_active' => false]);
+        });
 
         $this->showEditModal = false;
         $this->resetEditFields();
