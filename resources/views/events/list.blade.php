@@ -130,11 +130,13 @@
                                             {{ $event->dependency->name }}
                                         </span>
 
+                                        {{-- Área (deshabilitado temporalmente)
                                         @if($event->area)
                                             <span class="ml-2 px-2 py-1 bg-[#62a9b6] text-white rounded">
                                                 {{ $event->area->name }}
                                             </span>
                                         @endif
+                                        --}}
                                     </div>
                                 @endif
                                 
@@ -229,11 +231,13 @@
                                             {{ $event->dependency->name }}
                                         </span>
 
+                                        {{-- Área (deshabilitado temporalmente)
                                         @if($event->area)
                                             <span class="ml-2 px-2 py-1 bg-[#62a9b6] text-white rounded">
                                                 {{ $event->area->name }}
                                             </span>
                                         @endif
+                                        --}}
                                     </div>
                                 @endif
                                 
@@ -328,11 +332,13 @@
                                             {{ $event->dependency->name }}
                                         </span>
 
+                                        {{-- Área (deshabilitado temporalmente)
                                         @if($event->area)
                                             <span class="ml-2 px-2 py-1 bg-[#62a9b6] text-white rounded">
                                                 {{ $event->area->name }}
                                             </span>
                                         @endif
+                                        --}}
                                     </div>
                                 @endif
                                 
@@ -428,11 +434,13 @@
                                                 {{ $event->dependency->name }}
                                             </span>
 
+                                            {{-- Área (deshabilitado temporalmente)
                                             @if($event->area)
                                                 <span class="ml-2 px-2 py-1 bg-[#62a9b6] text-white rounded">
                                                     {{ $event->area->name }}
                                                 </span>
                                             @endif
+                                            --}}
                                         </div>
                                     @endif
                                     

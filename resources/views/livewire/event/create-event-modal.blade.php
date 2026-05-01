@@ -67,7 +67,7 @@
                     <input type="hidden" wire:model="dependency_id">
                 @endif
 
-                {{-- ÁREA --}}
+                {{-- ÁREA (deshabilitado temporalmente — no se usa actualmente)
                 <div class="flex flex-col gap-1">
                     <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                         Área (opcional)
@@ -82,6 +82,7 @@
                     </select>
                     <p class="text-xs text-gray-500">El área solo se puede seleccionar cuando la dependencia tenga áreas.</p>
                 </div>
+                --}}
 
                 {{-- FECHA Y HORAS --}}
                 <div class="grid grid-cols-1 gap-4">

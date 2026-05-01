@@ -212,9 +212,9 @@
                                 {{ __('Dependencias') }}
                             </flux:navlist.item>
 
-                            <flux:navlist.item :href="route('areas.index')" :current="request()->routeIs('areas.*')" wire:navigate>
+                            {{-- <flux:navlist.item :href="route('areas.index')" :current="request()->routeIs('areas.*')" wire:navigate>
                                 {{ __('Áreas') }}
-                            </flux:navlist.item>
+                            </flux:navlist.item> --}}
 
                             <flux:navlist.item :href="route('programs.index')" :current="request()->routeIs('programs.*')" wire:navigate>
                                 {{ __('Programas') }}

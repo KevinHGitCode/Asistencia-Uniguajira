@@ -142,7 +142,7 @@
                         </div>
                     @endif
 
-                    {{-- Área --}}
+                    {{-- Área (deshabilitado temporalmente — no se usa actualmente)
                     <div wire:key="areas-section-{{ $dependency_id ?? 'none' }}">
                         @if(!empty($areas))
                             <div>
@@ -172,6 +172,7 @@
                             </p>
                         @endif
                     </div>
+                    --}}
 
                 </div>
             @endif

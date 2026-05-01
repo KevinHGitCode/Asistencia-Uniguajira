@@ -120,7 +120,7 @@
                             </span>
                         </div>
 
-                        {{-- Área --}}
+                        {{-- Área (deshabilitado temporalmente — no se usa actualmente)
                         <div class="flex items-center justify-between border-b border-gray-300 dark:border-neutral-700 pb-2">
                             <div class="flex items-center gap-2 text-black dark:text-white">
                                 <flux:icon name="squares-2x2" class="w-5 h-5 text-blue-500" />
@@ -130,6 +130,7 @@
                                 {{ $event->area?->name ?? 'Sin área' }}
                             </span>
                         </div>
+                        --}}
 
                         {{-- Descripción --}}
                         <div class="flex items-center justify-between">

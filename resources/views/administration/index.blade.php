@@ -44,7 +44,7 @@
                 <div class="absolute bottom-0 left-0 w-0 h-0.5 rounded-b-xl bg-[#cc5e50] group-hover:w-full transition-all duration-300"></div>
             </a>
 
-            {{-- Card: Áreas --}}
+            {{-- Card: Áreas (deshabilitado temporalmente — no se usa actualmente)
             <a href="{{ route('areas.index') }}"
                class="group relative flex flex-col gap-4 p-5 sm:p-6 rounded-2xl border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 overflow-hidden">
 
@@ -66,6 +66,7 @@
 
                 <div class="absolute bottom-0 left-0 w-0 h-0.5 rounded-b-xl bg-[#62a9b6] group-hover:w-full transition-all duration-300"></div>
             </a>
+            --}}
 
             {{-- Card: Programas --}}
             <a href="{{ route('programs.index') }}"
