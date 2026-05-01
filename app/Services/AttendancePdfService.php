@@ -333,7 +333,7 @@ class AttendancePdfService
             }
 
             if (isset($cols['phone'])) {
-                $phoneText = $detail?->phone ?? $p->phone ?? '';
+                $phoneText = $detail?->phone ?? '';
                 $this->printAutoFitText($pdf, $cols['phone'], $y, (string) $phoneText);
             }
 

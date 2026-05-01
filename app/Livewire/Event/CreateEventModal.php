@@ -91,8 +91,8 @@ class CreateEventModal extends Component
             'dependency_id' => 'nullable|exists:dependencies,id',
             'area_id'       => 'nullable|exists:areas,id',
             'date'          => 'required|date|after_or_equal:today',
-            'start_time'    => 'nullable',
-            'end_time'      => 'nullable',
+            'start_time'    => 'nullable|date_format:H:i',
+            'end_time'      => 'nullable|date_format:H:i',
         ];
     }
 

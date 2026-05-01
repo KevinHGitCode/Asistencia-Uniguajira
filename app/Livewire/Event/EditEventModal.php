@@ -71,8 +71,8 @@ class EditEventModal extends Component
         $this->dependency_id = $event->dependency_id ? (string) $event->dependency_id : null;
         $this->area_id = $event->area_id ? (string) $event->area_id : null;
         $this->date = $event->date ?? '';
-        $this->start_time = $event->start_time ?? '';
-        $this->end_time = $event->end_time ?? '';
+        $this->start_time = $event->start_time ? substr($event->start_time, 0, 5) : '';
+        $this->end_time = $event->end_time ? substr($event->end_time, 0, 5) : '';
 
         $this->loadAreas();
         $this->resetValidation();
@@ -104,8 +104,8 @@ class EditEventModal extends Component
             'dependency_id' => 'nullable|exists:dependencies,id',
             'area_id'       => 'nullable|exists:areas,id',
             'date'          => 'required|date',
-            'start_time'    => 'nullable',
-            'end_time'      => 'nullable',
+            'start_time'    => 'nullable|date_format:H:i',
+            'end_time'      => 'nullable|date_format:H:i',
         ];
     }
 
