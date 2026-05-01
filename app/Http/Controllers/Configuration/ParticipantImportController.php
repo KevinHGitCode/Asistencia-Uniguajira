@@ -558,8 +558,6 @@ class ParticipantImportController extends Controller
             'affiliation_id' => 'nullable|exists:affiliations,id',
             'program_id'     => 'nullable|exists:programs,id',
             'dependency_id'  => 'nullable|exists:dependencies,id',
-            'sexo'           => 'nullable|in:Masculino,Femenino,No binario',
-            'priority_group' => 'nullable|string|max:150',
         ], [
             'document.required'   => 'El documento es obligatorio.',
             'document.unique'     => 'Ya existe un participante con ese documento.',

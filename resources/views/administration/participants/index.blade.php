@@ -4,8 +4,9 @@
      x-data="{
          activeTab: new URLSearchParams(window.location.search).get('tab') || '{{ session('active_tab', 'bulk') }}',
          role: '{{ old('role', '') }}',
-         showRoleDependent() { return ['Estudiante', 'Graduado'].includes(this.role); },
-         showAffiliation()   { return this.role === 'Docente'; },
+         showProgram()    { return ['Estudiante', 'Graduado', 'Docente'].includes(this.role); },
+         showDependency() { return this.role === 'Administrativo'; },
+         showStudentCode(){ return ['Estudiante', 'Graduado'].includes(this.role); },
          setTab(tab) {
              this.activeTab = tab;
              const url = new URL(window.location);
@@ -344,20 +345,8 @@
                     @enderror
                 </div>
 
-                {{-- Sexo --}}
-                <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Sexo</label>
-                    <select name="sexo"
-                        class="px-3 py-2 rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
-                        <option value="">Sin especificar</option>
-                        @foreach(['Masculino', 'Femenino', 'No binario'] as $s)
-                            <option value="{{ $s }}" {{ old('sexo') === $s ? 'selected' : '' }}>{{ $s }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
                 {{-- Código estudiantil (Estudiante / Graduado) --}}
-                <div class="flex flex-col gap-1.5 sm:col-span-2" x-show="showRoleDependent()" x-transition>
+                <div class="flex flex-col gap-1.5 sm:col-span-2" x-show="showStudentCode()" x-transition>
                     <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
                         Código estudiantil
                     </label>
@@ -369,8 +358,8 @@
                     @enderror
                 </div>
 
-                {{-- Programa (Estudiante / Graduado) --}}
-                <div class="flex flex-col gap-1.5 sm:col-span-2" x-show="showRoleDependent()" x-transition>
+                {{-- Programa (Estudiante / Graduado / Docente) --}}
+                <div class="flex flex-col gap-1.5 sm:col-span-2" x-show="showProgram()" x-transition>
                     <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Programa académico</label>
                     <select name="program_id"
                         class="px-3 py-2 rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
@@ -386,28 +375,33 @@
                     @enderror
                 </div>
 
-                {{-- Afiliación (Docente) --}}
-                <div class="flex flex-col gap-1.5 sm:col-span-2" x-show="showAffiliation()" x-transition>
-                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Tipo de afiliación</label>
+                {{-- Dependencia (Administrativo) --}}
+                <div class="flex flex-col gap-1.5 sm:col-span-2" x-show="showDependency()" x-transition>
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Dependencia</label>
+                    <select name="dependency_id"
+                        class="px-3 py-2 rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+                        <option value="">Sin dependencia</option>
+                        @foreach($dependencies as $dependency)
+                            <option value="{{ $dependency->id }}" {{ old('dependency_id') == $dependency->id ? 'selected' : '' }}>
+                                {{ $dependency->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('dependency_id')
+                        <p class="text-xs text-red-500">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                {{-- Afiliación (todos los estamentos) --}}
+                <div class="flex flex-col gap-1.5 sm:col-span-2" x-show="role !== ''" x-transition>
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Tipo de vinculación</label>
                     <select name="affiliation_id"
                         class="px-3 py-2 rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
-                        <option value="">Sin afiliación</option>
+                        <option value="">Sin vinculación</option>
                         @foreach($affiliations as $affiliation)
                             <option value="{{ $affiliation->id }}" {{ old('affiliation_id') == $affiliation->id ? 'selected' : '' }}>
                                 {{ $affiliation->name }}
                             </option>
-                        @endforeach
-                    </select>
-                </div>
-
-                {{-- Grupo priorizado --}}
-                <div class="flex flex-col gap-1.5 sm:col-span-2">
-                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Grupo priorizado</label>
-                    <select name="grupo_priorizado"
-                        class="px-3 py-2 rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
-                        <option value="">Ninguno</option>
-                        @foreach(['Comunidades indígenas', 'Comunidades afrodescendientes', 'Población con discapacidad', 'Víctimas del conflicto armado', 'Jóvenes rurales', 'LGBTIQ+'] as $grupo)
-                            <option value="{{ $grupo }}" {{ old('grupo_priorizado') === $grupo ? 'selected' : '' }}>{{ $grupo }}</option>
                         @endforeach
                     </select>
                 </div>
