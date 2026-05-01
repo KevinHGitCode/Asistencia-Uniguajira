@@ -60,6 +60,7 @@ class EditEventModal extends Component
         // Verificar que el usuario puede editar este evento
         $user = Auth::user();
         if ($user->role !== 'admin' && $event->user_id !== $user->id) {
+            session()->flash('error', 'No tienes permiso para editar este evento.');
             return;
         }
 
