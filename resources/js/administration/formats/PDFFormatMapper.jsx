@@ -58,6 +58,7 @@ export default function PDFFormatMapper({ formatId, formatSlug, formatName, form
   const containerRef = useRef(null);
   const [pdfReady, setPdfReady] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfRendered, setPdfRendered] = useState(false);
   const [pageInfo, setPageInfo] = useState({ wMm: 297, hMm: 210, wPx: 800, hPx: 566 });
   const [scale, setScale] = useState(1.2);
   const slug = formatSlug || "";
@@ -105,14 +106,15 @@ export default function PDFFormatMapper({ formatId, formatSlug, formatName, form
         await page.render({ canvasContext: canvas.getContext("2d"), viewport: vp }).promise;
       } catch (err) { console.error("Error loading PDF:", err); }
       setPdfLoading(false);
+      setPdfRendered(true);
     };
     loadPdf();
   }, [pdfReady, pdfUrl, scale]);
 
-  // Restore existing mapping — waits until PDF is fully rendered (pdfLoading === false)
+  // Restore existing mapping — waits until PDF canvas is fully rendered (pdfRendered === true)
   const [mappingRestored, setMappingRestored] = useState(false);
   useEffect(() => {
-    if (mappingRestored || pdfLoading || !pdfReady || !fileName) return;
+    if (mappingRestored || !pdfRendered || !fileName) return;
     if (!formatMapping || typeof formatMapping !== 'object' || Object.keys(formatMapping).length === 0) return;
     const cfg = formatMapping;
     if (cfg.startY || cfg.rowHeight || cfg.maxRows) setTableConfig({ startY: cfg.startY || 60, rowHeight: cfg.rowHeight || 8, maxRows: cfg.maxRows || 16 });
@@ -151,7 +153,7 @@ export default function PDFFormatMapper({ formatId, formatSlug, formatName, form
       setPlacedCheckboxes(cbs);
     }
     setMappingRestored(true);
-  }, [formatMapping, pdfReady, pdfLoading, fileName, pageInfo.wPx, mappingRestored]);
+  }, [formatMapping, pdfRendered, fileName, pageInfo.wPx, mappingRestored]);
 
   const pxToMm = useCallback((px, axis) => Math.round(px * (axis === "x" ? pageInfo.wMm / pageInfo.wPx : pageInfo.hMm / pageInfo.hPx) * 100) / 100, [pageInfo]);
   const mmToPx = useCallback((mm, axis) => Math.round(mm * (axis === "x" ? pageInfo.wPx / pageInfo.wMm : pageInfo.hPx / pageInfo.hMm)), [pageInfo]);

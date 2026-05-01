@@ -11,6 +11,26 @@ use Illuminate\Support\Facades\Storage;
 
 class FormatController extends Controller
 {
+    /**
+     * Verifica que FPDI pueda abrir el PDF.
+     * Devuelve null si es compatible, o un mensaje de error si no lo es.
+     */
+    private function validatePdfCompatibility(string $filePath): ?string
+    {
+        try {
+            $fpdi = new \setasign\Fpdi\Tfpdf\Fpdi();
+            $fpdi->setSourceFile($filePath);
+            return null;
+        } catch (\setasign\Fpdi\PdfParser\CrossReference\CrossReferenceException $e) {
+            return 'El archivo PDF usa un tipo de compresión no soportado. '
+                . 'Por favor, abra el PDF en LibreOffice Draw (Archivo → Exportar como PDF) '
+                . 'o use una herramienta online como smallpdf.com (opción "PDF a PDF/A") para re-guardarlo. '
+                . 'También puedes intentar abrirlo y re-guardarlo desde el navegador (arrastrando el PDF a una pestaña nueva y luego usando "Imprimir" → "Guardar como PDF").';
+        } catch (\Exception $e) {
+            return 'No se pudo procesar el archivo PDF: ' . $e->getMessage();
+        }
+    }
+
     public function index()
     {
         $formats = Format::with('dependencies')
@@ -49,6 +69,13 @@ class FormatController extends Controller
         if ($request->hasFile('pdf_file')) {
             $fileName = $request->slug . '_' . time() . '.pdf';
             $request->file('pdf_file')->storeAs('', $fileName, 'formats');
+
+            $storedPath = Storage::disk('formats')->path($fileName);
+            $pdfError = $this->validatePdfCompatibility($storedPath);
+            if ($pdfError) {
+                Storage::disk('formats')->delete($fileName);
+                return back()->withInput()->withErrors(['pdf_file' => $pdfError]);
+            }
             $data['file'] = $fileName;
         }
 
@@ -81,13 +108,21 @@ class FormatController extends Controller
         $data = $request->only('name', 'slug');
 
         if ($request->hasFile('pdf_file')) {
+            $newFileName = $request->slug . '_' . time() . '.pdf';
+            $request->file('pdf_file')->storeAs('', $newFileName, 'formats');
+
+            $storedPath = Storage::disk('formats')->path($newFileName);
+            $pdfError = $this->validatePdfCompatibility($storedPath);
+            if ($pdfError) {
+                Storage::disk('formats')->delete($newFileName);
+                return back()->withInput()->withErrors(['pdf_file' => $pdfError]);
+            }
+
             if ($format->file && Storage::disk('formats')->exists($format->file)) {
                 Storage::disk('formats')->delete($format->file);
             }
 
-            $fileName = $request->slug . '_' . time() . '.pdf';
-            $request->file('pdf_file')->storeAs('', $fileName, 'formats');
-            $data['file'] = $fileName;
+            $data['file'] = $newFileName;
         }
 
         $format->update($data);
@@ -113,7 +148,7 @@ class FormatController extends Controller
 
     public function mapper(Format $format)
     {
-        $existingMapping = config("attendance_formats.{$format->slug}") ?? $format->mapping ?? null;
+        $existingMapping = $format->mapping ?? config("attendance_formats.{$format->slug}") ?? null;
 
         return view('administration.formats.mapper', compact('format', 'existingMapping'));
     }

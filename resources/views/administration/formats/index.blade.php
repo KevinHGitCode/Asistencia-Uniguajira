@@ -47,6 +47,24 @@
         </div>
     @endif
 
+    @if($errors->any())
+        <div x-data="{ show: true }" x-show="show"
+            x-transition:leave="transition ease-in duration-300"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            class="flex items-start gap-3 px-4 py-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">
+            <flux:icon.x-circle class="size-5 shrink-0 mt-0.5" />
+            <div>
+                @foreach($errors->all() as $error)
+                    <p>{{ $error }}</p>
+                @endforeach
+            </div>
+            <button @click="show = false" class="ml-auto p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors cursor-pointer">
+                <flux:icon.x-mark class="size-4" />
+            </button>
+        </div>
+    @endif
+
     {{-- Tabla --}}
     <div class="border border-neutral-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm overflow-hidden">
 

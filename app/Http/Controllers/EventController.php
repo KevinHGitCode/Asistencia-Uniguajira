@@ -239,7 +239,14 @@ class EventController extends Controller
             abort(403, 'Esta dependencia no tiene acceso a este formato.');
         }
 
-        $pdfContent = $pdfService->generatePdf($evento, $formatSlug);
+        try {
+            $pdfContent = $pdfService->generatePdf($evento, $formatSlug);
+        } catch (\setasign\Fpdi\PdfParser\CrossReference\CrossReferenceException $e) {
+            return back()->with('error',
+                'La plantilla PDF del formato "' . $formatSlug . '" usa una versión de PDF no soportada (1.5 o superior). '
+                . 'Debe re-subir la plantilla en versión PDF 1.4 o inferior desde la configuración de formatos. Comuniquese con el administrador.'
+            );
+        }
 
         $nombreArchivo = "Asistencia_".str_replace(' ', '_', $evento->title)."_".\Carbon\Carbon::parse($evento->date)->format('Y-m-d').".pdf";
 
