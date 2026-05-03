@@ -3,6 +3,17 @@
 
 <head>
     @include('partials.head')
+    {{-- Aplica fade-in SOLO si venimos del login (flag puesto durante la animación de portal) --}}
+    <script>
+        (function () {
+            try {
+                if (sessionStorage.getItem('aura-from-login') === '1') {
+                    sessionStorage.removeItem('aura-from-login');
+                    document.documentElement.classList.add('from-login');
+                }
+            } catch (e) {}
+        })();
+    </script>
 </head>
 
 <body class="min-h-screen bg-white dark:bg-zinc-800">

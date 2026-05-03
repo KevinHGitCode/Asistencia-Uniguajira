@@ -54,7 +54,15 @@ class Login extends Component
         RateLimiter::clear($this->throttleKey());
         Session::regenerate();
 
-        $this->redirectIntended(default: route('dashboard', absolute: false), navigate: true);
+        // URL destino respetando el "intended" original.
+        $target = Session::pull('url.intended', route('dashboard', absolute: false));
+
+        // Un único evento dispara TODO en el cliente:
+        // - Alpine escucha 'show-login-portal' y recibe el target en $event.detail.target
+        // - Activa la animación del portal
+        // - Guarda el flag de fade-in en sessionStorage
+        // - Tras 1.1s hace window.location.href = target (full reload, no wire:navigate)
+        $this->dispatch('show-login-portal', target: $target);
     }
 
     /**

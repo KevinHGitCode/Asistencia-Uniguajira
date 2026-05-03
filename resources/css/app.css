@@ -4,6 +4,17 @@
 
 [x-cloak] { display: none !important; }
 
+/* Fade-in suave SOLO en la primera carga después del login.
+   El flag <html class="from-login"> lo pone un script en el head si
+   detecta el flag sessionStorage 'aura-from-login'. */
+@keyframes app-fade-in {
+    from { opacity: 0; transform: scale(0.995); filter: blur(4px); }
+    to   { opacity: 1; transform: scale(1);     filter: blur(0); }
+}
+html.from-login body {
+    animation: app-fade-in 600ms ease-out both;
+}
+
 @source '../views';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../vendor/livewire/flux-pro/stubs/**/*.blade.php';
