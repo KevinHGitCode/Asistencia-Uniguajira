@@ -1,6 +1,8 @@
 @import 'tailwindcss';
 @import '../../vendor/livewire/flux/dist/flux.css';
 @import './calendar/calendar.css';
+@import './login/split.css';
+@import './login/login-form.css';
 
 [x-cloak] { display: none !important; }
 

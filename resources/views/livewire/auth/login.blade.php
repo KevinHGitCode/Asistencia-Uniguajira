@@ -1,43 +1,4 @@
 <div class="flex flex-col gap-5 px-6 py-7">
-    <style>
-        /* Aparición escalonada — sutil */
-        .row-in { animation: row-in 600ms cubic-bezier(0.16, 1, 0.3, 1) both; }
-        .row-in.d1 { animation-delay: 120ms; }
-        .row-in.d2 { animation-delay: 200ms; }
-        .row-in.d3 { animation-delay: 280ms; }
-        .row-in.d4 { animation-delay: 360ms; }
-        .row-in.d5 { animation-delay: 440ms; }
-        @keyframes row-in {
-            from { opacity: 0; transform: translateY(8px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Botón principal — sólido, sobrio */
-        .btn-primary {
-            position: relative;
-            background: #ad3728;
-            color: #fff;
-            font-weight: 500;
-            padding: 0.7rem 1rem;
-            border-radius: 8px;
-            border: 1px solid rgba(255,255,255,0.05);
-            transition: background 200ms ease, transform 150ms ease;
-            cursor: pointer;
-        }
-        .btn-primary:hover { background: #c44030; }
-        .btn-primary:active { transform: translateY(1px); }
-        .btn-primary:disabled { opacity: 0.7; cursor: progress; }
-
-        .btn-spinner {
-            width: 1rem; height: 1rem;
-            border: 2px solid rgba(255,255,255,0.3);
-            border-top-color: #fff;
-            border-radius: 50%;
-            animation: spin 700ms linear infinite;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-    </style>
-
     <!-- Header -->
     <div class="row-in d1 flex w-full flex-col text-center">
         <h1 class="text-2xl font-semibold text-white tracking-tight">¡Bienvenido de vuelta!</h1>
