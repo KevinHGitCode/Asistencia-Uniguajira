@@ -11,6 +11,7 @@ use App\Models\ParticipantType;
 use App\Models\Program;
 use App\Models\Affiliation;
 use App\Models\Dependency;
+use App\Models\Organization;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Locked;
@@ -56,9 +57,12 @@ class AttendanceRegistration extends Component
     public string $detailEmail         = '';
 
     // Registro rapido Comunidad Externa
-    public string $externalFirstName = '';
-    public string $externalLastName  = '';
-    public string $externalEmail     = '';
+    public string $externalFirstName    = '';
+    public string $externalLastName     = '';
+    public string $externalEmail        = '';
+    public string $externalOrganization = '';
+    public array  $organizationSuggestions = [];
+    public ?int   $selectedOrganizationId  = null;
 
     // Formulario nuevo participante (tab)
     public string $newDocument       = '';
@@ -134,6 +138,32 @@ class AttendanceRegistration extends Component
         if (!empty($this->participantTypes)) {
             $this->newRole = $this->participantTypes[0]['name'];
         }
+    }
+
+    public function updatedExternalOrganization(): void
+    {
+        $this->selectedOrganizationId = null;
+
+        $term = trim($this->externalOrganization);
+
+        if (mb_strlen($term) < 2) {
+            $this->organizationSuggestions = [];
+            return;
+        }
+
+        $this->organizationSuggestions = Organization::where('name', 'LIKE', "%{$term}%")
+            ->orderBy('name')
+            ->limit(5)
+            ->get(['id', 'name'])
+            ->map(fn ($o) => ['id' => $o->id, 'name' => $o->name])
+            ->toArray();
+    }
+
+    public function selectOrganization(int $id, string $name): void
+    {
+        $this->externalOrganization    = $name;
+        $this->selectedOrganizationId  = $id;
+        $this->organizationSuggestions = [];
     }
 
     public function switchTab(string $tab): void
@@ -221,15 +251,18 @@ class AttendanceRegistration extends Component
     {
         $this->validate(
             [
-                'externalFirstName' => 'required|string|max:100',
-                'externalLastName'  => 'required|string|max:100',
-                'externalEmail'     => 'nullable|email|max:255|unique:participants,email',
+                'externalFirstName'    => 'required|string|max:100',
+                'externalLastName'     => 'required|string|max:100',
+                'externalEmail'        => 'nullable|email|max:255|unique:participants,email',
+                'externalOrganization' => 'required|string|max:150',
             ],
             [
-                'externalFirstName.required' => 'El nombre es obligatorio.',
-                'externalLastName.required'  => 'El apellido es obligatorio.',
-                'externalEmail.email'        => 'Ingresa un correo electronico valido.',
-                'externalEmail.unique'       => 'Este correo ya esta registrado en el sistema.',
+                'externalFirstName.required'    => 'El nombre es obligatorio.',
+                'externalLastName.required'     => 'El apellido es obligatorio.',
+                'externalEmail.email'           => 'Ingresa un correo electronico valido.',
+                'externalEmail.unique'          => 'Este correo ya esta registrado en el sistema.',
+                'externalOrganization.required' => 'La organización es obligatoria.',
+                'externalOrganization.max'      => 'La organización no puede superar los 150 caracteres.',
             ]
         );
 
@@ -241,6 +274,16 @@ class AttendanceRegistration extends Component
                 'email'      => $this->externalEmail ?: null,
             ]);
 
+            // Resolver organización: usar la seleccionada o hacer firstOrCreate case-insensitive
+            $organizationId = $this->selectedOrganizationId;
+
+            if (! $organizationId) {
+                $normalizedInput = trim($this->externalOrganization);
+                $organization = Organization::whereRaw('LOWER(name) = ?', [mb_strtolower($normalizedInput, 'UTF-8')])->first()
+                    ?? Organization::create(['name' => $normalizedInput]);
+                $organizationId = $organization->id;
+            }
+
             $type = ParticipantType::where('name', 'Comunidad Externa')->first();
             $role = null;
 
@@ -251,6 +294,7 @@ class AttendanceRegistration extends Component
                     'program_id'          => null,
                     'dependency_id'       => null,
                     'affiliation_id'      => null,
+                    'organization_id'     => $organizationId,
                     'is_active'           => true,
                 ]);
             }
@@ -281,9 +325,12 @@ class AttendanceRegistration extends Component
 
             $this->selectedRoleId = $role?->id;
 
-            $this->externalFirstName = '';
-            $this->externalLastName  = '';
-            $this->externalEmail     = '';
+            $this->externalFirstName       = '';
+            $this->externalLastName        = '';
+            $this->externalEmail           = '';
+            $this->externalOrganization    = '';
+            $this->organizationSuggestions = [];
+            $this->selectedOrganizationId  = null;
 
             $this->loadLastDefaults();
             $this->step = 'details';
@@ -513,9 +560,12 @@ class AttendanceRegistration extends Component
         $this->detailPriorityGroup = '';
         $this->detailEmail         = '';
 
-        $this->externalFirstName = '';
-        $this->externalLastName  = '';
-        $this->externalEmail     = '';
+        $this->externalFirstName       = '';
+        $this->externalLastName        = '';
+        $this->externalEmail           = '';
+        $this->externalOrganization    = '';
+        $this->organizationSuggestions = [];
+        $this->selectedOrganizationId  = null;
 
         $this->resetValidation();
     }

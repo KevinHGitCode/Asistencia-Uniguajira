@@ -13,6 +13,7 @@ class ParticipantRole extends Model
         'program_id',
         'dependency_id',
         'affiliation_id',
+        'organization_id',
         'is_active',
     ];
 
@@ -43,5 +44,10 @@ class ParticipantRole extends Model
     public function affiliation(): BelongsTo
     {
         return $this->belongsTo(Affiliation::class);
+    }
+
+    public function organization(): BelongsTo
+    {
+        return $this->belongsTo(Organization::class);
     }
 }

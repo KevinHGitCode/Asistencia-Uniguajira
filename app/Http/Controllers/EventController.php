@@ -187,6 +187,7 @@ class EventController extends Controller
             'asistencias.participant.activeRoles.affiliation',
             'asistencias.detail.participantRole.type',
             'asistencias.detail.participantRole.program',
+            'asistencias.detail.participantRole.organization',
             'dependency.formats',
             'area',
             'user',

@@ -18,6 +18,7 @@ use App\Http\Controllers\Configuration\DependencyController;
 use App\Http\Controllers\Configuration\ParticipantTypeController;
 use App\Http\Controllers\Configuration\ProgramController;
 use App\Http\Controllers\Configuration\FormatController;
+use App\Http\Controllers\Configuration\OrganizationController;
 use App\Http\Controllers\Configuration\ParticipantImportController;
 
 /**
@@ -192,6 +193,17 @@ Route::middleware(['auth', 'verified', 'role:admin'])
         Route::post('/participant-types/import', [ParticipantTypeController::class, 'importExcel'])->name('participant-types.import');
         Route::get('/participant-types/download-template', [ParticipantTypeController::class, 'downloadTemplate'])->name('participant-types.download-template');
         Route::get('/participant-types/download-export', [ParticipantTypeController::class, 'downloadExport'])->name('participant-types.download-export');
+
+        // Rutas de organizaciones
+        Route::get('/organizations', [OrganizationController::class, 'index'])->name('organizations.index');
+        Route::post('/organizations/import', [OrganizationController::class, 'importExcel'])->name('organizations.import');
+        Route::get('/organizations/download-skipped', [OrganizationController::class, 'downloadSkipped'])->name('organizations.download-skipped');
+        Route::get('/organizations/download-template', [OrganizationController::class, 'downloadTemplate'])->name('organizations.download-template');
+        Route::get('/organizations/download-export', [OrganizationController::class, 'downloadExport'])->name('organizations.download-export');
+        Route::post('/organizations', [OrganizationController::class, 'store'])->name('organizations.store');
+        Route::post('/organizations/edit/{organization}', [OrganizationController::class, 'update'])->name('organizations.update');
+        Route::post('/organizations/merge/{organization}', [OrganizationController::class, 'merge'])->name('organizations.merge');
+        Route::delete('/organizations/{organization}', [OrganizationController::class, 'destroy'])->name('organizations.destroy');
 
         // Rutas de importación / registro de participantes
         Route::get('/participants', [ParticipantImportController::class, 'index'])->name('participants-import.index');

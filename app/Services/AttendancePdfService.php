@@ -305,25 +305,16 @@ class AttendancePdfService
             }
 
             if (isset($cols['program'])) {
-                // El mismo campo del formato se reutiliza para Programa o
-                // Dependencia: si el participante registró la asistencia con
-                // un rol de estamento que pertenece a Dependencia (p. ej.
-                // "Administrativo"), se imprime el nombre de la dependencia;
-                // de lo contrario, el programa académico.
-                $role             = $detail?->participantRole;
-                $roleTypeName     = $role?->type?->name ?? '';
-                $roleTypeKey      = mb_strtolower(trim($roleTypeName), 'UTF-8');
-                $dependencyRoles  = ['administrativo'];
+                // El mismo campo del formato se reutiliza para Programa,
+                // Dependencia u Organización según el estamento del participante.
+                $role         = $detail?->participantRole;
+                $roleTypeKey  = mb_strtolower(trim($role?->type?->name ?? ''), 'UTF-8');
 
-                if (in_array($roleTypeKey, $dependencyRoles, true)) {
-                    $programName = $role?->dependency?->name
-                        ?? $role?->program?->name
-                        ?? '';
-                } else {
-                    $programName = $role?->program?->name
-                        ?? $role?->dependency?->name
-                        ?? '';
-                }
+                $programName = match(true) {
+                    $roleTypeKey === 'administrativo'    => $role?->dependency?->name ?? $role?->program?->name ?? '',
+                    $roleTypeKey === 'comunidad externa' => $role?->organization?->name ?? '',
+                    default                              => $role?->program?->name ?? $role?->dependency?->name ?? '',
+                };
 
                 $this->printAutoFitText($pdf, $cols['program'], $y, $programName);
             }
