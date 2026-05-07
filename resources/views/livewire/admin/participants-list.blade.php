@@ -11,6 +11,18 @@
         </div>
     @endif
 
+    {{-- Flash informativo (reactivación de roles) --}}
+    @if(session('participant-info'))
+        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)"
+            x-transition:leave="transition ease-in duration-300"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            class="mb-4 flex items-center gap-3 px-4 py-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-400 text-sm">
+            <flux:icon.information-circle class="size-5 shrink-0" />
+            {{ session('participant-info') }}
+        </div>
+    @endif
+
     {{-- Flash de error --}}
     @if(session('participant-error'))
         <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)"
@@ -490,6 +502,14 @@
                             <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
                         @enderror
                     </div>
+
+                    {{-- Error de roles duplicados (inline dentro del modal) --}}
+                    @if($roleError)
+                        <div class="flex items-start gap-3 px-4 py-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">
+                            <flux:icon.exclamation-triangle class="size-5 shrink-0 mt-0.5" />
+                            <span>{{ $roleError }}</span>
+                        </div>
+                    @endif
 
                     <div class="flex items-center justify-end gap-3 pt-2">
                         <button type="button" wire:click="closeEdit"

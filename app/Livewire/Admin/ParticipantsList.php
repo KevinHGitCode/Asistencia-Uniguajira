@@ -49,6 +49,9 @@ class ParticipantsList extends Component
     // ── Estamentos que se ligan a organización ──────────────────────────
     private const ORGANIZATION_TYPE_NAMES = ['Comunidad Externa'];
 
+    // ── Error de duplicados (se muestra dentro del modal) ──────────────
+    public string $roleError = '';
+
     // ── Búsqueda de organizaciones para roles ───────────────────────────
     public array $organizationSuggestions = [];
     public int $organizationSearchIndex = -1;
@@ -95,6 +98,7 @@ class ParticipantsList extends Component
 
         $this->organizationSuggestions = [];
         $this->organizationSearchIndex = -1;
+        $this->roleError = '';
 
         // Si no tiene roles, agregar uno vacío
         if (empty($this->editRoles)) {
@@ -189,6 +193,8 @@ class ParticipantsList extends Component
 
     public function updateParticipant(): void
     {
+        $this->roleError = '';
+
         $this->validate([
             'editDocument'                      => ['required', 'string', 'max:20', Rule::unique('participants', 'document')->ignore($this->editingId)],
             'editFirstName'                     => 'required|string|max:100',
@@ -215,8 +221,77 @@ class ParticipantsList extends Component
 
         $participant = Participant::findOrFail($this->editingId);
 
-        DB::transaction(function () use ($participant) {
-            // Actualizar datos básicos
+        // ── IDs de roles que el usuario mantiene en el formulario ────────
+        $batchRoleIds = collect($this->editRoles)
+            ->filter(fn ($r) => ! empty($r['id']))
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->toArray();
+
+        // ── Pre-validación de roles duplicados ──────────────────────────
+        $reactivations     = [];  // index => ParticipantRole inactivo a reactivar
+        $duplicatesToDelete = []; // IDs de duplicados a eliminar (evitar conflicto de índice)
+        $reactivatedNames  = [];
+        $seenCombos        = [];
+
+        foreach ($this->editRoles as $index => $roleData) {
+            $typeCategory = $this->getTypeCategory($roleData['participant_type_id']);
+
+            $entityColumn = match ($typeCategory) {
+                'program'      => 'program_id',
+                'dependency'   => 'dependency_id',
+                'organization' => 'organization_id',
+                default        => null,
+            };
+
+            $entityValue = match ($typeCategory) {
+                'program'      => ! empty($roleData['program_id']) ? (int) $roleData['program_id'] : null,
+                'dependency'   => ! empty($roleData['dependency_id']) ? (int) $roleData['dependency_id'] : null,
+                'organization' => $this->resolveOrganizationIdForCheck($roleData),
+                default        => null,
+            };
+
+            if (! $entityColumn || ! $entityValue) {
+                continue;
+            }
+
+            // — Duplicados internos (dentro del formulario) —
+            $comboKey = (int) $roleData['participant_type_id'] . ':' . $entityColumn . ':' . $entityValue;
+            if (isset($seenCombos[$comboKey])) {
+                $typeName = collect($this->catalogTypes)->firstWhere('id', (int) $roleData['participant_type_id'])['name'] ?? 'Rol';
+                $this->roleError = "El rol «{$typeName}» con la misma entidad aparece más de una vez en el formulario.";
+                return;
+            }
+            $seenCombos[$comboKey] = true;
+
+            // — Duplicados en la base de datos (excluir roles del lote actual) —
+            $duplicate = ParticipantRole::where('participant_id', $participant->id)
+                ->where('participant_type_id', $roleData['participant_type_id'])
+                ->where($entityColumn, $entityValue)
+                ->whereNotIn('id', $batchRoleIds)
+                ->first();
+
+            if (! $duplicate) {
+                continue;
+            }
+
+            $typeName = collect($this->catalogTypes)->firstWhere('id', (int) $roleData['participant_type_id'])['name'] ?? 'Rol';
+
+            if (empty($roleData['id'])) {
+                // Rol nuevo → reactivar el duplicado existente
+                $reactivations[$index] = $duplicate;
+                if (! $duplicate->is_active) {
+                    $reactivatedNames[] = $typeName;
+                }
+            } else {
+                // Rol actualizado → eliminar duplicado para evitar conflicto de índice único
+                $duplicatesToDelete[] = $duplicate->id;
+            }
+        }
+
+        // ── Transacción ─────────────────────────────────────────────────
+        DB::transaction(function () use ($participant, $batchRoleIds, $reactivations, $duplicatesToDelete) {
+            // 1. Actualizar datos básicos
             $participant->update([
                 'document'     => trim($this->editDocument),
                 'first_name'   => mb_convert_case(mb_strtolower(trim($this->editFirstName), 'UTF-8'), MB_CASE_TITLE, 'UTF-8'),
@@ -225,10 +300,22 @@ class ParticipantsList extends Component
                 'student_code' => $this->editStudentCode ?: null,
             ]);
 
-            // Sincronizar roles
-            $existingRoleIds = [];
+            // 2. Desactivar roles que el usuario eliminó del formulario
+            //    (proteger los que serán reactivados)
+            $reactivationIds = collect($reactivations)->map(fn ($r) => $r->id)->toArray();
+            $protectedIds    = array_merge($batchRoleIds, $reactivationIds);
 
-            foreach ($this->editRoles as $roleData) {
+            ParticipantRole::where('participant_id', $participant->id)
+                ->whereNotIn('id', $protectedIds)
+                ->update(['is_active' => false]);
+
+            // 3. Eliminar duplicados que conflictarían con actualizaciones
+            if (! empty($duplicatesToDelete)) {
+                ParticipantRole::whereIn('id', $duplicatesToDelete)->delete();
+            }
+
+            // 4. Procesar cada rol
+            foreach ($this->editRoles as $roleIndex => $roleData) {
                 $typeCategory = $this->getTypeCategory($roleData['participant_type_id']);
 
                 $programId      = null;
@@ -254,45 +341,63 @@ class ParticipantsList extends Component
                     }
                 }
 
-                if (!empty($roleData['id'])) {
+                $roleFields = [
+                    'participant_type_id' => $roleData['participant_type_id'],
+                    'program_id'          => $programId,
+                    'dependency_id'       => $dependencyId,
+                    'affiliation_id'      => $affiliationId,
+                    'organization_id'     => $organizationId,
+                    'is_active'           => true,
+                ];
+
+                if (! empty($roleData['id'])) {
                     // Actualizar rol existente
                     ParticipantRole::where('id', $roleData['id'])
                         ->where('participant_id', $participant->id)
-                        ->update([
-                            'participant_type_id' => $roleData['participant_type_id'],
-                            'program_id'          => $programId,
-                            'dependency_id'       => $dependencyId,
-                            'affiliation_id'      => $affiliationId,
-                            'organization_id'     => $organizationId,
-                            'is_active'           => true,
-                            'updated_at'          => now(),
-                        ]);
-                    $existingRoleIds[] = $roleData['id'];
+                        ->update(array_merge($roleFields, ['updated_at' => now()]));
+                } elseif (isset($reactivations[$roleIndex])) {
+                    // Reactivar rol inactivo existente
+                    $reactivations[$roleIndex]->update($roleFields);
                 } else {
                     // Crear nuevo rol
-                    $newRole = ParticipantRole::create([
-                        'participant_id'      => $participant->id,
-                        'participant_type_id' => $roleData['participant_type_id'],
-                        'program_id'          => $programId,
-                        'dependency_id'       => $dependencyId,
-                        'affiliation_id'      => $affiliationId,
-                        'organization_id'     => $organizationId,
-                        'is_active'           => true,
-                    ]);
-                    $existingRoleIds[] = $newRole->id;
+                    ParticipantRole::create(array_merge(
+                        ['participant_id' => $participant->id],
+                        $roleFields,
+                    ));
                 }
             }
-
-            // Desactivar roles que ya no están en la lista
-            ParticipantRole::where('participant_id', $participant->id)
-                ->whereNotIn('id', $existingRoleIds)
-                ->update(['is_active' => false]);
         });
 
         $this->showEditModal = false;
         $this->resetEditFields();
 
-        session()->flash('participant-success', 'Participante actualizado exitosamente.');
+        if (! empty($reactivatedNames)) {
+            $names = implode(', ', $reactivatedNames);
+            session()->flash('participant-success', 'Participante actualizado exitosamente.');
+            session()->flash('participant-info', "Se reactivaron roles previamente desactivados: {$names}.");
+        } else {
+            session()->flash('participant-success', 'Participante actualizado exitosamente.');
+        }
+    }
+
+    /**
+     * Resuelve el organization_id para la pre-validación de duplicados
+     * sin crear la organización si no existe (solo lectura).
+     */
+    private function resolveOrganizationIdForCheck(array $roleData): ?int
+    {
+        if (! empty($roleData['organization_id'])) {
+            return (int) $roleData['organization_id'];
+        }
+
+        if (! empty($roleData['organization_name'])) {
+            $normalized = trim($roleData['organization_name']);
+            $org = Organization::whereRaw('LOWER(name) = ?', [mb_strtolower($normalized, 'UTF-8')])->first();
+
+            return $org?->id;
+        }
+
+        return null;
     }
 
     public function closeEdit(): void
@@ -310,6 +415,7 @@ class ParticipantsList extends Component
         $this->editEmail       = '';
         $this->editStudentCode = '';
         $this->editRoles       = [];
+        $this->roleError       = '';
     }
 
     // ── Eliminar ─────────────────────────────────────────────────────────
