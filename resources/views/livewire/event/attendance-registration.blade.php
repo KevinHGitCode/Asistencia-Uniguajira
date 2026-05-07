@@ -276,7 +276,7 @@
                         </div>
 
                         {{-- Organización externa con autosugerencia --}}
-                        <div class="relative" x-data="{ open: false }" @click.outside="open = false">
+                        <div class="relative" x-data="{ open: false }" x-on:click.outside="open = false">
                             <label class="{{ $labelCls2 }}">
                                 Organización / Institución <span class="text-red-400">*</span>
                             </label>
@@ -286,8 +286,8 @@
                                 placeholder="Ej: Alcaldía de Riohacha"
                                 maxlength="150"
                                 autocomplete="off"
-                                @focus="open = true"
-                                @input="open = true"
+                                x-on:focus="open = true"
+                                x-on:input="open = true"
                                 class="{{ $inputCls2 }} {{ $errors->has('externalOrganization') ? 'border-red-400 focus:ring-red-300/40' : '' }}"
                             />
                             @error('externalOrganization')
@@ -295,24 +295,25 @@
                             @enderror
 
                             {{-- Dropdown de sugerencias --}}
-                            @if(count($organizationSuggestions) > 0)
-                                <ul x-show="open"
-                                    x-transition
-                                    class="absolute z-20 mt-1 w-full rounded-xl border border-neutral-200 bg-white shadow-lg
-                                           dark:border-zinc-600 dark:bg-zinc-700 max-h-40 overflow-y-auto">
-                                    @foreach($organizationSuggestions as $suggestion)
-                                        <li>
-                                            <button type="button"
-                                                wire:click="selectOrganization({{ $suggestion['id'] }}, {{ Js::from($suggestion['name']) }})"
-                                                @click="open = false"
-                                                class="w-full px-3.5 py-2 text-left text-sm text-gray-800 dark:text-gray-200
-                                                       hover:bg-[#62a9b6]/10 dark:hover:bg-[#62a9b6]/20 transition-colors cursor-pointer">
-                                                {{ $suggestion['name'] }}
-                                            </button>
-                                        </li>
-                                    @endforeach
-                                </ul>
-                            @endif
+                            <ul x-show="open && {{ count($organizationSuggestions) }} > 0"
+                                x-transition
+                                x-cloak
+                                class="absolute z-20 mt-1 w-full rounded-xl border border-neutral-200 bg-white shadow-lg
+                                       dark:border-zinc-600 dark:bg-zinc-700 max-h-40 overflow-y-auto">
+                                @foreach($organizationSuggestions as $suggestion)
+                                    <li>
+                                        <button type="button"
+                                            x-on:mousedown.prevent="
+                                                $wire.selectOrganization({{ $suggestion['id'] }}, {{ Js::from($suggestion['name']) }});
+                                                open = false;
+                                            "
+                                            class="w-full px-3.5 py-2 text-left text-sm text-gray-800 dark:text-gray-200
+                                                   hover:bg-[#62a9b6]/10 dark:hover:bg-[#62a9b6]/20 transition-colors cursor-pointer">
+                                            {{ $suggestion['name'] }}
+                                        </button>
+                                    </li>
+                                @endforeach
+                            </ul>
                         </div>
                     </div>
                 </div>

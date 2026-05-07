@@ -12,6 +12,14 @@ document.addEventListener('alpine:init', () => {
         mergeName: '',
         mergeTargetId: null,
 
+        // Merge search
+        mergeSearchQuery: '',
+        mergeSearchResults: [],
+        mergeSearchOpen: false,
+        mergeShowAll: false,
+        mergeSearchTimeout: null,
+        allOrganizations: [],
+
         openCreate() {
             this.editingId = null;
             this.formName = '';
@@ -42,7 +50,40 @@ document.addEventListener('alpine:init', () => {
             this.mergeId = id;
             this.mergeName = name;
             this.mergeTargetId = null;
+            this.mergeSearchQuery = '';
+            this.mergeSearchResults = [];
+            this.mergeSearchOpen = false;
+            this.mergeShowAll = false;
+            // allOrganizations se inyecta desde Blade en x-data
             this.showMerge = true;
+        },
+
+        searchMergeTargets() {
+            clearTimeout(this.mergeSearchTimeout);
+            this.mergeTargetId = null;
+
+            const q = this.mergeSearchQuery.trim();
+            if (q.length < 2) {
+                this.mergeSearchResults = [];
+                this.mergeSearchOpen = false;
+                return;
+            }
+
+            this.mergeSearchTimeout = setTimeout(() => {
+                fetch('/administracion/organizations/search?q=' + encodeURIComponent(q))
+                    .then(r => r.json())
+                    .then(data => {
+                        this.mergeSearchResults = data.filter(o => o.id !== this.mergeId);
+                        this.mergeSearchOpen = this.mergeSearchResults.length > 0;
+                    });
+            }, 300);
+        },
+
+        selectMergeTarget(id, name) {
+            this.mergeTargetId = id;
+            this.mergeSearchQuery = name;
+            this.mergeSearchResults = [];
+            this.mergeSearchOpen = false;
         },
 
         closeMerge() {

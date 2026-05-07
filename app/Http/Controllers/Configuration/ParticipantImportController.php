@@ -549,15 +549,17 @@ class ParticipantImportController extends Controller
         $validTypes = ParticipantType::pluck('name')->toArray();
 
         $request->validate([
-            'document'       => 'required|string|max:20|unique:participants,document',
-            'first_name'     => 'required|string|max:100',
-            'last_name'      => 'required|string|max:100',
-            'email'          => 'nullable|email|max:255|unique:participants,email',
-            'role'           => ['required', 'string', Rule::in($validTypes)],
-            'student_code'   => 'nullable|string|max:20|unique:participants,student_code',
-            'affiliation_id' => 'nullable|exists:affiliations,id',
-            'program_id'     => 'nullable|exists:programs,id',
-            'dependency_id'  => 'nullable|exists:dependencies,id',
+            'document'          => 'required|string|max:20|unique:participants,document',
+            'first_name'        => 'required|string|max:100',
+            'last_name'         => 'required|string|max:100',
+            'email'             => 'nullable|email|max:255|unique:participants,email',
+            'role'              => ['required', 'string', Rule::in($validTypes)],
+            'student_code'      => 'nullable|string|max:20|unique:participants,student_code',
+            'affiliation_id'    => 'nullable|exists:affiliations,id',
+            'program_id'        => 'nullable|exists:programs,id',
+            'dependency_id'     => 'nullable|exists:dependencies,id',
+            'organization_name' => 'nullable|string|max:150',
+            'organization_id'   => 'nullable|exists:organizations,id',
         ], [
             'document.required'   => 'El documento es obligatorio.',
             'document.unique'     => 'Ya existe un participante con ese documento.',
@@ -581,12 +583,25 @@ class ParticipantImportController extends Controller
         $type = ParticipantType::where('name', $request->role)->first();
 
         if ($type) {
+            // Resolver organization_id para Comunidad Externa
+            $organizationId = null;
+            if (mb_strtolower(trim($request->role), 'UTF-8') === 'comunidad externa') {
+                $organizationId = $request->organization_id ?: null;
+                if (! $organizationId && ! empty($request->organization_name)) {
+                    $normalizedInput = trim($request->organization_name);
+                    $org = \App\Models\Organization::whereRaw('LOWER(name) = ?', [mb_strtolower($normalizedInput, 'UTF-8')])->first()
+                        ?? \App\Models\Organization::create(['name' => $normalizedInput]);
+                    $organizationId = $org->id;
+                }
+            }
+
             DB::table('participant_roles')->insert([
                 'participant_id'      => $participant->id,
                 'participant_type_id' => $type->id,
                 'program_id'          => $request->program_id ?: null,
                 'dependency_id'       => $request->dependency_id ?: null,
                 'affiliation_id'      => $request->affiliation_id ?: null,
+                'organization_id'     => $organizationId,
                 'is_active'           => 1,
                 'created_at'          => now(),
                 'updated_at'          => now(),

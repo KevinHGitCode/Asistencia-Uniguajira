@@ -7,6 +7,28 @@
          showProgram()    { return ['Estudiante', 'Graduado', 'Docente'].includes(this.role); },
          showDependency() { return this.role === 'Administrativo'; },
          showStudentCode(){ return ['Estudiante', 'Graduado'].includes(this.role); },
+         showOrganization(){ return this.role === 'Comunidad Externa'; },
+         orgQuery: '{{ old('organization_name', '') }}',
+         orgId: '{{ old('organization_id', '') }}',
+         orgSuggestions: [],
+         orgOpen: false,
+         orgSearchTimeout: null,
+         searchOrganizations() {
+             clearTimeout(this.orgSearchTimeout);
+             this.orgId = '';
+             if (this.orgQuery.length < 2) { this.orgSuggestions = []; return; }
+             this.orgSearchTimeout = setTimeout(() => {
+                 fetch('{{ route('organizations.search') }}?q=' + encodeURIComponent(this.orgQuery))
+                     .then(r => r.json())
+                     .then(data => { this.orgSuggestions = data; this.orgOpen = data.length > 0; });
+             }, 300);
+         },
+         selectOrg(id, name) {
+             this.orgQuery = name;
+             this.orgId = id;
+             this.orgSuggestions = [];
+             this.orgOpen = false;
+         },
          setTab(tab) {
              this.activeTab = tab;
              const url = new URL(window.location);
@@ -388,6 +410,31 @@
                         @endforeach
                     </select>
                     @error('dependency_id')
+                        <p class="text-xs text-red-500">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                {{-- Organización (Comunidad Externa) --}}
+                <div class="flex flex-col gap-1.5 sm:col-span-2 relative" x-show="showOrganization()" x-transition @click.outside="orgOpen = false">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Organización / Institución <span class="text-red-500">*</span>
+                    </label>
+                    <input type="hidden" name="organization_id" :value="orgId" />
+                    <input type="text" name="organization_name" x-model="orgQuery" @input="searchOrganizations()" @focus="if(orgSuggestions.length) orgOpen = true"
+                        autocomplete="off" maxlength="150"
+                        placeholder="Ej: Alcaldía de Riohacha"
+                        class="px-3 py-2 rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition" />
+                    <ul x-show="orgOpen && orgSuggestions.length > 0" x-transition x-cloak
+                        class="absolute z-20 top-full mt-1 w-full rounded-lg border border-neutral-200 bg-white shadow-lg dark:border-zinc-600 dark:bg-zinc-700 max-h-40 overflow-y-auto">
+                        <template x-for="org in orgSuggestions" :key="org.id">
+                            <li>
+                                <button type="button" x-on:mousedown.prevent="selectOrg(org.id, org.name)"
+                                    class="w-full px-3 py-2 text-left text-sm text-gray-800 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-zinc-600 transition-colors cursor-pointer"
+                                    x-text="org.name"></button>
+                            </li>
+                        </template>
+                    </ul>
+                    @error('organization_name')
                         <p class="text-xs text-red-500">{{ $message }}</p>
                     @enderror
                 </div>

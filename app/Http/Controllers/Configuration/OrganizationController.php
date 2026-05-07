@@ -22,6 +22,20 @@ class OrganizationController extends Controller
         return view('administration.organizations.index', compact('organizations'));
     }
 
+    public function search(Request $request)
+    {
+        $term = trim($request->query('q', ''));
+
+        if (mb_strlen($term) < 2) {
+            return response()->json([]);
+        }
+
+        return Organization::where('name', 'LIKE', "%{$term}%")
+            ->orderBy('name')
+            ->limit(10)
+            ->get(['id', 'name']);
+    }
+
     public function store(Request $request)
     {
         $this->validateOrganization($request);

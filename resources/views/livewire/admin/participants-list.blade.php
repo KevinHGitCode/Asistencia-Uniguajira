@@ -431,6 +431,43 @@
                                             </div>
                                         @endif
 
+                                        {{-- Organización (Comunidad Externa) --}}
+                                        @if($typeCategory === 'organization')
+                                            <div class="flex flex-col gap-1.5 relative"
+                                                 x-data="{ orgOpen: false }"
+                                                 x-on:click.outside="orgOpen = false">
+                                                <label class="text-xs font-medium text-gray-600 dark:text-gray-400">
+                                                    Organización / Institución
+                                                </label>
+                                                <input type="text"
+                                                    wire:model="editRoles.{{ $index }}.organization_name"
+                                                    wire:input.debounce.300ms="searchOrganizations({{ $index }}, $event.target.value)"
+                                                    autocomplete="off"
+                                                    maxlength="150"
+                                                    placeholder="Ej: Alcaldía de Riohacha"
+                                                    x-on:focus="if ($wire.organizationSearchIndex === {{ $index }} && $wire.organizationSuggestions.length) orgOpen = true"
+                                                    class="px-3 py-2 rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition" />
+
+                                                @if($organizationSearchIndex === $index && count($organizationSuggestions) > 0)
+                                                    <ul x-show="orgOpen" x-transition x-cloak
+                                                        class="absolute z-20 top-full mt-1 w-full rounded-lg border border-neutral-200 bg-white shadow-lg dark:border-zinc-600 dark:bg-zinc-700 max-h-40 overflow-y-auto">
+                                                        @foreach($organizationSuggestions as $org)
+                                                            <li>
+                                                                <button type="button"
+                                                                    x-on:mousedown.prevent="
+                                                                        $wire.selectRoleOrganization({{ $index }}, {{ $org['id'] }}, {{ Js::from($org['name']) }});
+                                                                        orgOpen = false;
+                                                                    "
+                                                                    class="w-full px-3 py-2 text-left text-sm text-gray-800 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-zinc-600 transition-colors cursor-pointer">
+                                                                    {{ $org['name'] }}
+                                                                </button>
+                                                            </li>
+                                                        @endforeach
+                                                    </ul>
+                                                @endif
+                                            </div>
+                                        @endif
+
                                         {{-- Vinculación (Estudiante, Graduado, Docente, Administrativo) --}}
                                         @if(in_array($typeCategory, ['program', 'dependency']))
                                             <div class="flex flex-col gap-1.5">

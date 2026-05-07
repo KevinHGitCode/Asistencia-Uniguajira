@@ -5,6 +5,7 @@ namespace App\Livewire\Admin;
 use App\Models\Affiliation;
 use App\Models\Dependency;
 use App\Models\Attendance;
+use App\Models\Organization;
 use App\Models\Participant;
 use App\Models\ParticipantRole;
 use App\Models\ParticipantType;
@@ -45,6 +46,13 @@ class ParticipantsList extends Component
     // ── Estamentos que se ligan a programa + vinculación ─────────────────
     private const PROGRAM_TYPE_NAMES = ['Estudiante', 'Graduado', 'Docente'];
 
+    // ── Estamentos que se ligan a organización ──────────────────────────
+    private const ORGANIZATION_TYPE_NAMES = ['Comunidad Externa'];
+
+    // ── Búsqueda de organizaciones para roles ───────────────────────────
+    public array $organizationSuggestions = [];
+    public int $organizationSearchIndex = -1;
+
     // ── Eliminación ─────────────────────────────────────────────────────
     public bool $showDeleteModal = false;
     public ?int $deletingId = null;
@@ -58,7 +66,7 @@ class ParticipantsList extends Component
     // ── Editar ───────────────────────────────────────────────────────────
     public function openEdit(int $id): void
     {
-        $participant = Participant::with(['activeRoles'])->findOrFail($id);
+        $participant = Participant::with(['activeRoles.organization'])->findOrFail($id);
 
         $this->editingId       = $participant->id;
         $this->editDocument    = $participant->document;
@@ -80,8 +88,13 @@ class ParticipantsList extends Component
             'program_id'          => (string) ($role->program_id ?? ''),
             'dependency_id'       => (string) ($role->dependency_id ?? ''),
             'affiliation_id'      => (string) ($role->affiliation_id ?? ''),
+            'organization_id'     => (string) ($role->organization_id ?? ''),
+            'organization_name'   => $role->organization?->name ?? '',
             'is_active'           => $role->is_active,
         ])->toArray();
+
+        $this->organizationSuggestions = [];
+        $this->organizationSearchIndex = -1;
 
         // Si no tiene roles, agregar uno vacío
         if (empty($this->editRoles)) {
@@ -100,8 +113,42 @@ class ParticipantsList extends Component
             'program_id'          => '',
             'dependency_id'       => '',
             'affiliation_id'      => '',
+            'organization_id'     => '',
+            'organization_name'   => '',
             'is_active'           => true,
         ];
+    }
+
+    public function searchOrganizations(int $index, string $term): void
+    {
+        $this->organizationSearchIndex = $index;
+        $term = trim($term);
+
+        // Limpiar organization_id cuando el usuario escribe
+        if (isset($this->editRoles[$index])) {
+            $this->editRoles[$index]['organization_id'] = '';
+        }
+
+        if (mb_strlen($term) < 2) {
+            $this->organizationSuggestions = [];
+            return;
+        }
+
+        $this->organizationSuggestions = Organization::where('name', 'LIKE', "%{$term}%")
+            ->orderBy('name')
+            ->limit(5)
+            ->get(['id', 'name'])
+            ->toArray();
+    }
+
+    public function selectRoleOrganization(int $index, int $orgId, string $orgName): void
+    {
+        if (isset($this->editRoles[$index])) {
+            $this->editRoles[$index]['organization_id']   = (string) $orgId;
+            $this->editRoles[$index]['organization_name']  = $orgName;
+        }
+        $this->organizationSuggestions = [];
+        $this->organizationSearchIndex = -1;
     }
 
     public function removeRole(int $index): void
@@ -131,6 +178,10 @@ class ParticipantsList extends Component
 
         if (in_array($typeName, self::PROGRAM_TYPE_NAMES, true)) {
             return 'program';
+        }
+
+        if (in_array($typeName, self::ORGANIZATION_TYPE_NAMES, true)) {
+            return 'organization';
         }
 
         return 'none';
@@ -180,9 +231,10 @@ class ParticipantsList extends Component
             foreach ($this->editRoles as $roleData) {
                 $typeCategory = $this->getTypeCategory($roleData['participant_type_id']);
 
-                $programId     = null;
-                $dependencyId  = null;
-                $affiliationId = null;
+                $programId      = null;
+                $dependencyId   = null;
+                $affiliationId  = null;
+                $organizationId = null;
 
                 if ($typeCategory === 'program') {
                     $programId     = $roleData['program_id'] ?: null;
@@ -191,6 +243,15 @@ class ParticipantsList extends Component
                 if ($typeCategory === 'dependency') {
                     $dependencyId  = $roleData['dependency_id'] ?: null;
                     $affiliationId = $roleData['affiliation_id'] ?: null;
+                }
+                if ($typeCategory === 'organization') {
+                    $organizationId = $roleData['organization_id'] ?: null;
+                    if (! $organizationId && ! empty($roleData['organization_name'])) {
+                        $normalizedInput = trim($roleData['organization_name']);
+                        $org = Organization::whereRaw('LOWER(name) = ?', [mb_strtolower($normalizedInput, 'UTF-8')])->first()
+                            ?? Organization::create(['name' => $normalizedInput]);
+                        $organizationId = $org->id;
+                    }
                 }
 
                 if (!empty($roleData['id'])) {
@@ -202,6 +263,7 @@ class ParticipantsList extends Component
                             'program_id'          => $programId,
                             'dependency_id'       => $dependencyId,
                             'affiliation_id'      => $affiliationId,
+                            'organization_id'     => $organizationId,
                             'is_active'           => true,
                             'updated_at'          => now(),
                         ]);
@@ -214,6 +276,7 @@ class ParticipantsList extends Component
                         'program_id'          => $programId,
                         'dependency_id'       => $dependencyId,
                         'affiliation_id'      => $affiliationId,
+                        'organization_id'     => $organizationId,
                         'is_active'           => true,
                     ]);
                     $existingRoleIds[] = $newRole->id;
@@ -296,6 +359,7 @@ class ParticipantsList extends Component
             'activeRoles.program',
             'activeRoles.dependency',
             'activeRoles.affiliation',
+            'activeRoles.organization',
         ])
             ->when($this->search !== '', function ($q) {
                 $term = '%' . $this->search . '%';

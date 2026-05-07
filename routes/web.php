@@ -200,6 +200,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])
         Route::get('/organizations/download-skipped', [OrganizationController::class, 'downloadSkipped'])->name('organizations.download-skipped');
         Route::get('/organizations/download-template', [OrganizationController::class, 'downloadTemplate'])->name('organizations.download-template');
         Route::get('/organizations/download-export', [OrganizationController::class, 'downloadExport'])->name('organizations.download-export');
+        Route::get('/organizations/search', [OrganizationController::class, 'search'])->name('organizations.search');
         Route::post('/organizations', [OrganizationController::class, 'store'])->name('organizations.store');
         Route::post('/organizations/edit/{organization}', [OrganizationController::class, 'update'])->name('organizations.update');
         Route::post('/organizations/merge/{organization}', [OrganizationController::class, 'merge'])->name('organizations.merge');

@@ -14,6 +14,27 @@
             } catch (e) {}
         })();
     </script>
+
+    {{-- Fix: extender el fondo del sidebar en toda la altura de la página --}}
+    <style>
+        @media (min-width: 1024px) {
+            body:has([data-flux-sidebar])::before {
+                content: '';
+                position: fixed;
+                inset-block: 0;
+                inset-inline-start: 0;
+                width: 16rem; /* w-64, ancho del sidebar Flux */
+                background-color: rgb(250 250 249); /* zinc-50 */
+                border-inline-end: 1px solid rgb(228 228 231); /* zinc-200 */
+                z-index: 0;
+                pointer-events: none;
+            }
+            .dark body:has([data-flux-sidebar])::before {
+                background-color: rgb(24 24 27); /* zinc-900 */
+                border-inline-end-color: rgb(63 63 70); /* zinc-700 */
+            }
+        }
+    </style>
 </head>
 
 <body class="min-h-screen bg-white dark:bg-zinc-800">
@@ -169,7 +190,7 @@
                         open: false,
                         ready: false,
                         init() {
-                            if (@js(request()->routeIs('administracion.*', 'dependencies.*', 'areas.*', 'programs.*', 'formats.*', 'participant-types.*', 'affiliations.*', 'participants-import.*'))) {
+                            if (@js(request()->routeIs('administracion.*', 'dependencies.*', 'areas.*', 'programs.*', 'formats.*', 'participant-types.*', 'affiliations.*', 'organizations.*', 'participants-import.*'))) {
                                 this.open = true;
                             } else {
                                 this.open = localStorage.getItem('sidebar-admin-open') === 'true';
@@ -241,6 +262,10 @@
 
                             <flux:navlist.item :href="route('affiliations.index')" :current="request()->routeIs('affiliations.*')" wire:navigate>
                                 {{ __('Afiliaciones') }}
+                            </flux:navlist.item>
+
+                            <flux:navlist.item :href="route('organizations.index')" :current="request()->routeIs('organizations.*')" wire:navigate>
+                                {{ __('Organizaciones') }}
                             </flux:navlist.item>
 
                             <flux:navlist.item :href="route('participants-import.index')" :current="request()->routeIs('participants-import.*')" wire:navigate>

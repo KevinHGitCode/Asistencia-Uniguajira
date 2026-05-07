@@ -1,7 +1,7 @@
 <x-layouts.app :title="__('Organizaciones')">
 
 <div class="flex h-full w-full flex-1 flex-col gap-6 p-1 sm:p-4 md:p-6"
-     x-data="{ ...organizationsManager(), activeTab: new URLSearchParams(window.location.search).get('tab') || '{{ session('active_tab', 'list') }}', setTab(tab) { this.activeTab = tab; const url = new URL(window.location); url.searchParams.set('tab', tab); window.history.replaceState({}, '', url); } }">
+     x-data="{ ...organizationsManager(), allOrganizations: {{ Js::from($organizations->map(fn($o) => ['id' => $o->id, 'name' => $o->name])) }}, activeTab: new URLSearchParams(window.location.search).get('tab') || '{{ session('active_tab', 'list') }}', setTab(tab) { this.activeTab = tab; const url = new URL(window.location); url.searchParams.set('tab', tab); window.history.replaceState({}, '', url); } }">
 
     {{-- Header --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -119,7 +119,9 @@
                         @forelse($organizations as $organization)
                             <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
                                 x-show="search === '' || '{{ strtolower($organization->name) }}'.includes(search.toLowerCase())"
-                                x-transition>
+                                x-transition
+                                data-org-id="{{ $organization->id }}"
+                                data-org-name="{{ $organization->name }}">
                                 <td class="px-4 sm:px-6 py-4 text-gray-400 dark:text-zinc-500 font-mono text-xs">
                                     {{ $loop->iteration }}
                                 </td>

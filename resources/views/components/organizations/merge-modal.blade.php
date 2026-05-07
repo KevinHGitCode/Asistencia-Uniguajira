@@ -46,16 +46,58 @@
                     <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
                         Organización destino <span class="text-red-500">*</span>
                     </label>
-                    <select name="canonical_id" x-model="mergeTargetId" required
-                        class="px-3 py-2 rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#2563eb] transition">
-                        <option value="">— Seleccionar —</option>
-                        @foreach($organizations as $org)
-                            <option value="{{ $org->id }}"
-                                x-show="mergeId != {{ $org->id }}">
-                                {{ $org->name }}
-                            </option>
-                        @endforeach
-                    </select>
+
+                    {{-- Modo búsqueda (por defecto) --}}
+                    <div x-show="!mergeShowAll" class="relative" x-on:click.outside="mergeSearchOpen = false">
+                        <input type="text"
+                            x-model="mergeSearchQuery"
+                            x-on:input="searchMergeTargets()"
+                            x-on:focus="if(mergeSearchResults.length) mergeSearchOpen = true"
+                            autocomplete="off"
+                            placeholder="Buscar organización destino…"
+                            class="w-full px-3 py-2 rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-[#8b5cf6]/40 transition" />
+
+                        <ul x-show="mergeSearchOpen && mergeSearchResults.length > 0" x-transition x-cloak
+                            class="absolute z-20 mt-1 w-full rounded-lg border border-neutral-200 bg-white shadow-lg dark:border-zinc-600 dark:bg-zinc-700 max-h-40 overflow-y-auto">
+                            <template x-for="org in mergeSearchResults" :key="org.id">
+                                <li>
+                                    <button type="button"
+                                        x-on:mousedown.prevent="selectMergeTarget(org.id, org.name)"
+                                        class="w-full px-3 py-2 text-left text-sm text-gray-800 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-zinc-600 transition-colors cursor-pointer"
+                                        x-text="org.name"></button>
+                                </li>
+                            </template>
+                        </ul>
+                    </div>
+
+                    {{-- Modo select completo (cuando "Mostrar todas" está activo) --}}
+                    <div x-show="mergeShowAll" x-cloak>
+                        <select x-model="mergeTargetId"
+                            x-on:change="mergeSearchQuery = mergeTargetId ? allOrganizations.find(o => o.id == mergeTargetId)?.name || '' : ''"
+                            class="w-full px-3 py-2 rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#8b5cf6]/40 transition">
+                            <option value="">— Seleccionar —</option>
+                            <template x-for="org in allOrganizations" :key="org.id">
+                                <option :value="org.id" x-show="org.id != mergeId" x-text="org.name"></option>
+                            </template>
+                        </select>
+                    </div>
+
+                    {{-- Input oculto para enviar el canonical_id --}}
+                    <input type="hidden" name="canonical_id" :value="mergeTargetId" />
+
+                    {{-- Nombre seleccionado --}}
+                    <p x-show="mergeTargetId && !mergeShowAll" x-cloak class="text-xs text-purple-600 dark:text-purple-400 flex items-center gap-1">
+                        <flux:icon.check-circle class="size-3.5" />
+                        <span>Seleccionada: <strong x-text="mergeSearchQuery"></strong></span>
+                    </p>
+
+                    {{-- Checkbox: mostrar todas --}}
+                    <label class="flex items-center gap-2 mt-1 cursor-pointer">
+                        <input type="checkbox" x-model="mergeShowAll"
+                            x-on:change="if(mergeShowAll && !mergeTargetId) mergeSearchQuery = ''"
+                            class="rounded border-gray-300 text-purple-600 focus:ring-purple-500 dark:border-zinc-600 dark:bg-zinc-800" />
+                        <span class="text-xs text-gray-500 dark:text-gray-400">Mostrar todas las organizaciones</span>
+                    </label>
                 </div>
 
                 <div class="flex items-center justify-end gap-3 pt-2">
@@ -63,8 +105,8 @@
                         class="px-4 py-2 text-sm rounded-lg border border-neutral-200 dark:border-zinc-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer">
                         Cancelar
                     </button>
-                    <button type="submit"
-                        class="px-4 py-2 text-sm rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-medium transition-colors shadow-sm cursor-pointer">
+                    <button type="submit" :disabled="!mergeTargetId"
+                        class="px-4 py-2 text-sm rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-medium transition-colors shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
                         Fusionar
                     </button>
                 </div>

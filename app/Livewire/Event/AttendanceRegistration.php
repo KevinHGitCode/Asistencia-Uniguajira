@@ -142,7 +142,10 @@ class AttendanceRegistration extends Component
 
     public function updatedExternalOrganization(): void
     {
-        $this->selectedOrganizationId = null;
+        // Si la organización fue seleccionada programáticamente, no resetear
+        if ($this->selectedOrganizationId !== null) {
+            return;
+        }
 
         $term = trim($this->externalOrganization);
 
@@ -161,8 +164,8 @@ class AttendanceRegistration extends Component
 
     public function selectOrganization(int $id, string $name): void
     {
-        $this->externalOrganization    = $name;
         $this->selectedOrganizationId  = $id;
+        $this->externalOrganization    = $name;
         $this->organizationSuggestions = [];
     }
 
