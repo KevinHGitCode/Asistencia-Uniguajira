@@ -276,7 +276,10 @@
                         </div>
 
                         {{-- Organización externa con autosugerencia --}}
-                        <div class="relative" x-data="{ open: false }" x-on:click.outside="open = false">
+                        <div class="relative"
+                             x-data="{ open: false }"
+                             x-on:click.outside="open = false"
+                             x-effect="if ($wire.organizationSuggestions.length > 0) open = true">
                             <label class="{{ $labelCls2 }}">
                                 Organización / Institución <span class="text-red-400">*</span>
                             </label>
@@ -295,24 +298,24 @@
                             @enderror
 
                             {{-- Dropdown de sugerencias --}}
-                            <ul x-show="open && {{ count($organizationSuggestions) }} > 0"
+                            <ul x-show="open && $wire.organizationSuggestions.length > 0"
                                 x-transition
                                 x-cloak
                                 class="absolute z-20 mt-1 w-full rounded-xl border border-neutral-200 bg-white shadow-lg
                                        dark:border-zinc-600 dark:bg-zinc-700 max-h-40 overflow-y-auto">
-                                @foreach($organizationSuggestions as $suggestion)
+                                <template x-for="suggestion in $wire.organizationSuggestions" :key="suggestion.id">
                                     <li>
                                         <button type="button"
                                             x-on:mousedown.prevent="
-                                                $wire.selectOrganization({{ $suggestion['id'] }}, {{ Js::from($suggestion['name']) }});
+                                                $wire.selectOrganization(suggestion.id, suggestion.name);
                                                 open = false;
                                             "
                                             class="w-full px-3.5 py-2 text-left text-sm text-gray-800 dark:text-gray-200
-                                                   hover:bg-[#62a9b6]/10 dark:hover:bg-[#62a9b6]/20 transition-colors cursor-pointer">
-                                            {{ $suggestion['name'] }}
+                                                   hover:bg-[#62a9b6]/10 dark:hover:bg-[#62a9b6]/20 transition-colors cursor-pointer"
+                                            x-text="suggestion.name">
                                         </button>
                                     </li>
-                                @endforeach
+                                </template>
                             </ul>
                         </div>
                     </div>

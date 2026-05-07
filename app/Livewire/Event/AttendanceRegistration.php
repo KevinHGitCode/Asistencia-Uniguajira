@@ -142,10 +142,8 @@ class AttendanceRegistration extends Component
 
     public function updatedExternalOrganization(): void
     {
-        // Si la organización fue seleccionada programáticamente, no resetear
-        if ($this->selectedOrganizationId !== null) {
-            return;
-        }
+        // El usuario está escribiendo: limpiar cualquier selección previa
+        $this->selectedOrganizationId = null;
 
         $term = trim($this->externalOrganization);
 
