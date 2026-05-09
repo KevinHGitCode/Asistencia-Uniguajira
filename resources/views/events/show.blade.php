@@ -5,6 +5,17 @@
         ['label' => 'Información'],
     ]" />
 
+    @if(session('success'))
+        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)"
+            x-transition:leave="transition ease-in duration-300"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            class="flex items-start gap-3 mb-4 px-4 py-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 text-sm">
+            <flux:icon.check-circle class="size-5 shrink-0 mt-0.5" />
+            <span>{{ session('success') }}</span>
+        </div>
+    @endif
+
     @if(session('error'))
         <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 8000)"
             x-transition:leave="transition ease-in duration-300"
@@ -28,15 +39,38 @@
                 {{-- Información del evento --}}
                 <div class="border border-neutral-200 rounded-lg px-6 pt-6 pb-6 bg-white dark:border-neutral-700 dark:bg-zinc-800">
 
-                    {{-- Header con título y botón editar --}}
+                    {{-- Header con título y botones de acción --}}
                     <div class="flex items-center justify-between mb-6">
-                        <h3 class="text-lg font-bold text-black dark:text-white">Información del evento</h3>
                         <div class="flex items-center gap-2">
+                            <h3 class="text-lg font-bold text-black dark:text-white">Información del evento</h3>
+                            @if($event->isManuallyEnded())
+                                <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 ring-1 ring-gray-200 dark:ring-gray-700">
+                                    Finalizado manualmente
+                                </span>
+                            @endif
+                        </div>
+                        <div class="flex items-center gap-2">
+                            {{-- Terminar evento --}}
+                            @if($event->isOpenForAttendance())
+                                <flux:modal.trigger name="end-event-modal">
+                                    <flux:button
+                                        variant="filled"
+                                        size="sm"
+                                        class="hover:scale-105 transition-transform cursor-pointer !bg-amber-600 hover:!bg-amber-700 !text-white">
+                                        <svg class="size-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"/>
+                                        </svg>
+                                        {{ __('Terminar evento') }}
+                                    </flux:button>
+                                </flux:modal.trigger>
+                            @endif
+
                             {{-- Editar --}}
                             <flux:modal.trigger name="edit-event-modal">
-                                <flux:button 
-                                    variant="primary" 
-                                    size="sm" 
+                                <flux:button
+                                    variant="primary"
+                                    size="sm"
                                     class="hover:scale-105 transition-transform cursor-pointer"
                                     x-on:click="Livewire.dispatch('edit-event', { id: {{ $event->id }} })">
                                     <svg class="size-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -48,9 +82,9 @@
 
                             {{-- Eliminar --}}
                             <flux:modal.trigger name="delete-event-modal">
-                                <flux:button 
-                                    variant="danger" 
-                                    size="sm" 
+                                <flux:button
+                                    variant="danger"
+                                    size="sm"
                                     class="hover:scale-105 transition-transform cursor-pointer">
                                     <svg class="size-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
@@ -148,13 +182,7 @@
                 {{-- Contenedor de los Enlaces del Evento --}}
                 <div class="border border-neutral-200 dark:border-neutral-700 p-4 bg-white dark:bg-zinc-800 rounded-lg">
                     
-                    @php
-                        // Combinar fecha y hora de finalización del evento
-                        $eventEndDateTime = \Carbon\Carbon::parse($event->date . ' ' . $event->end_time);
-                        $eventHasEnded = now()->greaterThan($eventEndDateTime);
-                    @endphp
-
-                    @if(!$eventHasEnded)
+                    @if($event->isOpenForAttendance())
                         {{-- Mostrar enlaces solo si el evento NO ha terminado --}}
                         <div class="flex items-center justify-center">
                             <h2 class="text-2xl font-semibold">Enlaces del Evento</h2>
@@ -257,11 +285,8 @@
                         <h2 class="text-2xl font-semibold mb-4">Estadísticas del Evento</h2>
 
                         @php
-                            // Combinar fecha y hora de inicio del evento
-                            $eventStartDateTime = \Carbon\Carbon::parse($event->date . ' ' . $event->start_time);
-                            $eventEndDateTime = \Carbon\Carbon::parse($event->date . ' ' . $event->end_time);
-                            $eventHasStarted = now()->greaterThanOrEqualTo($eventStartDateTime);
-                            $eventHasEnded = now()->greaterThan($eventEndDateTime);
+                            $eventHasStarted = !$event->hasNotStarted();
+                            $eventHasEnded = !$event->isOpenForAttendance();
                         @endphp
 
                         @if(!$eventHasStarted)
@@ -316,6 +341,40 @@
 
     {{-- Modal de confirmación para eliminar --}}
     <x-events.delete-modal :event="$event" />
+
+    {{-- Modal de confirmación para terminar evento --}}
+    <flux:modal name="end-event-modal" class="max-w-md">
+        <div class="space-y-6">
+            <div class="text-center">
+                <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30 mb-4">
+                    <svg class="h-6 w-6 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <flux:heading size="lg">¿Terminar evento?</flux:heading>
+                <flux:text class="mt-2 text-zinc-500">
+                    Se cerrará el registro de asistencia para <span class="font-bold">{{ $event->title }}</span>.
+                    Los participantes ya registrados se conservarán. Puedes reabrir el evento editando su hora de finalización.
+                </flux:text>
+            </div>
+
+            <div class="flex items-center justify-center gap-3">
+                <flux:button
+                    variant="ghost"
+                    class="cursor-pointer"
+                    x-on:click="$dispatch('modal-close', { name: 'end-event-modal' })">
+                    Cancelar
+                </flux:button>
+
+                <form action="{{ route('events.end', $event->id) }}" method="POST">
+                    @csrf
+                    <flux:button class="cursor-pointer !bg-amber-600 hover:!bg-amber-700 !text-white" type="submit">
+                        Sí, terminar evento
+                    </flux:button>
+                </form>
+            </div>
+        </div>
+    </flux:modal>
 
     {{-- Script para copiar el enlace, compartir y descargar el QR --}}
     @vite(['resources/js/events/show.js'])

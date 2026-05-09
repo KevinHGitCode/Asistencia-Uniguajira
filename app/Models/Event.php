@@ -17,11 +17,16 @@ class Event extends Model
         'date',
         'start_time',
         'end_time',
+        'ended_at',
         'location',
         'link',
         'user_id',
         'dependency_id',
-        'area_id', // agregar solo si existe en la migración
+        'area_id',
+    ];
+
+    protected $casts = [
+        'ended_at' => 'datetime',
     ];
 
     public function user()
@@ -59,5 +64,44 @@ class Event extends Model
     public function getIsDeletableAttribute(): bool
     {
         return \Carbon\Carbon::parse($this->date)->greaterThanOrEqualTo(now()->startOfDay());
+    }
+
+    /**
+     * El evento está abierto para registro si no fue terminado manualmente
+     * y la hora actual no ha superado su end_time (si tiene).
+     */
+    public function isOpenForAttendance(): bool
+    {
+        if ($this->ended_at !== null) {
+            return false;
+        }
+
+        if ($this->end_time !== null) {
+            $endDateTime = \Carbon\Carbon::parse($this->date . ' ' . $this->end_time);
+            if (now()->gt($endDateTime)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public function isManuallyEnded(): bool
+    {
+        return $this->ended_at !== null;
+    }
+
+    /**
+     * El evento aún no ha comenzado (start_time en el futuro).
+     */
+    public function hasNotStarted(): bool
+    {
+        if ($this->start_time === null) {
+            return false;
+        }
+
+        $startDateTime = \Carbon\Carbon::parse($this->date . ' ' . $this->start_time);
+
+        return now()->lt($startDateTime);
     }
 }

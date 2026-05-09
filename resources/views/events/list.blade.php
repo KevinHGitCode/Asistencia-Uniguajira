@@ -32,19 +32,25 @@
             
             @php
                 $now = now();
-                
+
                 $myEventsInProgress = $myEvents->filter(function($event) use ($now) {
+                    // Terminado manualmente → no está en proceso
+                    if ($event->ended_at !== null) return false;
                     $startDateTime = \Carbon\Carbon::parse($event->date . ' ' . $event->start_time);
                     $endDateTime = \Carbon\Carbon::parse($event->date . ' ' . $event->end_time);
                     return $now->greaterThanOrEqualTo($startDateTime) && $now->lessThanOrEqualTo($endDateTime);
                 })->sortBy(fn($e) => $e->date . ' ' . $e->start_time);
 
                 $myEventsUpcoming = $myEvents->filter(function($event) use ($now) {
+                    // Terminado manualmente → no es próximo
+                    if ($event->ended_at !== null) return false;
                     $startDateTime = \Carbon\Carbon::parse($event->date . ' ' . $event->start_time);
                     return $now->lessThan($startDateTime);
                 })->sortBy(fn($e) => $e->date . ' ' . $e->start_time);
 
                 $myEventsFinished = $myEvents->filter(function($event) use ($now) {
+                    // Terminado manualmente → siempre es finalizado
+                    if ($event->ended_at !== null) return true;
                     $endDateTime = \Carbon\Carbon::parse($event->date . ' ' . $event->end_time);
                     return $now->greaterThan($endDateTime);
                 })->sortByDesc(fn($e) => $e->date . ' ' . $e->end_time);
@@ -282,20 +288,21 @@
                 @else
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         @foreach($myEventsFinished as $event)
-                            <a href="{{ route('events.show', $event->id) }}" 
+                            <a href="{{ route('events.show', $event->id) }}"
                                class="block p-4 rounded-2xl border border-neutral-200 dark:border-neutral-600 hover:border-[#e2a542] hover:shadow-lg transition-all duration-200 bg-white dark:bg-zinc-800">
                                 <div class="flex items-start justify-between mb-2">
                                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white line-clamp-1">
                                         {{ $event->title }}
                                     </h3>
-                                    {{-- <div class="ml-2 flex flex-col gap-1">
-                                        <span class="flex-shrink-0 px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded">
-                                            Propio
+                                    @if ($event->ended_at !== null)
+                                        <span class="ml-2 flex-shrink-0 inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded">
+                                            <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 9.563C9 9.252 9.252 9 9.563 9h4.874c.311 0 .563.252.563.563v4.874c0 .311-.252.563-.563.563H9.564A.562.562 0 0 1 9 14.437V9.564Z"/>
+                                            </svg>
+                                            Finalizado manualmente
                                         </span>
-                                        <span class="flex-shrink-0 px-2 py-1 text-xs font-medium bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 rounded">
-                                            Finalizado
-                                        </span>
-                                    </div> --}}
+                                    @endif
                                 </div>
                                 
                                 <div class="space-y-2 text-sm text-gray-600 dark:text-gray-300">

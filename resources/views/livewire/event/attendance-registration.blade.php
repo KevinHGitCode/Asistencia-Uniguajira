@@ -1074,6 +1074,65 @@
             </div>
         @endif
 
+        {{-- ─────────────────────────────────────────────────────────────
+             STEP: closed — Evento no disponible para registro
+        ──────────────────────────────────────────────────────────────── --}}
+        @if ($step === 'closed')
+            <div wire:transition
+                 wire:key="step-closed"
+                 class="rounded-2xl border border-neutral-200 bg-white shadow-lg
+                        dark:border-zinc-700 dark:bg-zinc-800"
+                 style="border-top: 3px solid {{ $eventStatus === 'not_started' ? '#e2a542' : '#94a3b8' }};">
+                <div class="px-6 py-10 text-center">
+
+                    @if ($eventStatus === 'not_started')
+                        {{-- Evento aún no ha comenzado --}}
+                        <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full shadow-md"
+                             style="background: linear-gradient(135deg, #e2a542 0%, #d4952e 100%);">
+                            <svg class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24"
+                                 stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                      d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+                            </svg>
+                        </div>
+                        <h2 class="text-xl font-extrabold tracking-tight text-gray-800 dark:text-gray-100">
+                            Este evento aún no ha comenzado
+                        </h2>
+                        <p class="mx-auto mt-2 max-w-[280px] text-sm text-gray-500 dark:text-zinc-400">
+                            El registro de asistencia estará disponible cuando inicie el evento.
+                        </p>
+                    @else
+                        {{-- Evento finalizado (manual o por tiempo) --}}
+                        <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full shadow-md"
+                             style="background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);">
+                            <svg class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24"
+                                 stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                      d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636"/>
+                            </svg>
+                        </div>
+                        <h2 class="text-xl font-extrabold tracking-tight text-gray-800 dark:text-gray-100">
+                            Este evento ha finalizado
+                        </h2>
+                        <p class="mx-auto mt-2 max-w-[280px] text-sm text-gray-500 dark:text-zinc-400">
+                            El registro de asistencia ya no está disponible para este evento.
+                        </p>
+                    @endif
+
+                </div>
+
+                <div class="flex items-center justify-center gap-2 border-t border-neutral-100 bg-gray-50/60 px-6 py-3
+                            text-xs text-gray-500 dark:border-zinc-700 dark:bg-zinc-900/30 dark:text-zinc-400">
+                    <svg class="h-3.5 w-3.5 text-gray-400" fill="none" viewBox="0 0 24 24"
+                         stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z"/>
+                    </svg>
+                    Contacta al organizador para más información
+                </div>
+            </div>
+        @endif
+
     @endif {{-- fin tab asistencia --}}
 
 

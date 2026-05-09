@@ -154,6 +154,27 @@ class EventController extends Controller
             ->with('success', 'Evento eliminado exitosamente.');
     }
 
+    /**
+     * Terminar evento manualmente.
+     */
+    public function end(Event $event)
+    {
+        $user = Auth::user();
+        $isOwner = $event->user_id !== null && (int) $event->user_id === (int) $user->id;
+
+        if ($user->role !== 'admin' && !$isOwner) {
+            abort(403);
+        }
+
+        if (!$event->isOpenForAttendance()) {
+            return back()->with('error', 'Este evento ya ha finalizado.');
+        }
+
+        $event->update(['ended_at' => now()]);
+
+        return back()->with('success', 'El evento ha sido finalizado exitosamente.');
+    }
+
     public function areas(Dependency $dependency)
     {
         return $dependency->areas()

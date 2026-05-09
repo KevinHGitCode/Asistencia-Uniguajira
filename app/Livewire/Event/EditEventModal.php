@@ -157,6 +157,19 @@ class EditEventModal extends Component
             'end_time'      => $this->end_time ?: null,
         ]);
 
+        // Reapertura automática: si el evento fue terminado manualmente
+        // y el nuevo end_time queda en el futuro, limpiar ended_at
+        if (
+            $event->isManuallyEnded()
+            && $this->end_time
+            && $this->date
+        ) {
+            $newEndDateTime = \Carbon\Carbon::parse($this->date . ' ' . $this->end_time);
+            if (now()->lt($newEndDateTime)) {
+                $event->update(['ended_at' => null]);
+            }
+        }
+
         // Detectar cambios y enviar correo
         $changes = [];
         foreach ($original as $field => $oldValue) {

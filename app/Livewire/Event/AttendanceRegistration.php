@@ -29,8 +29,11 @@ class AttendanceRegistration extends Component
 
     public string $activeTab = 'asistencia';
 
-    // 'search' | 'register_external' | 'found' | 'select_type' | 'select_role' | 'details' | 'duplicate' | 'success'
+    // 'search' | 'register_external' | 'found' | 'select_type' | 'select_role' | 'details' | 'duplicate' | 'success' | 'closed'
     public string $step = 'search';
+
+    // 'open' | 'ended' | 'not_started'
+    public string $eventStatus = 'open';
 
     public bool $acceptsDataTreatment = false;
 
@@ -110,6 +113,19 @@ class AttendanceRegistration extends Component
             'end_time'   => $event->end_time,
             'location'   => $event->location,
         ];
+
+        // Validar estado del evento para registro
+        if ($event->hasNotStarted()) {
+            $this->eventStatus = 'not_started';
+            $this->step = 'closed';
+            return;
+        }
+
+        if (! $event->isOpenForAttendance()) {
+            $this->eventStatus = 'ended';
+            $this->step = 'closed';
+            return;
+        }
 
         $this->programs = Program::orderBy('name')
             ->get(['id', 'name'])

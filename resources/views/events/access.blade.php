@@ -105,10 +105,26 @@
                             class="h-7 sm:h-8 w-auto object-contain">
                     </div>
 
-                    <span class="inline-flex items-center gap-1 rounded-full bg-emerald-400/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-emerald-300 ring-1 ring-emerald-400/30">
-                        <span class="ev-access-live-dot h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
-                        En vivo
-                    </span>
+                    @if ($event->isOpenForAttendance())
+                        <span class="inline-flex items-center gap-1 rounded-full bg-emerald-400/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-emerald-300 ring-1 ring-emerald-400/30">
+                            <span class="ev-access-live-dot h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
+                            En vivo
+                        </span>
+                    @elseif ($event->hasNotStarted())
+                        <span class="inline-flex items-center gap-1 rounded-full bg-amber-400/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-300 ring-1 ring-amber-400/30">
+                            <svg class="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+                            </svg>
+                            Próximamente
+                        </span>
+                    @else
+                        <span class="inline-flex items-center gap-1 rounded-full bg-gray-400/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-gray-300 ring-1 ring-gray-400/30">
+                            <svg class="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636"/>
+                            </svg>
+                            Finalizado
+                        </span>
+                    @endif
                 </div>
 
                 {{-- Salto de línea: Control de asistencia + título del evento --}}
@@ -179,10 +195,26 @@
                             alt="AURA"
                             class="h-10 lg:h-12 xl:h-16 2xl:h-20 w-auto object-contain">
                     </div>
-                    <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-400/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-emerald-300 ring-1 ring-emerald-400/30">
-                        <span class="ev-access-live-dot h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
-                        Evento en vivo
-                    </span>
+                    @if ($event->isOpenForAttendance())
+                        <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-400/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-emerald-300 ring-1 ring-emerald-400/30">
+                            <span class="ev-access-live-dot h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
+                            Evento en vivo
+                        </span>
+                    @elseif ($event->hasNotStarted())
+                        <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-400/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-amber-300 ring-1 ring-amber-400/30">
+                            <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+                            </svg>
+                            Próximamente
+                        </span>
+                    @else
+                        <span class="inline-flex items-center gap-1.5 rounded-full bg-gray-400/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-gray-300 ring-1 ring-gray-400/30">
+                            <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636"/>
+                            </svg>
+                            Evento finalizado
+                        </span>
+                    @endif
                 </div>
 
                 {{-- Bloque central --}}

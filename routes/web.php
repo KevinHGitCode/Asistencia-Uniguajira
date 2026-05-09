@@ -49,6 +49,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('eventos/{id}/descargar-asistencia/{formatSlug?}', [EventController::class, 'descargarAsistencia'])
         ->name('events.download');
+
+    Route::post('eventos/{event}/terminar', [EventController::class, 'end'])
+        ->name('events.end');
 });
 
 Route::middleware(['auth'])
