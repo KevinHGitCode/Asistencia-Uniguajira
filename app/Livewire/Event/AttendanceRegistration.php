@@ -29,7 +29,7 @@ class AttendanceRegistration extends Component
 
     public string $activeTab = 'asistencia';
 
-    // 'search' | 'register_external' | 'found' | 'select_type' | 'select_role' | 'details' | 'duplicate' | 'success' | 'closed'
+    // 'search' | 'register_external' | 'found' | 'select_type' | 'select_role' | 'details' | 'duplicate' | 'success' | 'closed' | 'event_ended'
     public string $step = 'search';
 
     // 'open' | 'ended' | 'not_started'
@@ -196,6 +196,13 @@ class AttendanceRegistration extends Component
 
     public function search(): void
     {
+        // Re-verificar que el evento sigue abierto (el usuario pudo dejar la pestaña abierta)
+        $event = Event::find($this->eventId);
+        if (!$event || !$event->isOpenForAttendance()) {
+            $this->step = 'event_ended';
+            return;
+        }
+
         $this->validate(
             [
                 'identification' => 'required|string|max:20',
@@ -458,6 +465,13 @@ class AttendanceRegistration extends Component
 
     public function confirmWithDetails(): void
     {
+        // Re-verificar que el evento sigue abierto antes de guardar
+        $event = Event::find($this->eventId);
+        if (!$event || !$event->isOpenForAttendance()) {
+            $this->step = 'event_ended';
+            return;
+        }
+
         if (! $this->participantData) {
             $this->backToSearch();
             return;
