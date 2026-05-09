@@ -2,7 +2,9 @@
 
 <div class="flex h-full w-full flex-1 flex-col gap-6 p-1 sm:p-4 md:p-6"
      x-data="{
-         activeTab: new URLSearchParams(window.location.search).get('tab') || '{{ session('active_tab', 'bulk') }}',
+         activeTab: new URLSearchParams(window.location.search).get('filtro') === 'sin_clasificar'
+             ? 'list'
+             : (new URLSearchParams(window.location.search).get('tab') || '{{ session('active_tab', 'bulk') }}'),
          role: '{{ old('role', '') }}',
          showProgram()    { return ['Estudiante', 'Graduado', 'Docente'].includes(this.role); },
          showDependency() { return this.role === 'Administrativo'; },

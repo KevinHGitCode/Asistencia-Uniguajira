@@ -17,10 +17,12 @@ import { CHART_HEIGHTS, CHART_DENSITY } from './config.js';
 // ---------------------------------------------------------------------------
 
 const DESCRIPTIONS = {
-  programParticipants: `Muestra cómo se distribuyen los participantes únicos entre los diferentes programas. Todos los programas que representen ${CHART_DENSITY.pieMinPercent}% o menos del total se agrupan automáticamente en la categoría "Otros".`,
-  byRole:  `Distribución de los participantes únicos por estamento (Estudiante / Docente) en el período seleccionado. Solo se cuentan participantes con al menos una asistencia.`,
+  programParticipants: `Distribución de participantes únicos que asistieron con un rol vinculado a un programa académico (Estudiante, Docente, Graduado). No incluye participantes administrativos ni de comunidad externa. Los programas que representen ${CHART_DENSITY.pieMinPercent}% o menos se agrupan en "Otros".`,
+  dependencyParticipants: `Distribución de participantes únicos que asistieron con un rol vinculado a una dependencia universitaria (Administrativos). Los que representen ${CHART_DENSITY.pieMinPercent}% o menos se agrupan en "Otros".`,
+  organizationParticipants: `Distribución de participantes únicos que asistieron como Comunidad Externa, agrupados por la organización o institución con la que se registraron. Los que representen ${CHART_DENSITY.pieMinPercent}% o menos se agrupan en "Otros".`,
+  byRole:  `Distribución de los participantes únicos por estamento (Estudiante / Docente) en el período seleccionado. Se usa el estamento de la última asistencia registrada para cada participante, evitando contar a una misma persona en múltiples categorías.`,
   bySex:   `Distribución de los participantes únicos por sexo (Masculino, Femenino, Otro) en el período seleccionado. Solo se cuentan participantes con al menos una asistencia.`,
-  byGroup: `Distribución de los participantes únicos según su grupo poblacional priorizado (Indígena, Afrodescendiente, Raizal, Palenquero, Rom, Ninguno, etc.) en el período seleccionado.`,
+  byGroup: `Distribución de los participantes únicos según su grupo poblacional priorizado (Indígena, Afrodescendiente, Raizal, Palenquero, Rom, Ninguno, etc.) en el período seleccionado. Se usa el grupo de la última asistencia registrada para cada participante.`,
 };
 
 // ---------------------------------------------------------------------------
@@ -133,24 +135,85 @@ export default function ParticipantesApp() {
         </div>
       </section>
 
-      {/* ══ Distribución por Programa ══ */}
+      {/* ══ Participantes por Estamento — GRANDE ══ */}
       <section className="mb-8">
         <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-3">
-          Distribución por Programa
+          Participantes por Estamento
         </h2>
         <ChartCard
-          title="Participantes por Programa"
-          description={DESCRIPTIONS.programParticipants}
+          title="Participantes por Estamento"
+          description={DESCRIPTIONS.byRole}
           height={CHART_HEIGHTS.pie}
           loading={loading}
-          isEmpty={!loading && charts.participantsByProgram.length === 0}
-          data={charts.participantsByProgram}
+          isEmpty={!loading && charts.byRole.length === 0}
+          data={charts.byRole}
           isDark={isDark}
           valueLabel="Participantes"
         >
-          <ProgramParticipantsPie data={charts.participantsByProgram} isDark={isDark} />
+          <ProgramParticipantsPie data={charts.byRole} isDark={isDark} showOuterLabels={false} groupOthers={false} />
         </ChartCard>
       </section>
+
+      {/* ══ Participantes por Programa / Dependencia / Organización — reducidas ══ */}
+      <section className="mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+          <ChartCard
+            title="Participantes por Programa Académico"
+            description={DESCRIPTIONS.programParticipants}
+            height={CHART_HEIGHTS.role}
+            loading={loading}
+            isEmpty={!loading && charts.participantsByProgram.length === 0}
+            data={charts.participantsByProgram}
+            isDark={isDark}
+            valueLabel="Participantes"
+          >
+            <ProgramParticipantsPie data={charts.participantsByProgram} isDark={isDark} showOuterLabels={false} />
+          </ChartCard>
+
+          <ChartCard
+            title="Participantes por Dependencia"
+            description={DESCRIPTIONS.dependencyParticipants}
+            height={CHART_HEIGHTS.role}
+            loading={loading}
+            isEmpty={!loading && charts.participantsByDependency.length === 0}
+            data={charts.participantsByDependency}
+            isDark={isDark}
+            valueLabel="Participantes"
+          >
+            <ProgramParticipantsPie data={charts.participantsByDependency} isDark={isDark} showOuterLabels={false} />
+          </ChartCard>
+
+          <ChartCard
+            title="Participantes por Organización"
+            description={DESCRIPTIONS.organizationParticipants}
+            height={CHART_HEIGHTS.role}
+            loading={loading}
+            isEmpty={!loading && charts.participantsByOrganization.length === 0}
+            data={charts.participantsByOrganization}
+            isDark={isDark}
+            valueLabel="Participantes"
+          >
+            <ProgramParticipantsPie data={charts.participantsByOrganization} isDark={isDark} showOuterLabels={false} />
+          </ChartCard>
+
+        </div>
+      </section>
+
+      {/* ══ Sin clasificar ══ */}
+      {!loading && charts.participantsUnclassified > 0 && (
+        <div className="mb-6 px-4 py-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl text-sm text-amber-800 dark:text-amber-300 flex items-center justify-between gap-3 flex-wrap">
+          <span>
+            <strong>{charts.participantsUnclassified.toLocaleString('es-CO')}</strong> participante(s) no están vinculados a ningún programa, dependencia ni organización (sin clasificar).
+          </span>
+          <a
+            href="/administracion/participants?filtro=sin_clasificar"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium transition-colors shrink-0 no-underline"
+          >
+            Ver participantes
+          </a>
+        </div>
+      )}
 
       {/* ══ Perfil Demográfico ══ */}
       <section className="mb-8">
@@ -158,19 +221,6 @@ export default function ParticipantesApp() {
           Perfil Demográfico
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-          <ChartCard
-            title="Por Estamento"
-            description={DESCRIPTIONS.byRole}
-            height={CHART_HEIGHTS.role}
-            loading={loading}
-            isEmpty={!loading && charts.byRole.length === 0}
-            data={charts.byRole}
-            isDark={isDark}
-            valueLabel="Participantes"
-          >
-            <ProgramParticipantsPie data={charts.byRole} isDark={isDark} showOuterLabels={false} groupOthers={false} />
-          </ChartCard>
 
           <ChartCard
             title="Por Sexo"

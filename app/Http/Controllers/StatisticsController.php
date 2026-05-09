@@ -27,12 +27,15 @@ class StatisticsController extends Controller
             return response()->json([
                 'counters' => ['events' => 0, 'attendances' => 0, 'participants' => 0],
                 'charts'   => [
-                    'attendancesByProgram' => [],
-                    'topEvents'            => [],
-                    'topParticipants'      => [],
-                    'byRole'               => [],
-                    'bySex'                => [],
-                    'byGroup'              => [],
+                    'attendancesByProgram'      => [],
+                    'attendancesByDependency'   => [],
+                    'attendancesByOrganization' => [],
+                    'attendancesUnclassified'   => 0,
+                    'topEvents'                => [],
+                    'topParticipants'          => [],
+                    'byRole'                   => [],
+                    'bySex'                    => [],
+                    'byGroup'                  => [],
                 ],
             ]);
         }
@@ -46,12 +49,15 @@ class StatisticsController extends Controller
                 'participants' => $s->totalParticipants(),
             ],
             'charts' => [
-                'attendancesByProgram' => $s->attendancesByProgram(),
-                'topEvents'            => $s->topEvents(),
-                'topParticipants'      => $s->topParticipants(),
-                'byRole'               => $s->attendancesByType(),
-                'bySex'                => $s->attendancesByDetailField('gender'),
-                'byGroup'              => $s->attendancesByDetailField('priority_group'),
+                'attendancesByProgram'      => $s->attendancesByProgram(),
+                'attendancesByDependency'   => $s->attendancesByDependency(),
+                'attendancesByOrganization' => $s->attendancesByOrganization(),
+                'attendancesUnclassified'   => $s->attendancesUnclassified(),
+                'topEvents'                => $s->topEvents(),
+                'topParticipants'          => $s->topParticipants(),
+                'byRole'                   => $s->attendancesByType(),
+                'bySex'                    => $s->attendancesByDetailField('gender'),
+                'byGroup'                  => $s->attendancesByDetailField('priority_group'),
             ],
         ]);
     }
@@ -67,10 +73,13 @@ class StatisticsController extends Controller
             return response()->json([
                 'counters' => ['events' => 0, 'participants' => 0],
                 'charts'   => [
-                    'participantsByProgram' => [],
-                    'byRole'               => [],
-                    'bySex'                => [],
-                    'byGroup'              => [],
+                    'participantsByProgram'      => [],
+                    'participantsByDependency'   => [],
+                    'participantsByOrganization' => [],
+                    'participantsUnclassified'   => 0,
+                    'byRole'                     => [],
+                    'bySex'                      => [],
+                    'byGroup'                    => [],
                 ],
             ]);
         }
@@ -83,10 +92,13 @@ class StatisticsController extends Controller
                 'participants' => $s->totalParticipants(),
             ],
             'charts' => [
-                'participantsByProgram' => $s->participantsByProgram(),
-                'byRole'                => $s->participantsByType(),
-                'bySex'                 => $s->participantsByDetailField('gender'),
-                'byGroup'               => $s->participantsByDetailField('priority_group'),
+                'participantsByProgram'      => $s->participantsByProgram(),
+                'participantsByDependency'   => $s->participantsByDependency(),
+                'participantsByOrganization' => $s->participantsByOrganization(),
+                'participantsUnclassified'   => $s->participantsUnclassified(),
+                'byRole'                    => $s->participantsByTypeDedup(),
+                'bySex'                     => $s->participantsByDetailField('gender'),
+                'byGroup'                   => $s->participantsByGroupDedup(),
             ],
         ]);
     }
@@ -181,6 +193,26 @@ class StatisticsController extends Controller
     public function participantsByGroup(Request $request): JsonResponse
     {
         return response()->json($this->svc($request)->participantsByDetailField('priority_group'));
+    }
+
+    public function attendancesByDependency(Request $request): JsonResponse
+    {
+        return response()->json($this->svc($request)->attendancesByDependency());
+    }
+
+    public function participantsByDependency(Request $request): JsonResponse
+    {
+        return response()->json($this->svc($request)->participantsByDependency());
+    }
+
+    public function attendancesByOrganization(Request $request): JsonResponse
+    {
+        return response()->json($this->svc($request)->attendancesByOrganization());
+    }
+
+    public function participantsByOrganization(Request $request): JsonResponse
+    {
+        return response()->json($this->svc($request)->participantsByOrganization());
     }
 
     // ── Helpers privados ────────────────────────────────────────────────────

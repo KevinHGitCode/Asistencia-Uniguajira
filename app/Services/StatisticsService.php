@@ -97,6 +97,96 @@ class StatisticsService
             ->get();
     }
 
+    // ── Por dependencia (participant_roles.dependency_id → dependencies) ────
+
+    public function attendancesByDependency(): Collection
+    {
+        return $this->detailsBase()
+            ->join('participant_roles', 'attendance_details.participant_role_id', '=', 'participant_roles.id')
+            ->join('dependencies', 'participant_roles.dependency_id', '=', 'dependencies.id')
+            ->select('dependencies.name as name', DB::raw('COUNT(*) as value'))
+            ->groupBy('dependencies.id', 'dependencies.name')
+            ->orderByDesc('value')
+            ->get();
+    }
+
+    public function participantsByDependency(): Collection
+    {
+        return $this->detailsBase()
+            ->join('participant_roles', 'attendance_details.participant_role_id', '=', 'participant_roles.id')
+            ->join('dependencies', 'participant_roles.dependency_id', '=', 'dependencies.id')
+            ->select('dependencies.name as name', DB::raw('COUNT(DISTINCT attendances.participant_id) as value'))
+            ->groupBy('dependencies.id', 'dependencies.name')
+            ->orderByDesc('value')
+            ->get();
+    }
+
+    // ── Por organización (participant_roles.organization_id → organizations) ──
+
+    public function attendancesByOrganization(): Collection
+    {
+        return $this->detailsBase()
+            ->join('participant_roles', 'attendance_details.participant_role_id', '=', 'participant_roles.id')
+            ->join('organizations', 'participant_roles.organization_id', '=', 'organizations.id')
+            ->select('organizations.name as name', DB::raw('COUNT(*) as value'))
+            ->groupBy('organizations.id', 'organizations.name')
+            ->orderByDesc('value')
+            ->get();
+    }
+
+    public function participantsByOrganization(): Collection
+    {
+        return $this->detailsBase()
+            ->join('participant_roles', 'attendance_details.participant_role_id', '=', 'participant_roles.id')
+            ->join('organizations', 'participant_roles.organization_id', '=', 'organizations.id')
+            ->select('organizations.name as name', DB::raw('COUNT(DISTINCT attendances.participant_id) as value'))
+            ->groupBy('organizations.id', 'organizations.name')
+            ->orderByDesc('value')
+            ->get();
+    }
+
+    // ── Sin clasificar (no vinculado a programa, dependencia ni organización) ──
+
+    /**
+     * Asistencias no vinculadas a ningún programa, dependencia ni organización.
+     * Incluye: sin attendance_details, sin participant_role, o con role sin las 3 FKs.
+     */
+    public function attendancesUnclassified(): int
+    {
+        return $this->detailsBase()
+            ->leftJoin('participant_roles', 'attendance_details.participant_role_id', '=', 'participant_roles.id')
+            ->where(function ($q) {
+                $q->whereNull('attendance_details.id')               // sin detalle
+                  ->orWhereNull('attendance_details.participant_role_id') // sin rol
+                  ->orWhere(function ($q2) {                         // rol sin clasificar
+                      $q2->whereNull('participant_roles.program_id')
+                         ->whereNull('participant_roles.dependency_id')
+                         ->whereNull('participant_roles.organization_id');
+                  });
+            })
+            ->count();
+    }
+
+    /**
+     * Participantes únicos no vinculados a ningún programa, dependencia ni organización.
+     */
+    public function participantsUnclassified(): int
+    {
+        return $this->detailsBase()
+            ->leftJoin('participant_roles', 'attendance_details.participant_role_id', '=', 'participant_roles.id')
+            ->where(function ($q) {
+                $q->whereNull('attendance_details.id')
+                  ->orWhereNull('attendance_details.participant_role_id')
+                  ->orWhere(function ($q2) {
+                      $q2->whereNull('participant_roles.program_id')
+                         ->whereNull('participant_roles.dependency_id')
+                         ->whereNull('participant_roles.organization_id');
+                  });
+            })
+            ->distinct()
+            ->count('attendances.participant_id');
+    }
+
     // ── Por campo demográfico en attendance_details ─────────────────────────
 
     /**
@@ -148,6 +238,66 @@ class StatisticsService
         }
 
         return $col;
+    }
+
+    // ── Demográficos deduplicados (última asistencia por participante) ─────
+
+    /**
+     * Participantes únicos por estamento, usando solo la ÚLTIMA asistencia
+     * de cada participante (la de mayor attendances.id).
+     * Evita contar a un participante en múltiples estamentos si cambió de rol.
+     */
+    public function participantsByTypeDedup(): Collection
+    {
+        $lastAtt = $this->lastAttendanceSubquery();
+
+        return DB::table(DB::raw("({$lastAtt->toSql()}) as latest"))
+            ->mergeBindings($lastAtt)
+            ->join('attendance_details', 'latest.attendance_id', '=', 'attendance_details.id')
+            ->join('participant_roles', 'attendance_details.participant_role_id', '=', 'participant_roles.id')
+            ->join('participant_types', 'participant_roles.participant_type_id', '=', 'participant_types.id')
+            ->select('participant_types.name as name', DB::raw('COUNT(*) as value'))
+            ->groupBy('participant_types.name')
+            ->orderByDesc('value')
+            ->get();
+    }
+
+    /**
+     * Participantes únicos por grupo priorizado, usando solo la ÚLTIMA
+     * asistencia de cada participante.
+     */
+    public function participantsByGroupDedup(string $fallback = 'Sin datos'): Collection
+    {
+        $lastAtt = $this->lastAttendanceSubquery();
+
+        return DB::table(DB::raw("({$lastAtt->toSql()}) as latest"))
+            ->mergeBindings($lastAtt)
+            ->join('attendance_details', 'latest.attendance_id', '=', 'attendance_details.id')
+            ->selectRaw("COALESCE(attendance_details.priority_group, ?) as name", [$fallback])
+            ->selectRaw('COUNT(*) as value')
+            ->groupBy('attendance_details.priority_group')
+            ->orderByDesc('value')
+            ->get();
+    }
+
+    /**
+     * Subquery que devuelve la última asistencia (MAX id) de cada participante
+     * dentro de los filtros actuales.
+     * Resultado: (participant_id, attendance_id)
+     */
+    private function lastAttendanceSubquery(): Builder
+    {
+        $q = DB::table('attendances')
+            ->join('events', 'attendances.event_id', '=', 'events.id')
+            ->leftJoin('attendance_details', 'attendances.id', '=', 'attendance_details.attendance_id')
+            ->select(
+                'attendances.participant_id',
+                DB::raw('MAX(attendance_details.id) as attendance_id')
+            )
+            ->whereNotNull('attendance_details.id')
+            ->groupBy('attendances.participant_id');
+
+        return $this->applyEventFilters($q);
     }
 
     // ── Top listas ──────────────────────────────────────────────────────────

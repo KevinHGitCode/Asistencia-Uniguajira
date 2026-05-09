@@ -20,6 +20,7 @@ class ParticipantsList extends Component
     use WithPagination;
 
     public string $search = '';
+    public bool $filterUnclassified = false;
 
     // ── Edición ──────────────────────────────────────────────────────────
     public bool $showEditModal = false;
@@ -61,8 +62,26 @@ class ParticipantsList extends Component
     public ?int $deletingId = null;
     public string $deletingName = '';
 
+    public function mount(): void
+    {
+        if (request()->query('filtro') === 'sin_clasificar') {
+            $this->filterUnclassified = true;
+        }
+    }
+
     public function updatingSearch(): void
     {
+        $this->resetPage();
+    }
+
+    public function updatingFilterUnclassified(): void
+    {
+        $this->resetPage();
+    }
+
+    public function toggleUnclassifiedFilter(): void
+    {
+        $this->filterUnclassified = ! $this->filterUnclassified;
         $this->resetPage();
     }
 
@@ -460,7 +479,7 @@ class ParticipantsList extends Component
 
     public function render()
     {
-        $participants = Participant::with([
+        $query = Participant::with([
             'activeRoles.type',
             'activeRoles.program',
             'activeRoles.dependency',
@@ -475,7 +494,31 @@ class ParticipantsList extends Component
                         ->orWhere('last_name', 'like', $term)
                         ->orWhere('email', 'like', $term);
                 });
-            })
+            });
+
+        // Filtro "Sin clasificar": participantes con al menos una asistencia
+        // cuyo rol no tiene programa, dependencia ni organización asignados
+        if ($this->filterUnclassified) {
+            $unclassifiedIds = DB::table('participants')
+                ->join('attendances', 'attendances.participant_id', '=', 'participants.id')
+                ->leftJoin('attendance_details', 'attendance_details.attendance_id', '=', 'attendances.id')
+                ->leftJoin('participant_roles', 'participant_roles.id', '=', 'attendance_details.participant_role_id')
+                ->where(function ($q) {
+                    $q->whereNull('attendance_details.id')
+                      ->orWhereNull('attendance_details.participant_role_id')
+                      ->orWhere(function ($q2) {
+                          $q2->whereNull('participant_roles.program_id')
+                             ->whereNull('participant_roles.dependency_id')
+                             ->whereNull('participant_roles.organization_id');
+                      });
+                })
+                ->distinct()
+                ->pluck('participants.id');
+
+            $query->whereIn('id', $unclassifiedIds);
+        }
+
+        $participants = $query
             ->orderBy('last_name')
             ->orderBy('first_name')
             ->paginate(25);

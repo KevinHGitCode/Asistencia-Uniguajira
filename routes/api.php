@@ -267,6 +267,10 @@ Route::prefix('statistics')->controller(StatisticsController::class)->group(func
     Route::get('/participants-by-role',  'participantsByRole');
     Route::get('/participants-by-sex',   'participantsBySex');
     Route::get('/participants-by-group', 'participantsByGroup');
+    Route::get('/attendances-by-dependency',    'attendancesByDependency');
+    Route::get('/participants-by-dependency',   'participantsByDependency');
+    Route::get('/attendances-by-organization',  'attendancesByOrganization');
+    Route::get('/participants-by-organization', 'participantsByOrganization');
 });
 
 /**

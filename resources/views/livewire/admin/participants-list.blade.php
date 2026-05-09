@@ -35,9 +35,9 @@
         </div>
     @endif
 
-    {{-- Buscador --}}
-    <div class="mb-4">
-        <div class="relative">
+    {{-- Buscador + Filtro --}}
+    <div class="mb-4 flex flex-col sm:flex-row gap-3">
+        <div class="relative flex-1">
             <svg class="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400 pointer-events-none"
                  fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -52,7 +52,27 @@
                        placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
             />
         </div>
+        <button
+            wire:click="toggleUnclassifiedFilter"
+            class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors cursor-pointer shrink-0
+                {{ $filterUnclassified
+                    ? 'border-amber-400 bg-amber-50 text-amber-700 dark:border-amber-600 dark:bg-amber-900/30 dark:text-amber-300'
+                    : 'border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-700' }}">
+            <flux:icon.funnel class="size-4" />
+            Sin clasificar
+            @if($filterUnclassified)
+                <flux:icon.x-mark class="size-3.5" />
+            @endif
+        </button>
     </div>
+
+    {{-- Banner de filtro activo --}}
+    @if($filterUnclassified)
+        <div class="mb-4 flex items-center gap-3 px-4 py-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 text-sm">
+            <flux:icon.funnel class="size-5 shrink-0" />
+            <span>Mostrando solo participantes con al menos una asistencia sin programa, dependencia ni organización asignados.</span>
+        </div>
+    @endif
 
     {{-- Tabla --}}
     <div class="overflow-x-auto rounded-xl border border-neutral-200 dark:border-zinc-700">
@@ -87,15 +107,27 @@
                         $affiliationNames       = $participant->activeRoles->pluck('affiliation.name')->filter()->unique()->values();
                         $primaryAffiliation     = $affiliationNames->first();
                         $extraAffiliationsCount = max(0, $affiliationNames->count() - 1);
+
+                        // Detectar si tiene algún rol sin clasificar
+                        $hasUnclassifiedRole = $participant->activeRoles->contains(fn ($role) =>
+                            is_null($role->program_id) && is_null($role->dependency_id) && is_null($role->organization_id)
+                        );
                     @endphp
                     <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors">
                         <td class="px-4 py-3 font-mono text-xs text-gray-600 dark:text-zinc-400 whitespace-nowrap">
                             {{ $participant->document }}
                         </td>
                         <td class="px-4 py-3">
-                            <p class="font-semibold text-gray-900 dark:text-gray-100">
-                                {{ $participant->first_name }} {{ $participant->last_name }}
-                            </p>
+                            <div class="flex items-center gap-2">
+                                <p class="font-semibold text-gray-900 dark:text-gray-100">
+                                    {{ $participant->first_name }} {{ $participant->last_name }}
+                                </p>
+                                @if($hasUnclassifiedRole)
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 whitespace-nowrap">
+                                        Sin clasificar
+                                    </span>
+                                @endif
+                            </div>
                             @if($participant->student_code)
                                 <p class="text-xs text-gray-400 dark:text-zinc-500">Cód. {{ $participant->student_code }}</p>
                             @endif
