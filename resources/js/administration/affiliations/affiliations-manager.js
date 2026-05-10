@@ -1,5 +1,5 @@
-﻿document.addEventListener('alpine:init', () => {
-    Alpine.data('affiliationsManager', () => ({
+window.affiliationsManager = function () {
+    return {
         search: '',
         showForm: false,
         editingId: null,
@@ -33,5 +33,9 @@
         closeDelete() {
             this.showDelete = false;
         },
-    }));
+    };
+};
+
+document.addEventListener('alpine:init', () => {
+    Alpine.data('affiliationsManager', window.affiliationsManager);
 });

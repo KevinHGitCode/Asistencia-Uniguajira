@@ -1,5 +1,5 @@
-document.addEventListener('alpine:init', () => {
-    Alpine.data('organizationsManager', () => ({
+window.organizationsManager = function () {
+    return {
         search: '',
         showForm: false,
         editingId: null,
@@ -54,7 +54,6 @@ document.addEventListener('alpine:init', () => {
             this.mergeSearchResults = [];
             this.mergeSearchOpen = false;
             this.mergeShowAll = false;
-            // allOrganizations se inyecta desde Blade en x-data
             this.showMerge = true;
         },
 
@@ -89,5 +88,9 @@ document.addEventListener('alpine:init', () => {
         closeMerge() {
             this.showMerge = false;
         },
-    }));
+    };
+};
+
+document.addEventListener('alpine:init', () => {
+    Alpine.data('organizationsManager', window.organizationsManager);
 });

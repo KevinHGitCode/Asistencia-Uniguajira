@@ -1,5 +1,5 @@
-document.addEventListener('alpine:init', () => {
-    Alpine.data('formatsManager', () => ({
+window.formatsManager = function () {
+    return {
         search: '',
         showForm: false,
         editingId: null,
@@ -58,5 +58,9 @@ document.addEventListener('alpine:init', () => {
                 this.selectedDependencies.splice(index, 1);
             }
         },
-    }));
+    };
+};
+
+document.addEventListener('alpine:init', () => {
+    Alpine.data('formatsManager', window.formatsManager);
 });

@@ -1,5 +1,5 @@
-document.addEventListener('alpine:init', () => {
-    Alpine.data('programsManager', () => ({
+window.programsManager = function () {
+    return {
         search: '',
         showForm: false,
         editingId: null,
@@ -36,5 +36,9 @@ document.addEventListener('alpine:init', () => {
         closeDelete() {
             this.showDelete = false;
         },
-    }));
+    };
+};
+
+document.addEventListener('alpine:init', () => {
+    Alpine.data('programsManager', window.programsManager);
 });

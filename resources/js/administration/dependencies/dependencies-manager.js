@@ -1,5 +1,5 @@
-document.addEventListener('alpine:init', () => {
-    Alpine.data('dependenciesManager', () => ({
+window.dependenciesManager = function () {
+    return {
         search: '',
         showForm: false,
         editingId: null,
@@ -33,5 +33,9 @@ document.addEventListener('alpine:init', () => {
         closeDelete() {
             this.showDelete = false;
         },
-    }));
+    };
+};
+
+document.addEventListener('alpine:init', () => {
+    Alpine.data('dependenciesManager', window.dependenciesManager);
 });
