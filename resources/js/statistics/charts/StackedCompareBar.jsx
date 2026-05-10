@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer,
+  Tooltip, ResponsiveContainer, LabelList,
 } from 'recharts';
 import {
   getColors, getTheme, getTooltipStyle, getAxisTickStyle,
@@ -96,10 +96,10 @@ export function StackedCompareBar({ data, categories, isDark }) {
   const { angle, textAnchor, tickHeight } = getLabelAngle(data.length, width);
   const maxChars  = angle !== 0 ? LABEL_MAX_CHARS.xAxis : LABEL_MAX_CHARS.xAxis + 4;
 
-  const formatted = data.map(d => ({
-    ...d,
-    _label: truncate(d.name, maxChars),
-  }));
+  const formatted = data.map(d => {
+    const total = categories.reduce((sum, cat) => sum + (d[cat] ?? 0), 0);
+    return { ...d, _label: truncate(d.name, maxChars), _total: total };
+  });
 
   const barColors = categories.map((_, i) => colors[i % colors.length]);
 
@@ -146,7 +146,16 @@ export function StackedCompareBar({ data, categories, isDark }) {
                 animationDuration={CHART_ANIMATION_DURATION}
                 animationEasing="ease-out"
                 radius={i === categories.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
-              />
+              >
+                {i === categories.length - 1 && (
+                  <LabelList
+                    dataKey="_total"
+                    position="top"
+                    formatter={v => v.toLocaleString('es-CO')}
+                    style={{ fill: theme.muted, fontSize: 11, fontWeight: 600 }}
+                  />
+                )}
+              </Bar>
             ))}
           </BarChart>
         </ResponsiveContainer>

@@ -45,6 +45,13 @@ export const CHART_DENSITY = {
 };
 
 // ---------------------------------------------------------------------------
+// TOP-N GROUPING — Agrupación por posición (no por porcentaje)
+// Los ítems que queden fuera del top se agrupan en "Otros (n)"
+// ---------------------------------------------------------------------------
+export const PIE_TOP_N = 7;   // Máximo de slices visibles en tortas
+export const BAR_TOP_N = 12;  // Máximo de barras visibles en horizontales
+
+// ---------------------------------------------------------------------------
 // LONGITUD MÁXIMA DE NOMBRES ABREVIADOS EN EJES
 // Si el nombre supera este largo, se recorta con "…"
 // ---------------------------------------------------------------------------

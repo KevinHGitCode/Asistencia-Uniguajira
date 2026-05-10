@@ -7,24 +7,21 @@ import {
 } from './utils.js';
 import {
   CHART_DENSITY, CHART_ANIMATION, CHART_ANIMATION_DURATION,
-  PIE_INNER_RADIUS, PIE_OUTER_RADIUS, LABEL_MAX_CHARS,
+  PIE_INNER_RADIUS, PIE_OUTER_RADIUS, LABEL_MAX_CHARS, PIE_TOP_N,
 } from './config.js';
 import { useMounted } from './useMounted.js';
 
-// ── Group small slices ────────────────────────────────────────────────────────
+// ── Group top N slices ───────────────────────────────────────────────────────
 
-function groupSmallSlices(raw, minPercent) {
-  const total = raw.reduce((s, d) => s + (d.value ?? 0), 0);
-  if (total === 0 || minPercent <= 0) return raw;
-
-  const threshold = total * (minPercent / 100);
-  const main = raw.filter(d => (d.value ?? 0) >= threshold);
-  const small = raw.filter(d => (d.value ?? 0) < threshold);
-
-  if (small.length <= 1) return raw;
-
-  const othersVal = small.reduce((s, d) => s + (d.value ?? 0), 0);
-  return [...main, { name: `Otros (${small.length})`, value: othersVal }];
+function groupTopN(data, maxItems = PIE_TOP_N) {
+  if (!data || data.length <= maxItems) return data;
+  const sorted = [...data].sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
+  const top    = sorted.slice(0, maxItems);
+  const rest   = sorted.slice(maxItems);
+  if (rest.length === 0) return top;
+  const othersVal = rest.reduce((sum, d) => sum + (d.value ?? 0), 0);
+  if (othersVal === 0) return top;
+  return [...top, { name: `Otros (${rest.length})`, value: othersVal, isOthers: true }];
 }
 
 // ── Center label (total) ──────────────────────────────────────────────────────
@@ -141,7 +138,7 @@ export function RoleParticipantsPie({ data, isDark, valueLabel = 'Participantes'
   const mounted = useMounted();
   const theme = getTheme(isDark);
   const colors = getColors(isDark);
-  const chartData = groupSmallSlices(data, CHART_DENSITY.pieMinPercent);
+  const chartData = groupTopN(data, PIE_TOP_N);
   const total = chartData.reduce((s, d) => s + (d.value ?? 0), 0);
   const isDonut = PIE_INNER_RADIUS !== '0%';
 

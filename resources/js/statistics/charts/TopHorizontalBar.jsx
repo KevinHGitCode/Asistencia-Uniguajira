@@ -3,9 +3,9 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Cell, LabelList,
 } from 'recharts';
-import { getColors, getTheme, getTooltipStyle, truncate, getAxisTickStyle } from './utils.js';
+import { getColors, getTheme, getTooltipStyle, truncate, getAxisTickStyle, groupTopN } from './utils.js';
 import {
-  CHART_ANIMATION, CHART_ANIMATION_DURATION, LABEL_MAX_CHARS,
+  CHART_ANIMATION, CHART_ANIMATION_DURATION, LABEL_MAX_CHARS, BAR_TOP_N,
 } from '../config.js';
 import { useMounted } from '../hooks/useMounted.js';
 
@@ -36,13 +36,16 @@ function CustomTooltip({ active, payload, fullNames, valueLabel, isDark }) {
  *  - isDark     : bool
  *  - valueLabel : string  — texto despues del numero en el tooltip (ej. "asistencias")
  */
-export function TopHorizontalBar({ data, isDark, valueLabel = 'items' }) {
+export function TopHorizontalBar({ data, isDark, valueLabel = 'items', maxItems = BAR_TOP_N }) {
   const mounted = useMounted();
   const theme    = getTheme(isDark);
   const colors   = getColors(isDark);
-  const fullNames = data.map(d => d.name);
 
-  const formatted = data.map((d, i) => ({
+  // Agrupar por posición: top N + "Otros"
+  const grouped   = groupTopN(data, maxItems);
+  const fullNames = grouped.map(d => d.name);
+
+  const formatted = grouped.map((d, i) => ({
     ...d,
     shortName: truncate(d.name, LABEL_MAX_CHARS.yAxisHoriz),
     _idx: i,

@@ -1,4 +1,4 @@
-import { CHART_COLORS, THEME_TOKENS, LABEL_MAX_CHARS } from '../config.js';
+import { CHART_COLORS, THEME_TOKENS, LABEL_MAX_CHARS, PIE_TOP_N, BAR_TOP_N } from '../config.js';
 
 /** Devuelve la paleta de colores según el tema. */
 export function getColors(isDark) {
@@ -60,4 +60,27 @@ export function getTooltipStyle(isDark) {
 export function getAxisTickStyle(isDark, small = false) {
   const t = getTheme(isDark);
   return { fill: t.muted, fontSize: small ? 10 : 12 };
+}
+
+/**
+ * Agrupa los datos por posición: muestra los top N ítems y agrupa el resto
+ * en una categoría "Otros (n)". Los datos se ordenan por valor descendente.
+ *
+ * @param {Array} data    - [{ name, value, ... }]
+ * @param {number} maxItems - máximo de ítems visibles (default PIE_TOP_N)
+ * @returns {Array}
+ */
+export function groupTopN(data, maxItems = PIE_TOP_N) {
+  if (!data || data.length <= maxItems) return data;
+
+  const sorted = [...data].sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
+  const top    = sorted.slice(0, maxItems);
+  const rest   = sorted.slice(maxItems);
+
+  if (rest.length === 0) return top;
+
+  const othersVal = rest.reduce((sum, d) => sum + (d.value ?? 0), 0);
+  if (othersVal === 0) return top;
+
+  return [...top, { name: `Otros (${rest.length})`, value: othersVal, isOthers: true }];
 }

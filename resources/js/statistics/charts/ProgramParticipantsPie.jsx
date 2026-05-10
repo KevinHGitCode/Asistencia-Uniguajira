@@ -3,33 +3,17 @@ import {
   PieChart, Pie, Cell, Tooltip, Label, ResponsiveContainer,
 } from 'recharts';
 import {
-  getColors, getTheme, getTooltipStyle, truncate,
+  getColors, getTheme, getTooltipStyle, truncate, groupTopN,
 } from './utils.js';
 import {
   CHART_DENSITY, CHART_ANIMATION, CHART_ANIMATION_DURATION,
-  PIE_INNER_RADIUS, PIE_OUTER_RADIUS, LABEL_MAX_CHARS,
+  PIE_INNER_RADIUS, PIE_OUTER_RADIUS, LABEL_MAX_CHARS, PIE_TOP_N,
 } from '../config.js';
 import { useMounted } from '../hooks/useMounted.js';
 
 const RADIAN           = Math.PI / 180;
 const LEGEND_PAGE_SIZE = 10; // items per page in the right legend
 const OTHERS_COLOR     = { light: '#9ca3af', dark: '#6b7280' };
-
-// ── "Otros" grouping ──────────────────────────────────────────────────────────
-
-function groupSmallSlices(raw, minPercent) {
-  const total = raw.reduce((s, d) => s + (d.value ?? 0), 0);
-  if (total === 0 || minPercent <= 0) return raw;
-
-  const threshold = total * (minPercent / 100);
-  const main      = raw.filter(d => (d.value ?? 0) > threshold);
-  const small     = raw.filter(d => (d.value ?? 0) <= threshold);
-
-  if (small.length === 0) return raw;
-
-  const othersVal = small.reduce((s, d) => s + (d.value ?? 0), 0);
-  return [...main, { name: `Otros (${small.length})`, value: othersVal, isOthers: true }];
-}
 
 function getSliceColor(item, index, colors, isDark) {
   if (item?.isOthers) return isDark ? OTHERS_COLOR.dark : OTHERS_COLOR.light;
@@ -209,8 +193,9 @@ export function ProgramParticipantsPie({ data, isDark, showOuterLabels = true, g
   const mounted = useMounted();
   const theme     = getTheme(isDark);
   const colors    = getColors(isDark);
-  // groupOthers=false -> pasamos minPercent=0, lo que hace que groupSmallSlices devuelva raw
-  const chartData = groupSmallSlices(data, groupOthers ? CHART_DENSITY.pieMinPercent : 0).map((item, i) => ({
+  // groupOthers=false → devuelve data tal cual, sin agrupar
+  const grouped   = groupOthers ? groupTopN(data, PIE_TOP_N) : data;
+  const chartData = grouped.map((item, i) => ({
     ...item,
     fill: getSliceColor(item, i, colors, isDark),
   }));

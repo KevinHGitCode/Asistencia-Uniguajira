@@ -1,30 +1,22 @@
 import React, { useState, useEffect } from 'react';
 
 import { ChartCard } from '../statistics/components/ChartCard.jsx';
-// Gráficos propios del módulo de eventos
-import { ProgramParticipantsPie } from './charts/ProgramParticipantsPie.jsx';
-import { ProgramParticipantsBar } from './charts/ProgramParticipantsBar.jsx';
-import { RoleParticipantsPie }    from './charts/RoleParticipantsPie.jsx';
-import { RoleParticipantsBar }    from './charts/RoleParticipantsBar.jsx';
-// Gráfico de torta genérico con soporte de showOuterLabels/groupOthers
-import { ProgramParticipantsPie as DemoPie } from '../statistics/charts/ProgramParticipantsPie.jsx';
+// Gráfico de torta/dona unificado del módulo de estadísticas (con legend lateral, groupTopN, etc.)
+import { ProgramParticipantsPie } from '../statistics/charts/ProgramParticipantsPie.jsx';
+
+import { CHART_HEIGHTS } from '../statistics/config.js';
 
 // ---------------------------------------------------------------------------
 // Descripciones
 // ---------------------------------------------------------------------------
 
 const DESCRIPTIONS = {
-  programPie:  `Distribución porcentual de los asistentes al evento según el programa académico al que pertenecen. Permite identificar qué programas tuvieron mayor representación.`,
-  programBar:  `Número de asistentes por programa académico en este evento. La barra más alta indica el programa con mayor participación.`,
-  rolePie:     `Distribución de los asistentes según su estamento: Estudiante o Docente. Muestra la proporción de cada grupo en el evento.`,
-  roleBar:     `Cantidad de asistentes por estamento (Estudiante / Docente). Útil para entender qué tipo de comunidad universitaria participó más en el evento.`,
-  demoRole:    `Distribución de los asistentes al evento por estamento (Estudiante / Docente).`,
-  demoSex:     `Distribución de los asistentes al evento por sexo (Masculino, Femenino, Otro).`,
-  demoGroup:   `Distribución de los asistentes al evento según su grupo poblacional priorizado (Indígena, Afrodescendiente, Raizal, Palenquero, Rom, Ninguno, etc.).`,
+  byRole:     `Distribución de los asistentes al evento según su estamento (Estudiante, Docente, etc.). Muestra la proporción de cada grupo en el evento.`,
+  byProgram:  `Distribución porcentual de los asistentes al evento según el programa académico al que pertenecen. Permite identificar qué programas tuvieron mayor representación.`,
+  demoRole:   `Distribución de los asistentes al evento por estamento (Estudiante / Docente).`,
+  demoSex:    `Distribución de los asistentes al evento por sexo (Masculino, Femenino, Otro).`,
+  demoGroup:  `Distribución de los asistentes al evento según su grupo poblacional priorizado (Indígena, Afrodescendiente, Raizal, Palenquero, Rom, Ninguno, etc.).`,
 };
-
-const HEIGHT      = 320;
-const HEIGHT_DEMO = 260;
 
 // ---------------------------------------------------------------------------
 // Heading de sección reutilizable
@@ -92,78 +84,44 @@ export default function EventChartsApp({ eventId }) {
     );
   }
 
-  const programEmpty = !loading && programData.length === 0;
-  const roleEmpty    = !loading && roleData.length === 0;
-  const demoEmpty    = !loading && roleData.length === 0 && sexData.length === 0 && groupData.length === 0;
-
   return (
     <div className="flex flex-col gap-8">
 
-      {/* ══ Distribución por Programa ══ */}
+      {/* ══ Asistentes por Estamento — GRANDE ══ */}
       <section>
-        <SectionTitle>Distribución por Programa</SectionTitle>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-          <ChartCard
-            title="Distribución por Programa"
-            description={DESCRIPTIONS.programPie}
-            height={HEIGHT}
-            loading={loading}
-            isEmpty={programEmpty}
-            data={programData}
-            isDark={isDark}
-          >
-            <ProgramParticipantsPie data={programData} isDark={isDark} />
-          </ChartCard>
-
-          <ChartCard
-            title="Participación por Programa"
-            description={DESCRIPTIONS.programBar}
-            height={HEIGHT}
-            loading={loading}
-            isEmpty={programEmpty}
-            data={programData}
-            isDark={isDark}
-          >
-            <ProgramParticipantsBar data={programData} isDark={isDark} />
-          </ChartCard>
-
-        </div>
+        <SectionTitle>Asistentes por Estamento</SectionTitle>
+        <ChartCard
+          title="Asistentes por Estamento"
+          description={DESCRIPTIONS.byRole}
+          height={CHART_HEIGHTS.bar}
+          loading={loading}
+          isEmpty={!loading && roleData.length === 0}
+          data={roleData}
+          isDark={isDark}
+          valueLabel="Asistentes"
+        >
+          <ProgramParticipantsPie data={roleData} isDark={isDark} showOuterLabels={false} groupOthers={false} valueLabel="Asistentes" />
+        </ChartCard>
       </section>
 
-      {/* ══ Participación por Estamento ══ */}
+      {/* ══ Asistentes por Programa — GRANDE ══ */}
       <section>
-        <SectionTitle>Participación por Estamento</SectionTitle>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-          <ChartCard
-            title="Distribución por Estamento"
-            description={DESCRIPTIONS.rolePie}
-            height={HEIGHT}
-            loading={loading}
-            isEmpty={roleEmpty}
-            data={roleData}
-            isDark={isDark}
-          >
-            <RoleParticipantsPie data={roleData} isDark={isDark} />
-          </ChartCard>
-
-          <ChartCard
-            title="Participación por Estamento"
-            description={DESCRIPTIONS.roleBar}
-            height={HEIGHT}
-            loading={loading}
-            isEmpty={roleEmpty}
-            data={roleData}
-            isDark={isDark}
-          >
-            <RoleParticipantsBar data={roleData} isDark={isDark} />
-          </ChartCard>
-
-        </div>
+        <SectionTitle>Asistentes por Programa</SectionTitle>
+        <ChartCard
+          title="Asistentes por Programa Académico"
+          description={DESCRIPTIONS.byProgram}
+          height={CHART_HEIGHTS.bar}
+          loading={loading}
+          isEmpty={!loading && programData.length === 0}
+          data={programData}
+          isDark={isDark}
+          valueLabel="Asistentes"
+        >
+          <ProgramParticipantsPie data={programData} isDark={isDark} valueLabel="Asistentes" />
+        </ChartCard>
       </section>
 
-      {/* ══ Perfil Demográfico ══ */}
+      {/* ══ Perfil Demográfico — 3 columnas ══ */}
       <section>
         <SectionTitle>Perfil Demográfico</SectionTitle>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -171,37 +129,40 @@ export default function EventChartsApp({ eventId }) {
           <ChartCard
             title="Por Estamento"
             description={DESCRIPTIONS.demoRole}
-            height={HEIGHT_DEMO}
+            height={CHART_HEIGHTS.role}
             loading={loading}
             isEmpty={!loading && roleData.length === 0}
             data={roleData}
             isDark={isDark}
+            valueLabel="Asistentes"
           >
-            <DemoPie data={roleData} isDark={isDark} showOuterLabels={false} groupOthers={false} />
+            <ProgramParticipantsPie data={roleData} isDark={isDark} showOuterLabels={false} groupOthers={false} valueLabel="Asistentes" />
           </ChartCard>
 
           <ChartCard
             title="Por Sexo"
             description={DESCRIPTIONS.demoSex}
-            height={HEIGHT_DEMO}
+            height={CHART_HEIGHTS.role}
             loading={loading}
             isEmpty={!loading && sexData.length === 0}
             data={sexData}
             isDark={isDark}
+            valueLabel="Asistentes"
           >
-            <DemoPie data={sexData} isDark={isDark} showOuterLabels={false} groupOthers={false} />
+            <ProgramParticipantsPie data={sexData} isDark={isDark} showOuterLabels={false} groupOthers={false} valueLabel="Asistentes" />
           </ChartCard>
 
           <ChartCard
             title="Por Grupo Priorizado"
             description={DESCRIPTIONS.demoGroup}
-            height={HEIGHT_DEMO}
+            height={CHART_HEIGHTS.role}
             loading={loading}
             isEmpty={!loading && groupData.length === 0}
             data={groupData}
             isDark={isDark}
+            valueLabel="Asistentes"
           >
-            <DemoPie data={groupData} isDark={isDark} showOuterLabels={false} groupOthers={false} />
+            <ProgramParticipantsPie data={groupData} isDark={isDark} showOuterLabels={false} groupOthers={false} valueLabel="Asistentes" />
           </ChartCard>
 
         </div>

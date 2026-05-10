@@ -1,9 +1,13 @@
 // ── Chart Display Configuration ──
 
-// Minimum percentage threshold: slices below this are grouped into "Otros"
+// Minimum percentage threshold (legacy, kept for reference)
 export const CHART_DENSITY = {
-  pieMinPercent: 3, // % threshold for grouping small slices
+  pieMinPercent: 3,
 };
+
+// Top-N grouping (position-based)
+export const PIE_TOP_N = 7;   // Max slices in pie charts
+export const BAR_TOP_N = 12;  // Max bars in horizontal bar charts
 
 // Animation settings
 export const CHART_ANIMATION = true;

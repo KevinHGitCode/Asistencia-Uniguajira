@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList,
 } from 'recharts';
 import { getColors, getTheme, getTooltipStyle, truncate, formatNumber } from './utils.js';
 import { CHART_ANIMATION, CHART_ANIMATION_DURATION } from './config.js';
@@ -48,7 +48,14 @@ export function ProgramParticipantsBar({ data, isDark, valueLabel = 'Participant
           isAnimationActive={CHART_ANIMATION}
           animationDuration={CHART_ANIMATION_DURATION}
           radius={[8, 8, 0, 0]}
-        />
+        >
+          <LabelList
+            dataKey="value"
+            position="top"
+            formatter={v => formatNumber(v)}
+            style={{ fill: theme.muted, fontSize: 11, fontWeight: 600 }}
+          />
+        </Bar>
       </BarChart>
     </ResponsiveContainer>
   );

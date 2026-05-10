@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, Cell,
+  Tooltip, ResponsiveContainer, Cell, LabelList,
 } from 'recharts';
 import {
   getTheme, getTooltipStyle, getAxisTickStyle,
@@ -112,6 +112,12 @@ export function ProgramAttendancesBar({ data, isDark }) {
             {formatted.map((_, i) => (
               <Cell key={i} fill={barColor} fillOpacity={0.85 + (0.15 * (1 - i / (formatted.length || 1)))} />
             ))}
+            <LabelList
+              dataKey="value"
+              position="top"
+              formatter={v => v.toLocaleString('es-CO')}
+              style={{ fill: theme.muted, fontSize: 11, fontWeight: 600 }}
+            />
           </Bar>
         </BarChart>
       </ResponsiveContainer>
