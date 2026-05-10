@@ -4,6 +4,7 @@ import {
 } from 'recharts';
 import { getColors, getTheme, getTooltipStyle, truncate, formatNumber } from './utils.js';
 import { CHART_ANIMATION, CHART_ANIMATION_DURATION } from './config.js';
+import { useMounted } from './useMounted.js';
 
 function CustomTooltip({ active, payload, isDark, valueLabel = 'Participantes' }) {
   if (!active || !payload?.length) return null;
@@ -22,6 +23,7 @@ function CustomTooltip({ active, payload, isDark, valueLabel = 'Participantes' }
 }
 
 export function ProgramParticipantsBar({ data, isDark, valueLabel = 'Participantes' }) {
+  const mounted = useMounted();
   const theme = getTheme(isDark);
   const colors = getColors(isDark);
   const barColor = colors[0];
@@ -29,8 +31,10 @@ export function ProgramParticipantsBar({ data, isDark, valueLabel = 'Participant
   // Sort by value descending
   const chartData = [...data].sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
 
+  if (!mounted) return <div className="w-full" style={{ height: '100%' }} />;
+
   return (
-    <ResponsiveContainer width="100%" height="100%">
+    <ResponsiveContainer width="100%" height="100%" minWidth={0}>
       <BarChart
         data={chartData}
         margin={{ top: 20, right: 30, left: 30, bottom: 20 }}

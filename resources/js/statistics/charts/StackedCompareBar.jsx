@@ -10,6 +10,7 @@ import {
 import {
   CHART_ANIMATION, CHART_ANIMATION_DURATION, LABEL_MAX_CHARS,
 } from '../config.js';
+import { useMounted } from '../hooks/useMounted.js';
 
 // ── Tooltip ───────────────────────────────────────────────────────────────────
 
@@ -69,7 +70,7 @@ function InlineLegend({ categories, colors, isDark }) {
 // ── Componente principal ──────────────────────────────────────────────────────
 
 /**
- * Stacked bar chart: compara categorías demográficas entre eventos.
+ * Stacked bar chart: compara categorias demograficas entre eventos.
  *
  * Props:
  *  - data       : [{ name: 'Evento A', Masculino: 30, Femenino: 45, ... }]
@@ -77,6 +78,7 @@ function InlineLegend({ categories, colors, isDark }) {
  *  - isDark     : bool
  */
 export function StackedCompareBar({ data, categories, isDark }) {
+  const mounted = useMounted();
   const containerRef = useRef(null);
   const [width, setWidth] = useState(600);
 
@@ -101,10 +103,12 @@ export function StackedCompareBar({ data, categories, isDark }) {
 
   const barColors = categories.map((_, i) => colors[i % colors.length]);
 
+  if (!mounted) return <div className="w-full" style={{ height: '100%' }} />;
+
   return (
-    <div ref={containerRef} className="w-full h-full flex flex-col">
+    <div ref={containerRef} className="w-full h-full min-w-0 flex flex-col">
       <div className="flex-1 min-h-0">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
           <BarChart
             data={formatted}
             margin={{ top: 10, right: 16, bottom: tickHeight, left: 8 }}

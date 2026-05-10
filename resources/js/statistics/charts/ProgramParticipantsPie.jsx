@@ -9,6 +9,7 @@ import {
   CHART_DENSITY, CHART_ANIMATION, CHART_ANIMATION_DURATION,
   PIE_INNER_RADIUS, PIE_OUTER_RADIUS, LABEL_MAX_CHARS,
 } from '../config.js';
+import { useMounted } from '../hooks/useMounted.js';
 
 const RADIAN           = Math.PI / 180;
 const LEGEND_PAGE_SIZE = 10; // items per page in the right legend
@@ -47,7 +48,7 @@ function OuterLabel(props) {
   const cos    = Math.cos(-midAngle * RADIAN);
   const isLeft = cos < 0;
 
-  // Two-segment line: radial leg → horizontal elbow
+  // Two-segment line: radial leg -> horizontal elbow
   const x1 = cx + (outerRadius + 4)  * cos; // start at slice edge
   const y1 = cy + (outerRadius + 4)  * sin;
   const x2 = cx + (outerRadius + 27) * cos; // end of radial leg
@@ -194,20 +195,21 @@ function VerticalLegend({ chartData, isDark }) {
 // ── Main component ────────────────────────────────────────────────────────────
 
 /**
- * Pie / donut chart — reutilizable para cualquier distribución.
+ * Pie / donut chart — reutilizable para cualquier distribucion.
  *
  * Props adicionales:
- *  - showOuterLabels : bool (default true)  — muestra/oculta las líneas y etiquetas exteriores
- *  - groupOthers     : bool (default true)  — agrupa slices pequeños en "Otros (n)"
+ *  - showOuterLabels : bool (default true)  — muestra/oculta las lineas y etiquetas exteriores
+ *  - groupOthers     : bool (default true)  — agrupa slices pequenos en "Otros (n)"
  *
  * Layout:
  *  - Left (~62%): donut chart with center total + outer % labels on big left-side slices
  *  - Right (~38%): vertical paginated legend
  */
 export function ProgramParticipantsPie({ data, isDark, showOuterLabels = true, groupOthers = true, valueLabel = 'Participantes' }) {
+  const mounted = useMounted();
   const theme     = getTheme(isDark);
   const colors    = getColors(isDark);
-  // groupOthers=false → pasamos minPercent=0, lo que hace que groupSmallSlices devuelva raw
+  // groupOthers=false -> pasamos minPercent=0, lo que hace que groupSmallSlices devuelva raw
   const chartData = groupSmallSlices(data, groupOthers ? CHART_DENSITY.pieMinPercent : 0).map((item, i) => ({
     ...item,
     fill: getSliceColor(item, i, colors, isDark),
@@ -215,11 +217,13 @@ export function ProgramParticipantsPie({ data, isDark, showOuterLabels = true, g
   const total     = chartData.reduce((s, d) => s + (d.value ?? 0), 0);
   const isDonut   = PIE_INNER_RADIUS !== '0%';
 
+  if (!mounted) return <div className="w-full" style={{ height: '100%' }} />;
+
   return (
-    <div className="w-full h-full flex items-center">
+    <div className="w-full h-full min-w-0 flex items-center">
       {/* ── Pie / donut ── */}
       <div className="h-full min-w-0" style={{ flex: '0 0 62%' }}>
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
           <PieChart>
             <Pie
               data={chartData}

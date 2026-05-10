@@ -9,6 +9,7 @@ import {
   CHART_DENSITY, CHART_ANIMATION, CHART_ANIMATION_DURATION,
   PIE_INNER_RADIUS, PIE_OUTER_RADIUS, LABEL_MAX_CHARS,
 } from './config.js';
+import { useMounted } from './useMounted.js';
 
 // ── Group small slices ────────────────────────────────────────────────────────
 
@@ -137,15 +138,18 @@ function ResponsiveLegend({ chartData, colors, isDark }) {
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function RoleParticipantsPie({ data, isDark, valueLabel = 'Participantes' }) {
+  const mounted = useMounted();
   const theme = getTheme(isDark);
   const colors = getColors(isDark);
   const chartData = groupSmallSlices(data, CHART_DENSITY.pieMinPercent);
   const total = chartData.reduce((s, d) => s + (d.value ?? 0), 0);
   const isDonut = PIE_INNER_RADIUS !== '0%';
 
+  if (!mounted) return <div className="w-full" style={{ height: '100%' }} />;
+
   return (
-    <div className="relative w-full h-full">
-      <ResponsiveContainer width="100%" height="100%">
+    <div className="relative w-full h-full min-w-0">
+      <ResponsiveContainer width="100%" height="100%" minWidth={0}>
         <PieChart>
           <Pie
             data={chartData}

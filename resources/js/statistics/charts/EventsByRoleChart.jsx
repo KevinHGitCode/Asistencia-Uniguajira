@@ -5,6 +5,7 @@ import {
 } from 'recharts';
 import { getColors, getTheme, getTooltipStyle, getAxisTickStyle } from './utils.js';
 import { CHART_ANIMATION, CHART_ANIMATION_DURATION } from '../config.js';
+import { useMounted } from '../hooks/useMounted.js';
 
 /** Mapeo de roles internos a etiquetas legibles. */
 const ROLE_LABELS = {
@@ -30,10 +31,11 @@ function CustomTooltip({ active, payload, isDark }) {
 }
 
 /**
- * Gráfico de barras verticales: Eventos creados por rol de usuario.
+ * Grafico de barras verticales: Eventos creados por rol de usuario.
  * Generalmente tiene 2-3 barras (admin / user).
  */
 export function EventsByRoleChart({ data, isDark }) {
+  const mounted = useMounted();
   const theme  = getTheme(isDark);
   const colors = getColors(isDark);
 
@@ -42,9 +44,11 @@ export function EventsByRoleChart({ data, isDark }) {
     label: ROLE_LABELS[d.name] ?? d.name,
   }));
 
+  if (!mounted) return <div className="w-full" style={{ height: '100%' }} />;
+
   return (
-    <div className="w-full h-full">
-      <ResponsiveContainer width="100%" height="100%">
+    <div className="w-full h-full min-w-0">
+      <ResponsiveContainer width="100%" height="100%" minWidth={0}>
         <BarChart
           data={formatted}
           margin={{ top: 20, right: 24, bottom: 10, left: 8 }}

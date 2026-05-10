@@ -58,6 +58,13 @@ function handleRouteChange(routeName) {
             });
             break;
 
+        case 'asistencias':
+        case 'participantes':
+        case 'eventos':
+        case 'compara-eventos':
+            // Sub-páginas de estadísticas manejadas por React — sin lógica adicional
+            break;
+
         case 'lista':
             break;
 

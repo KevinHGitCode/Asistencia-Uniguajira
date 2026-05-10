@@ -7,6 +7,7 @@ import { getColors, getTheme, getTooltipStyle, truncate, getAxisTickStyle } from
 import {
   CHART_ANIMATION, CHART_ANIMATION_DURATION, LABEL_MAX_CHARS,
 } from '../config.js';
+import { useMounted } from '../hooks/useMounted.js';
 
 /** Tooltip que muestra el nombre completo. */
 function CustomTooltip({ active, payload, fullNames, valueLabel, isDark }) {
@@ -27,15 +28,16 @@ function CustomTooltip({ active, payload, fullNames, valueLabel, isDark }) {
 }
 
 /**
- * Gráfico de barras horizontales reutilizable.
+ * Grafico de barras horizontales reutilizable.
  * Usado para: Top Eventos, Top Participantes, Top Usuarios, Eventos por Usuario.
  *
  * Props:
  *  - data       : { name, value }[]
  *  - isDark     : bool
- *  - valueLabel : string  — texto después del número en el tooltip (ej. "asistencias")
+ *  - valueLabel : string  — texto despues del numero en el tooltip (ej. "asistencias")
  */
-export function TopHorizontalBar({ data, isDark, valueLabel = 'ítems' }) {
+export function TopHorizontalBar({ data, isDark, valueLabel = 'items' }) {
+  const mounted = useMounted();
   const theme    = getTheme(isDark);
   const colors   = getColors(isDark);
   const fullNames = data.map(d => d.name);
@@ -46,9 +48,11 @@ export function TopHorizontalBar({ data, isDark, valueLabel = 'ítems' }) {
     _idx: i,
   }));
 
+  if (!mounted) return <div className="w-full" style={{ height: '100%' }} />;
+
   return (
-    <div className="w-full h-full">
-      <ResponsiveContainer width="100%" height="100%">
+    <div className="w-full h-full min-w-0">
+      <ResponsiveContainer width="100%" height="100%" minWidth={0}>
         <BarChart
           layout="vertical"
           data={formatted}

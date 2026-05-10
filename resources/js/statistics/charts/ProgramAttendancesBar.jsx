@@ -12,6 +12,7 @@ import {
   CHART_ANIMATION, CHART_ANIMATION_DURATION,
   LABEL_MAX_CHARS,
 } from '../config.js';
+import { useMounted } from '../hooks/useMounted.js';
 
 /** Tooltip personalizado que muestra el nombre completo del programa. */
 function CustomTooltip({ active, payload, fullNames, isDark }) {
@@ -38,6 +39,7 @@ function CustomTooltip({ active, payload, fullNames, isDark }) {
  * - Fuente se reduce cuando hay muchos ítems.
  */
 export function ProgramAttendancesBar({ data, isDark }) {
+  const mounted = useMounted();
   const containerRef = useRef(null);
   const [width, setWidth] = useState(600);
 
@@ -64,9 +66,11 @@ export function ProgramAttendancesBar({ data, isDark }) {
 
   const fullNames = data.map(d => d.name);
 
+  if (!mounted) return <div className="w-full" style={{ height: '100%' }} />;
+
   return (
-    <div ref={containerRef} className="w-full h-full">
-      <ResponsiveContainer width="100%" height="100%">
+    <div ref={containerRef} className="w-full h-full min-w-0">
+      <ResponsiveContainer width="100%" height="100%" minWidth={0}>
         <BarChart
           data={formatted}
           margin={{ top: 8, right: 16, bottom: tickHeight, left: 8 }}

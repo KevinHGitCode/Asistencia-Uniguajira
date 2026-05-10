@@ -1,6 +1,6 @@
 {
-  "_ProgramParticipantsPie-DYNIoWFP.js": {
-    "file": "assets/ProgramParticipantsPie-DYNIoWFP.js",
+  "_ProgramParticipantsPie-CmFeDjzy.js": {
+    "file": "assets/ProgramParticipantsPie-CmFeDjzy.js",
     "name": "ProgramParticipantsPie",
     "imports": [
       "_index-BwNU8OnE.js"
@@ -28,7 +28,7 @@
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-Bfadwvky.js",
+    "file": "assets/app-CZDWlef6.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
@@ -74,13 +74,13 @@
     "isDynamicEntry": true
   },
   "resources/js/events/index.jsx": {
-    "file": "assets/index-C5o-2KHc.js",
+    "file": "assets/index-DxyYHyfm.js",
     "name": "index",
     "src": "resources/js/events/index.jsx",
     "isEntry": true,
     "imports": [
       "_index-BwNU8OnE.js",
-      "_ProgramParticipantsPie-DYNIoWFP.js"
+      "_ProgramParticipantsPie-CmFeDjzy.js"
     ]
   },
   "resources/js/events/show.js": {
@@ -90,13 +90,13 @@
     "isEntry": true
   },
   "resources/js/statistics/index.jsx": {
-    "file": "assets/index-DUYp_xcb.js",
+    "file": "assets/index-DuhjPoVa.js",
     "name": "index",
     "src": "resources/js/statistics/index.jsx",
     "isEntry": true,
     "imports": [
       "_index-BwNU8OnE.js",
-      "_ProgramParticipantsPie-DYNIoWFP.js"
+      "_ProgramParticipantsPie-CmFeDjzy.js"
     ]
   }
 }
