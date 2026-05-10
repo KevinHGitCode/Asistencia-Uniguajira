@@ -134,6 +134,32 @@ Route::get('/statistics/event/{event}/group', function ($event) {
         ->get();
 });
 
+// Distribución por dependencia de un evento específico
+Route::get('/statistics/event/{event}/dependencies', function ($event) {
+    return DB::table('attendances')
+        ->join('attendance_details', 'attendances.id', '=', 'attendance_details.attendance_id')
+        ->join('participant_roles', 'attendance_details.participant_role_id', '=', 'participant_roles.id')
+        ->join('dependencies', 'participant_roles.dependency_id', '=', 'dependencies.id')
+        ->select('dependencies.name as label', DB::raw('COUNT(*) as count'))
+        ->where('attendances.event_id', $event)
+        ->groupBy('dependencies.id', 'dependencies.name')
+        ->orderByDesc('count')
+        ->get();
+});
+
+// Distribución por organización de un evento específico
+Route::get('/statistics/event/{event}/organizations', function ($event) {
+    return DB::table('attendances')
+        ->join('attendance_details', 'attendances.id', '=', 'attendance_details.attendance_id')
+        ->join('participant_roles', 'attendance_details.participant_role_id', '=', 'participant_roles.id')
+        ->join('organizations', 'participant_roles.organization_id', '=', 'organizations.id')
+        ->select('organizations.name as label', DB::raw('COUNT(*) as count'))
+        ->where('attendances.event_id', $event)
+        ->groupBy('organizations.id', 'organizations.name')
+        ->orderByDesc('count')
+        ->get();
+});
+
 /**
  * =============================================
  * RUTAS PARA COMPARAR EVENTOS
