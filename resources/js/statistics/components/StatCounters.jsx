@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 
-/** Ícono SVG del calendario */
+/** Icono SVG del calendario */
 const CalendarIcon = () => (
   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round"
@@ -8,7 +8,7 @@ const CalendarIcon = () => (
   </svg>
 );
 
-/** Ícono SVG de usuarios */
+/** Icono SVG de usuarios */
 const UsersIcon = () => (
   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round"
@@ -16,7 +16,7 @@ const UsersIcon = () => (
   </svg>
 );
 
-/** Ícono SVG de persona */
+/** Icono SVG de persona */
 const PersonIcon = () => (
   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round"
@@ -24,17 +24,62 @@ const PersonIcon = () => (
   </svg>
 );
 
-/** Skeleton para el número cuando está cargando. */
+/** Skeleton para el numero cuando esta cargando. */
 function Skeleton() {
   return (
     <span className="block w-14 h-5 bg-gray-200 dark:bg-zinc-700 rounded-md animate-pulse" />
   );
 }
 
+// ── Count-up animation hook ──────────────────────────────────────────────────
+
+const COUNTUP_DURATION = 1200;
+const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
+
+function useCountUp(target, duration = COUNTUP_DURATION) {
+  const [display, setDisplay] = useState(target ?? 0);
+  const rafRef   = useRef(null);
+  const startRef = useRef(null);
+  const fromRef  = useRef(0);
+
+  const animate = useCallback((from, to, dur) => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    fromRef.current  = from;
+    startRef.current = null;
+
+    const step = (timestamp) => {
+      if (startRef.current === null) startRef.current = timestamp;
+      const elapsed  = timestamp - startRef.current;
+      const progress = Math.min(elapsed / dur, 1);
+      const eased    = easeOutCubic(progress);
+      const current  = Math.round(from + (to - from) * eased);
+      setDisplay(current);
+
+      if (progress < 1) {
+        rafRef.current = requestAnimationFrame(step);
+      } else {
+        rafRef.current = null;
+      }
+    };
+
+    rafRef.current = requestAnimationFrame(step);
+  }, []);
+
+  useEffect(() => {
+    if (target === null || target === undefined) return;
+    animate(fromRef.current, target, duration);
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+  }, [target, duration, animate]);
+
+  return target === null || target === undefined ? null : display;
+}
+
 /**
  * Tarjeta compacta de contador.
  */
 function Counter({ icon, value, label, colorBg, colorIcon }) {
+  const animated = useCountUp(value);
+
   return (
     <div className="flex items-center gap-3 px-4 py-3 bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-sm">
       <div className={`p-2 rounded-lg ${colorBg} shrink-0`}>
@@ -42,7 +87,7 @@ function Counter({ icon, value, label, colorBg, colorIcon }) {
       </div>
       <div>
         <p className="text-lg font-bold text-gray-900 dark:text-gray-100 leading-tight">
-          {value === null ? <Skeleton /> : value.toLocaleString('es-CO')}
+          {animated === null ? <Skeleton /> : animated.toLocaleString('es-CO')}
         </p>
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{label}</p>
       </div>
@@ -51,7 +96,7 @@ function Counter({ icon, value, label, colorBg, colorIcon }) {
 }
 
 /**
- * Sección de contadores globales (eventos, asistencias, participantes).
+ * Seccion de contadores globales (eventos, asistencias, participantes).
  */
 export function StatCounters({ counters, loading }) {
   const v = (key) => (loading ? null : counters[key]);
@@ -63,22 +108,22 @@ export function StatCounters({ counters, loading }) {
           icon={<CalendarIcon />}
           value={v('events')}
           label="Número de Eventos"
-          colorBg="bg-blue-100 dark:bg-blue-900/30"
-          colorIcon="text-blue-600 dark:text-blue-400"
+          colorBg="bg-[#cc5e50]/10 dark:bg-[#cc5e50]/20"
+          colorIcon="text-[#cc5e50]"
         />
         <Counter
           icon={<UsersIcon />}
           value={v('attendances')}
           label="Número de Asistencias"
-          colorBg="bg-emerald-100 dark:bg-emerald-900/30"
-          colorIcon="text-emerald-600 dark:text-emerald-400"
+          colorBg="bg-[#e2a542]/10 dark:bg-[#e2a542]/20"
+          colorIcon="text-[#e2a542]"
         />
         <Counter
           icon={<PersonIcon />}
           value={v('participants')}
           label="Participantes únicos"
-          colorBg="bg-violet-100 dark:bg-violet-900/30"
-          colorIcon="text-violet-600 dark:text-violet-400"
+          colorBg="bg-[#62a9b6]/10 dark:bg-[#62a9b6]/20"
+          colorIcon="text-[#62a9b6]"
         />
       </div>
     </section>

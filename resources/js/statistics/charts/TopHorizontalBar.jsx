@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Cell, LabelList,
@@ -20,28 +20,55 @@ function CustomTooltip({ active, payload, fullNames, valueLabel, isDark }) {
       <p style={{ color: t.tooltipText, fontWeight: 600, marginBottom: 4, maxWidth: 260, lineHeight: 1.3 }}>
         {fullNames[idx] ?? payload[0].name}
       </p>
-      <p style={{ color: payload[0].fill ?? '#60a5fa' }}>
+      <p style={{ color: payload[0].fill ?? '#cc5e50' }}>
         {payload[0].value.toLocaleString('es-CO')} {valueLabel}
       </p>
     </div>
   );
 }
 
+// ── DOM-based dimming (bypasses React re-renders) ────────────────────────────
+
+function useBarDimming(containerRef, mounted) {
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || !mounted) return;
+
+    const handleOver = (e) => {
+      if (e.target.closest('.recharts-tooltip-wrapper')) return;
+      const rect = e.target.closest('.recharts-bar-rectangle');
+      if (!rect) return;
+      const hovered = rect.querySelector('path');
+      el.querySelectorAll('.recharts-bar-rectangle path').forEach(p => {
+        p.style.transition = 'fill-opacity 0.25s ease';
+        p.style.fillOpacity = p === hovered ? '1' : '0.35';
+      });
+    };
+
+    const handleLeave = () => {
+      el.querySelectorAll('.recharts-bar-rectangle path').forEach(p => {
+        p.style.fillOpacity = '1';
+      });
+    };
+
+    el.addEventListener('mouseover', handleOver);
+    el.addEventListener('mouseleave', handleLeave);
+    return () => {
+      el.removeEventListener('mouseover', handleOver);
+      el.removeEventListener('mouseleave', handleLeave);
+    };
+  }, [containerRef, mounted]);
+}
+
 /**
  * Grafico de barras horizontales reutilizable.
- * Usado para: Top Eventos, Top Participantes, Top Usuarios, Eventos por Usuario.
- *
- * Props:
- *  - data       : { name, value }[]
- *  - isDark     : bool
- *  - valueLabel : string  — texto despues del numero en el tooltip (ej. "asistencias")
  */
 export function TopHorizontalBar({ data, isDark, valueLabel = 'items', maxItems = BAR_TOP_N }) {
-  const mounted = useMounted();
-  const theme    = getTheme(isDark);
-  const colors   = getColors(isDark);
+  const mounted      = useMounted();
+  const containerRef = useRef(null);
+  const theme        = getTheme(isDark);
+  const colors       = getColors(isDark);
 
-  // Agrupar por posición: top N + "Otros"
   const grouped   = groupTopN(data, maxItems);
   const fullNames = grouped.map(d => d.name);
 
@@ -51,16 +78,26 @@ export function TopHorizontalBar({ data, isDark, valueLabel = 'items', maxItems 
     _idx: i,
   }));
 
+  useBarDimming(containerRef, mounted);
+
   if (!mounted) return <div className="w-full" style={{ height: '100%' }} />;
 
   return (
-    <div className="w-full h-full min-w-0">
+    <div ref={containerRef} className="w-full h-full min-w-0">
       <ResponsiveContainer width="100%" height="100%" minWidth={0}>
         <BarChart
           layout="vertical"
           data={formatted}
           margin={{ top: 4, right: 52, bottom: 4, left: 4 }}
         >
+          <defs>
+            {colors.slice(0, Math.min(formatted.length, colors.length)).map((color, i) => (
+              <linearGradient key={i} id={`horizGrad${i}`} x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%"   stopColor={color} stopOpacity={0.55} />
+                <stop offset="100%" stopColor={color} stopOpacity={1}    />
+              </linearGradient>
+            ))}
+          </defs>
           <CartesianGrid
             strokeDasharray="4 4"
             stroke={theme.grid}
@@ -99,7 +136,10 @@ export function TopHorizontalBar({ data, isDark, valueLabel = 'items', maxItems 
             animationEasing="ease-out"
           >
             {formatted.map((_, i) => (
-              <Cell key={i} fill={colors[i % colors.length]} />
+              <Cell
+                key={i}
+                fill={`url(#horizGrad${i % colors.length})`}
+              />
             ))}
             <LabelList
               dataKey="value"

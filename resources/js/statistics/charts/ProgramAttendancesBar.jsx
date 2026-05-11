@@ -33,10 +33,48 @@ function CustomTooltip({ active, payload, fullNames, isDark }) {
   );
 }
 
+// ── DOM-based dimming (bypasses React re-renders) ────────────────────────────
+
+function useVertBarDimming(containerRef, mounted) {
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || !mounted) return;
+
+    const handleOver = (e) => {
+      if (e.target.closest('.recharts-tooltip-wrapper')) return;
+      const rect = e.target.closest('.recharts-bar-rectangle');
+      if (!rect) return;
+      const hovered = rect.querySelector('path');
+      el.querySelectorAll('.recharts-bar-rectangle path').forEach(p => {
+        p.style.transition = 'fill-opacity 0.25s ease, filter 0.25s ease';
+        if (p === hovered) {
+          p.style.fillOpacity = '1';
+          p.style.filter = 'brightness(1.12)';
+        } else {
+          p.style.fillOpacity = '0.35';
+          p.style.filter = 'brightness(1)';
+        }
+      });
+    };
+
+    const handleLeave = () => {
+      el.querySelectorAll('.recharts-bar-rectangle path').forEach(p => {
+        p.style.fillOpacity = '1';
+        p.style.filter = 'brightness(1)';
+      });
+    };
+
+    el.addEventListener('mouseover', handleOver);
+    el.addEventListener('mouseleave', handleLeave);
+    return () => {
+      el.removeEventListener('mouseover', handleOver);
+      el.removeEventListener('mouseleave', handleLeave);
+    };
+  }, [containerRef, mounted]);
+}
+
 /**
- * Gráfico de barras verticales: Asistencias por Programa.
- * - Etiquetas del eje X se rotan automáticamente cuando hay poco espacio.
- * - Fuente se reduce cuando hay muchos ítems.
+ * Grafico de barras verticales: Asistencias por Programa.
  */
 export function ProgramAttendancesBar({ data, isDark }) {
   const mounted = useMounted();
@@ -57,7 +95,6 @@ export function ProgramAttendancesBar({ data, isDark }) {
   const smallFont  = data.length >= CHART_DENSITY.barTinyAt;
   const maxChars   = angle !== 0 ? LABEL_MAX_CHARS.xAxis : LABEL_MAX_CHARS.xAxis + 4;
 
-  // Mapear datos añadiendo índice para el tooltip y nombres cortos para el eje.
   const formatted = data.map((d, i) => ({
     ...d,
     shortName: truncate(d.name, maxChars),
@@ -65,6 +102,8 @@ export function ProgramAttendancesBar({ data, isDark }) {
   }));
 
   const fullNames = data.map(d => d.name);
+
+  useVertBarDimming(containerRef, mounted);
 
   if (!mounted) return <div className="w-full" style={{ height: '100%' }} />;
 
@@ -75,6 +114,12 @@ export function ProgramAttendancesBar({ data, isDark }) {
           data={formatted}
           margin={{ top: 8, right: 16, bottom: tickHeight, left: 8 }}
         >
+          <defs>
+            <linearGradient id="barGradientVert" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%"   stopColor={barColor} stopOpacity={1}   />
+              <stop offset="100%" stopColor={barColor} stopOpacity={0.5} />
+            </linearGradient>
+          </defs>
           <CartesianGrid
             strokeDasharray="4 4"
             stroke={theme.grid}
@@ -105,12 +150,16 @@ export function ProgramAttendancesBar({ data, isDark }) {
             dataKey="value"
             radius={[5, 5, 0, 0]}
             maxBarSize={52}
+            fill="url(#barGradientVert)"
             isAnimationActive={CHART_ANIMATION}
             animationDuration={CHART_ANIMATION_DURATION}
             animationEasing="ease-out"
           >
             {formatted.map((_, i) => (
-              <Cell key={i} fill={barColor} fillOpacity={0.85 + (0.15 * (1 - i / (formatted.length || 1)))} />
+              <Cell
+                key={i}
+                fill="url(#barGradientVert)"
+              />
             ))}
             <LabelList
               dataKey="value"

@@ -40,7 +40,7 @@ export const CHART_DENSITY = {
   barRotateAt:    7,    // Ítems en barra → rotar etiquetas del eje X
   barTinyAt:      12,   // Ítems en barra → reducir tamaño de fuente a mínimo
   pieHideLabelAt: 9,    // Ítems en torta → ocultar etiquetas externas (solo %)
-  pieMinPercent:  5,  // % mínimo para mostrar etiqueta en la torta
+  pieMinPercent:  5,    // % mínimo para mostrar etiqueta en la torta
   horizontalMax:  10,   // Máximo de filas visibles en barras horizontales
 };
 
@@ -66,7 +66,7 @@ export const LABEL_MAX_CHARS = {
 // PIE_INNER: '0%' = torta sólida | '>0%' = dona con hueco
 // PIE_OUTER: radio exterior (100% = llena el contenedor)
 // ---------------------------------------------------------------------------
-export const PIE_INNER_RADIUS = '35%';  // '0%' = torta sólida | '>0%' = dona
+export const PIE_INNER_RADIUS = '42%';  // '0%' = torta sólida | '>0%' = dona
 export const PIE_OUTER_RADIUS = '68%';
 
 // ---------------------------------------------------------------------------
@@ -75,19 +75,19 @@ export const PIE_OUTER_RADIUS = '68%';
 // CHART_ANIMATION_DURATION: milisegundos que dura la animación de entrada
 // ---------------------------------------------------------------------------
 export const CHART_ANIMATION          = true;
-export const CHART_ANIMATION_DURATION = 550;
+export const CHART_ANIMATION_DURATION = 700;
 
 // ---------------------------------------------------------------------------
 // PALETA DE COLORES (índice = orden de aparición)
-// Cada color tiene variante para modo claro y modo oscuro.
+// Los primeros 3 usan los colores institucionales de la Universidad de La Guajira.
 // ---------------------------------------------------------------------------
 export const CHART_COLORS = [
-  { light: '#3b82f6', dark: '#60a5fa' }, // azul
-  { light: '#10b981', dark: '#34d399' }, // esmeralda
+  { light: '#62a9b6', dark: '#7ec0cb' }, // azul-teal institucional (1°)
+  { light: '#e2a542', dark: '#f0bc6a' }, // ámbar institucional    (2°)
+  { light: '#cc5e50', dark: '#e07a6d' }, // terracota institucional (3°)
   { light: '#8b5cf6', dark: '#a78bfa' }, // violeta
-  { light: '#f59e0b', dark: '#fbbf24' }, // ámbar
-  { light: '#ef4444', dark: '#f87171' }, // rojo
-  { light: '#06b6d4', dark: '#22d3ee' }, // cian
+  { light: '#10b981', dark: '#34d399' }, // esmeralda
+  { light: '#3b82f6', dark: '#60a5fa' }, // azul
   { light: '#ec4899', dark: '#f472b6' }, // rosa
   { light: '#84cc16', dark: '#a3e635' }, // lima
   { light: '#f97316', dark: '#fb923c' }, // naranja
@@ -98,8 +98,8 @@ export const CHART_COLORS = [
 // COLOR PRINCIPAL DE LAS BARRAS ÚNICAS  (cuando el gráfico usa un solo color)
 // ---------------------------------------------------------------------------
 export const BAR_PRIMARY_COLOR = {
-  light: '#3b82f6', // blue-500
-  dark:  '#60a5fa', // blue-400
+  light: '#62a9b6', // azul-teal institucional
+  dark:  '#7ec0cb', // azul-teal institucional (claro)
 };
 
 // ---------------------------------------------------------------------------

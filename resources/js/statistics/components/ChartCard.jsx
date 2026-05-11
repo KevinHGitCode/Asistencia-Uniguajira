@@ -5,7 +5,7 @@ import { ChartModal }   from './ChartModal.jsx';
 function LoadingSpinner() {
   return (
     <div className="flex items-center justify-center h-full">
-      <div className="w-8 h-8 border-[3px] border-blue-500 dark:border-blue-400 border-t-transparent rounded-full animate-spin" />
+      <div className="w-8 h-8 border-[3px] border-[#cc5e50] border-t-transparent rounded-full animate-spin" />
     </div>
   );
 }
@@ -58,6 +58,9 @@ export function ChartCard({
   return (
     <>
       <div className="flex flex-col bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-neutral-700 rounded-2xl shadow-sm overflow-hidden">
+
+        {/* Franja de acento institucional */}
+        <div style={{ height: 3, background: 'linear-gradient(to right, #cc5e50, #e2a542, #62a9b6)' }} />
 
         {/* Header: title + action icons inline */}
         {title && (

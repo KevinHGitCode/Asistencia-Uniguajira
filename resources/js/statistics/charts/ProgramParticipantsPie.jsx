@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   PieChart, Pie, Cell, Tooltip, Label, ResponsiveContainer,
 } from 'recharts';
@@ -12,7 +12,7 @@ import {
 import { useMounted } from '../hooks/useMounted.js';
 
 const RADIAN           = Math.PI / 180;
-const LEGEND_PAGE_SIZE = 10; // items per page in the right legend
+const LEGEND_PAGE_SIZE = 10;
 const OTHERS_COLOR     = { light: '#9ca3af', dark: '#6b7280' };
 
 function getSliceColor(item, index, colors, isDark) {
@@ -21,8 +21,6 @@ function getSliceColor(item, index, colors, isDark) {
 }
 
 // ── Outer percentage label ────────────────────────────────────────────────────
-// Only rendered for large slices AND only on the left half of the pie
-// (right half would overlap the vertical legend).
 
 function OuterLabel(props) {
   const { cx, cy, midAngle, outerRadius, percent, payload, theme } = props;
@@ -32,12 +30,11 @@ function OuterLabel(props) {
   const cos    = Math.cos(-midAngle * RADIAN);
   const isLeft = cos < 0;
 
-  // Two-segment line: radial leg -> horizontal elbow
-  const x1 = cx + (outerRadius + 4)  * cos; // start at slice edge
+  const x1 = cx + (outerRadius + 4)  * cos;
   const y1 = cy + (outerRadius + 4)  * sin;
-  const x2 = cx + (outerRadius + 27) * cos; // end of radial leg
+  const x2 = cx + (outerRadius + 27) * cos;
   const y2 = cy + (outerRadius + 27) * sin;
-  const x3 = x2 + (isLeft ? -12 : 12);        // elbow tip
+  const x3 = x2 + (isLeft ? -12 : 12);
 
   const textX  = isLeft ? x3 - 3 : x3 + 3;
   const anchor = isLeft ? 'end' : 'start';
@@ -122,7 +119,6 @@ function VerticalLegend({ chartData, isDark }) {
 
   return (
     <div className="flex flex-col h-full justify-center gap-1 pl-2 pr-1">
-      {/* Legend items */}
       <div className="flex flex-col gap-1.5 flex-1 justify-center min-h-0">
         {items.map((item) => {
           const color = item.fill;
@@ -146,7 +142,6 @@ function VerticalLegend({ chartData, isDark }) {
         })}
       </div>
 
-      {/* Pagination controls */}
       {pages > 1 && (
         <div className="flex items-center justify-center gap-2 pt-2 shrink-0">
           <button
@@ -156,7 +151,7 @@ function VerticalLegend({ chartData, isDark }) {
             className="w-5 h-5 flex items-center justify-center rounded text-[10px] transition-opacity disabled:opacity-25 hover:opacity-70"
             style={{ color: theme.muted }}
           >
-            ▲
+            &#9650;
           </button>
           <span className="text-[11px] tabular-nums" style={{ color: theme.muted }}>
             {page + 1}/{pages}
@@ -168,12 +163,53 @@ function VerticalLegend({ chartData, isDark }) {
             className="w-5 h-5 flex items-center justify-center rounded text-[10px] transition-opacity disabled:opacity-25 hover:opacity-70"
             style={{ color: theme.muted }}
           >
-            ▼
+            &#9660;
           </button>
         </div>
       )}
     </div>
   );
+}
+
+// ── DOM-based dimming hook (bypasses React re-renders) ────────────────────────
+
+function usePieDimming(chartRef, mounted) {
+  useEffect(() => {
+    const el = chartRef.current;
+    if (!el || !mounted) return;
+
+    const handleOver = (e) => {
+      if (e.target.closest('.recharts-tooltip-wrapper')) return;
+      const sector = e.target.closest('.recharts-pie-sector');
+      if (!sector) return;
+      const hovered = sector.querySelector('path');
+      el.querySelectorAll('.recharts-pie-sector path').forEach(p => {
+        p.style.transition = 'fill-opacity 0.25s ease, transform 0.25s ease';
+        p.style.transformOrigin = 'center';
+        if (p === hovered) {
+          p.style.fillOpacity = '1';
+          p.style.transform = 'scale(1.04)';
+        } else {
+          p.style.fillOpacity = '0.45';
+          p.style.transform = 'scale(1)';
+        }
+      });
+    };
+
+    const handleLeave = () => {
+      el.querySelectorAll('.recharts-pie-sector path').forEach(p => {
+        p.style.fillOpacity = '1';
+        p.style.transform = 'scale(1)';
+      });
+    };
+
+    el.addEventListener('mouseover', handleOver);
+    el.addEventListener('mouseleave', handleLeave);
+    return () => {
+      el.removeEventListener('mouseover', handleOver);
+      el.removeEventListener('mouseleave', handleLeave);
+    };
+  }, [chartRef, mounted]);
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
@@ -182,32 +218,33 @@ function VerticalLegend({ chartData, isDark }) {
  * Pie / donut chart — reutilizable para cualquier distribucion.
  *
  * Props adicionales:
- *  - showOuterLabels : bool (default true)  — muestra/oculta las lineas y etiquetas exteriores
- *  - groupOthers     : bool (default true)  — agrupa slices pequenos en "Otros (n)"
+ *  - showOuterLabels : bool (default true)
+ *  - groupOthers     : bool (default true)
  *
  * Layout:
- *  - Left (~62%): donut chart with center total + outer % labels on big left-side slices
+ *  - Left (~62%): donut chart with center total + outer % labels
  *  - Right (~38%): vertical paginated legend
  */
 export function ProgramParticipantsPie({ data, isDark, showOuterLabels = true, groupOthers = true, valueLabel = 'Participantes' }) {
-  const mounted = useMounted();
-  const theme     = getTheme(isDark);
-  const colors    = getColors(isDark);
-  // groupOthers=false → devuelve data tal cual, sin agrupar
-  const grouped   = groupOthers ? groupTopN(data, PIE_TOP_N) : data;
+  const mounted  = useMounted();
+  const chartRef = useRef(null);
+  const theme    = getTheme(isDark);
+  const colors   = getColors(isDark);
+  const grouped  = groupOthers ? groupTopN(data, PIE_TOP_N) : data;
   const chartData = grouped.map((item, i) => ({
     ...item,
     fill: getSliceColor(item, i, colors, isDark),
   }));
-  const total     = chartData.reduce((s, d) => s + (d.value ?? 0), 0);
-  const isDonut   = PIE_INNER_RADIUS !== '0%';
+  const total   = chartData.reduce((s, d) => s + (d.value ?? 0), 0);
+  const isDonut = PIE_INNER_RADIUS !== '0%';
+
+  usePieDimming(chartRef, mounted);
 
   if (!mounted) return <div className="w-full" style={{ height: '100%' }} />;
 
   return (
     <div className="w-full h-full min-w-0 flex items-center">
-      {/* ── Pie / donut ── */}
-      <div className="h-full min-w-0" style={{ flex: '0 0 62%' }}>
+      <div ref={chartRef} className="h-full min-w-0" style={{ flex: '0 0 62%' }}>
         <ResponsiveContainer width="100%" height="100%" minWidth={0}>
           <PieChart>
             <Pie
@@ -221,6 +258,7 @@ export function ProgramParticipantsPie({ data, isDark, showOuterLabels = true, g
               paddingAngle={chartData.length > 1 ? 2 : 0}
               labelLine={false}
               label={showOuterLabels ? (props) => <OuterLabel {...props} theme={theme} /> : false}
+              activeIndex={-1}
               isAnimationActive={CHART_ANIMATION}
               animationDuration={CHART_ANIMATION_DURATION}
               animationEasing="ease-out"
@@ -248,7 +286,6 @@ export function ProgramParticipantsPie({ data, isDark, showOuterLabels = true, g
         </ResponsiveContainer>
       </div>
 
-      {/* ── Right legend ── */}
       <div className="h-full min-w-0" style={{ flex: '0 0 38%' }}>
         <VerticalLegend chartData={chartData} isDark={isDark} />
       </div>
