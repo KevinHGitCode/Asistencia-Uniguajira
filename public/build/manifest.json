@@ -1,6 +1,6 @@
 {
-  "_ProgramParticipantsPie-DhjwqMua.js": {
-    "file": "assets/ProgramParticipantsPie-DhjwqMua.js",
+  "_ProgramParticipantsPie-DlmX1T2O.js": {
+    "file": "assets/ProgramParticipantsPie-DlmX1T2O.js",
     "name": "ProgramParticipantsPie",
     "imports": [
       "_index-BwNU8OnE.js"
@@ -74,13 +74,13 @@
     "isDynamicEntry": true
   },
   "resources/js/events/index.jsx": {
-    "file": "assets/index-DcsgyRly.js",
+    "file": "assets/index-BxC5EOka.js",
     "name": "index",
     "src": "resources/js/events/index.jsx",
     "isEntry": true,
     "imports": [
       "_index-BwNU8OnE.js",
-      "_ProgramParticipantsPie-DhjwqMua.js"
+      "_ProgramParticipantsPie-DlmX1T2O.js"
     ]
   },
   "resources/js/events/show.js": {
@@ -90,13 +90,13 @@
     "isEntry": true
   },
   "resources/js/statistics/index.jsx": {
-    "file": "assets/index-CLtEB-Ld.js",
+    "file": "assets/index-BW41xCP4.js",
     "name": "index",
     "src": "resources/js/statistics/index.jsx",
     "isEntry": true,
     "imports": [
       "_index-BwNU8OnE.js",
-      "_ProgramParticipantsPie-DhjwqMua.js"
+      "_ProgramParticipantsPie-DlmX1T2O.js"
     ]
   }
 }
