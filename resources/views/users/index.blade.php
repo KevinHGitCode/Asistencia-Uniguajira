@@ -110,22 +110,27 @@
                                                             {{ \Illuminate\Support\Str::limit($primaryDependency, 30, '...') }}
                                                         </flux:badge>
                                                         @if($extraDependenciesCount > 0)
-                                                            <div class="relative group/dependencies">
-                                                                <button
-                                                                    type="button"
-                                                                    class="inline-flex items-center rounded-full bg-[#cc5e50] px-2 py-0.5 text-xs font-semibold text-white hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-[#cc5e50]/40"
+                                                            <div x-data="{ open:false, x:0, y:0, _t:null, show(el){ clearTimeout(this._t); const r=el.getBoundingClientRect(); let xx=r.left, yy=r.bottom+6; if(xx+240>window.innerWidth) xx=r.right-240; if(xx<8) xx=8; if(yy+150>window.innerHeight) yy=r.top-6; this.x=xx; this.y=yy; this.open=true; }, keep(){ clearTimeout(this._t); }, hide(){ this._t=setTimeout(()=>this.open=false,150); } }">
+                                                                <button type="button" x-ref="trigger"
+                                                                    @mouseenter="show($refs.trigger)"
+                                                                    @mouseleave="hide()"
+                                                                    class="inline-flex items-center rounded-full bg-[#cc5e50] px-2 py-0.5 text-xs font-semibold text-white hover:brightness-110 focus:outline-none cursor-pointer"
                                                                     aria-label="Mostrar dependencias adicionales">
                                                                     +{{ $extraDependenciesCount }}
                                                                 </button>
-
-                                                                <div class="dependency-tooltip pointer-events-none absolute right-0 top-full z-20 mt-2 hidden min-w-56 max-w-xs rounded-lg border border-neutral-200 bg-white p-3 text-xs text-zinc-700 shadow-lg dark:border-neutral-700 dark:bg-zinc-900 dark:text-zinc-200 group-hover/dependencies:block group-focus-within/dependencies:block">
-                                                                    <p class="mb-2 font-semibold">Dependencias</p>
-                                                                    <ul class="space-y-1">
-                                                                        @foreach ($dependencyNames as $dependencyName)
-                                                                            <li class="truncate" title="{{ $dependencyName }}">{{ $dependencyName }}</li>
-                                                                        @endforeach
-                                                                    </ul>
-                                                                </div>
+                                                                <template x-teleport="body">
+                                                                    <div x-show="open" x-transition.opacity.duration.150ms
+                                                                         :style="`position:fixed;top:${y}px;left:${x}px;`"
+                                                                         class="z-[9999] min-w-56 max-w-xs rounded-lg border border-neutral-200 bg-white p-3 text-xs text-zinc-700 shadow-lg dark:border-neutral-700 dark:bg-zinc-900 dark:text-zinc-200"
+                                                                         @mouseenter="keep()" @mouseleave="hide()">
+                                                                        <p class="mb-2 font-semibold">Dependencias</p>
+                                                                        <ul class="space-y-1">
+                                                                            @foreach ($dependencyNames as $dependencyName)
+                                                                                <li class="truncate" title="{{ $dependencyName }}">{{ $dependencyName }}</li>
+                                                                            @endforeach
+                                                                        </ul>
+                                                                    </div>
+                                                                </template>
                                                             </div>
                                                         @endif
                                                     </div>
@@ -233,19 +238,26 @@
                                                 </flux:badge>
 
                                                 @if($mobileExtraDeps->isNotEmpty())
-                                                    <div class="relative group/m-deps">
-                                                        <button type="button"
-                                                            class="inline-flex items-center rounded-full bg-[#cc5e50] px-2 py-0.5 text-xs font-semibold text-white hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-[#cc5e50]/40">
+                                                    <div x-data="{ open:false, x:0, y:0, _t:null, show(el){ clearTimeout(this._t); const r=el.getBoundingClientRect(); let xx=r.left, yy=r.bottom+6; if(xx+240>window.innerWidth) xx=r.right-240; if(xx<8) xx=8; if(yy+150>window.innerHeight) yy=r.top-6; this.x=xx; this.y=yy; this.open=true; }, keep(){ clearTimeout(this._t); }, hide(){ this._t=setTimeout(()=>this.open=false,150); } }">
+                                                        <button type="button" x-ref="trigger"
+                                                            @mouseenter="show($refs.trigger)"
+                                                            @mouseleave="hide()"
+                                                            class="inline-flex items-center rounded-full bg-[#cc5e50] px-2 py-0.5 text-xs font-semibold text-white hover:brightness-110 focus:outline-none cursor-pointer">
                                                             +{{ $mobileExtraDeps->count() }}
                                                         </button>
-                                                        <div class="pointer-events-none absolute left-0 {{ $loop->last ? 'bottom-full mb-2' : 'top-full mt-2' }} z-10 hidden min-w-56 max-w-xs rounded-lg border border-neutral-200 bg-white p-3 text-xs text-zinc-700 shadow-lg dark:border-neutral-700 dark:bg-zinc-900 dark:text-zinc-200 group-hover/m-deps:block group-focus-within/m-deps:block">
-                                                            <p class="mb-2 font-semibold">Dependencias</p>
-                                                            <ul class="space-y-1">
-                                                                @foreach ($mobileDepNames as $mobileDepName)
-                                                                    <li class="truncate" title="{{ $mobileDepName }}">{{ $mobileDepName }}</li>
-                                                                @endforeach
-                                                            </ul>
-                                                        </div>
+                                                        <template x-teleport="body">
+                                                            <div x-show="open" x-transition.opacity.duration.150ms
+                                                                 :style="`position:fixed;top:${y}px;left:${x}px;`"
+                                                                 class="z-[9999] min-w-56 max-w-xs rounded-lg border border-neutral-200 bg-white p-3 text-xs text-zinc-700 shadow-lg dark:border-neutral-700 dark:bg-zinc-900 dark:text-zinc-200"
+                                                                 @mouseenter="keep()" @mouseleave="hide()">
+                                                                <p class="mb-2 font-semibold">Dependencias</p>
+                                                                <ul class="space-y-1">
+                                                                    @foreach ($mobileDepNames as $mobileDepName)
+                                                                        <li class="truncate" title="{{ $mobileDepName }}">{{ $mobileDepName }}</li>
+                                                                    @endforeach
+                                                                </ul>
+                                                            </div>
+                                                        </template>
                                                     </div>
                                                 @endif
                                             @else
@@ -326,4 +338,5 @@
 
     @livewire('user.create-user-modal', ['dependencies' => $dependencies, 'roles' => $roles])
     @livewire('user.edit-user-modal', ['dependencies' => $dependencies, 'roles' => $roles])
+
 </x-layouts.app>
