@@ -1,6 +1,6 @@
 {
-  "_ProgramParticipantsPie-BRunLYnI.js": {
-    "file": "assets/ProgramParticipantsPie-BRunLYnI.js",
+  "_ProgramParticipantsPie-DhjwqMua.js": {
+    "file": "assets/ProgramParticipantsPie-DhjwqMua.js",
     "name": "ProgramParticipantsPie",
     "imports": [
       "_index-BwNU8OnE.js"
@@ -11,7 +11,7 @@
     "name": "index"
   },
   "resources/css/app.css": {
-    "file": "assets/app-DFC-F3TK.css",
+    "file": "assets/app-DkH_twye.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "names": [
@@ -74,13 +74,13 @@
     "isDynamicEntry": true
   },
   "resources/js/events/index.jsx": {
-    "file": "assets/index-wdfWDWm0.js",
+    "file": "assets/index-DcsgyRly.js",
     "name": "index",
     "src": "resources/js/events/index.jsx",
     "isEntry": true,
     "imports": [
       "_index-BwNU8OnE.js",
-      "_ProgramParticipantsPie-BRunLYnI.js"
+      "_ProgramParticipantsPie-DhjwqMua.js"
     ]
   },
   "resources/js/events/show.js": {
@@ -90,13 +90,13 @@
     "isEntry": true
   },
   "resources/js/statistics/index.jsx": {
-    "file": "assets/index-2a7lnFMK.js",
+    "file": "assets/index-DrROlHj_.js",
     "name": "index",
     "src": "resources/js/statistics/index.jsx",
     "isEntry": true,
     "imports": [
       "_index-BwNU8OnE.js",
-      "_ProgramParticipantsPie-BRunLYnI.js"
+      "_ProgramParticipantsPie-DhjwqMua.js"
     ]
   }
 }
