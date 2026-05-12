@@ -15,7 +15,7 @@
           x-on:show-login-portal.window="triggerPortal($event.detail.target || '/dashboard')">
 
         <!-- Capas de fondo (fixed: cubren siempre todo el viewport) -->
-        <div class="auth-bg-image" style="background-image: url('{{ asset('images/fondo-uniguajira.jpeg') }}')"></div>
+        <div class="auth-bg-image" style="background-image: url('{{ asset('images/fondo-uniguajira.png') }}')"></div>
         <div class="auth-bg-veil-right"></div> {{-- velo claro del lado del formulario --}}
         <div class="auth-bg-veil"></div>       {{-- velo oscuro del lado del logo (encima, recortado al 50% izquierdo) --}}
         <div class="auth-bg-grain"></div>
@@ -119,6 +119,16 @@
                                         :aria-label="`Ver ${feature.title}`">
                                 </button>
                             </template>
+                        </div>
+
+
+                        <!-- SIIS2 -->
+                        <div class="mt-6 flex justify-center">
+                            <img
+                                src="{{ asset('images/SIIS2 Colores.png') }}"
+                                alt="Logo SIIS2"
+                                class="h-32 w-auto xl:h-40"
+                            >
                         </div>
                     </div>
                 </div>

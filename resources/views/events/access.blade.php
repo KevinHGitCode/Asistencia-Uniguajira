@@ -52,6 +52,27 @@
         .ev-access-live-dot {
             animation: ev-access-pulse 2s ease-in-out infinite;
         }
+
+        .ev-access-panel-card {
+            border: 1px solid rgba(255,255,255,.14);
+            background: linear-gradient(135deg, rgba(255,255,255,.16), rgba(255,255,255,.06));
+            box-shadow: 0 20px 45px -28px rgba(0, 0, 0, .55);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+        }
+
+        .ev-access-panel-chip {
+            border: 1px solid rgba(255,255,255,.10);
+            background: rgba(255,255,255,.08);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+        }
+
+        .ev-access-brand-badge {
+            border: 1px solid rgba(255,255,255,.14);
+            background: linear-gradient(135deg, rgba(255,255,255,.14), rgba(255,255,255,.05));
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
     </style>
 
     {{-- Cancelar el p-6 del layout → tomar control total del viewport --}}
@@ -65,9 +86,9 @@
         <aside
             class="relative shrink-0 overflow-hidden text-white
                    px-5 pt-6 pb-5
-                   bg-cover bg-center bg-no-repeat
+                   bg-cover bg-no-repeat
                    lg:flex lg:h-dvh lg:w-[44%] lg:flex-col lg:self-stretch lg:px-10 lg:pt-10 lg:pb-10"
-            style="background-image: url('{{ asset('images/fondo-uniguajira.jpeg') }}');">
+            style="background-image: url('{{ asset('images/fondo-uniguajira.png') }}'); background-position: 46% center;">
 
             {{-- Overlay con degradado que refuerza la identidad de marca --}}
             <div class="absolute inset-0"
@@ -128,52 +149,64 @@
                 </div>
 
                 {{-- Salto de línea: Control de asistencia + título del evento --}}
-                <div class="mt-3">
+                <div class="mt-4 ev-access-panel-card rounded-2xl p-4">
                     <p class="text-[10px] font-bold uppercase tracking-[.2em] text-white/70">
                         Control de asistencia
                     </p>
                     <h1 class="mt-1 text-[17px] font-extrabold leading-snug text-white drop-shadow">
                         {{ $event->title }}
                     </h1>
-                </div>
 
-                {{-- Fila de detalles compacta --}}
-                <div class="mt-3 flex flex-wrap gap-x-3.5 gap-y-1.5 text-[11px] text-white/90">
-                    @if ($event->date)
-                        <span class="flex items-center gap-1.5 rounded-full bg-white/10 px-2 py-0.5 ring-1 ring-white/10">
-                            <svg class="h-3 w-3 opacity-80" fill="none" viewBox="0 0 24 24"
-                                 stroke="currentColor" stroke-width="2">
-                                <rect x="3" y="4" width="18" height="18" rx="2"/>
-                                <line x1="16" y1="2" x2="16" y2="6"/>
-                                <line x1="8"  y1="2" x2="8"  y2="6"/>
-                                <line x1="3"  y1="10" x2="21" y2="10"/>
-                            </svg>
-                            {{ \Carbon\Carbon::parse($event->date)->isoFormat('D [de] MMM') }}
-                        </span>
-                    @endif
+                    {{-- Fila de detalles compacta --}}
+                    <div class="mt-3 flex flex-wrap gap-x-3.5 gap-y-1.5 text-[11px] text-white/90">
+                        @if ($event->date)
+                            <span class="ev-access-panel-chip flex items-center gap-1.5 rounded-full px-2 py-0.5">
+                                <svg class="h-3 w-3 opacity-80" fill="none" viewBox="0 0 24 24"
+                                     stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="4" width="18" height="18" rx="2"/>
+                                    <line x1="16" y1="2" x2="16" y2="6"/>
+                                    <line x1="8"  y1="2" x2="8"  y2="6"/>
+                                    <line x1="3"  y1="10" x2="21" y2="10"/>
+                                </svg>
+                                {{ \Carbon\Carbon::parse($event->date)->isoFormat('D [de] MMM') }}
+                            </span>
+                        @endif
 
-                    @if ($event->start_time && $event->end_time)
-                        <span class="flex items-center gap-1.5 rounded-full bg-white/10 px-2 py-0.5 ring-1 ring-white/10">
-                            <svg class="h-3 w-3 opacity-80" fill="none" viewBox="0 0 24 24"
-                                 stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                            </svg>
-                            {{ \Carbon\Carbon::parse($event->start_time)->format('h:i A') }}
-                            &ndash;
-                            {{ \Carbon\Carbon::parse($event->end_time)->format('h:i A') }}
-                        </span>
-                    @endif
+                        @if ($event->start_time && $event->end_time)
+                            <span class="ev-access-panel-chip flex items-center gap-1.5 rounded-full px-2 py-0.5">
+                                <svg class="h-3 w-3 opacity-80" fill="none" viewBox="0 0 24 24"
+                                     stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                                </svg>
+                                {{ \Carbon\Carbon::parse($event->start_time)->format('h:i A') }}
+                                &ndash;
+                                {{ \Carbon\Carbon::parse($event->end_time)->format('h:i A') }}
+                            </span>
+                        @endif
 
-                    @if ($event->location)
-                        <span class="flex items-center gap-1.5 rounded-full bg-white/10 px-2 py-0.5 ring-1 ring-white/10 max-w-full truncate">
-                            <svg class="h-3 w-3 shrink-0 opacity-80" fill="none" viewBox="0 0 24 24"
-                                 stroke="currentColor" stroke-width="2">
-                                <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/>
-                                <circle cx="12" cy="10" r="3"/>
-                            </svg>
-                            <span class="truncate">{{ $event->location }}</span>
-                        </span>
-                    @endif
+                        @if ($event->location)
+                            <span class="ev-access-panel-chip flex max-w-full items-center gap-1.5 rounded-full px-2 py-0.5 truncate">
+                                <svg class="h-3 w-3 shrink-0 opacity-80" fill="none" viewBox="0 0 24 24"
+                                     stroke="currentColor" stroke-width="2">
+                                    <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/>
+                                    <circle cx="12" cy="10" r="3"/>
+                                </svg>
+                                <span class="truncate">{{ $event->location }}</span>
+                            </span>
+                        @endif
+                    </div>
+
+                    <div class="ev-access-brand-badge mt-4 flex items-center gap-3 rounded-2xl px-3 py-2.5">
+                        <img
+                            src="{{ asset('images/SIIS2 Colores.png') }}"
+                            alt="SIIS2"
+                            class="h-10 w-auto object-contain"
+                        >
+                        <div>
+                            <p class="text-[10px] font-bold uppercase tracking-[.2em] text-white/65">Soporte SIIS2</p>
+                            <p class="text-[11px] leading-relaxed text-white/85">Registro digital respaldado por el semillero.</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -183,33 +216,33 @@
             <div class="relative hidden lg:flex lg:h-full lg:flex-col pb-10">
 
                 {{-- Logo fijo arriba --}}
-                <div class="flex flex-wrap items-center gap-3">
-                    <div class="flex min-w-0 max-w-full items-center gap-3 lg:gap-4 xl:gap-5 rounded-2xl bg-white/15 px-4 py-3 lg:px-5 xl:px-6 xl:py-4 ring-1 ring-white/20 backdrop-blur-sm">
+                <div class="flex flex-wrap items-center justify-center gap-4 text-center">
+                    <div class="flex min-w-0 max-w-full items-center gap-4 lg:gap-5 xl:gap-6 rounded-2xl bg-white/15 px-5 py-4 lg:px-6 xl:px-7 xl:py-5 ring-1 ring-white/20 backdrop-blur-sm">
                         <img
                             src="{{ asset('images/logo-uniguajira-blanco.webp') }}"
                             alt="Universidad de La Guajira"
-                            class="h-10 lg:h-12 xl:h-16 2xl:h-20 w-auto object-contain">
-                        <span class="block h-8 lg:h-10 xl:h-14 2xl:h-16 w-px bg-white/30"></span>
+                            class="h-12 lg:h-14 xl:h-20 2xl:h-24 w-auto object-contain">
+                        <span class="block h-10 lg:h-12 xl:h-16 2xl:h-20 w-px bg-white/30"></span>
                         <img
                             src="{{ asset('images/aura_blanco.png') }}"
                             alt="AURA"
-                            class="h-10 lg:h-12 xl:h-16 2xl:h-20 w-auto object-contain">
+                            class="h-12 lg:h-14 xl:h-20 2xl:h-24 w-auto object-contain">
                     </div>
                     @if ($event->isOpenForAttendance())
-                        <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-400/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-emerald-300 ring-1 ring-emerald-400/30">
-                            <span class="ev-access-live-dot h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
+                        <span class="inline-flex items-center gap-2 rounded-full bg-emerald-400/15 px-3.5 py-1.5 text-xs font-bold uppercase tracking-[.22em] text-emerald-300 ring-1 ring-emerald-400/30">
+                            <span class="ev-access-live-dot h-2 w-2 rounded-full bg-emerald-400"></span>
                             Evento en vivo
                         </span>
                     @elseif ($event->hasNotStarted())
-                        <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-400/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-amber-300 ring-1 ring-amber-400/30">
-                            <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <span class="inline-flex items-center gap-2 rounded-full bg-amber-400/15 px-3.5 py-1.5 text-xs font-bold uppercase tracking-[.22em] text-amber-300 ring-1 ring-amber-400/30">
+                            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
                             </svg>
                             Próximamente
                         </span>
                     @else
-                        <span class="inline-flex items-center gap-1.5 rounded-full bg-gray-400/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-gray-300 ring-1 ring-gray-400/30">
-                            <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <span class="inline-flex items-center gap-2 rounded-full bg-gray-400/15 px-3.5 py-1.5 text-xs font-bold uppercase tracking-[.22em] text-gray-300 ring-1 ring-gray-400/30">
+                            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636"/>
                             </svg>
                             Evento finalizado
@@ -218,42 +251,42 @@
                 </div>
 
                 {{-- Bloque central --}}
-                <div class="flex flex-1 flex-col justify-center">
+                <div class="flex flex-1 flex-col items-center justify-center text-center">
 
-                    <p class="text-[10px] font-bold uppercase tracking-[.22em] text-white/70">
+                    <p class="text-xs font-bold uppercase tracking-[.28em] text-white/70">
                         Control de asistencia
                     </p>
-                    <h1 class="mt-2 text-3xl font-extrabold leading-snug text-white drop-shadow xl:text-[2rem]">
+                    <h1 class="mt-3 max-w-2xl text-4xl font-extrabold leading-tight text-white drop-shadow xl:text-[2.9rem] 2xl:text-[3.35rem]">
                         {{ $event->title }}
                     </h1>
 
                     {{-- Línea decorativa --}}
-                    <span class="mt-5 block h-1 w-16 rounded-full"
+                    <span class="mt-6 block h-1.5 w-24 rounded-full"
                           style="background: linear-gradient(90deg, #62a9b6 0%, #cc5e50 100%);"></span>
 
-                    <ul class="mt-6 space-y-3 text-sm text-white/90">
+                    <ul class="mt-8 max-w-2xl space-y-5 text-base text-white/90 xl:text-lg">
                         @if ($event->date)
-                            <li class="flex items-start gap-3">
-                                <span class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/10 ring-1 ring-white/15">
-                                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <li class="grid w-full grid-cols-[2.75rem_minmax(0,1fr)] items-center gap-4 text-left">
+                                <span class="ev-access-panel-chip flex h-11 w-11 shrink-0 items-center justify-center rounded-xl">
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                         <rect x="3" y="4" width="18" height="18" rx="2"/>
                                         <line x1="16" y1="2" x2="16" y2="6"/>
                                         <line x1="8"  y1="2" x2="8"  y2="6"/>
                                         <line x1="3"  y1="10" x2="21" y2="10"/>
                                     </svg>
                                 </span>
-                                <span class="pt-0.5">{{ \Carbon\Carbon::parse($event->date)->isoFormat('dddd, D [de] MMMM [de] YYYY') }}</span>
+                                <span>{{ \Carbon\Carbon::parse($event->date)->isoFormat('dddd, D [de] MMMM [de] YYYY') }}</span>
                             </li>
                         @endif
 
                         @if ($event->start_time && $event->end_time)
-                            <li class="flex items-start gap-3">
-                                <span class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/10 ring-1 ring-white/15">
-                                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <li class="grid w-full grid-cols-[2.75rem_minmax(0,1fr)] items-center gap-4 text-left">
+                                <span class="ev-access-panel-chip flex h-11 w-11 shrink-0 items-center justify-center rounded-xl">
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                         <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
                                     </svg>
                                 </span>
-                                <span class="pt-0.5">
+                                <span>
                                     {{ \Carbon\Carbon::parse($event->start_time)->format('h:i A') }}
                                     &ndash;
                                     {{ \Carbon\Carbon::parse($event->end_time)->format('h:i A') }}
@@ -262,21 +295,33 @@
                         @endif
 
                         @if ($event->location)
-                            <li class="flex items-start gap-3">
-                                <span class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/10 ring-1 ring-white/15">
-                                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <li class="grid w-full grid-cols-[2.75rem_minmax(0,1fr)] items-center gap-4 text-left">
+                                <span class="ev-access-panel-chip flex h-11 w-11 shrink-0 items-center justify-center rounded-xl">
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                         <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/>
                                         <circle cx="12" cy="10" r="3"/>
                                     </svg>
                                 </span>
-                                <span class="pt-0.5">{{ $event->location }}</span>
+                                <span>{{ $event->location }}</span>
                             </li>
                         @endif
                     </ul>
+
+                    <div class="ev-access-brand-badge mt-10 flex w-fit items-center gap-4 rounded-2xl px-5 py-4 text-left">
+                        <img
+                            src="{{ asset('images/SIIS2 Colores.png') }}"
+                            alt="SIIS2"
+                            class="h-14 w-auto object-contain"
+                        >
+                        <div>
+                            <p class="text-xs font-bold uppercase tracking-[.24em] text-white/60">Soporte digital</p>
+                            <p class="mt-1 text-base leading-snug text-white/85">Experiencia de registro impulsada por el semillero SIIS2.</p>
+                        </div>
+                    </div>
                 </div>
 
                 {{-- Footer --}}
-                <div class="flex items-center justify-between text-xs text-white/50">
+                <div class="flex items-center justify-between text-sm text-white/55">
                     <p>&copy; {{ date('Y') }} Universidad de La Guajira</p>
                     <p class="font-mono tracking-wider">AURA</p>
                 </div>
