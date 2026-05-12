@@ -38,7 +38,7 @@
 </head>
 
 <body class="relative min-h-screen bg-white dark:bg-zinc-800">
-    <flux:sidebar stashable class="min-h-screen border-e border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
+    <flux:sidebar stashable class="min-h-screen max-lg:h-dvh max-lg:overflow-y-auto border-e border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
         <flux:sidebar.toggle class="lg:hidden" icon="x-mark" />
 
         {{-- Debounce wrapper: prevents rapid multi-clicks on wire:navigate links.
@@ -83,9 +83,28 @@
             }
 
             .siis2-sidebar-link .siis2-logo-sidebar {
+                width: auto;
+                height: 96px;
+                max-height: 96px;
+                max-width: 100%;
+                object-fit: contain;
                 transition: transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1),
                             filter 300ms ease-out;
                 transform-origin: center;
+            }
+
+            @media (min-width: 1024px) {
+                .siis2-sidebar-link .siis2-logo-sidebar {
+                    height: 130px;
+                    max-height: 130px;
+                }
+            }
+
+            @media (min-width: 1536px) {
+                .siis2-sidebar-link .siis2-logo-sidebar {
+                    height: 150px;
+                    max-height: 150px;
+                }
             }
 
             .siis2-sidebar-link:hover .siis2-logo-sidebar {
@@ -302,12 +321,12 @@
 
         <flux:spacer />
 
-        <div class="hidden lg:block px-2 pb-0">
+        <div class="block px-2 pb-0 lg:block">
             <div class="siis2-sidebar-link flex items-center justify-center">
                 <img
                     src="{{ asset('images/SIIS2 Colores.png') }}"
                     alt="SIIS2"
-                    class="siis2-logo-sidebar h-24 w-auto object-contain"
+                    class="siis2-logo-sidebar"
                 >
             </div>
         </div>
@@ -364,7 +383,7 @@
     </flux:sidebar>
 
     <!-- Mobile User Menu -->
-    <flux:header class="lg:hidden">
+    <flux:header class="lg:hidden border-b border-zinc-700 bg-zinc-900 text-white">
         <flux:sidebar.toggle class="lg:hidden" icon="bars-2" inset="left" />
 
         <flux:spacer />

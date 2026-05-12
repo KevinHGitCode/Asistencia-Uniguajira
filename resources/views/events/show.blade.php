@@ -40,8 +40,8 @@
                 <div class="border border-neutral-200 rounded-lg px-6 pt-6 pb-6 bg-white dark:border-neutral-700 dark:bg-zinc-800">
 
                     {{-- Header con título y botones de acción --}}
-                    <div class="flex items-center justify-between mb-6">
-                        <div class="flex items-center gap-2">
+                    <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                        <div class="flex flex-wrap items-center gap-2">
                             <h3 class="text-lg font-bold text-black dark:text-white">Información del evento</h3>
                             @if($event->isManuallyEnded())
                                 <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 ring-1 ring-gray-200 dark:ring-gray-700">
@@ -49,14 +49,14 @@
                                 </span>
                             @endif
                         </div>
-                        <div class="flex items-center gap-2">
+                        <div class="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:justify-end">
                             {{-- Terminar evento --}}
                             @if($event->isOpenForAttendance())
                                 <flux:modal.trigger name="end-event-modal">
                                     <flux:button
                                         variant="filled"
                                         size="sm"
-                                        class="hover:scale-105 transition-transform cursor-pointer !bg-amber-600 hover:!bg-amber-700 !text-white">
+                                        class="w-full justify-center hover:scale-105 transition-transform cursor-pointer !bg-amber-600 hover:!bg-amber-700 !text-white sm:w-auto">
                                         <svg class="size-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"/>
@@ -71,7 +71,7 @@
                                 <flux:button
                                     variant="primary"
                                     size="sm"
-                                    class="hover:scale-105 transition-transform cursor-pointer"
+                                    class="w-full justify-center hover:scale-105 transition-transform cursor-pointer sm:w-auto"
                                     x-on:click="Livewire.dispatch('edit-event', { id: {{ $event->id }} })">
                                     <svg class="size-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L12 15l-4 1 1-4 8.586-8.586z"/>
@@ -85,7 +85,7 @@
                                 <flux:button
                                     variant="danger"
                                     size="sm"
-                                    class="hover:scale-105 transition-transform cursor-pointer">
+                                    class="w-full justify-center hover:scale-105 transition-transform cursor-pointer sm:w-auto">
                                     <svg class="size-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                     </svg>
