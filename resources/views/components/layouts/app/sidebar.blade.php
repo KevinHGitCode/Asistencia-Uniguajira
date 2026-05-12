@@ -83,28 +83,9 @@
             }
 
             .siis2-sidebar-link .siis2-logo-sidebar {
-                width: auto;
-                height: 96px;
-                max-height: 96px;
-                max-width: 100%;
-                object-fit: contain;
                 transition: transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1),
                             filter 300ms ease-out;
                 transform-origin: center;
-            }
-
-            @media (min-width: 1024px) {
-                .siis2-sidebar-link .siis2-logo-sidebar {
-                    height: 130px;
-                    max-height: 130px;
-                }
-            }
-
-            @media (min-width: 1536px) {
-                .siis2-sidebar-link .siis2-logo-sidebar {
-                    height: 150px;
-                    max-height: 150px;
-                }
             }
 
             .siis2-sidebar-link:hover .siis2-logo-sidebar {
@@ -326,7 +307,7 @@
                 <img
                     src="{{ asset('images/SIIS2 Colores.png') }}"
                     alt="SIIS2"
-                    class="siis2-logo-sidebar"
+                    class="siis2-logo-sidebar h-24 w-auto object-contain lg:h-24"
                 >
             </div>
         </div>
@@ -383,7 +364,7 @@
     </flux:sidebar>
 
     <!-- Mobile User Menu -->
-    <flux:header class="lg:hidden border-b border-zinc-700 bg-zinc-900 text-white">
+    <flux:header class="lg:hidden border-b border-neutral-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-white">
         <flux:sidebar.toggle class="lg:hidden" icon="bars-2" inset="left" />
 
         <flux:spacer />

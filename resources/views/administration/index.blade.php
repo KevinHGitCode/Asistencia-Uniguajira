@@ -10,9 +10,6 @@
                     <span class="text-gray-700 dark:text-gray-200">Módulo de Administración</span>
                 </div>
             </h1>
-            <p class="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-                Administra las dependencias, áreas y otros recursos del sistema
-            </p>
         </div>
 
         {{-- Grid de tarjetas de administración --}}
