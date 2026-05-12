@@ -3,6 +3,7 @@
 namespace App\Livewire\User;
 
 use App\Models\User;
+use App\Services\ActivityLogService;
 use Livewire\Component;
 use Livewire\Attributes\On;
 use Illuminate\Support\Facades\Hash;
@@ -69,6 +70,9 @@ class EditUserModal extends Component
 
         $user = User::findOrFail($this->userId);
 
+        $original = $user->only(['name', 'email', 'role']);
+        $originalDeps = $user->dependencies->pluck('id')->sort()->values()->toArray();
+
         $user->update([
             'name'  => $this->name,
             'email' => $this->email,
@@ -82,6 +86,23 @@ class EditUserModal extends Component
         $user->dependencies()->sync(
             $this->role === 'user' ? $this->dependency_ids : []
         );
+
+        $changes = [];
+        foreach ($original as $field => $oldValue) {
+            $newValue = $user->$field;
+            if ((string) $oldValue !== (string) $newValue) {
+                $changes[$field] = ['old' => $oldValue ?? '—', 'new' => $newValue ?? '—'];
+            }
+        }
+        if ($this->password) {
+            $changes['password'] = ['old' => '••••••••', 'new' => '••••••••(nueva)'];
+        }
+        $newDeps = collect($this->role === 'user' ? $this->dependency_ids : [])->map(fn($id) => (int) $id)->sort()->values()->toArray();
+        if ($originalDeps !== $newDeps) {
+            $changes['dependencias'] = ['old' => implode(', ', $originalDeps), 'new' => implode(', ', $newDeps)];
+        }
+
+        ActivityLogService::log('editar', 'usuarios', "Editó el usuario '{$user->name}'", $user, $changes);
 
         Flux::modal('edit-user-modal')->close();
 

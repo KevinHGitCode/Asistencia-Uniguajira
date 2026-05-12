@@ -7,6 +7,7 @@ use App\Models\ParticipantType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Services\ActivityLogService;
 
 class ParticipantTypeController extends Controller
 {
@@ -29,10 +30,12 @@ class ParticipantTypeController extends Controller
             'name.max'      => 'El nombre no puede superar los 100 caracteres.',
         ]);
 
-        ParticipantType::create(['name' => self::normalizeName($request->name)]);
+        $participantType = ParticipantType::create(['name' => self::normalizeName($request->name)]);
+
+        ActivityLogService::log('crear', 'estamentos', "Creó el estamento '{$participantType->name}'", $participantType);
 
         return redirect()->route('participant-types.index')
-            ->with('success', 'Estamento "' . self::normalizeName($request->name) . '" creado exitosamente.');
+            ->with('success', 'Estamento "' . $participantType->name . '" creado exitosamente.');
     }
 
     public function update(Request $request, ParticipantType $participantType)
@@ -45,7 +48,15 @@ class ParticipantTypeController extends Controller
             'name.max'      => 'El nombre no puede superar los 100 caracteres.',
         ]);
 
+        $oldName = $participantType->name;
         $participantType->update(['name' => self::normalizeName($request->name)]);
+
+        $changes = [];
+        if ($oldName !== $participantType->name) {
+            $changes['name'] = ['old' => $oldName, 'new' => $participantType->name];
+        }
+
+        ActivityLogService::log('editar', 'estamentos', "Editó el estamento '{$participantType->name}'", $participantType, $changes);
 
         return redirect()->route('participant-types.index')
             ->with('success', 'Estamento actualizado exitosamente.');
@@ -63,6 +74,8 @@ class ParticipantTypeController extends Controller
 
         $name = $participantType->name;
         $participantType->delete();
+
+        ActivityLogService::log('eliminar', 'estamentos', "Eliminó el estamento '{$name}'");
 
         return redirect()->route('participant-types.index')
             ->with('success', "Estamento \"{$name}\" eliminado exitosamente.");
@@ -136,11 +149,15 @@ class ParticipantTypeController extends Controller
             $msg .= " Se omitieron {$skipped} fila(s) (vacías o ya existentes).";
         }
 
+        ActivityLogService::log('importar', 'estamentos', "Importó {$created} estamento(s) desde Excel", metadata: ['created' => $created, 'skipped' => $skipped]);
+
         return redirect()->route('participant-types.index')->with('success', $msg);
     }
 
     public function downloadTemplate()
     {
+        ActivityLogService::log('exportar', 'estamentos', 'Descargó la plantilla de importación de estamentos');
+
         return Excel::download(
             new \App\Exports\ParticipantTypeTemplateExport(),
             'plantilla_estamentos.xlsx'
@@ -149,6 +166,8 @@ class ParticipantTypeController extends Controller
 
     public function downloadExport()
     {
+        ActivityLogService::log('exportar', 'estamentos', 'Descargó el listado de estamentos en Excel');
+
         return Excel::download(
             new \App\Exports\ParticipantTypeExport(),
             'estamentos.xlsx'

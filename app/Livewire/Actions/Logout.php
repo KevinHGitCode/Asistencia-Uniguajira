@@ -4,6 +4,7 @@ namespace App\Livewire\Actions;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
+use App\Services\ActivityLogService;
 
 class Logout
 {
@@ -12,6 +13,8 @@ class Logout
      */
     public function __invoke()
     {
+        ActivityLogService::log('logout', 'sesion', 'Cerró sesión');
+
         Auth::guard('web')->logout();
 
         Session::invalidate();

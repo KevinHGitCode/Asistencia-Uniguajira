@@ -14,6 +14,7 @@ use Carbon\Carbon;
 use setasign\Fpdi\Tfpdf\Fpdi;
 use App\Services\AttendancePdfService;
 use App\Services\EventService;
+use App\Services\ActivityLogService;
 
 class EventController extends Controller
 {
@@ -148,7 +149,10 @@ class EventController extends Controller
             return back()->withErrors(['error' => 'No se puede eliminar un evento que ya pasó.']);
         }
 
+        $eventTitle = $event->title;
         $event->delete();
+
+        ActivityLogService::log('eliminar', 'eventos', "Eliminó el evento '{$eventTitle}'");
 
         return redirect()->route('events.list')
             ->with('success', 'Evento eliminado exitosamente.');
@@ -171,6 +175,8 @@ class EventController extends Controller
         }
 
         $event->update(['ended_at' => now()]);
+
+        ActivityLogService::log('terminar_evento', 'eventos', "Terminó manualmente el evento '{$event->title}'", $event);
 
         return back()->with('success', 'El evento ha sido finalizado exitosamente.');
     }
@@ -254,6 +260,8 @@ class EventController extends Controller
                 . 'Debe re-subir la plantilla en versión PDF 1.4 o inferior desde la configuración de formatos. Comuniquese con el administrador.'
             );
         }
+
+        ActivityLogService::log('exportar', 'eventos', "Descargó PDF de asistencias del evento '{$evento->title}'", $evento);
 
         $nombreArchivo = "Asistencia_".str_replace(' ', '_', $evento->title)."_".\Carbon\Carbon::parse($evento->date)->format('Y-m-d').".pdf";
 

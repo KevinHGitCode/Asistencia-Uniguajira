@@ -7,6 +7,7 @@ use App\Models\Affiliation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Services\ActivityLogService;
 
 class AffiliationController extends Controller
 {
@@ -29,7 +30,9 @@ class AffiliationController extends Controller
             'name.max'      => 'El nombre no puede superar los 100 caracteres.',
         ]);
 
-        Affiliation::create(['name' => self::normalizeName($request->name)]);
+        $affiliation = Affiliation::create(['name' => self::normalizeName($request->name)]);
+
+        ActivityLogService::log('crear', 'afiliaciones', "Creó la afiliación '{$affiliation->name}'", $affiliation);
 
         return redirect()->route('affiliations.index')
             ->with('success', 'Afiliación creada exitosamente.');
@@ -45,7 +48,15 @@ class AffiliationController extends Controller
             'name.max'      => 'El nombre no puede superar los 100 caracteres.',
         ]);
 
+        $oldName = $affiliation->name;
         $affiliation->update(['name' => self::normalizeName($request->name)]);
+
+        $changes = [];
+        if ($oldName !== $affiliation->name) {
+            $changes['name'] = ['old' => $oldName, 'new' => $affiliation->name];
+        }
+
+        ActivityLogService::log('editar', 'afiliaciones', "Editó la afiliación '{$affiliation->name}'", $affiliation, $changes);
 
         return redirect()->route('affiliations.index')
             ->with('success', 'Afiliación actualizada exitosamente.');
@@ -63,6 +74,8 @@ class AffiliationController extends Controller
 
         $name = $affiliation->name;
         $affiliation->delete();
+
+        ActivityLogService::log('eliminar', 'afiliaciones', "Eliminó la afiliación '{$name}'");
 
         return redirect()->route('affiliations.index')
             ->with('success', "Afiliación \"{$name}\" eliminada exitosamente.");
@@ -136,11 +149,15 @@ class AffiliationController extends Controller
             $msg .= " Se omitieron {$skipped} fila(s) (vacías o ya existentes).";
         }
 
+        ActivityLogService::log('importar', 'afiliaciones', "Importó {$created} afiliación(es) desde Excel", metadata: ['created' => $created, 'skipped' => $skipped]);
+
         return redirect()->route('affiliations.index')->with('success', $msg);
     }
 
     public function downloadTemplate()
     {
+        ActivityLogService::log('exportar', 'afiliaciones', 'Descargó la plantilla de importación de afiliaciones');
+
         return Excel::download(
             new \App\Exports\AffiliationTemplateExport(),
             'plantilla_afiliaciones.xlsx'
@@ -149,6 +166,8 @@ class AffiliationController extends Controller
 
     public function downloadExport()
     {
+        ActivityLogService::log('exportar', 'afiliaciones', 'Descargó el listado de afiliaciones en Excel');
+
         return Excel::download(
             new \App\Exports\AffiliationExport(),
             'afiliaciones.xlsx'

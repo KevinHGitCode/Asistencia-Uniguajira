@@ -8,6 +8,7 @@ use App\Models\Dependency;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
+use App\Services\ActivityLogService;
 
 class FormatController extends Controller
 {
@@ -85,6 +86,8 @@ class FormatController extends Controller
             $format->dependencies()->sync($request->dependencies);
         }
 
+        ActivityLogService::log('crear', 'formatos', "Creó el formato '{$format->name}'", $format);
+
         return redirect()->route('formats.index')->with('success', 'Formato creado correctamente.');
     }
 
@@ -125,8 +128,25 @@ class FormatController extends Controller
             $data['file'] = $newFileName;
         }
 
+        $original = $format->only(['name', 'slug', 'file']);
+        $originalDeps = $format->dependencies->pluck('id')->sort()->values()->toArray();
+
         $format->update($data);
         $format->dependencies()->sync($request->dependencies ?? []);
+
+        $changes = [];
+        foreach ($original as $field => $oldValue) {
+            $newValue = $format->$field;
+            if ((string) ($oldValue ?? '') !== (string) ($newValue ?? '')) {
+                $changes[$field] = ['old' => $oldValue ?? '—', 'new' => $newValue ?? '—'];
+            }
+        }
+        $newDeps = collect($request->dependencies ?? [])->map(fn($id) => (int) $id)->sort()->values()->toArray();
+        if ($originalDeps !== $newDeps) {
+            $changes['dependencias'] = ['old' => implode(', ', $originalDeps), 'new' => implode(', ', $newDeps)];
+        }
+
+        ActivityLogService::log('editar', 'formatos', "Editó el formato '{$format->name}'", $format, $changes);
 
         return redirect()->route('formats.index')->with('success', 'Formato actualizado correctamente.');
     }
@@ -140,8 +160,11 @@ class FormatController extends Controller
         // Eliminar del config
         $this->removeFromConfigFile($format->slug);
 
+        $name = $format->name;
         $format->dependencies()->detach();
         $format->delete();
+
+        ActivityLogService::log('eliminar', 'formatos', "Eliminó el formato '{$name}'");
 
         return redirect()->route('formats.index')->with('success', 'Formato eliminado correctamente.');
     }

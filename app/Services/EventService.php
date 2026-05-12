@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Validation\ValidationException;
 
 use App\Mail\EventCreatedMail;
+use App\Services\ActivityLogService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
@@ -71,6 +72,8 @@ class EventService
             'user_id'       => $user->id,
             'link'          => $slug,
         ]);
+
+        ActivityLogService::log('crear', 'eventos', "Creó el evento '{$event->title}'", $event, userId: $user->id);
 
         if ($user->email) {
             try {

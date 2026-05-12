@@ -3,6 +3,7 @@
 namespace App\Livewire\User;
 
 use App\Models\User;
+use App\Services\ActivityLogService;
 use Livewire\Component;
 use Illuminate\Support\Facades\Hash;
 use Flux;
@@ -62,6 +63,8 @@ class CreateUserModal extends Component
         if ($this->role === 'user' && !empty($this->dependency_ids)) {
             $user->dependencies()->attach($this->dependency_ids);
         }
+
+        ActivityLogService::log('crear', 'usuarios', "Creó el usuario '{$user->name}'", $user);
 
         $this->reset(['name', 'email', 'role', 'dependency_ids', 'password']);
 

@@ -20,6 +20,7 @@ use App\Http\Controllers\Configuration\ProgramController;
 use App\Http\Controllers\Configuration\FormatController;
 use App\Http\Controllers\Configuration\OrganizationController;
 use App\Http\Controllers\Configuration\ParticipantImportController;
+use App\Http\Controllers\Configuration\ActivityLogController;
 
 /**
  * ================================================================
@@ -215,6 +216,10 @@ Route::middleware(['auth', 'verified', 'role:admin'])
         Route::get('/participants/download-skipped', [ParticipantImportController::class, 'downloadSkipped'])->name('participants-import.download-skipped');
         Route::get('/participants/download-template', [ParticipantImportController::class, 'downloadTemplate'])->name('participants-import.download-template');
         Route::post('/participants', [ParticipantImportController::class, 'store'])->name('participants-import.store');
+
+        // Rutas de registros de actividad
+        Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
+        Route::post('/activity-logs/clear', [ActivityLogController::class, 'clear'])->name('activity-logs.clear');
 
     });
 

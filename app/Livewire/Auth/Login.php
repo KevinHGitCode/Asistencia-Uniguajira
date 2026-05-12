@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
+use App\Services\ActivityLogService;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
 
@@ -53,6 +54,8 @@ class Login extends Component
 
         RateLimiter::clear($this->throttleKey());
         Session::regenerate();
+
+        ActivityLogService::log('login', 'sesion', 'Inició sesión');
 
         // URL destino respetando el "intended" original.
         $target = Session::pull('url.intended', route('dashboard', absolute: false));

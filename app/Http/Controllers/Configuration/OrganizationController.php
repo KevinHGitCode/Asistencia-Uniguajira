@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Services\ActivityLogService;
 
 class OrganizationController extends Controller
 {
@@ -40,9 +41,11 @@ class OrganizationController extends Controller
     {
         $this->validateOrganization($request);
 
-        Organization::create([
+        $organization = Organization::create([
             'name' => self::normalizeName(trim($request->name)),
         ]);
+
+        ActivityLogService::log('crear', 'organizaciones', "Creó la organización '{$organization->name}'", $organization);
 
         return redirect()->route('organizations.index')
             ->with('success', 'Organización creada exitosamente.');
@@ -52,9 +55,17 @@ class OrganizationController extends Controller
     {
         $this->validateOrganization($request, $organization->id);
 
+        $oldName = $organization->name;
         $organization->update([
             'name' => self::normalizeName(trim($request->name)),
         ]);
+
+        $changes = [];
+        if ($oldName !== $organization->name) {
+            $changes['name'] = ['old' => $oldName, 'new' => $organization->name];
+        }
+
+        ActivityLogService::log('editar', 'organizaciones', "Editó la organización '{$organization->name}'", $organization, $changes);
 
         return redirect()->route('organizations.index')
             ->with('success', 'Organización actualizada exitosamente.');
@@ -73,6 +84,8 @@ class OrganizationController extends Controller
         $name = $organization->name;
         $organization->delete();
 
+        ActivityLogService::log('eliminar', 'organizaciones', "Eliminó la organización '{$name}'");
+
         return redirect()->route('organizations.index')
             ->with('success', "Organización \"{$name}\" eliminada exitosamente.");
     }
@@ -88,12 +101,21 @@ class OrganizationController extends Controller
         ]);
 
         $canonicalId = $request->canonical_id;
+        $canonical = Organization::findOrFail($canonicalId);
+
+        $movedCount = ParticipantRole::where('organization_id', $organization->id)->count();
 
         ParticipantRole::where('organization_id', $organization->id)
             ->update(['organization_id' => $canonicalId]);
 
         $name = $organization->name;
         $organization->delete();
+
+        ActivityLogService::log('editar', 'organizaciones', "Fusionó la organización '{$name}' con '{$canonical->name}'", $canonical, [
+            'organización_eliminada' => $name,
+            'organización_destino' => $canonical->name,
+            'participantes_movidos' => $movedCount,
+        ]);
 
         return redirect()->route('organizations.index')
             ->with('success', "Organización \"{$name}\" fusionada exitosamente.");
@@ -178,6 +200,8 @@ class OrganizationController extends Controller
             $msg .= " Se omitieron {$skipped} fila(s) (vacias o ya existentes).";
         }
 
+        ActivityLogService::log('importar', 'organizaciones', "Importó {$created} organización(es) desde Excel", metadata: ['created' => $created, 'skipped' => $skipped]);
+
         return redirect()->route('organizations.index')
             ->with('success', $msg)
             ->with('import_result', [
@@ -203,6 +227,8 @@ class OrganizationController extends Controller
 
     public function downloadTemplate()
     {
+        ActivityLogService::log('exportar', 'organizaciones', 'Descargó la plantilla de importación de organizaciones');
+
         return Excel::download(
             new \App\Exports\OrganizationTemplateExport(),
             'plantilla_organizaciones.xlsx'
@@ -211,6 +237,8 @@ class OrganizationController extends Controller
 
     public function downloadExport()
     {
+        ActivityLogService::log('exportar', 'organizaciones', 'Descargó el listado de organizaciones en Excel');
+
         return Excel::download(
             new \App\Exports\OrganizationExport(),
             'organizaciones.xlsx'

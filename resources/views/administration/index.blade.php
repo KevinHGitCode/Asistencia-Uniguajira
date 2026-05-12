@@ -206,6 +206,29 @@
                 <div class="absolute bottom-0 left-0 w-0 h-0.5 rounded-b-xl bg-[#3b82f6] group-hover:w-full transition-all duration-300"></div>
             </a>
 
+            {{-- Card: Registros de Actividad --}}
+            <a href="{{ route('activity-logs.index') }}"
+               class="group relative flex flex-col gap-4 p-5 sm:p-6 rounded-2xl border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 overflow-hidden">
+
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center justify-center w-12 h-12 rounded-lg group-hover:scale-110 transition-transform duration-200">
+                        <flux:icon name="shield-check" class="size-16 text-[#64748b]" />
+                    </div>
+                    <flux:icon.chevron-right class="size-5 text-gray-400 dark:text-gray-500 group-hover:translate-x-1 transition-transform duration-200" />
+                </div>
+
+                <div>
+                    <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-1">
+                        Registros de Actividad
+                    </h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                        Consulta el historial de acciones realizadas en el sistema.
+                    </p>
+                </div>
+
+                <div class="absolute bottom-0 left-0 w-0 h-0.5 rounded-b-xl bg-[#64748b] group-hover:w-full transition-all duration-300"></div>
+            </a>
+
         </div>
 
         {{-- Sección informativa / tips --}}

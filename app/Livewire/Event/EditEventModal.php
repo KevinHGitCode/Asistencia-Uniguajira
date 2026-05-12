@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Flux\Flux;
 
 use App\Mail\EventModifiedMail;
+use App\Services\ActivityLogService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
@@ -188,6 +189,8 @@ class EditEventModal extends Component
             }
         }
 
+
+        ActivityLogService::log('editar', 'eventos', "Editó el evento '{$event->title}'", $event, $changes);
 
         Flux::modal('edit-event-modal')->close();
 

@@ -12,6 +12,7 @@ use App\Models\ParticipantType;
 use App\Models\Program;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use App\Services\ActivityLogService;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -239,6 +240,7 @@ class ParticipantsList extends Component
         ]);
 
         $participant = Participant::findOrFail($this->editingId);
+        $original = $participant->only(['document', 'first_name', 'last_name', 'email', 'student_code']);
 
         // ── IDs de roles que el usuario mantiene en el formulario ────────
         $batchRoleIds = collect($this->editRoles)
@@ -387,6 +389,17 @@ class ParticipantsList extends Component
             }
         });
 
+        $fullName = trim($participant->first_name . ' ' . $participant->last_name);
+        $participant->refresh();
+        $changes = [];
+        foreach ($original as $field => $oldValue) {
+            $newValue = $participant->$field;
+            if ((string) ($oldValue ?? '') !== (string) ($newValue ?? '')) {
+                $changes[$field] = ['old' => $oldValue ?? '—', 'new' => $newValue ?? '—'];
+            }
+        }
+        ActivityLogService::log('editar', 'participantes', "Editó el participante '{$fullName}'", $participant, $changes);
+
         $this->showEditModal = false;
         $this->resetEditFields();
 
@@ -461,7 +474,10 @@ class ParticipantsList extends Component
             ->where('participant_id', $participant->id)
             ->delete();
 
+        $deletedName = trim($participant->first_name . ' ' . $participant->last_name);
         $participant->delete();
+
+        ActivityLogService::log('eliminar', 'participantes', "Eliminó el participante '{$deletedName}'");
 
         $this->showDeleteModal = false;
         $this->deletingId      = null;

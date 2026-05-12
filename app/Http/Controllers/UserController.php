@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use App\Services\ActivityLogService;
 
 class UserController extends Controller
 {
@@ -80,6 +81,8 @@ class UserController extends Controller
             'role' => $validated['role'],
             'dependency_id' => $validated['dependency_id'] ?? null,
         ]);
+
+        ActivityLogService::log('crear', 'usuarios', "Creó el usuario '{$user->name}'", $user);
 
         return redirect()->route('users.index')->with('success', 'Usuario creado correctamente');
     }
@@ -170,9 +173,21 @@ class UserController extends Controller
             'email' => 'required|email|unique:users,email,' . $user->id,
         ]);
 
+        $original = $user->only(['name', 'email']);
+
         $user->name = $validated['name'];
         $user->email = $validated['email'];
         $user->save();
+
+        $changes = [];
+        foreach ($original as $field => $oldValue) {
+            $newValue = $user->$field;
+            if ((string) $oldValue !== (string) $newValue) {
+                $changes[$field] = ['old' => $oldValue ?? '—', 'new' => $newValue ?? '—'];
+            }
+        }
+
+        ActivityLogService::log('editar', 'usuarios', "Editó el usuario '{$user->name}'", $user, $changes);
 
         return redirect()->route('users.index')->with('success', 'Usuario actualizado correctamente');
     }
@@ -190,7 +205,11 @@ class UserController extends Controller
             return redirect()->back()->withErrors(['password' => 'La contraseña es incorrecta.']);
         }
 
+        $userName = $user->name;
         $user->delete();
+
+        ActivityLogService::log('eliminar', 'usuarios', "Eliminó el usuario '{$userName}'");
+
         return redirect()->route('users.index')->with('success', 'Usuario eliminado correctamente');
     }
 }

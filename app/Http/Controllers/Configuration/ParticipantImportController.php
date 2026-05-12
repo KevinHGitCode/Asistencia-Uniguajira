@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Services\ActivityLogService;
 
 class ParticipantImportController extends Controller
 {
@@ -47,6 +48,8 @@ class ParticipantImportController extends Controller
 
     public function downloadTemplate()
     {
+        ActivityLogService::log('exportar', 'participantes', 'Descargó la plantilla de importación de participantes');
+
         return Excel::download(
             new \App\Exports\ParticipantTemplateExport(),
             'plantilla_participantes.xlsx'
@@ -518,6 +521,15 @@ class ParticipantImportController extends Controller
 
         session(['import_skipped' => $skipped]);
 
+        ActivityLogService::log('importar', 'participantes', "Importó {$saved} participante(s) desde Excel", metadata: [
+            'created' => $saved,
+            'updated_participants' => $updatedParticipants,
+            'roles_activated' => $rolesActivated,
+            'roles_deactivated' => $rolesDeactivated,
+            'roles_created' => $rolesCreated,
+            'skipped' => count($skipped),
+        ]);
+
         return redirect()->route('participants-import.index')
             ->with('import_result', [
                 'saved'                => $saved,
@@ -607,6 +619,9 @@ class ParticipantImportController extends Controller
                 'updated_at'          => now(),
             ]);
         }
+
+        $fullName = trim($participant->first_name . ' ' . $participant->last_name);
+        ActivityLogService::log('crear', 'participantes', "Creó el participante '{$fullName}' (Doc: {$participant->document})", $participant);
 
         return redirect()->route('participants-import.index')
             ->with('success', 'Participante registrado exitosamente.');

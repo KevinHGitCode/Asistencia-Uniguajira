@@ -19,6 +19,7 @@ use Livewire\Component;
 
 use App\Mail\AttendanceRegisteredMail;
 use Illuminate\Support\Facades\Mail;
+use App\Services\ActivityLogService;
 
 class AttendanceRegistration extends Component
 {
@@ -552,6 +553,18 @@ class AttendanceRegistration extends Component
                     Log::warning('No se pudo enviar correo de asistencia: ' . $e->getMessage());
                 }
             }
+
+            $nombre = trim(($this->participantData['first_name'] ?? '') . ' ' . ($this->participantData['last_name'] ?? ''));
+            $eventoNombre = $this->eventData['title'] ?? '';
+            ActivityLogService::log(
+                'registrar_asistencia',
+                'asistencias',
+                "Participante '{$nombre}' registró asistencia en '{$eventoNombre}'",
+                $attendance,
+                [],
+                null,
+                $this->participantData['id'],
+            );
 
             $this->successRegisteredAt = $attendance->created_at->format('h:i A');
             $this->totalAttendances    = Attendance::where('participant_id', $this->participantData['id'])->count();

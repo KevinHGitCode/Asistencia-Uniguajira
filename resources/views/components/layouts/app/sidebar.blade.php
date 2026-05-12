@@ -190,7 +190,7 @@
                         open: false,
                         ready: false,
                         init() {
-                            if (@js(request()->routeIs('administracion.*', 'dependencies.*', 'areas.*', 'programs.*', 'formats.*', 'participant-types.*', 'affiliations.*', 'organizations.*', 'participants-import.*'))) {
+                            if (@js(request()->routeIs('administracion.*', 'dependencies.*', 'areas.*', 'programs.*', 'formats.*', 'participant-types.*', 'affiliations.*', 'organizations.*', 'participants-import.*', 'activity-logs.*'))) {
                                 this.open = true;
                             } else {
                                 this.open = localStorage.getItem('sidebar-admin-open') === 'true';
@@ -270,6 +270,10 @@
 
                             <flux:navlist.item :href="route('participants-import.index')" :current="request()->routeIs('participants-import.*')" wire:navigate>
                                 {{ __('Participantes') }}
+                            </flux:navlist.item>
+
+                            <flux:navlist.item :href="route('activity-logs.index')" :current="request()->routeIs('activity-logs.*')" wire:navigate>
+                                {{ __('Registros') }}
                             </flux:navlist.item>
                         </div>
                     </div>

@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Services\ActivityLogService;
 
 class ProgramController extends Controller
 {
@@ -25,10 +26,12 @@ class ProgramController extends Controller
     {
         $this->validateProgram($request);
 
-        Program::create([
+        $program = Program::create([
             'name'         => self::normalizeName(trim($request->name)),
             'program_type' => $request->program_type ?: null,
         ]);
+
+        ActivityLogService::log('crear', 'programas', "Creó el programa '{$program->name}'", $program);
 
         return redirect()->route('programs.index')
             ->with('success', 'Programa creado exitosamente.');
@@ -38,10 +41,22 @@ class ProgramController extends Controller
     {
         $this->validateProgram($request, $program->id);
 
+        $original = $program->only(['name', 'program_type']);
+
         $program->update([
             'name'         => self::normalizeName(trim($request->name)),
             'program_type' => $request->program_type ?: null,
         ]);
+
+        $changes = [];
+        foreach ($original as $field => $oldValue) {
+            $newValue = $program->$field;
+            if ((string) ($oldValue ?? '') !== (string) ($newValue ?? '')) {
+                $changes[$field] = ['old' => $oldValue ?? '—', 'new' => $newValue ?? '—'];
+            }
+        }
+
+        ActivityLogService::log('editar', 'programas', "Editó el programa '{$program->name}'", $program, $changes);
 
         return redirect()->route('programs.index')
             ->with('success', 'Programa actualizado exitosamente.');
@@ -59,6 +74,8 @@ class ProgramController extends Controller
 
         $name = $program->name;
         $program->delete();
+
+        ActivityLogService::log('eliminar', 'programas', "Eliminó el programa '{$name}'");
 
         return redirect()->route('programs.index')
             ->with('success', "Programa \"{$name}\" eliminado exitosamente.");
@@ -154,6 +171,8 @@ class ProgramController extends Controller
             $msg .= " Se omitieron {$skipped} fila(s) (vacias o ya existentes).";
         }
 
+        ActivityLogService::log('importar', 'programas', "Importó {$created} programa(s) desde Excel", metadata: ['created' => $created, 'skipped' => $skipped]);
+
         return redirect()->route('programs.index')
             ->with('success', $msg)
             ->with('import_result', [
@@ -179,6 +198,8 @@ class ProgramController extends Controller
 
     public function downloadTemplate()
     {
+        ActivityLogService::log('exportar', 'programas', 'Descargó la plantilla de importación de programas');
+
         return Excel::download(
             new \App\Exports\ProgramTemplateExport(),
             'plantilla_programas.xlsx'
@@ -187,6 +208,8 @@ class ProgramController extends Controller
 
     public function downloadExport()
     {
+        ActivityLogService::log('exportar', 'programas', 'Descargó el listado de programas en Excel');
+
         return Excel::download(
             new \App\Exports\ProgramExport(),
             'programas.xlsx'

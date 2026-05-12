@@ -7,6 +7,7 @@ use App\Models\Dependency;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Services\ActivityLogService;
 
 class DependencyController extends Controller
 {
@@ -57,6 +58,8 @@ class DependencyController extends Controller
             $dependency->formats()->attach($formatGeneral->id);
         }
 
+        ActivityLogService::log('crear', 'dependencias', "Creó la dependencia '{$dependency->name}'", $dependency);
+
         return redirect()->route('dependencies.index')->with('success', 'Dependencia creada exitosamente.');
     }
 
@@ -93,9 +96,17 @@ class DependencyController extends Controller
             'name.unique'           => 'Ya existe una dependencia con ese nombre.',
         ]);
 
+        $oldName = $dependency->name;
         $dependency->update([
             'name' => $normalizedName,
         ]);
+
+        $changes = [];
+        if ($oldName !== $dependency->name) {
+            $changes['name'] = ['old' => $oldName, 'new' => $dependency->name];
+        }
+
+        ActivityLogService::log('editar', 'dependencias', "Editó la dependencia '{$dependency->name}'", $dependency, $changes);
 
         return redirect()->route('dependencies.index')->with('success', 'Dependencia actualizada exitosamente.');
     }
@@ -105,7 +116,10 @@ class DependencyController extends Controller
      */
     public function destroy(Dependency $dependency)
     {
+        $name = $dependency->name;
         $dependency->delete();
+
+        ActivityLogService::log('eliminar', 'dependencias', "Eliminó la dependencia '{$name}'");
 
         return redirect()->route('dependencies.index')->with('success', 'Dependencia eliminada exitosamente.');
     }
@@ -200,11 +214,15 @@ class DependencyController extends Controller
             $msg .= " Se omitieron {$skipped} fila(s) (vacías o ya existentes).";
         }
 
+        ActivityLogService::log('importar', 'dependencias', "Importó {$created} dependencia(s) desde Excel", metadata: ['created' => $created, 'skipped' => $skipped]);
+
         return redirect()->route('dependencies.index')->with('success', $msg);
     }
 
     public function downloadTemplate()
     {
+        ActivityLogService::log('exportar', 'dependencias', 'Descargó la plantilla de importación de dependencias');
+
         return Excel::download(
             new \App\Exports\DependencyTemplateExport(),
             'plantilla_dependencias.xlsx'
@@ -213,6 +231,8 @@ class DependencyController extends Controller
 
     public function downloadExport()
     {
+        ActivityLogService::log('exportar', 'dependencias', 'Descargó el listado de dependencias en Excel');
+
         return Excel::download(
             new \App\Exports\DependencyExport(),
             'dependencias.xlsx'
