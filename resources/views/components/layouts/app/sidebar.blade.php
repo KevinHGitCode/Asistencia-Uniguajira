@@ -20,7 +20,7 @@
         @media (min-width: 1024px) {
             body:has([data-flux-sidebar])::before {
                 content: '';
-                position: fixed;
+                position: absolute;
                 inset-block: 0;
                 inset-inline-start: 0;
                 width: 16rem; /* w-64, ancho del sidebar Flux */
@@ -37,8 +37,8 @@
     </style>
 </head>
 
-<body class="min-h-screen bg-white dark:bg-zinc-800">
-    <flux:sidebar sticky stashable class="border-e border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
+<body class="relative min-h-screen bg-white dark:bg-zinc-800">
+    <flux:sidebar stashable class="min-h-screen border-e border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
         <flux:sidebar.toggle class="lg:hidden" icon="x-mark" />
 
         {{-- Debounce wrapper: prevents rapid multi-clicks on wire:navigate links.
@@ -78,6 +78,22 @@
             }
 
             .aura-sidebar-link:active .aura-logo-sidebar {
+                transform: scale(1.08) rotate(-1deg);
+                transition-duration: 120ms;
+            }
+
+            .siis2-sidebar-link .siis2-logo-sidebar {
+                transition: transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1),
+                            filter 300ms ease-out;
+                transform-origin: center;
+            }
+
+            .siis2-sidebar-link:hover .siis2-logo-sidebar {
+                transform: scale(1.18) rotate(-2deg);
+                filter: drop-shadow(0 6px 14px rgba(98, 169, 182, 0.55));
+            }
+
+            .siis2-sidebar-link:active .siis2-logo-sidebar {
                 transform: scale(1.08) rotate(-1deg);
                 transition-duration: 120ms;
             }
@@ -285,6 +301,16 @@
         </div>{{-- end debounce wrapper --}}
 
         <flux:spacer />
+
+        <div class="hidden lg:block px-2 pb-0">
+            <div class="siis2-sidebar-link flex items-center justify-center">
+                <img
+                    src="{{ asset('images/SIIS2 Colores.png') }}"
+                    alt="SIIS2"
+                    class="siis2-logo-sidebar h-24 w-auto object-contain"
+                >
+            </div>
+        </div>
 
         <!-- Desktop User Menu -->
         <flux:dropdown class="hidden lg:block" position="bottom" align="start">
