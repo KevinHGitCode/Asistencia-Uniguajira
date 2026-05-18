@@ -36,7 +36,7 @@ class DependencyTable extends Component
 
         return Dependency::query()
             ->select(['id', 'name', 'created_at'])
-            ->withCount(['areas', 'events', 'participants'])
+            ->withCount(['events', 'participants'])
             ->when($search !== '', fn (Builder $query) => $query->where('name', 'like', "%{$search}%"))
             ->orderBy('name');
     }
