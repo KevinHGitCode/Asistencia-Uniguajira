@@ -1,6 +1,5 @@
 window.dependenciesManager = function () {
     return {
-        search: '',
         showForm: false,
         editingId: null,
         formName: '',

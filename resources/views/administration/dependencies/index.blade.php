@@ -15,7 +15,7 @@
                 <span>Dependencias</span>
             </h1>
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                {{ $dependencies->count() }} {{ Str::plural('dependencia', $dependencies->count()) }} registrada{{ $dependencies->count() !== 1 ? 's' : '' }}
+                {{ $totalDependencies }} {{ Str::plural('dependencia', $totalDependencies) }} registrada{{ $totalDependencies !== 1 ? 's' : '' }}
             </p>
         </div>
         <button @click="openCreate()"
@@ -75,107 +75,13 @@
 
     {{-- TAB: LISTADO --}}
     <div x-show="activeTab === 'list'" x-transition>
-        <div class="border border-neutral-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm overflow-hidden">
-
-            {{-- Header tabla --}}
-            <div class="px-4 sm:px-6 py-4 border-b border-neutral-200 dark:border-neutral-700 bg-zinc-50 dark:bg-zinc-900 flex items-center justify-between gap-4">
-                <h2 class="text-base font-semibold text-gray-900 dark:text-white">Listado de Dependencias</h2>
-                <div class="relative">
-                    <flux:icon.magnifying-glass class="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input type="text" x-model="search" placeholder="Buscar..."
-                        class="pl-9 pr-4 py-1.5 text-sm rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition w-40 sm:w-56" />
-                </div>
-            </div>
-
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                    <thead>
-                        <tr class="border-b border-neutral-100 dark:border-zinc-800 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                            <th class="px-4 sm:px-6 py-3 text-left font-medium">#</th>
-                            <th class="px-4 sm:px-6 py-3 text-left font-medium">Nombre</th>
-                            <th class="px-4 sm:px-6 py-3 text-center font-medium hidden sm:table-cell">Áreas</th>
-                            <th class="px-4 sm:px-6 py-3 text-center font-medium hidden sm:table-cell">Eventos</th>
-                            <th class="px-4 sm:px-6 py-3 text-center font-medium">Participantes</th>
-                            <th class="px-4 sm:px-6 py-3 text-center font-medium">Creada</th>
-                            <th class="px-4 sm:px-6 py-3 text-right font-medium">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-neutral-100 dark:divide-zinc-800">
-                        @forelse($dependencies as $dependency)
-                            <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
-                                x-show="search === '' || '{{ strtolower($dependency->name) }}'.includes(search.toLowerCase())"
-                                x-transition>
-                                <td class="px-4 sm:px-6 py-4 text-gray-400 dark:text-zinc-500 font-mono text-xs">
-                                    {{ $loop->iteration }}
-                                </td>
-                                <td class="px-4 sm:px-6 py-4">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0">
-                                            <flux:icon.building-office-2 class="size-6 text-[#cc5e50]" />
-                                        </div>
-                                        <span class="font-medium text-gray-900 dark:text-white">{{ $dependency->name }}</span>
-                                    </div>
-                                </td>
-                                <td class="px-4 sm:px-6 py-4 text-center hidden sm:table-cell">
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-white bg-[#62a9b6]">
-                                        {{ $dependency->areas_count ?? 0 }}
-                                    </span>
-                                </td>
-                                <td class="px-4 sm:px-6 py-4 text-center hidden sm:table-cell">
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-white bg-[#e2a542]">
-                                        {{ $dependency->events_count ?? 0 }}
-                                    </span>
-                                </td>
-                                <td class="px-4 sm:px-6 py-4 text-center">
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-white bg-[#2563eb]">
-                                        {{ $dependency->participants_count ?? 0 }}
-                                    </span>
-                                </td>
-                                <td class="px-4 sm:px-6 py-4 text-center text-gray-500 dark:text-gray-400 text-xs">
-                                    {{ $dependency->created_at->format('d/m/Y') }}
-                                </td>
-                                <td class="px-4 sm:px-6 py-4">
-                                    <div class="flex items-center justify-end gap-2">
-                                        <button
-                                            @click="openEdit({{ $dependency->id }}, {{ Js::from($dependency->name) }})"
-                                            class="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 dark:hover:text-blue-400 transition-colors cursor-pointer"
-                                            title="Editar">
-                                            <flux:icon.pencil-square class="size-4" />
-                                        </button>
-                                        <button
-                                            @click="openDelete({{ $dependency->id }}, {{ Js::from($dependency->name) }})"
-                                            class="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 dark:hover:text-red-400 transition-colors cursor-pointer"
-                                            title="Eliminar">
-                                            <flux:icon.trash class="size-4" />
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="7" class="px-6 py-16 text-center">
-                                    <div class="flex flex-col items-center gap-3 text-gray-400 dark:text-zinc-500">
-                                        <flux:icon.building-office-2 class="size-12 opacity-30" />
-                                        <p class="text-sm">No hay dependencias registradas aún.</p>
-                                        <button @click="openCreate()"
-                                            class="text-sm text-blue-600 dark:text-blue-400 hover:underline cursor-pointer">
-                                            Crear la primera dependencia
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </div>
+        <livewire:administration.dependency-table />
     </div>
 
     {{-- TAB: IMPORTAR / EXPORTAR --}}
     <div x-show="activeTab === 'import'" x-transition>
         <div class="border border-neutral-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm overflow-hidden">
 
-            {{-- Import section header --}}
             <div class="px-4 sm:px-6 py-4 border-b border-neutral-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 flex items-center justify-between gap-4">
                 <div>
                     <h2 class="text-base font-semibold text-gray-900 dark:text-white">Importar desde Excel</h2>
@@ -192,7 +98,6 @@
 
             <div class="px-4 sm:px-6 py-6 flex flex-col gap-6">
 
-                {{-- Error de importación --}}
                 @error('excel_file')
                     <div class="flex items-start gap-3 px-4 py-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">
                         <flux:icon.x-circle class="size-5 shrink-0 mt-0.5" />
@@ -200,7 +105,6 @@
                     </div>
                 @enderror
 
-                {{-- Drop zone --}}
                 <form action="{{ route('dependencies.import') }}" method="POST" enctype="multipart/form-data"
                       x-data="{ fileName: '', dragging: false }"
                       class="flex flex-col gap-4">
@@ -235,10 +139,8 @@
                     </div>
                 </form>
 
-                {{-- Divider --}}
                 <div class="border-t border-neutral-200 dark:border-zinc-700"></div>
 
-                {{-- Export section --}}
                 <div class="flex items-center justify-between gap-4">
                     <div>
                         <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Exportar datos actuales</h3>
