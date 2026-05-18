@@ -159,7 +159,7 @@ class UserModelTest extends TestCase
 
         // La factory no establece role, así que se usará el default de DB
         // (o podemos verificar que los valores válidos son admin/user)
-        $this->assertContains($user->role, ['admin', 'user']);
+        $this->assertEquals('user', $user->fresh()->role);
     }
 
     public function test_user_puede_tener_rol_admin(): void
