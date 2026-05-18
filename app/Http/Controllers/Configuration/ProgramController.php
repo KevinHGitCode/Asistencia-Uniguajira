@@ -15,11 +15,9 @@ class ProgramController extends Controller
 {
     public function index()
     {
-        $programs = Program::withCount('participants')
-            ->orderBy('name')
-            ->get();
+        $totalPrograms = Program::count();
 
-        return view('administration.programs.index', compact('programs'));
+        return view('administration.programs.index', compact('totalPrograms'));
     }
 
     public function store(Request $request)

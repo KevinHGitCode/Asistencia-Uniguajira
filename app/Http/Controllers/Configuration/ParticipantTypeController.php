@@ -13,11 +13,9 @@ class ParticipantTypeController extends Controller
 {
     public function index()
     {
-        $participantTypes = ParticipantType::withCount('participants')
-            ->orderBy('name')
-            ->get();
+        $totalParticipantTypes = ParticipantType::count();
 
-        return view('administration.participant-types.index', compact('participantTypes'));
+        return view('administration.participant-types.index', compact('totalParticipantTypes'));
     }
 
     public function store(Request $request)

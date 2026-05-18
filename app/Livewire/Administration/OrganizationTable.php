@@ -3,14 +3,14 @@
 namespace App\Livewire\Administration;
 
 use App\Livewire\Concerns\ClampsPagination;
-use App\Models\Dependency;
+use App\Models\Organization;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 
-class DependencyTable extends Component
+class OrganizationTable extends Component
 {
     use ClampsPagination;
     use WithPagination;
@@ -25,18 +25,18 @@ class DependencyTable extends Component
 
     public function render(): View
     {
-        $dependencies = $this->paginateAndClamp($this->dependencyQuery());
+        $organizations = $this->paginateAndClamp($this->organizationQuery());
 
-        return view('livewire.administration.dependency-table', compact('dependencies'));
+        return view('livewire.administration.organization-table', compact('organizations'));
     }
 
-    private function dependencyQuery(): Builder
+    private function organizationQuery(): Builder
     {
         $search = trim($this->search);
 
-        return Dependency::query()
+        return Organization::query()
             ->select(['id', 'name', 'created_at'])
-            ->withCount(['areas', 'events', 'participants'])
+            ->withCount('participantRoles')
             ->when($search !== '', fn (Builder $query) => $query->where('name', 'like', "%{$search}%"))
             ->orderBy('name');
     }

@@ -13,11 +13,9 @@ class AffiliationController extends Controller
 {
     public function index()
     {
-        $affiliations = Affiliation::withCount('participants')
-            ->orderBy('name')
-            ->get();
+        $totalAffiliations = Affiliation::count();
 
-        return view('administration.affiliations.index', compact('affiliations'));
+        return view('administration.affiliations.index', compact('totalAffiliations'));
     }
 
     public function store(Request $request)

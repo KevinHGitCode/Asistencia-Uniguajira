@@ -125,6 +125,42 @@
 
     {{-- Tabla --}}
     <div class="border border-neutral-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm overflow-hidden">
+        <div class="px-4 sm:px-6 py-4 border-b border-neutral-200 dark:border-neutral-700 bg-zinc-50 dark:bg-zinc-900 flex flex-wrap items-center justify-between gap-3">
+            <h2 class="text-base font-semibold text-gray-900 dark:text-white">Listado de Registros</h2>
+
+            @if($logs->hasPages())
+            <div class="flex items-center gap-0.5 ml-auto">
+                @if($logs->onFirstPage())
+                    <span class="p-1.5 rounded-lg text-gray-300 dark:text-zinc-600 cursor-not-allowed">
+                        <flux:icon.chevron-left class="size-4" />
+                    </span>
+                @else
+                    <a href="{{ $logs->previousPageUrl() }}"
+                       class="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
+                       title="Página anterior">
+                        <flux:icon.chevron-left class="size-4" />
+                    </a>
+                @endif
+
+                <span class="text-xs font-medium text-gray-500 dark:text-gray-400 px-1.5 tabular-nums select-none">
+                    {{ $logs->currentPage() }}&thinsp;/&thinsp;{{ $logs->lastPage() }}
+                </span>
+
+                @if($logs->hasMorePages())
+                    <a href="{{ $logs->nextPageUrl() }}"
+                       class="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
+                       title="Página siguiente">
+                        <flux:icon.chevron-right class="size-4" />
+                    </a>
+                @else
+                    <span class="p-1.5 rounded-lg text-gray-300 dark:text-zinc-600 cursor-not-allowed">
+                        <flux:icon.chevron-right class="size-4" />
+                    </span>
+                @endif
+            </div>
+            @endif
+        </div>
+
         <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead>
@@ -237,8 +273,65 @@
 
         {{-- Paginación --}}
         @if($logs->hasPages())
-            <div class="px-4 sm:px-6 py-4 border-t border-neutral-200 dark:border-zinc-800">
-                {{ $logs->links() }}
+            @php
+                $current = $logs->currentPage();
+                $last = $logs->lastPage();
+                $left = max(1, $current - 2);
+                $right = min($last, $current + 2);
+            @endphp
+            <div class="px-4 sm:px-6 py-4 border-t border-neutral-100 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <p class="text-xs text-gray-500 dark:text-gray-400">
+                    Mostrando
+                    <span class="font-medium text-gray-700 dark:text-gray-300">{{ $logs->firstItem() }}</span>–<span class="font-medium text-gray-700 dark:text-gray-300">{{ $logs->lastItem() }}</span>
+                    de
+                    <span class="font-medium text-gray-700 dark:text-gray-300">{{ $logs->total() }}</span>
+                    {{ Str::plural('registro', $logs->total()) }}
+                </p>
+
+                <div class="flex items-center gap-1">
+                    @if($logs->onFirstPage())
+                        <span class="px-2.5 py-1.5 rounded-lg text-xs text-gray-300 dark:text-zinc-600 cursor-not-allowed select-none">Anterior</span>
+                    @else
+                        <a href="{{ $logs->previousPageUrl() }}"
+                           class="px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors cursor-pointer">
+                            Anterior
+                        </a>
+                    @endif
+
+                    @if($left > 1)
+                        <a href="{{ $logs->url(1) }}"
+                           class="w-8 h-8 flex items-center justify-center rounded-lg text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors cursor-pointer">1</a>
+                        @if($left > 2)
+                            <span class="w-8 h-8 flex items-center justify-center text-xs text-gray-400 dark:text-zinc-500 select-none">…</span>
+                        @endif
+                    @endif
+
+                    @for($p = $left; $p <= $right; $p++)
+                        @if($p === $current)
+                            <span class="w-8 h-8 flex items-center justify-center rounded-lg text-xs font-semibold text-white bg-[#64748b] select-none">{{ $p }}</span>
+                        @else
+                            <a href="{{ $logs->url($p) }}"
+                               class="w-8 h-8 flex items-center justify-center rounded-lg text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors cursor-pointer">{{ $p }}</a>
+                        @endif
+                    @endfor
+
+                    @if($right < $last)
+                        @if($right < $last - 1)
+                            <span class="w-8 h-8 flex items-center justify-center text-xs text-gray-400 dark:text-zinc-500 select-none">…</span>
+                        @endif
+                        <a href="{{ $logs->url($last) }}"
+                           class="w-8 h-8 flex items-center justify-center rounded-lg text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors cursor-pointer">{{ $last }}</a>
+                    @endif
+
+                    @if($logs->hasMorePages())
+                        <a href="{{ $logs->nextPageUrl() }}"
+                           class="px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors cursor-pointer">
+                            Siguiente
+                        </a>
+                    @else
+                        <span class="px-2.5 py-1.5 rounded-lg text-xs text-gray-300 dark:text-zinc-600 cursor-not-allowed select-none">Siguiente</span>
+                    @endif
+                </div>
             </div>
         @endif
     </div>

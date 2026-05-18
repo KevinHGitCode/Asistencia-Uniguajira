@@ -1,6 +1,5 @@
 window.affiliationsManager = function () {
     return {
-        search: '',
         showForm: false,
         editingId: null,
         formName: '',

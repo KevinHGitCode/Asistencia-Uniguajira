@@ -16,11 +16,10 @@ class OrganizationController extends Controller
 {
     public function index()
     {
-        $organizations = Organization::withCount('participantRoles')
-            ->orderBy('name')
-            ->get();
+        $allOrganizations = Organization::orderBy('name')->get(['id', 'name']);
+        $totalOrganizations = $allOrganizations->count();
 
-        return view('administration.organizations.index', compact('organizations'));
+        return view('administration.organizations.index', compact('allOrganizations', 'totalOrganizations'));
     }
 
     public function search(Request $request)

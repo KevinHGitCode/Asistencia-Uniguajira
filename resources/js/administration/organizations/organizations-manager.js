@@ -1,6 +1,5 @@
 window.organizationsManager = function () {
     return {
-        search: '',
         showForm: false,
         editingId: null,
         formName: '',
