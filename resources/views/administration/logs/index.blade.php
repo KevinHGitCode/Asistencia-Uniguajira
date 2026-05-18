@@ -1,7 +1,7 @@
 <x-layouts.app :title="__('Registros de Actividad')">
 
 <div class="flex h-full w-full flex-1 flex-col gap-6 p-1 sm:p-4 md:p-6"
-     x-data="{ showClearModal: false, showFilters: false }">
+     x-data="{ showFilters: false }">
 
     {{-- Header --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -18,13 +18,6 @@
                 {{ $logs->total() }} {{ Str::plural('registro', $logs->total()) }}
             </p>
         </div>
-        @if($logs->total() > 0)
-            <button @click="showClearModal = true"
-                class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-red-600 text-white text-sm font-medium transition-colors shadow-sm cursor-pointer self-start sm:self-auto hover:opacity-90">
-                <flux:icon.trash class="size-4" />
-                Limpiar logs
-            </button>
-        @endif
     </div>
 
     {{-- Flash: success --}}
@@ -336,41 +329,6 @@
         @endif
     </div>
 
-    {{-- Modal de confirmación para limpiar --}}
-    <div x-show="showClearModal" x-cloak
-         class="fixed inset-0 z-50 flex items-center justify-center p-4"
-         x-transition:enter="transition ease-out duration-200"
-         x-transition:enter-start="opacity-0"
-         x-transition:enter-end="opacity-100"
-         x-transition:leave="transition ease-in duration-150"
-         x-transition:leave-start="opacity-100"
-         x-transition:leave-end="opacity-0">
-
-        {{-- Overlay --}}
-        <div class="fixed inset-0 bg-black/50" @click="showClearModal = false"></div>
-
-        {{-- Panel --}}
-        <div class="relative bg-white dark:bg-zinc-900 rounded-2xl shadow-xl max-w-md w-full p-6 z-10"
-             @click.away="showClearModal = false">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Limpiar registros antiguos</h3>
-            <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
-                Se eliminarán todos los registros de actividad con más de <strong>90 días</strong> de antigüedad. Esta acción no se puede deshacer.
-            </p>
-            <div class="flex items-center justify-end gap-3">
-                <button @click="showClearModal = false"
-                    class="px-4 py-2 rounded-lg border border-neutral-200 dark:border-zinc-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer">
-                    Cancelar
-                </button>
-                <form method="POST" action="{{ route('activity-logs.clear') }}">
-                    @csrf
-                    <button type="submit"
-                        class="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:opacity-90 transition-colors shadow-sm cursor-pointer">
-                        Sí, limpiar
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
 </div>
 
 </x-layouts.app>
