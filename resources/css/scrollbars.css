@@ -1,0 +1,74 @@
+/* ============================================================
+   Scrollbars sutiles
+   ------------------------------------------------------------
+   · Delgados y prácticamente invisibles en reposo.
+   · Solo resaltan cuando hay movimiento: un pequeño script
+     (resources/js/scroll-activity.js) añade la clase
+     `.is-scrolling` al elemento mientras se desplaza y la quita
+     al detenerse.
+   · El sidebar es más delgado y más tenue que el contenido.
+   · Solo en punteros finos (mouse); en táctil se deja el nativo.
+   ============================================================ */
+
+@media (pointer: fine) {
+
+    /* ---- Firefox ---- */
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: transparent transparent;
+    }
+    .is-scrolling {
+        scrollbar-color: rgba(82, 82, 82, 0.45) transparent;
+    }
+    .dark .is-scrolling,
+    .dark.is-scrolling {
+        scrollbar-color: rgba(255, 255, 255, 0.28) transparent;
+    }
+    [data-flux-sidebar].is-scrolling {
+        scrollbar-color: rgba(82, 82, 82, 0.22) transparent;
+    }
+    .dark [data-flux-sidebar].is-scrolling {
+        scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+    }
+
+    /* ---- WebKit / Blink: base (pista invisible, thumb fino e invisible) ---- */
+    ::-webkit-scrollbar {
+        width: 11px;
+        height: 11px;
+    }
+    ::-webkit-scrollbar-track,
+    ::-webkit-scrollbar-corner {
+        background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+        background-color: transparent;
+        /* El borde transparente + background-clip adelgaza el thumb visible */
+        border: 3.5px solid transparent;
+        background-clip: content-box;
+        border-radius: 9999px;
+        transition: background-color 0.25s ease;
+    }
+
+    /* ---- Contenido: el thumb aparece solo con el movimiento ---- */
+    .is-scrolling::-webkit-scrollbar-thumb {
+        background-color: rgba(82, 82, 82, 0.45);
+    }
+    .dark .is-scrolling::-webkit-scrollbar-thumb,
+    .dark.is-scrolling::-webkit-scrollbar-thumb {
+        background-color: rgba(255, 255, 255, 0.28);
+    }
+
+    /* ---- Sidebar: más delgado y más sutil que el contenido ---- */
+    [data-flux-sidebar]::-webkit-scrollbar {
+        width: 8px;
+    }
+    [data-flux-sidebar]::-webkit-scrollbar-thumb {
+        border-width: 2.5px;
+    }
+    [data-flux-sidebar].is-scrolling::-webkit-scrollbar-thumb {
+        background-color: rgba(82, 82, 82, 0.22);
+    }
+    .dark [data-flux-sidebar].is-scrolling::-webkit-scrollbar-thumb {
+        background-color: rgba(255, 255, 255, 0.12);
+    }
+}
