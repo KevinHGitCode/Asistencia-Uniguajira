@@ -1,0 +1,11 @@
+# Estado de interfaz/sesión de Obsidian (no es conocimiento, cambia por máquina)
+.obsidian/workspace*.json
+.obsidian/cache
+.obsidian/plugins/*/data.json
+
+# Papelera de Obsidian
+.trash/
+
+# Sistema
+.DS_Store
+Thumbs.db
