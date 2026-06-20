@@ -13,11 +13,17 @@ class Program extends Model
         'name',
         'program_type',
         'campus_id',
+        'academic_program_id',
     ];
 
     public function campus()
     {
         return $this->belongsTo(Campus::class);
+    }
+
+    public function academicProgram()
+    {
+        return $this->belongsTo(AcademicProgram::class);
     }
 
     public function participants()
