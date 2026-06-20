@@ -55,6 +55,7 @@
                                 <tr class="text-left text-xs uppercase tracking-wide text-zinc-600 dark:text-zinc-300">
                                     <th class="px-4 py-3">{{ __('User') }}</th>
                                     <th class="px-4 py-3">{{ __('Role') }}</th>
+                                    <th class="px-4 py-3">Sede</th>
                                     <th class="px-4 py-3">{{ __('Dependencies') }}</th>
                                     <th class="px-4 py-3">{{ __('Status') }}</th>
                                     <th class="px-4 py-3 text-right">{{ __('Actions') }}</th>
@@ -101,6 +102,11 @@
                                                     {{ __(ucfirst($user->role)) }}
                                                 </flux:badge>
                                             @endif
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            <span class="text-sm text-zinc-700 dark:text-zinc-300">
+                                                {{ $user->campus?->name ?? 'Global' }}
+                                            </span>
                                         </td>
                                         <td class="px-4 py-3 max-w-sm">
                                             @if(isset($user->role) && $user->role === 'user')
@@ -186,7 +192,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="5" class="px-4 py-8 text-center text-sm text-zinc-600 dark:text-zinc-400">
+                                        <td colspan="6" class="px-4 py-8 text-center text-sm text-zinc-600 dark:text-zinc-400">
                                             {{ __('No users found') }}
                                         </td>
                                     </tr>
@@ -336,7 +342,7 @@
         </div>
     </div>
 
-    @livewire('user.create-user-modal', ['dependencies' => $dependencies, 'roles' => $roles])
-    @livewire('user.edit-user-modal', ['dependencies' => $dependencies, 'roles' => $roles])
+    @livewire('user.create-user-modal', ['dependencies' => $dependencies, 'campuses' => $campuses, 'roles' => $roles])
+    @livewire('user.edit-user-modal', ['dependencies' => $dependencies, 'campuses' => $campuses, 'roles' => $roles])
 
 </x-layouts.app>

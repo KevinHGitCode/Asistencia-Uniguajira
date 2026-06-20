@@ -23,6 +23,7 @@ class Event extends Model
         'user_id',
         'dependency_id',
         'area_id',
+        'campus_id',
     ];
 
     protected $casts = [
@@ -54,6 +55,11 @@ class Event extends Model
     public function area()
     {
         return $this->belongsTo(Area::class);
+    }
+
+    public function campus()
+    {
+        return $this->belongsTo(Campus::class);
     }
 
     public function getIsEditableAttribute(): bool

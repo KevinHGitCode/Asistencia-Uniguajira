@@ -30,6 +30,50 @@
                     :value="old('email', $user->email)"
                 />
 
+                <div class="flex flex-col gap-1">
+                    <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                        Rol del usuario
+                    </label>
+                    <select name="role"
+                        class="w-full rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        @foreach($roles as $value => $label)
+                            <option value="{{ $value }}" {{ old('role', $user->role) == $value ? 'selected' : '' }}>
+                                {{ $label }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="flex flex-col gap-1">
+                    <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                        Sede <span class="text-gray-400">(no aplica para superadmin)</span>
+                    </label>
+                    <select name="campus_id"
+                        class="w-full rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">— Ninguna —</option>
+                        @foreach($campuses as $value => $label)
+                            <option value="{{ $value }}" {{ old('campus_id', $user->campus_id) == $value ? 'selected' : '' }}>
+                                {{ $label }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="flex flex-col gap-1">
+                    <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                        Dependencia <span class="text-gray-400">(obligatoria para user)</span>
+                    </label>
+                    <select name="dependency_id"
+                        class="w-full rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">— Ninguna —</option>
+                        @foreach($dependencies as $value => $label)
+                            <option value="{{ $value }}" {{ old('dependency_id', $user->dependencies->first()?->id) == $value ? 'selected' : '' }}>
+                                {{ $label }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
                 @if ($errors->any())
                     <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
                         <ul class="list-disc list-inside text-sm">

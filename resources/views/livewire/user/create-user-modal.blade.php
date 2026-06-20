@@ -61,6 +61,24 @@
                     @enderror
                 </div>
 
+                {{-- SEDE --}}
+                @if($role !== 'superadmin')
+                    <div class="flex flex-col gap-1">
+                        <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                            Sede
+                        </label>
+                        <x-ui.searchable-select
+                            wire:model.live="campus_id"
+                            :options="$campuses"
+                            placeholder="Selecciona una sede"
+                            empty-label="Selecciona una sede"
+                            search-placeholder="Buscar sede..." />
+                        @error('campus_id')
+                            <span class="text-red-500 text-xs">{{ $message }}</span>
+                        @enderror
+                    </div>
+                @endif
+
                 {{-- DEPENDENCIAS (solo visible si el rol es user) --}}
                 @if($role === 'user')
                     <div class="flex flex-col gap-2">

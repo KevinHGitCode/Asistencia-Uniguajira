@@ -2,10 +2,11 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Facades\Auth;
+use Symfony\Component\HttpFoundation\Response;
 
 class RoleMiddleware
 {
@@ -16,9 +17,25 @@ class RoleMiddleware
      */
     public function handle(Request $request, Closure $next, ...$roles): Response
     {
-        if (!Auth::check() || !in_array(Auth::user()->role, $roles)) {
+        $user = Auth::user();
+
+        if (! $user || ! in_array($user->role, $this->expandRoles($roles), true)) {
             abort(403, 'No tienes permisos para acceder.');
         }
+
         return $next($request);
+    }
+
+    /**
+     * @param  array<int, string>  $roles
+     * @return array<int, string>
+     */
+    private function expandRoles(array $roles): array
+    {
+        if (in_array(User::ROLE_ADMIN, $roles, true) && ! in_array(User::ROLE_SUPERADMIN, $roles, true)) {
+            $roles[] = User::ROLE_SUPERADMIN;
+        }
+
+        return $roles;
     }
 }
