@@ -22,6 +22,16 @@ compromiso de fechas; es orden de prioridad sugerido.
 - Actualizar `README.md` y la tabla de relaciones de `CLAUDE.md` (brechas #2 y #3).
 - Activar/ordenar seeders de demo (brecha #5).
 
+## 🧭 Planeado (propuestas activas — 2026-06-20)
+Iniciativas formalizadas como ADR en estado 🟡 propuesta (pendientes de aceptar). Ramas
+sugeridas en [[nombres-de-rama-sugeridos]].
+- **Pasarela de revisión para importar participantes** (tabla de espera + revisión/aprobación,
+  carga en cola, anti doble-cargue, indicador de progreso) → [[adr-0004-pasarela-de-revision-para-importacion-de-participantes]].
+- **Rate limiting anti-abuso** en rutas públicas y API → [[adr-0005-rate-limiting-anti-abuso]].
+- **Formularios en modal centrado** (en vez de flyout lateral) → [[adr-0006-formularios-en-modal-centrado]].
+- **Paleta de comandos para administradores** (atajo tipo Cmd/Ctrl+K) → [[adr-0007-paleta-de-comandos-admin]].
+- **Listado de participantes en React** (isla, por rendimiento) → [[adr-0008-listado-participantes-en-react]].
+
 ## 🚀 Candidatos de producto (sin compromiso)
 - Notificaciones reales (la UI hoy solo manda correo de confirmación).
 - Auto-registro de participantes internos (hoy el externo sí, el interno depende de import).

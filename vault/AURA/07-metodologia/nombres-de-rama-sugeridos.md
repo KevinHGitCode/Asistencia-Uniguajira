@@ -28,6 +28,11 @@ y prefijos en [[convencion-de-ramas]]. Reserva la tarea en [[tablero-trabajo-en-
 | Tests del registro de asistencia | `test/cobertura-registro-asistencia` | 🟢 | Solo pruebas |
 | Notificaciones reales | `feat/notificaciones-eventos` | 🔴 | Probable migración (tabla notifications/jobs) |
 | Auto-registro de internos en QR | `feat/autoregistro-internos-qr` | 🟢 | Lógica del componente, sin esquema |
+| Pasarela de revisión de importación | `feat/pasarela-importacion-participantes` | 🔴 | Crea tablas de staging ([[adr-0004-pasarela-de-revision-para-importacion-de-participantes]]) |
+| Rate limiting de rutas | `feat/rate-limiting-rutas` | 🔴 | Cambia contratos de rutas (429) ([[adr-0005-rate-limiting-anti-abuso]]) |
+| Formularios a modal centrado | `refactor/formularios-modal-centrado` | 🟢 | Solo UI ([[adr-0006-formularios-en-modal-centrado]]) |
+| Paleta de comandos admin | `feat/paleta-comandos-admin` | 🟢 | UI/JS, sin esquema ([[adr-0007-paleta-de-comandos-admin]]) |
+| Listado de participantes en React | `feat/participantes-listado-react` | 🔴 | Nuevo endpoint/contrato API ([[adr-0008-listado-participantes-en-react]]) |
 
 > Añade filas cuando propongas una funcionalidad nueva. Una funcionalidad sin rama propuesta
 > aquí no debería empezar a codificarse (ver [[reglas-de-oro]]).
