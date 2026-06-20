@@ -4,6 +4,7 @@ namespace Tests\Feature\Event;
 
 use App\Livewire\Event\CreateEventWizard;
 use App\Models\Area;
+use App\Models\Campus;
 use App\Models\Dependency;
 use App\Models\Event;
 use App\Models\User;
@@ -26,14 +27,24 @@ class CreateEventWizardTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private Dependency $dependency;
+
+    private Campus $campus;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->dependency = Dependency::factory()->create(['name' => 'Bienestar Universitario']);
-        $this->user = User::factory()->create(['role' => 'user']);
+        $this->campus = Campus::create(['name' => 'Maicao']);
+        $this->dependency = Dependency::factory()->create([
+            'name' => 'Bienestar Universitario',
+            'campus_id' => $this->campus->id,
+        ]);
+        $this->user = User::factory()->create([
+            'role' => 'user',
+            'campus_id' => $this->campus->id,
+        ]);
         $this->user->dependencies()->attach($this->dependency);
     }
 
@@ -156,11 +167,15 @@ class CreateEventWizardTest extends TestCase
     #[Test]
     public function seleccionar_dependencia_carga_sus_areas(): void
     {
-        $area = Area::factory()->create(['dependency_id' => $this->dependency->id, 'name' => 'Área de Salud']);
+        $area = Area::factory()->create([
+            'dependency_id' => $this->dependency->id,
+            'campus_id' => $this->campus->id,
+            'name' => 'Área de Salud',
+        ]);
         $this->actingAs($this->user);
 
         // Añadir segunda dependencia para que showDependencySelect sea true
-        $dep2 = Dependency::factory()->create();
+        $dep2 = Dependency::factory()->create(['campus_id' => $this->campus->id]);
         $this->user->dependencies()->attach($dep2);
 
         Livewire::test(CreateEventWizard::class)
@@ -173,10 +188,13 @@ class CreateEventWizardTest extends TestCase
     #[Test]
     public function cambiar_dependencia_limpia_el_area_seleccionada(): void
     {
-        $dep2 = Dependency::factory()->create();
+        $dep2 = Dependency::factory()->create(['campus_id' => $this->campus->id]);
         $this->user->dependencies()->attach($dep2);
 
-        $area1 = Area::factory()->create(['dependency_id' => $this->dependency->id]);
+        $area1 = Area::factory()->create([
+            'dependency_id' => $this->dependency->id,
+            'campus_id' => $this->campus->id,
+        ]);
         $this->actingAs($this->user);
 
         Livewire::test(CreateEventWizard::class)
@@ -345,10 +363,10 @@ class CreateEventWizardTest extends TestCase
             ->assertRedirect(route('events.list'));
 
         $this->assertDatabaseHas('events', [
-            'title'    => 'Día del amor y la amistad',
+            'title' => 'Día del amor y la amistad',
             'location' => 'Auditorio principal',
-            'date'     => '2026-06-15',
-            'user_id'  => $this->user->id,
+            'date' => '2026-06-15',
+            'user_id' => $this->user->id,
         ]);
     }
 
@@ -369,8 +387,8 @@ class CreateEventWizardTest extends TestCase
             ->assertRedirect(route('events.list'));
 
         $this->assertDatabaseHas('events', [
-            'title'   => 'Evento mínimo',
-            'date'    => '2026-07-20',
+            'title' => 'Evento mínimo',
+            'date' => '2026-07-20',
             'user_id' => $this->user->id,
         ]);
     }
@@ -399,10 +417,13 @@ class CreateEventWizardTest extends TestCase
     #[Test]
     public function usuario_normal_no_puede_asignar_dependencia_ajena(): void
     {
-        $otraDependencia = Dependency::factory()->create(['name' => 'Rectoría']);
+        $otraDependencia = Dependency::factory()->create([
+            'name' => 'Rectoría',
+            'campus_id' => $this->campus->id,
+        ]);
         // $otraDependencia NO está asociada a $this->user
 
-        $dep2 = Dependency::factory()->create();
+        $dep2 = Dependency::factory()->create(['campus_id' => $this->campus->id]);
         $this->user->dependencies()->attach($dep2); // para que showDependencySelect sea true
 
         $this->actingAs($this->user);
@@ -424,10 +445,13 @@ class CreateEventWizardTest extends TestCase
     #[Test]
     public function area_de_otra_dependencia_es_rechazada_por_el_servicio(): void
     {
-        $otraDep  = Dependency::factory()->create();
-        $areaAjena = Area::factory()->create(['dependency_id' => $otraDep->id]);
+        $otraDep = Dependency::factory()->create(['campus_id' => $this->campus->id]);
+        $areaAjena = Area::factory()->create([
+            'dependency_id' => $otraDep->id,
+            'campus_id' => $this->campus->id,
+        ]);
 
-        $dep2 = Dependency::factory()->create();
+        $dep2 = Dependency::factory()->create(['campus_id' => $this->campus->id]);
         $this->user->dependencies()->attach($dep2);
 
         $this->actingAs($this->user);
@@ -452,7 +476,10 @@ class CreateEventWizardTest extends TestCase
     #[Test]
     public function admin_puede_crear_evento_sin_dependencia(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'campus_id' => $this->campus->id,
+        ]);
         $this->actingAs($admin);
 
         Livewire::test(CreateEventWizard::class)
@@ -469,7 +496,7 @@ class CreateEventWizardTest extends TestCase
             ->assertRedirect(route('events.list'));
 
         $this->assertDatabaseHas('events', [
-            'title'         => 'Evento admin',
+            'title' => 'Evento admin',
             'dependency_id' => null,
         ]);
     }

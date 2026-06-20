@@ -4,36 +4,46 @@ namespace App\Livewire\Event;
 
 use App\Models\Area;
 use App\Models\Dependency;
+use App\Services\CampusScopeService;
 use App\Services\EventService;
 use Carbon\Carbon;
-use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Component;
 
 class CreateEventWizard extends Component
 {
     public int $step = 1;
+
     public const TOTAL_STEPS = 3;
 
     // ── Paso 1: Identidad ─────────────────────────────────────────────────────
     public string $title = '';
+
     public string $description = '';
 
     // ── Paso 2: Organización ──────────────────────────────────────────────────
     public string $location = '';
+
     public ?string $dependency_id = null;
+
     public ?string $area_id = null;
 
     // ── Paso 3: Fecha & Hora ──────────────────────────────────────────────────
     public string $date = '';
+
     public string $start_time = '';
+
     public string $end_time = '';
 
     // ── UI helpers ────────────────────────────────────────────────────────────
     /** @var array<int|string, string>  id => name */
     public array $dependencies = [];
+
     /** @var array<int, array{id: int, name: string}> */
     public array $areas = [];
+
     public bool $isAdmin = false;
+
     public bool $showDependencySelect = false;
 
     // ── Reglas por paso ───────────────────────────────────────────────────────
@@ -42,18 +52,18 @@ class CreateEventWizard extends Component
     {
         return [
             1 => [
-                'title'       => ['required', 'string', 'max:255'],
+                'title' => ['required', 'string', 'max:255'],
                 'description' => ['nullable', 'string'],
             ],
             2 => [
-                'location'      => ['nullable', 'string', 'max:255'],
+                'location' => ['nullable', 'string', 'max:255'],
                 'dependency_id' => ['nullable', 'exists:dependencies,id'],
-                'area_id'       => ['nullable', 'exists:areas,id'],
+                'area_id' => ['nullable', 'exists:areas,id'],
             ],
             3 => [
-                'date'       => ['required', 'date', 'after_or_equal:today'],
+                'date' => ['required', 'date', 'after_or_equal:today'],
                 'start_time' => ['required', 'date_format:H:i'],
-                'end_time'   => [
+                'end_time' => [
                     'required',
                     'date_format:H:i',
                     function ($attribute, $value, $fail) {
@@ -71,14 +81,20 @@ class CreateEventWizard extends Component
     public function mount(): void
     {
         $user = Auth::user();
-        $this->isAdmin = $user->role === 'admin';
+        $campusScope = app(CampusScopeService::class);
+        $this->isAdmin = $user->hasAdminAccess();
 
         if ($this->isAdmin) {
-            // Caso 1: admin ve todas las dependencias
-            $this->dependencies = Dependency::orderBy('name')->pluck('name', 'id')->toArray();
+            $this->dependencies = $campusScope->applyToQuery(Dependency::query(), $user)
+                ->orderBy('name')
+                ->pluck('name', 'id')
+                ->toArray();
             $this->showDependencySelect = true;
         } else {
-            $userDeps = $user->dependencies()->orderBy('name')->get();
+            $userDeps = $user->dependencies()
+                ->where('dependencies.campus_id', $user->campus_id)
+                ->orderBy('name')
+                ->get();
 
             if ($userDeps->count() > 1) {
                 // Caso 2: usuario con varias dependencias
@@ -115,13 +131,24 @@ class CreateEventWizard extends Component
 
     private function loadAreas(): void
     {
-        $this->areas = $this->dependency_id
-            ? Area::select(['id', 'name'])
-                ->where('dependency_id', $this->dependency_id)
-                ->orderBy('name')
-                ->get()
-                ->toArray()
-            : [];
+        if (! $this->dependency_id) {
+            $this->areas = [];
+
+            return;
+        }
+
+        $query = Area::select(['id', 'name'])
+            ->where('dependency_id', $this->dependency_id);
+
+        $campusId = app(CampusScopeService::class)->activeCampusId(Auth::user());
+        if ($campusId !== null) {
+            $query->where('campus_id', $campusId);
+        }
+
+        $this->areas = $query
+            ->orderBy('name')
+            ->get()
+            ->toArray();
     }
 
     // ── Navegación ────────────────────────────────────────────────────────────
@@ -146,14 +173,14 @@ class CreateEventWizard extends Component
         $this->validate($this->stepRules()[3]);
 
         $eventService->create([
-            'title'         => $this->title,
-            'description'   => $this->description ?: null,
-            'location'      => $this->location ?: null,
+            'title' => $this->title,
+            'description' => $this->description ?: null,
+            'location' => $this->location ?: null,
             'dependency_id' => $this->dependency_id ?: null,
-            'area_id'       => $this->area_id ?: null,
-            'date'          => $this->date,
-            'start_time'    => $this->start_time ?: null,
-            'end_time'      => $this->end_time ?: null,
+            'area_id' => $this->area_id ?: null,
+            'date' => $this->date,
+            'start_time' => $this->start_time ?: null,
+            'end_time' => $this->end_time ?: null,
         ], Auth::user());
 
         return redirect()->route('events.list')->with('success', '¡Evento creado exitosamente!');

@@ -64,13 +64,14 @@ Leyenda: ✅ implementado · 🟡 parcial · ⬜ pendiente · 🚫 no aplica / g
 |---|---:|---|
 | Dashboard | ✅ | `DashboardController` aplica `CampusScopeService` a conteos y dependencias. Superadmin tiene selector de sede activa. |
 | Calendario dashboard | ✅ | `/api/eventos-json`, `/api/events/{date}` y `/api/mis-eventos-json` pasan por auth web y filtran por sede. |
+| Eventos privados (listado, crear, detalle, editar, eliminar, terminar) | ✅ | `EventController`, `EventService`, `CreateEventWizard` y `EditEventModal` aplican sede. Admin gestiona solo su sede; superadmin respeta sede activa o ve todo sin seleccion. |
 | Detalle de evento desde calendario | ✅ | `EventController::show` valida sede antes de permitir ver detalle. |
 | Ruta publica QR `/events/acceso/{slug}` | 🚫 | Debe seguir publica y sin filtro de sede. No romper. |
 | Confirmacion publica de asistencia | 🚫 | Debe seguir publica. Revisar solo seguridad anti-abuso, no sede. |
 | Estadisticas | ⬜ | No tocar todavia. Alto riesgo de mezcla por endpoints `/api/statistics/*`. |
 | Comparador de eventos | ⬜ | Vive en `routes/api.php`; aun puede mezclar sedes. Revisar cuando toque estadisticas. |
-| Eventos CRUD/listado | ⬜ | `EventController::index`, create/store/destroy/end y `EventService` requieren auditoria por sede. |
-| Wizard de creacion de evento | ⬜ | Debe limitar dependencias/areas por sede y asignar `events.campus_id`. |
+| Descarga privada de PDF de evento | ✅ | No cambia generacion PDF; se agrego autorizacion por sede para evitar bypass por URL directa. |
+| Wizard de creacion de evento | ✅ | Limita dependencias/areas por sede y asigna `events.campus_id`. |
 | Administracion dependencias | ⬜ | Listados, CRUD, import/export deben filtrar o asignar sede. |
 | Administracion areas | ⬜ | Listados, CRUD, import/export deben filtrar o asignar sede. |
 | Administracion programas | ⬜ | Listados, CRUD, import/export deben filtrar o asignar sede y respetar `academic_program_id`. |
