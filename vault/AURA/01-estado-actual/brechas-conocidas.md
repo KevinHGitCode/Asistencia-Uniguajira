@@ -1,53 +1,54 @@
 ---
 tipo: estado-actual
-descripcion: Brechas e inconsistencias entre lo que prometen UI/docs y lo que entrega el código
+descripcion: Brechas e inconsistencias entre lo que prometen UI/docs y lo que entrega el codigo
 actualizado: 2026-06-20
 ---
 
 # Brechas conocidas
 
 Diferencias reales entre lo documentado/prometido y lo que el backend hace hoy. Cada brecha
-es candidata a ticket, idea ([[ideas]]) o decisión ([[plantilla-adr]]).
+es candidata a ticket, idea ([[ideas]]) o decision ([[plantilla-adr]]).
 
-## 1. Doble flujo de registro de asistencia (código legacy vivo) 🧟
-- El flujo **real** es el componente Livewire `AttendanceRegistration`, montado por
+## 1. Doble flujo de registro de asistencia (codigo legacy vivo) 🧟
+- El flujo real es el componente Livewire `AttendanceRegistration`, montado por
   `events/access.blade.php` (`<livewire:event.attendance-registration>`).
-- Siguen existiendo **vivos pero sin uso**: `AttendanceController::store` + `confirmation`,
+- Siguen vivos pero sin uso: `AttendanceController::store` + `confirmation`,
   la vista `events/confirmation`, y las rutas `attendance.store` / `attendance.confirmation`.
-- El flujo legacy es más pobre: solo busca participantes existentes por documento, sin
-  auto-registro ni captura demográfica.
-- **Riesgo:** ruta pública POST activa que duplica lógica y puede confundir. → Propuesta en
-  [[adr-0003-retirar-flujo-legacy-de-asistencia]].
+- Riesgo: ruta publica POST activa que duplica logica y puede confundir.
 
 ## 2. README desactualizado 📄
-- Dice **"MySQL"** y **"Blade, Tailwind"** como único stack; omite Livewire, React, Alpine.
-- Lista "Notificaciones automáticas" — en realidad solo hay **un correo** de confirmación de
-  asistencia (`AttendanceRegisteredMail`), no notificaciones generales.
-- No menciona administración, formatos, organizaciones, auditoría ni estadísticas.
-- Stack real en [[stack-tecnologico]].
+- Dice "MySQL" y "Blade, Tailwind" como unico stack; omite Livewire, React, Alpine.
+- Lista "Notificaciones automaticas"; en realidad solo hay correo de confirmacion de asistencia.
+- No menciona administracion, formatos, organizaciones, auditoria ni estadisticas.
 
-## 3. `CLAUDE.md` vs. código 🧭
-- Declara `User belongsTo Dependency`; el código es **`belongsToMany`** vía `dependency_user`.
-- Su tabla de relaciones **omite** `ParticipantRole`, `AttendanceDetail`, `Organization`,
-  `Format`, `ActivityLog`. Modelo real en [[modelo-de-datos]].
+## 3. `CLAUDE.md` vs. codigo 🧭
+- Declara `User belongsTo Dependency`; el codigo real es `belongsToMany` via `dependency_user`.
+- Omite `ParticipantRole`, `AttendanceDetail`, `Organization`, `Format`, `ActivityLog`,
+  `Campus` y `AcademicProgram`.
+- Modelo real en [[modelo-de-datos]].
 
-## 4. Estadísticas sin autenticación 🔓
-- Los endpoints **individuales** `/api/statistics/*` (en `routes/api.php`) **no** tienen
-  middleware de auth. Solo `*-summary` usan `web, auth` para filtrar por rol.
-- Permite leer agregados sin sesión. Riesgo pre-existente conocido — evaluar si es decisión
-  consciente o deuda (candidato a ADR).
+## 4. Estadisticas sin autenticacion / sin sede completa 🔓
+- Los endpoints individuales `/api/statistics/*` en `routes/api.php` no estan migrados al
+  filtro por sede.
+- Riesgo: pueden leer agregados globales o mezclar sedes.
+- Pendiente para la fase de estadisticas en [[migracion-multi-sede]].
 
 ## 5. Siembra de datos parcial 🌱
-- `DatabaseSeeder` solo ejecuta `ParticipantTypeSeeder` + `FormatSeeder` y crea **5 admins**
-  con contraseña `12345678`. Dependencias, áreas, eventos, participantes y asistencias están
-  **comentados**.
-- Consecuencia: `php artisan migrate --seed` **no** deja un entorno de demo completo.
+- `DatabaseSeeder` historicamente no deja un entorno demo completo.
+- Revisar seeders actuales antes de asumir datos de prueba.
 
 ## 6. "AURA" es marca de la app y nombre del vault ⚠️
-- `aura_blanco.png` y el footer "AURA" aparecen en la página pública de acceso → *AURA* es
-  marca de la aplicación. Este vault también se llama AURA (decisión tomada). Mantener la
-  distinción "app vs. conocimiento" en la comunicación.
+- `aura_blanco.png` y el footer "AURA" aparecen en la pagina publica de acceso.
+- Este vault tambien se llama AURA. Mantener la distincion "app vs. conocimiento".
 
 ## 7. Tests de ejemplo sin limpiar 🧪
-- Persisten `tests/Unit/ExampleTest.php` y `tests/Feature/ExampleTest.php` (placeholders del
-  starter kit). Cobertura real en [[estrategia-de-pruebas]].
+- Persisten tests placeholder del starter kit.
+- Cobertura real en [[estrategia-de-pruebas]].
+
+## 8. Migracion multi-sede incompleta por modulo 🟡
+- Ya existe base estructural (`campuses`, `campus_id`, roles, `CampusScopeService`) y dashboard
+  + calendario ya filtran por sede.
+- Aun faltan modulos criticos: Eventos CRUD, Administracion, Estadisticas, Imports/Exports y
+  auditoria.
+- Riesgo: una query sin `CampusScopeService` puede mezclar Maicao/Riohacha/Fonseca/Villanueva.
+- Fuente viva de verdad: [[migracion-multi-sede]].

@@ -1,38 +1,42 @@
 ---
 tipo: estado-actual
-descripcion: Inventario de módulos del sistema con su grado real de implementación
+descripcion: Inventario de modulos del sistema con su grado real de implementacion
 actualizado: 2026-06-20
 ---
 
-# Mapa de módulos
+# Mapa de modulos
 
-Grado de implementación verificado en controladores, componentes Livewire, rutas y vistas.
-Leyenda: ✅ funcional · 🟡 parcial / con deuda · 🧟 legacy (vivo pero sin uso).
+Grado de implementacion verificado en controladores, componentes Livewire, rutas y vistas.
+Leyenda: ✅ funcional · 🟡 parcial / con deuda · 🧟 legacy vivo pero sin uso.
 
-| Módulo | Estado | Dónde vive | Notas |
+> Seguimiento multi-sede: revisar siempre [[migracion-multi-sede]] antes de tocar un modulo
+> que lea o escriba `users`, `events`, `dependencies`, `areas` o `programs`.
+
+| Modulo | Estado | Donde vive | Notas |
 |---|---|---|---|
-| Autenticación | ✅ | starter kit Livewire, `routes/auth.php` | Registro, verificación, reset |
-| Dashboard + calendario | ✅ | `DashboardController`, `api.php` (`eventos-json`, `mis-eventos-json`) | Indicador "Hoy" con CSS |
-| Eventos (CRUD) | ✅ | `EventController`, `CreateEventWizard` (Livewire), `EventService` | `link` único para QR; terminar manual (`ended_at`) |
-| **Registro público de asistencia (QR)** | ✅ | `AttendanceRegistration` (Livewire), vista `events/access` | Flujo rico — ver [[registro-de-asistencia]] |
-| Registro de asistencia (controlador) | 🧟 | `AttendanceController::store` + `confirmation`, vista `events/confirmation`, ruta `attendance.store` | **Legacy**: la vista de acceso ya monta el componente Livewire — ver [[brechas-conocidas]] |
-| PDF de asistencia | ✅ | `EventController::descargarAsistencia`, `AttendancePdfService`, FPDI | Formato `general` + formatos por dependencia con mapper |
-| Formatos (plantillas PDF + mapper) | ✅ | `FormatController`, `config/attendance_formats.php` | Valida compatibilidad FPDI; escribe config con lock |
-| Administración | ✅ | `app/Http/Controllers/Configuration/*`, `app/Livewire/Administration/*` | Patrón 2 pestañas + Excel + paginación |
-| └ Dependencias / Áreas | ✅ | `DependencyController`, `AreaController` | Import/export/plantilla |
-| └ Programas / Afiliaciones / Estamentos | ✅ | `Program/Affiliation/ParticipantTypeController` | Import/export/plantilla |
-| └ Organizaciones | ✅ | `OrganizationController` | Búsqueda, merge, import |
-| └ Importación de participantes | ✅ | `ParticipantImportController` | Plantilla + reporte de descartados |
-| └ Registros de actividad (auditoría) | ✅ | `ActivityLogController`, `ActivityLogService` | Limpiar logs |
-| Estadísticas | ✅ | `StatisticsController` + `routes/api.php`, React en `resources/js/statistics/` | Resumen, top, por rol/sexo/grupo/dependencia/organización, comparar eventos |
-| Usuarios (admin) | ✅ | `UserController`, `app/Livewire/User/*` | CRUD + toggle activo |
+| Autenticacion | ✅ | starter kit Livewire, `routes/auth.php` | Registro, verificacion, reset |
+| Dashboard + calendario | ✅ | `DashboardController`, `routes/api.php` (`eventos-json`, `events/{date}`, `mis-eventos-json`) | Ya respeta sede con `CampusScopeService`; superadmin puede seleccionar sede activa |
+| Eventos (CRUD) | 🟡 | `EventController`, `CreateEventWizard` (Livewire), `EventService` | `show` ya valida sede; listado, creacion, descarga, terminar y borrado aun requieren auditoria multi-sede |
+| Registro publico de asistencia (QR) | ✅ | `AttendanceRegistration` (Livewire), vista `events/access` | Flujo publico; no filtrar por sede directamente. Ver [[registro-de-asistencia]] |
+| Registro de asistencia (controlador) | 🧟 | `AttendanceController::store` + `confirmation`, vista `events/confirmation`, ruta `attendance.store` | Legacy vivo. No romper rutas publicas |
+| PDF de asistencia | ✅ | `EventController::descargarAsistencia`, `AttendancePdfService`, FPDI | Pendiente revisar acceso por sede cuando toque Eventos CRUD |
+| Formatos (plantillas PDF + mapper) | ✅ | `FormatController`, `config/attendance_formats.php` | Global; no filtrar `formats` directamente |
+| Administracion | 🟡 | `app/Http/Controllers/Configuration/*`, `app/Livewire/Administration/*` | Patron 2 pestanas + Excel + paginacion; pendiente filtrar/asignar sede por entidad |
+| └ Dependencias / Areas | 🟡 | `DependencyController`, `AreaController` | Tienen `campus_id`; falta aplicar filtros CRUD/import/export |
+| └ Programas / Afiliaciones / Estamentos | 🟡 | `Program/Affiliation/ParticipantTypeController` | Programas tiene `campus_id` + `academic_program_id`; afiliaciones y estamentos son globales |
+| └ Organizaciones | ✅ | `OrganizationController` | Global por ahora |
+| └ Importacion de participantes | ✅ | `ParticipantImportController` | Participantes globales; no filtrar participantes directamente |
+| └ Registros de actividad | 🟡 | `ActivityLogController`, `ActivityLogService` | Pendiente decidir si auditoria se filtra por sede o queda global para superadmin |
+| Estadisticas | 🟡 | `StatisticsController` + `routes/api.php`, React en `resources/js/statistics/` | No migrado a sede todavia; alto riesgo de mezcla |
+| Usuarios (admin) | 🟡 | `UserController`, `app/Livewire/User/*` | Roles `user/admin/superadmin` ya existen; revisar listados/edicion por sede en cada flujo |
 | Settings | ✅ | `app/Livewire/Settings/*` | Perfil, password, apariencia, idioma, about |
-| Correo de confirmación | ✅ | `AttendanceRegisteredMail` | Se envía al registrar (si hay email) |
+| Correo de confirmacion | ✅ | `AttendanceRegisteredMail` | Se envia al registrar si hay email |
 
-## Permisos (resumen)
-- `admin` — acceso completo; rutas `usuarios/*`, `administracion/*`, `estadisticas/usuarios`
-  con middleware `role:admin`.
-- Usuario normal — ve sus eventos y los de **sus dependencias** (`belongsToMany`).
-- Participante — sin cuenta; registra asistencia por el QR público.
+## Permisos actuales / objetivo multi-sede
+- `superadmin` - acceso global; si selecciona sede activa, ve solo esa sede en modulos migrados.
+- `admin` - debe ver y gestionar solo su sede.
+- `user` - debe ver su sede y conservar reglas actuales de eventos propios/dependencias.
+- Participante - sin cuenta; registra asistencia por QR publico.
 
 Detalle de personas en [[personas-y-roles]]. Inconsistencias en [[brechas-conocidas]].
+Seguimiento vivo de sedes en [[migracion-multi-sede]].

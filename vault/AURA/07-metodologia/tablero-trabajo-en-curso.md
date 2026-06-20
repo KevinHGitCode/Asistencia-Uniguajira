@@ -33,7 +33,9 @@ que dos personas/IAs choquen, sobre todo en cambios 🔴 que tocan el esquema.
 ## ⚠️ Avisos de serialización (🔴 activos)
 > Lista aquí los cambios de **esquema/rutas públicas** en vuelo para que nadie los solape.
 
-- _(ninguno por ahora)_
+- Migracion multi-sede progresiva activa: antes de tocar eventos, administracion,
+  estadisticas, imports/exports o usuarios, revisar [[migracion-multi-sede]] y confirmar
+  si el modulo ya aplica `CampusScopeService`.
 
 ---
 > Cambios de esquema = migraciones nuevas/alteradas. Mira el orden cronológico en

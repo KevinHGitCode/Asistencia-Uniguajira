@@ -1,67 +1,87 @@
 ---
 tipo: estado-actual
-descripcion: Modelo de datos real derivado de las 27 migraciones y los modelos Eloquent
+descripcion: Modelo de datos real derivado de migraciones y modelos Eloquent
 actualizado: 2026-06-20
 ---
 
 # Modelo de datos
 
-Derivado de `database/migrations/` (27 migraciones) y `app/Models/`. Más rico que la tabla
-de `CLAUDE.md`, que está incompleta (ver [[brechas-conocidas]]).
+Derivado de `database/migrations/` y `app/Models/`. Mas rico que la tabla de `CLAUDE.md`,
+que esta incompleta (ver [[brechas-conocidas]]).
 
 ## Tablas y relaciones
 
-### Núcleo organizativo
-- **users** — `role` (string: `admin` / normal), `is_active`, `avatar`.
-  `User belongsToMany Dependency` vía **dependency_user** (⚠️ no `belongsTo`, como dice CLAUDE.md).
-- **dependencies** — `hasMany areas`, `belongsToMany formats` (pivot `dependency_format`).
-- **areas** — pertenecen a una dependencia (opcional en eventos).
-- **dependency_user** — pivot usuario↔dependencia (migración 2025_11_15).
+### Nucleo organizativo
+- **campuses** - sedes iniciales: Maicao, Riohacha, Fonseca y Villanueva. Es la base de la
+  migracion multi-sede progresiva. Estado vivo en [[migracion-multi-sede]].
+- **users** - `role` (`user` / `admin` / `superadmin`), `is_active`, `avatar`, `campus_id`
+  nullable durante migracion. `superadmin` debe tener `campus_id = null`; `admin` y `user`
+  pertenecen a una sede.
+- **dependencies** - `campus_id` nullable, `hasMany areas`, `belongsToMany formats`
+  (pivot `dependency_format`).
+- **areas** - `campus_id` nullable, pertenecen a una dependencia (opcional en eventos).
+- **dependency_user** - pivot usuario-dependencia. El codigo real es
+  `User belongsToMany Dependency`, no `belongsTo`.
 
 ### Eventos y asistencia
-- **events** — `title`, `description`, `date`, `start_time`, `end_time`, `ended_at`,
-  `location`, **`link`** (string único, 500; slug público del QR), `user_id` (dueño),
-  `dependency_id` (nullable, `set null`), `area_id` (nullable).
-- **participants** — `document` (único), `student_code` (único, nullable),
-  `first_name`, `last_name`, `email` (único, nullable). **Sin** datos demográficos: esos
-  viven en el detalle de cada asistencia.
-- **attendances** — `event_id` + `participant_id`, **único (event, participant)**,
-  borrado de participante **restringido** si tiene asistencias.
-- **attendance_details** — *snapshot por asistencia*: `participant_role_id`, `gender`,
-  `phone`, `city`, `neighborhood`, `address`, `priority_group`. Captura el dato **en el
-  momento del registro** (ver [[adr-0002-snapshot-demografico-attendance-details]]).
+- **events** - `title`, `description`, `date`, `start_time`, `end_time`, `ended_at`,
+  `location`, **`link`** (slug publico del QR), `user_id` (dueno), `dependency_id`
+  nullable, `area_id` nullable, `campus_id` nullable durante migracion.
+- **participants** - global. `document` unico, `student_code` unico nullable,
+  `first_name`, `last_name`, `email` unico nullable. No filtrar directamente por sede.
+- **attendances** - `event_id` + `participant_id`, unico por evento/participante.
+- **attendance_details** - snapshot por asistencia: `participant_role_id`, `gender`,
+  `phone`, `city`, `neighborhood`, `address`, `priority_group`.
 
-### Identidad del participante (la pieza clave)
-- **participant_roles** — un participante puede tener **varios roles activos**. Cada rol =
-  `participant_type_id` (estamento) + `program_id?` + `dependency_id?` + `affiliation_id?`
-  + `organization_id?` + `is_active`. Índices para filtrar por activo.
-- **participant_types** — estamentos (Estudiante, Docente, *Comunidad Externa*, …).
-- **programs** — programas académicos.
-- **affiliations** — afiliaciones.
-- **organizations** — entidades externas (comunidad externa), autocompletado en el registro.
+### Identidad del participante
+- **participant_roles** - un participante puede tener varios roles activos. Cada rol =
+  `participant_type_id` + `program_id?` + `dependency_id?` + `affiliation_id?` +
+  `organization_id?` + `is_active`.
+- **participant_types** - estamentos.
+- **programs** - instancias por sede/importacion; `campus_id` nullable y
+  `academic_program_id` nullable durante migracion.
+- **academic_programs** - catalogo global del programa academico normalizado. Se pobla desde
+  `programs.name` quitando sufijos de sede (` - Maicao`, ` - Riohacha`, ` - Fonseca`,
+  ` - Villanueva`) sin modificar `programs.name`.
+- **affiliations** - global.
+- **organizations** - global, usado para comunidad externa.
 
 ### Formatos de PDF
-- **formats** — `name`, `slug` (único), `file` (plantilla PDF), `mapping` (JSON).
-  Pivot **dependency_format**. El mapeo se edita en un *mapper visual* y se persiste también
-  en `config/attendance_formats.php`.
+- **formats** - global. `name`, `slug` unico, `file` (plantilla PDF), `mapping` JSON.
+  Pivot **dependency_format**. No filtrar `formats` directamente por sede.
 
-### Auditoría y soporte
-- **activity_logs** — auditoría: `user_id?`, `participant_id?`, `action`, `module`,
-  `description`, `subject_type/id`, `ip_address`, `user_agent`, `metadata` (JSON).
+### Auditoria y soporte
+- **activity_logs** - auditoria: `user_id?`, `participant_id?`, `action`, `module`,
+  `description`, `subject_type/id`, `ip_address`, `user_agent`, `metadata` JSON.
 - **personal_access_tokens** (Sanctum), **cache**, **jobs**.
-- Migración `2026_03_07` añade índices de rendimiento para estadísticas.
 
-## Diagrama mental (texto)
+## Diagrama mental
 
+```text
+Campus -< User -< Event >- Dependency -< Area
+   |       |          |
+   |       +-- dependency_user -- Dependency
+   |
+   +--< Dependency
+   +--< Area
+   +--< Program >-- AcademicProgram
+
+Event -< Attendance >-- Participant -< ParticipantRole >-- ParticipantType
+                                      |                  +-- Program
+                                      |                  +-- Dependency
+                                      |                  +-- Affiliation
+                                      |                  +-- Organization
+Attendance --1:1-- AttendanceDetail -- ParticipantRole
+Dependency -< dependency_format >- Format
 ```
-User ─┬─< Event >─┬─ Dependency ─< Area
-      │           └─< Attendance >── Participant ─< ParticipantRole ─┬─ ParticipantType
-      └── dependency_user ── Dependency             │                 ├─ Program
-                                                    │                 ├─ Dependency
-Attendance ──1:1── AttendanceDetail ── ParticipantRole                ├─ Affiliation
-Dependency ─< dependency_format >─ Format                             └─ Organization
-```
+
+## Reglas multi-sede importantes
+- `participants` y `formats` siguen globales.
+- `campus_id` sigue nullable hasta terminar backfill/auditoria.
+- No usar global scopes automaticos por ahora.
+- Aplicar `CampusScopeService` modulo por modulo.
 
 ## Relacionado
-- Cómo se usan estas tablas en el flujo público → [[registro-de-asistencia]]
-- Estadísticas que consumen `attendance_details` → [[mapa-de-modulos]]
+- Como se usan estas tablas en el flujo publico -> [[registro-de-asistencia]]
+- Estadisticas que consumen `attendance_details` -> [[mapa-de-modulos]]
+- Seguimiento multi-sede por modulo -> [[migracion-multi-sede]]

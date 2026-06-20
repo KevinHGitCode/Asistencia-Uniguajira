@@ -1,6 +1,6 @@
 ---
 tipo: producto
-descripcion: Dirección del producto — hecho, en curso y candidatos, derivados del estado real
+descripcion: Direccion del producto - hecho, en curso y candidatos, derivados del estado real
 actualizado: 2026-06-20
 ---
 
@@ -9,34 +9,44 @@ actualizado: 2026-06-20
 Vivo. Derivado del estado real ([[mapa-de-modulos]]) y las [[brechas-conocidas]]. No es un
 compromiso de fechas; es orden de prioridad sugerido.
 
-## ✅ Hecho (base sólida)
-- Eventos + QR público + registro rico de asistencia ([[registro-de-asistencia]]).
+## ✅ Hecho (base solida)
+- Eventos + QR publico + registro rico de asistencia ([[registro-de-asistencia]]).
 - PDF por formato de dependencia con mapper visual.
-- Administración completa (dependencias, áreas, programas, afiliaciones, estamentos,
-  organizaciones, importación, auditoría) con import/export Excel y paginación.
-- Estadísticas con React + API y comparador de eventos.
+- Administracion completa con import/export Excel y paginacion.
+- Estadisticas con React + API y comparador de eventos.
+- Base estructural multi-sede:
+  - `campuses`,
+  - `campus_id` nullable en tablas nucleo,
+  - roles `user/admin/superadmin`,
+  - `CampusScopeService`,
+  - backfills idempotentes,
+  - `academic_programs`.
+- Dashboard + calendario ya filtran por sede.
 
-## 🔧 Deuda / saneamiento (recomendado primero)
-- Retirar el **flujo legacy** de asistencia → [[adr-0003-retirar-flujo-legacy-de-asistencia]].
-- Decidir auth de los endpoints `/api/statistics/*` individuales (brecha #4).
-- Actualizar `README.md` y la tabla de relaciones de `CLAUDE.md` (brechas #2 y #3).
-- Activar/ordenar seeders de demo (brecha #5).
+## 🔧 Deuda / saneamiento recomendado primero
+- Completar migracion multi-sede modulo por modulo -> [[migracion-multi-sede]].
+- Retirar el flujo legacy de asistencia -> [[adr-0003-retirar-flujo-legacy-de-asistencia]].
+- Decidir auth y filtro por sede de endpoints `/api/statistics/*`.
+- Actualizar `README.md` y `CLAUDE.md`.
+- Activar/ordenar seeders de demo.
 
-## 🧭 Planeado (propuestas activas — 2026-06-20)
-Iniciativas formalizadas como ADR en estado 🟡 propuesta (pendientes de aceptar). Ramas
-sugeridas en [[nombres-de-rama-sugeridos]].
-- **Pasarela de revisión para importar participantes** (tabla de espera + revisión/aprobación,
-  carga en cola, anti doble-cargue, indicador de progreso) → [[adr-0004-pasarela-de-revision-para-importacion-de-participantes]].
-- **Rate limiting anti-abuso** en rutas públicas y API → [[adr-0005-rate-limiting-anti-abuso]].
-- **Formularios en modal centrado** (en vez de flyout lateral) → [[adr-0006-formularios-en-modal-centrado]].
-- **Paleta de comandos para administradores** (atajo tipo Cmd/Ctrl+K) → [[adr-0007-paleta-de-comandos-admin]].
-- **Listado de participantes en React** (isla, por rendimiento) → [[adr-0008-listado-participantes-en-react]].
+## 🧭 Planeado (propuestas activas - 2026-06-20)
+Iniciativas formalizadas como ADR o seguimiento vivo. Ramas sugeridas en
+[[nombres-de-rama-sugeridos]].
 
-## 🚀 Candidatos de producto (sin compromiso)
-- Notificaciones reales (la UI hoy solo manda correo de confirmación).
-- Auto-registro de participantes internos (hoy el externo sí, el interno depende de import).
-- Exportación de estadísticas (PDF/Excel) desde el dashboard.
-- Roles más finos por dependencia.
+- **Migracion multi-sede progresiva** -> [[adr-0009-migracion-multi-sede-progresiva]] y
+  [[migracion-multi-sede]].
+- **Pasarela de revision para importar participantes** -> [[adr-0004-pasarela-de-revision-para-importacion-de-participantes]].
+- **Rate limiting anti-abuso** -> [[adr-0005-rate-limiting-anti-abuso]].
+- **Formularios en modal centrado** -> [[adr-0006-formularios-en-modal-centrado]].
+- **Paleta de comandos para administradores** -> [[adr-0007-paleta-de-comandos-admin]].
+- **Listado de participantes en React** -> [[adr-0008-listado-participantes-en-react]].
 
-> Ideas sin madurar van a [[ideas]]. Cuando una idea implica una decisión con consecuencias,
+## 🚀 Candidatos de producto
+- Notificaciones reales.
+- Auto-registro de participantes internos.
+- Exportacion de estadisticas (PDF/Excel) desde el dashboard.
+- Roles mas finos por dependencia.
+
+> Ideas sin madurar van a [[ideas]]. Cuando una idea implica una decision con consecuencias,
 > se promueve a un ADR en `03-diseno/decisiones-adr/`.
