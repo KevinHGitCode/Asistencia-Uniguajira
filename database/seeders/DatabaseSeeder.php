@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
     {
         // Seeders base
         $this->call([
+            CampusSeeder::class,
             // DependenciesSeeder::class,
             ParticipantTypeSeeder::class,
         ]);
