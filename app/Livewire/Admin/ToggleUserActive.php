@@ -5,7 +5,6 @@ namespace App\Livewire\Admin;
 use App\Models\User;
 use App\Services\ActivityLogService;
 use Livewire\Component;
-use Flux\Flux as FluxAlias;
 
 class ToggleUserActive extends Component
 {
@@ -18,10 +17,13 @@ class ToggleUserActive extends Component
 
     public function toggleActive()
     {
-        abort_unless(auth()->user()?->role === 'admin', 403, 'Solo administradores pueden cambiar el estado de usuarios.');
+        $authUser = auth()->user();
+
+        abort_unless($authUser?->hasAdminAccess(), 403, 'Solo administradores pueden cambiar el estado de usuarios.');
+        abort_if($authUser->isAdmin() && (int) $this->user->campus_id !== (int) $authUser->campus_id, 403, 'No puedes cambiar usuarios de otra sede.');
 
         $oldStatus = $this->user->is_active ? 'activo' : 'inactivo';
-        $this->user->update(['is_active' => !$this->user->is_active]);
+        $this->user->update(['is_active' => ! $this->user->is_active]);
 
         $status = $this->user->is_active ? 'activado' : 'desactivado';
         $newStatus = $this->user->is_active ? 'activo' : 'inactivo';

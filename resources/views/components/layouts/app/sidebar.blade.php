@@ -111,7 +111,7 @@
                 <flux:navlist.item icon="calendar-check" :href="route('events.list')" class="hover:scale-103 transition-transform" :current="request()->routeIs('events.list')"
                     wire:navigate>{{ __('Your Events') }}</flux:navlist.item>
 
-                @if(auth()->user()->role === 'admin')
+                @if(auth()->user()->hasAdminAccess())
                     <flux:navlist.item icon="numbered-list" :href="route('admin.events.index')" class="hover:scale-103 transition-transform" :current="request()->routeIs('admin.events.index')"
                         wire:navigate>{{ __('All Events') }}</flux:navlist.item>
                 @endif
@@ -183,7 +183,7 @@
                         <flux:navlist.item :href="route('statistics.compara-eventos')" :current="request()->routeIs('statistics.compara-eventos')" wire:navigate data-debounce="1000">
                             {{ __('Compara Eventos') }}
                         </flux:navlist.item>
-                        @if(auth()->user()->role === 'admin')
+                        @if(auth()->user()->hasAdminAccess())
                             <flux:navlist.item :href="route('statistics.usuarios')" :current="request()->routeIs('statistics.usuarios')" wire:navigate data-debounce="1000">
                                 {{ __('Por Usuarios') }}
                             </flux:navlist.item>
@@ -195,12 +195,12 @@
                 {{-- <flux:navlist.item icon="chart-bar" :href="route('charts.types')" class="hover:scale-103 transition-transform" :current="request()->routeIs('charts.types')"
                     wire:navigate>{{ __('Chart Types') }}</flux:navlist.item> --}}
 
-                @if(auth()->user()->role === 'admin')
+                @if(auth()->user()->hasAdminAccess())
                     <flux:navlist.item icon="users" :href="route('users.index')" class="hover:scale-103 transition-transform" :current="request()->routeIs('users.index')"
                         wire:navigate>{{ __('Users') }}</flux:navlist.item>
                 @endif
 
-                @if(auth()->user()->role === 'admin')
+                @if(auth()->user()->hasAdminAccess())
                     {{-- AdministraciÃ³n: enlace al overview + lista colapsable de sub-mÃ³dulos --}}
                     <div x-data="{
                         open: false,

@@ -59,7 +59,7 @@ Route::middleware(['auth'])
     ->get('/dependencies/{dependency}/areas', [EventController::class, 'areas'])
     ->name('dependencies.areas');
 
-Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
+Route::middleware(['auth', 'verified', 'role:admin,superadmin'])->group(function () {
     Route::get('/admin/events', function () {
         return view('events.admin-events');
     })->name('admin.events.index');
@@ -98,7 +98,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::view('estadisticas/compara-eventos',   'statistics.compara-eventos')  ->name('statistics.compara-eventos');
 });
 
-Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
+Route::middleware(['auth', 'verified', 'role:admin,superadmin'])->group(function () {
     Route::view('estadisticas/usuarios', 'statistics.usuarios')->name('statistics.usuarios');
 });
 
@@ -108,7 +108,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
  *  RUTAS DE ADMINISTRACIÓN DE USUARIOS
  * ================================================================
  */
-Route::middleware(['auth', 'verified', 'role:admin'])
+Route::middleware(['auth', 'verified', 'role:admin,superadmin'])
     ->prefix('usuarios')
     ->group(function () {
         
@@ -131,7 +131,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])
  *  RUTAS DE ADMINISTRACIÓN DEL SISTEMA
  * ================================================================
  */
-Route::middleware(['auth', 'verified', 'role:admin'])
+Route::middleware(['auth', 'verified', 'role:admin,superadmin'])
     ->prefix('administracion')
     ->group(function () {
         

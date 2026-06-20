@@ -169,7 +169,7 @@ Route::get('/statistics/event/{event}/organizations', function ($event) {
 // Lista de eventos disponibles para comparar (admin ve todos; usuario ve solo los suyos)
 Route::middleware(['web', 'auth'])->get('/statistics/compare/events', function (Request $request) {
     $user    = Auth::user();
-    $isAdmin = $user->role === 'admin';
+    $isAdmin = $user->hasAdminAccess();
 
     $query = DB::table('events')
         ->leftJoin('attendances', 'events.id', '=', 'attendances.event_id')
@@ -257,7 +257,7 @@ Route::get('/statistics/compare/data', function (Request $request) {
 
 
 // ✅ Usa sesión web + auth, igual que las demás rutas
-Route::middleware(['web', 'auth', 'role:admin'])->group(function () {
+Route::middleware(['web', 'auth', 'role:admin,superadmin'])->group(function () {
     Route::get('/statistics/admin-eventos',                [AdminEventosController::class, 'index']);
     Route::get('/statistics/admin-eventos/filter-options', [AdminEventosController::class, 'filterOptions']);
 });

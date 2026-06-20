@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Attendance;
 use App\Models\Dependency;
-use Illuminate\Http\Request;
 use App\Models\Event;
 use App\Models\Participant;
 use Illuminate\Support\Facades\Auth;
@@ -16,7 +15,7 @@ class DashboardController extends Controller
         $user = Auth::user();
         $username = ucfirst(strtolower($user->name));
 
-        if ($user->role === 'admin') {
+        if ($user->hasAdminAccess()) {
             // Super Admin → Totales generales
             $eventosCount = Event::count();
             $asistenciasCount = Attendance::count();
@@ -26,17 +25,17 @@ class DashboardController extends Controller
             // Usuario (organizador) → solo sus eventos
             $eventosCount = Event::where('user_id', $user->id)->count();
 
-            $asistenciasCount = Attendance::whereHas('event', function($q) use ($user) {
+            $asistenciasCount = Attendance::whereHas('event', function ($q) use ($user) {
                 $q->where('user_id', $user->id);
             })->count();
 
-            $participantesCount = Attendance::whereHas('event', function($q) use ($user) {
+            $participantesCount = Attendance::whereHas('event', function ($q) use ($user) {
                 $q->where('user_id', $user->id);
             })->distinct('participant_id')->count('participant_id');
         }
 
         $dependencies = Dependency::orderBy('name')->pluck('name', 'id')->toArray();
-        $roles = ['admin' => 'Administrador', 'user' => 'Usuario'];
+        $roles = ['user' => 'Usuario', 'admin' => 'Administrador', 'superadmin' => 'Superadministrador'];
 
         return view('dashboard', compact('username', 'eventosCount', 'asistenciasCount', 'participantesCount', 'dependencies', 'roles'));
     }

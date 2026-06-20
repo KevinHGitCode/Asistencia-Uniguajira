@@ -51,10 +51,28 @@
                     </select>
                 </div>
 
+                {{-- SEDE --}}
+                <div class="flex flex-col gap-1">
+                    <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                        Sede <span class="text-gray-400">(no aplica para superadmin)</span>
+                    </label>
+                    <select name="campus_id"
+                        class="w-full rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+
+                        <option value="">— Ninguna —</option>
+
+                        @foreach($campuses as $value => $label)
+                            <option value="{{ $value }}" {{ old('campus_id', auth()->user()->isAdmin() ? auth()->user()->campus_id : null) == $value ? 'selected' : '' }}>
+                                {{ $label }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
                 {{-- DEPENDENCIA --}}
                 <div class="flex flex-col gap-1">
                     <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                        Dependencia <span class="text-gray-400">(opcional para admin)</span>
+                        Dependencia <span class="text-gray-400">(obligatoria para user)</span>
                     </label>
                     <select name="dependency_id"
                         class="w-full rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">

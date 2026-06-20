@@ -11,6 +11,12 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
+    public const ROLE_USER = 'user';
+
+    public const ROLE_ADMIN = 'admin';
+
+    public const ROLE_SUPERADMIN = 'superadmin';
+
     protected $fillable = [
         'name',
         'email',
@@ -53,19 +59,32 @@ class User extends Authenticatable
         return $this->belongsTo(Campus::class);
     }
 
+    public function isSuperadmin(): bool
+    {
+        return $this->role === self::ROLE_SUPERADMIN;
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === self::ROLE_ADMIN;
+    }
+
+    public function hasAdminAccess(): bool
+    {
+        return in_array($this->role, [self::ROLE_ADMIN, self::ROLE_SUPERADMIN], true);
+    }
+
     // ------------------------------------
     // ✔ Nueva relación corregida
     // ------------------------------------
     public function dependencies()
     {
         return $this->belongsToMany(Dependency::class, 'dependency_user')
-                    ->withTimestamps();
+            ->withTimestamps();
     }
-
 
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
     }
-
 }
