@@ -2,19 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
-use App\Models\Area;
-use App\Models\Event;
+use App\Models\Attendance;
 use App\Models\Dependency;
+use App\Models\Event;
+use App\Models\User;
+use App\Services\ActivityLogService;
+use App\Services\AttendancePdfService;
+use App\Services\CampusScopeService;
+use App\Services\EventService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use App\Models\Attendance;
-use Carbon\Carbon;
-use setasign\Fpdi\Tfpdf\Fpdi;
-use App\Services\AttendancePdfService;
-use App\Services\EventService;
-use App\Services\ActivityLogService;
 
 class EventController extends Controller
 {
@@ -54,7 +52,6 @@ class EventController extends Controller
         return view('events.list', compact('myEvents', 'dependencyEvents', 'dependenciesNames'));
     }
 
-
     /**
      * Show the form for creating a new resource.
      * Los datos (dependencias, áreas) los carga el propio componente Livewire.
@@ -71,14 +68,14 @@ class EventController extends Controller
     {
         try {
             $validated = $request->validate([
-                'title'         => 'required|string|max:255',
-                'description'   => 'nullable|string',
-                'date'          => 'required|date',
-                'start_time'    => 'nullable|date_format:H:i',
-                'end_time'      => 'nullable|date_format:H:i|after_or_equal:start_time',
-                'location'      => 'required|string|max:255',
+                'title' => 'required|string|max:255',
+                'description' => 'nullable|string',
+                'date' => 'required|date',
+                'start_time' => 'nullable|date_format:H:i',
+                'end_time' => 'nullable|date_format:H:i|after_or_equal:start_time',
+                'location' => 'required|string|max:255',
                 'dependency_id' => 'nullable|exists:dependencies,id',
-                'area_id'       => 'nullable|exists:areas,id',
+                'area_id' => 'nullable|exists:areas,id',
             ]);
 
             $event = $eventService->create($validated, Auth::user());
@@ -89,7 +86,8 @@ class EventController extends Controller
                 ->with('event_link', route('events.access', ['slug' => $event->link]));
 
         } catch (\Exception $e) {
-            Log::error('Error creating event: ' . $e->getMessage());
+            Log::error('Error creating event: '.$e->getMessage());
+
             return back()->withInput()->withErrors(['error' => 'Hubo un error al crear el evento.']);
         }
     }
@@ -97,7 +95,7 @@ class EventController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(string $id, CampusScopeService $campusScope)
     {
         /** @var User $user */
         $user = Auth::user();
@@ -111,25 +109,25 @@ class EventController extends Controller
             ->where('dependencies.id', $event->dependency_id)
             ->exists();
 
-        $tienePermiso =
-            $user->role === 'admin' ||
+        $tienePermiso = $campusScope->canAccessResource($user, $event) && (
+            $user->hasAdminAccess() ||
             $event->user_id === $user->id ||
-            $perteneceDependencia;
+            $perteneceDependencia
+        );
 
-        if (!$tienePermiso) {
+        if (! $tienePermiso) {
             abort(403, 'No tienes permiso para ver este evento.');
         }
 
         return view('events.show', compact('event', 'asistenciasCount'));
     }
 
+    public function access($slug)
+    {
+        $event = Event::where('link', $slug)->firstOrFail();
 
-
-    public function access($slug){
-      $event = Event::where('link', $slug)->firstOrFail();
-       return view('events.access', compact('event'));
+        return view('events.access', compact('event'));
     }
-
 
     /**
      * Remove the specified resource from storage.
@@ -141,11 +139,11 @@ class EventController extends Controller
 
         $isOwner = $event->user_id !== null && (int) $event->user_id === (int) $user->id;
 
-        if ($user->role !== 'admin' && !$isOwner) {
+        if ($user->role !== 'admin' && ! $isOwner) {
             abort(403);
         }
 
-        if (!$event->is_deletable) {
+        if (! $event->is_deletable) {
             return back()->withErrors(['error' => 'No se puede eliminar un evento que ya pasó.']);
         }
 
@@ -166,11 +164,11 @@ class EventController extends Controller
         $user = Auth::user();
         $isOwner = $event->user_id !== null && (int) $event->user_id === (int) $user->id;
 
-        if ($user->role !== 'admin' && !$isOwner) {
+        if ($user->role !== 'admin' && ! $isOwner) {
             abort(403);
         }
 
-        if (!$event->isOpenForAttendance()) {
+        if (! $event->isOpenForAttendance()) {
             return back()->with('error', 'Este evento ya ha finalizado.');
         }
 
@@ -189,16 +187,36 @@ class EventController extends Controller
             ->get();
     }
 
-
-    public function getByDate($date)
+    public function getByDate($date, CampusScopeService $campusScope)
     {
-        $events = Event::with(['dependency:id,name', 'area:id,name', 'user:id,name'])
-            ->whereDate('date', $date)
+        /** @var User $user */
+        $user = Auth::user();
+
+        $query = Event::with(['dependency:id,name', 'area:id,name', 'user:id,name'])
+            ->whereDate('date', $date);
+
+        $campusScope->applyToQuery($query, $user);
+
+        if (! $user->hasAdminAccess()) {
+            $user->loadMissing('dependencies');
+            $dependencyIds = $user->dependencies->pluck('id')->all();
+
+            $query->where(function ($eventQuery) use ($user, $dependencyIds) {
+                $eventQuery->where('user_id', $user->id);
+
+                if ($dependencyIds !== []) {
+                    $eventQuery->orWhereIn('dependency_id', $dependencyIds);
+                }
+            });
+        }
+
+        $events = $query
             ->get()
             ->map(function ($e) {
                 $e->dependency_name = $e->dependency?->name;
-                $e->area_name       = $e->area?->name;
-                $e->creator_name    = $e->user?->name;
+                $e->area_name = $e->area?->name;
+                $e->creator_name = $e->user?->name;
+
                 return $e;
             });
 
@@ -243,12 +261,12 @@ class EventController extends Controller
         }
 
         // Si no se pasó slug, usa general
-        if (!$formatSlug) {
+        if (! $formatSlug) {
             $formatSlug = 'general';
         }
 
         // Validar acceso solo si tiene formatos asignados
-        if ($formats->isNotEmpty() && !$formats->contains('slug', $formatSlug) && $formatSlug !== 'general') {
+        if ($formats->isNotEmpty() && ! $formats->contains('slug', $formatSlug) && $formatSlug !== 'general') {
             abort(403, 'Esta dependencia no tiene acceso a este formato.');
         }
 
@@ -256,14 +274,14 @@ class EventController extends Controller
             $pdfContent = $pdfService->generatePdf($evento, $formatSlug);
         } catch (\setasign\Fpdi\PdfParser\CrossReference\CrossReferenceException $e) {
             return back()->with('error',
-                'La plantilla PDF del formato "' . $formatSlug . '" usa una versión de PDF no soportada (1.5 o superior). '
-                . 'Debe re-subir la plantilla en versión PDF 1.4 o inferior desde la configuración de formatos. Comuniquese con el administrador.'
+                'La plantilla PDF del formato "'.$formatSlug.'" usa una versión de PDF no soportada (1.5 o superior). '
+                .'Debe re-subir la plantilla en versión PDF 1.4 o inferior desde la configuración de formatos. Comuniquese con el administrador.'
             );
         }
 
         ActivityLogService::log('exportar', 'eventos', "Descargó PDF de asistencias del evento '{$evento->title}'", $evento);
 
-        $nombreArchivo = "Asistencia_".str_replace(' ', '_', $evento->title)."_".\Carbon\Carbon::parse($evento->date)->format('Y-m-d').".pdf";
+        $nombreArchivo = 'Asistencia_'.str_replace(' ', '_', $evento->title).'_'.\Carbon\Carbon::parse($evento->date)->format('Y-m-d').'.pdf';
 
         return response($pdfContent, 200, [
             'Content-Type' => 'application/pdf',

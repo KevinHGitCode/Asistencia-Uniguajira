@@ -3,31 +3,50 @@
 use App\Http\Controllers\Api\AdminEventosController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\StatisticsController;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Auth;
+use App\Models\Affiliation;
+use App\Models\Attendance;
+use App\Models\Dependency;
 use App\Models\Event;
 use App\Models\Participant;
 use App\Models\Program;
-use App\Models\Attendance;
 use App\Models\User;
-use App\Models\Dependency;
-use App\Models\Affiliation;
+use App\Services\CampusScopeService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
-
-
 
 /**
  * ================================================================
  *  RUTAS PARA LA GESTION DEL CALENDARIO
  * ================================================================
  */
+$applyCalendarVisibility = function ($query, User $user, CampusScopeService $campusScope): void {
+    $campusScope->applyToQuery($query, $user);
+
+    if ($user->hasAdminAccess()) {
+        return;
+    }
+
+    $user->loadMissing('dependencies');
+    $dependencyIds = $user->dependencies->pluck('id')->all();
+
+    $query->where(function ($eventQuery) use ($user, $dependencyIds) {
+        $eventQuery->where('user_id', $user->id);
+
+        if ($dependencyIds !== []) {
+            $eventQuery->orWhereIn('dependency_id', $dependencyIds);
+        }
+    });
+};
+
 // Ruta para obtener eventos en formato JSON para el calendario
-Route::get('/eventos-json', function () {
+Route::middleware(['web', 'auth'])->get('/eventos-json', function (CampusScopeService $campusScope) use ($applyCalendarVisibility) {
+    $user = Auth::user();
     $now = now();
     $year = $now->year;
     if ($now->month >= 1 && $now->month <= 6) {
@@ -39,17 +58,23 @@ Route::get('/eventos-json', function () {
         $start = "$year-07-01";
         $end = "$year-12-31";
     }
-    return Event::selectRaw('DATE(date) as date, COUNT(*) as count')
-        ->whereBetween('date', [$start, $end])
+    $query = Event::query()
+        ->selectRaw('DATE(date) as date, COUNT(*) as count')
+        ->whereBetween('date', [$start, $end]);
+
+    $applyCalendarVisibility($query, $user, $campusScope);
+
+    return $query
         ->groupBy('date')
         ->get();
 });
 
 // Ruta para obtener eventos por fecha específica
-Route::get('/events/{date}', [EventController::class, 'getByDate']);
+Route::middleware(['web', 'auth'])->get('/events/{date}', [EventController::class, 'getByDate']);
 
 // Ruta para obtener eventos del usuario autenticado en formato JSON para el calendario
-Route::middleware(['web', 'auth'])->get('/mis-eventos-json', function () {
+Route::middleware(['web', 'auth'])->get('/mis-eventos-json', function (CampusScopeService $campusScope) {
+    $user = Auth::user();
     $now = now();
     $year = $now->year;
 
@@ -63,16 +88,16 @@ Route::middleware(['web', 'auth'])->get('/mis-eventos-json', function () {
 
     return response()->json([
         'auth_id' => Auth::id(),
-        'eventos' => Event::selectRaw('DATE_FORMAT(date, "%Y-%m-%d") as date, COUNT(*) as count')
-            ->where('user_id', Auth::id())
-            ->whereBetween('date', [$start, $end])
+        'eventos' => $campusScope->applyToQuery(
+            Event::selectRaw('DATE(date) as date, COUNT(*) as count')
+                ->where('user_id', Auth::id())
+                ->whereBetween('date', [$start, $end]),
+            $user
+        )
             ->groupBy('date')
-            ->get()
+            ->get(),
     ]);
 });
-
-
-
 
 /**
  * =============================================
@@ -168,7 +193,7 @@ Route::get('/statistics/event/{event}/organizations', function ($event) {
 
 // Lista de eventos disponibles para comparar (admin ve todos; usuario ve solo los suyos)
 Route::middleware(['web', 'auth'])->get('/statistics/compare/events', function (Request $request) {
-    $user    = Auth::user();
+    $user = Auth::user();
     $isAdmin = $user->hasAdminAccess();
 
     $query = DB::table('events')
@@ -182,14 +207,18 @@ Route::middleware(['web', 'auth'])->get('/statistics/compare/events', function (
         ->groupBy('events.id', 'events.title', 'events.date')
         ->orderByDesc('events.date');
 
-    if (!$isAdmin) {
+    if (! $isAdmin) {
         $query->where('events.user_id', $user->id);
     }
 
     $dateFrom = $request->get('dateFrom');
-    $dateTo   = $request->get('dateTo');
-    if ($dateFrom) $query->where('events.date', '>=', $dateFrom);
-    if ($dateTo)   $query->where('events.date', '<=', $dateTo);
+    $dateTo = $request->get('dateTo');
+    if ($dateFrom) {
+        $query->where('events.date', '>=', $dateFrom);
+    }
+    if ($dateTo) {
+        $query->where('events.date', '<=', $dateTo);
+    }
 
     return $query->get();
 });
@@ -248,17 +277,15 @@ Route::get('/statistics/compare/data', function (Request $request) {
 
     return [
         'attendances' => $attendances,
-        'byRole'      => $byRole,
-        'bySex'       => $demoDetail('gender'),
-        'byGroup'     => $demoDetail('priority_group'),
+        'byRole' => $byRole,
+        'bySex' => $demoDetail('gender'),
+        'byGroup' => $demoDetail('priority_group'),
     ];
 });
 
-
-
 // ✅ Usa sesión web + auth, igual que las demás rutas
 Route::middleware(['web', 'auth', 'role:admin,superadmin'])->group(function () {
-    Route::get('/statistics/admin-eventos',                [AdminEventosController::class, 'index']);
+    Route::get('/statistics/admin-eventos', [AdminEventosController::class, 'index']);
     Route::get('/statistics/admin-eventos/filter-options', [AdminEventosController::class, 'filterOptions']);
 });
 
@@ -270,7 +297,7 @@ Route::middleware(['web', 'auth', 'role:admin,superadmin'])->group(function () {
 
 // ── Endpoints de resumen: requieren sesión para filtrar por rol de usuario ──
 Route::middleware(['web', 'auth'])->prefix('statistics')->controller(StatisticsController::class)->group(function () {
-    Route::get('/asistencias-summary',   'asistenciasSummary');
+    Route::get('/asistencias-summary', 'asistenciasSummary');
     Route::get('/participantes-summary', 'participantesSummary');
 });
 
@@ -287,15 +314,15 @@ Route::prefix('statistics')->controller(StatisticsController::class)->group(func
     Route::get('/top-events', 'topEvents');
     Route::get('/top-participants', 'topParticipants');
     Route::get('/top-users', 'topUsers');
-    Route::get('/attendances-by-role',   'attendancesByRole');
-    Route::get('/attendances-by-sex',    'attendancesBySex');
-    Route::get('/attendances-by-group',  'attendancesByGroup');
-    Route::get('/participants-by-role',  'participantsByRole');
-    Route::get('/participants-by-sex',   'participantsBySex');
+    Route::get('/attendances-by-role', 'attendancesByRole');
+    Route::get('/attendances-by-sex', 'attendancesBySex');
+    Route::get('/attendances-by-group', 'attendancesByGroup');
+    Route::get('/participants-by-role', 'participantsByRole');
+    Route::get('/participants-by-sex', 'participantsBySex');
     Route::get('/participants-by-group', 'participantsByGroup');
-    Route::get('/attendances-by-dependency',    'attendancesByDependency');
-    Route::get('/participants-by-dependency',   'participantsByDependency');
-    Route::get('/attendances-by-organization',  'attendancesByOrganization');
+    Route::get('/attendances-by-dependency', 'attendancesByDependency');
+    Route::get('/participants-by-dependency', 'participantsByDependency');
+    Route::get('/attendances-by-organization', 'attendancesByOrganization');
     Route::get('/participants-by-organization', 'participantsByOrganization');
 });
 
@@ -317,7 +344,7 @@ Route::get('/events/user/{user_id}', function ($user_id) {
     return Event::where('user_id', $user_id)->get();
 });
 
-//consultar eventos con información del usuario
+// consultar eventos con información del usuario
 Route::get('/events-with-user', function () {
     return Event::with('user')->get();
 });

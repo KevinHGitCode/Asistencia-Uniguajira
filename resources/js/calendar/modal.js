@@ -32,7 +32,7 @@ export function openModal(fecha, eventos) {
         const userDependencyId = document.querySelector('meta[name="user-dependency-id"]')?.content;
         const userId = document.querySelector('meta[name="user-id"]')?.content;
         const userRole = document.querySelector('meta[name="user-role"]')?.content;
-        const isAdmin = userRole === 'admin';
+        const hasAdminAccess = userRole === 'admin' || userRole === 'superadmin';
         
         // Helper para formatear hora a 12h
         const formatTo12h = (time) => {
@@ -48,7 +48,7 @@ export function openModal(fecha, eventos) {
             const isSameDependency = e.dependency_id && userDependencyId && 
                                      e.dependency_id.toString() === userDependencyId.toString();
             
-            const isClickable = isAdmin || isOwnEvent || isSameDependency;
+            const isClickable = hasAdminAccess || isOwnEvent || isSameDependency;
             const clickableClass = isClickable
                 ? 'cursor-pointer hover:shadow-xl hover:scale-[1.02] transition-all duration-200' 
                 : 'cursor-default';
@@ -83,8 +83,8 @@ export function openModal(fecha, eventos) {
                 `);
             }
 
-            // Badge de creador (solo visible para admin)
-            if (isAdmin && e.creator_name) {
+            // Badge de creador (solo visible para administradores)
+            if (hasAdminAccess && e.creator_name) {
                 metaBadges.push(`
                     <span class="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium
                                  bg-[#e2a542] text-white">

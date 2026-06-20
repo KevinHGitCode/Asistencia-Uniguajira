@@ -9,10 +9,36 @@
 
 <x-layouts.app :title="__('Dashboard')">
     @include('calendar.modal')
-    
+
     <div class="flex h-full w-full flex-1 flex-col gap-5 p-1 sm:p-2 md:px-4 md:py-2">
         <!-- Header de bienvenida -->
         <div class="mb-2">
+            @if(auth()->user()->isSuperadmin())
+                <form method="POST" action="{{ route('dashboard.campus') }}" class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end">
+                    @csrf
+                    <div class="w-full sm:max-w-xs">
+                        <label for="dashboard-campus-id" class="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                            Sede activa
+                        </label>
+                        <select
+                            id="dashboard-campus-id"
+                            name="campus_id"
+                            onchange="this.form.submit()"
+                            class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100">
+                            <option value="">Todas las sedes</option>
+                            @foreach($campuses as $campusId => $campusName)
+                                <option value="{{ $campusId }}" @selected((int) $activeCampusId === (int) $campusId)>
+                                    {{ $campusName }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                        Este filtro aplica al dashboard y calendario.
+                    </p>
+                </form>
+            @endif
+
             <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
                 ¡Bienvenido, {{ $username }}! 👋
             </h1>
