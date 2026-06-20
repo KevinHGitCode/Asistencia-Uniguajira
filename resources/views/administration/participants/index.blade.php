@@ -316,15 +316,16 @@
                     <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
                         Estamento <span class="text-red-500">*</span>
                     </label>
-                    <select name="role" x-model="role" required
-                        class="px-3 py-2 rounded-lg border @error('role') border-red-400 @else border-neutral-200 dark:border-zinc-700 @enderror bg-white dark:bg-zinc-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
-                        <option value="">Selecciona un estamento…</option>
-                        @foreach($estamentos as $estamento)
-                            <option value="{{ $estamento->name }}" {{ old('role') === $estamento->name ? 'selected' : '' }}>
-                                {{ $estamento->name }}
-                            </option>
-                        @endforeach
-                    </select>
+                    <x-ui.searchable-select
+                        name="role"
+                        x-model="role"
+                        :value="old('role')"
+                        :options="$estamentos"
+                        value-key="name"
+                        label-key="name"
+                        placeholder="Selecciona un estamento…"
+                        empty-label="Selecciona un estamento…"
+                        search-placeholder="Buscar estamento…" />
                     @error('role')
                         <p class="text-xs text-red-500">{{ $message }}</p>
                     @enderror
@@ -385,15 +386,13 @@
                 {{-- Programa (Estudiante / Graduado / Docente) --}}
                 <div class="flex flex-col gap-1.5 sm:col-span-2" x-show="showProgram()" x-transition>
                     <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Programa académico</label>
-                    <select name="program_id"
-                        class="px-3 py-2 rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
-                        <option value="">Sin programa</option>
-                        @foreach($programs as $program)
-                            <option value="{{ $program->id }}" {{ old('program_id') == $program->id ? 'selected' : '' }}>
-                                {{ $program->name }}
-                            </option>
-                        @endforeach
-                    </select>
+                    <x-ui.searchable-select
+                        name="program_id"
+                        :value="old('program_id')"
+                        :options="$programs"
+                        placeholder="Sin programa"
+                        empty-label="Sin programa"
+                        search-placeholder="Buscar programa…" />
                     @error('program_id')
                         <p class="text-xs text-red-500">{{ $message }}</p>
                     @enderror
@@ -402,15 +401,13 @@
                 {{-- Dependencia (Administrativo) --}}
                 <div class="flex flex-col gap-1.5 sm:col-span-2" x-show="showDependency()" x-transition>
                     <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Dependencia</label>
-                    <select name="dependency_id"
-                        class="px-3 py-2 rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
-                        <option value="">Sin dependencia</option>
-                        @foreach($dependencies as $dependency)
-                            <option value="{{ $dependency->id }}" {{ old('dependency_id') == $dependency->id ? 'selected' : '' }}>
-                                {{ $dependency->name }}
-                            </option>
-                        @endforeach
-                    </select>
+                    <x-ui.searchable-select
+                        name="dependency_id"
+                        :value="old('dependency_id')"
+                        :options="$dependencies"
+                        placeholder="Sin dependencia"
+                        empty-label="Sin dependencia"
+                        search-placeholder="Buscar dependencia…" />
                     @error('dependency_id')
                         <p class="text-xs text-red-500">{{ $message }}</p>
                     @enderror
@@ -444,15 +441,13 @@
                 {{-- Afiliación (todos los estamentos) --}}
                 <div class="flex flex-col gap-1.5 sm:col-span-2" x-show="role !== ''" x-transition>
                     <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Tipo de vinculación</label>
-                    <select name="affiliation_id"
-                        class="px-3 py-2 rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
-                        <option value="">Sin vinculación</option>
-                        @foreach($affiliations as $affiliation)
-                            <option value="{{ $affiliation->id }}" {{ old('affiliation_id') == $affiliation->id ? 'selected' : '' }}>
-                                {{ $affiliation->name }}
-                            </option>
-                        @endforeach
-                    </select>
+                    <x-ui.searchable-select
+                        name="affiliation_id"
+                        :value="old('affiliation_id')"
+                        :options="$affiliations"
+                        placeholder="Sin vinculación"
+                        empty-label="Sin vinculación"
+                        search-placeholder="Buscar vinculación…" />
                 </div>
 
                 {{-- Errores generales --}}

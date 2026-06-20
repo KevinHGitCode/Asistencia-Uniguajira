@@ -53,12 +53,12 @@
                     <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
                         Tipo de programa
                     </label>
-                    <select name="program_type" x-model="formType"
-                        class="px-3 py-2 rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#2563eb] transition">
-                        <option value="">— Sin definir —</option>
-                        <option value="Pregrado">Pregrado</option>
-                        <option value="Posgrado">Posgrado</option>
-                    </select>
+                    <x-ui.searchable-select
+                        name="program_type"
+                        x-model="formType"
+                        :options="['Pregrado' => 'Pregrado', 'Posgrado' => 'Posgrado']"
+                        placeholder="— Sin definir —"
+                        empty-label="— Sin definir —" />
                     @error('program_type')
                         <p class="text-xs text-red-500">{{ $message }}</p>
                     @enderror

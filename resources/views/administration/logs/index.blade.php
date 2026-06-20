@@ -54,37 +54,37 @@
                 {{-- Module --}}
                 <div>
                     <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Módulo</label>
-                    <select name="module"
-                        class="w-full px-3 py-2 text-sm rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
-                        <option value="">Todos los módulos</option>
-                        @foreach($modules as $mod)
-                            <option value="{{ $mod }}" {{ request('module') === $mod ? 'selected' : '' }}>{{ ucfirst($mod) }}</option>
-                        @endforeach
-                    </select>
+                    <x-ui.searchable-select
+                        name="module"
+                        :value="request('module')"
+                        :options="collect($modules)->map(fn($m) => ['value' => $m, 'label' => ucfirst($m)])->all()"
+                        placeholder="Todos los módulos"
+                        empty-label="Todos los módulos"
+                        search-placeholder="Buscar módulo…" />
                 </div>
 
                 {{-- Action --}}
                 <div>
                     <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Acción</label>
-                    <select name="action"
-                        class="w-full px-3 py-2 text-sm rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
-                        <option value="">Todas las acciones</option>
-                        @foreach($actions as $act)
-                            <option value="{{ $act }}" {{ request('action') === $act ? 'selected' : '' }}>{{ ucfirst(str_replace('_', ' ', $act)) }}</option>
-                        @endforeach
-                    </select>
+                    <x-ui.searchable-select
+                        name="action"
+                        :value="request('action')"
+                        :options="collect($actions)->map(fn($a) => ['value' => $a, 'label' => ucfirst(str_replace('_', ' ', $a))])->all()"
+                        placeholder="Todas las acciones"
+                        empty-label="Todas las acciones"
+                        search-placeholder="Buscar acción…" />
                 </div>
 
                 {{-- User --}}
                 <div>
                     <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Usuario</label>
-                    <select name="user_id"
-                        class="w-full px-3 py-2 text-sm rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
-                        <option value="">Todos los usuarios</option>
-                        @foreach($users as $u)
-                            <option value="{{ $u->id }}" {{ request('user_id') == $u->id ? 'selected' : '' }}>{{ $u->name }}</option>
-                        @endforeach
-                    </select>
+                    <x-ui.searchable-select
+                        name="user_id"
+                        :value="request('user_id')"
+                        :options="$users"
+                        placeholder="Todos los usuarios"
+                        empty-label="Todos los usuarios"
+                        search-placeholder="Buscar usuario…" />
                 </div>
 
                 {{-- Date from --}}

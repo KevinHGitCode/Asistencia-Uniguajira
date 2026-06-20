@@ -50,13 +50,12 @@
                     <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                         Rol del usuario
                     </label>
-                    <select wire:model.live="role"
-                        class="w-full rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="">Selecciona un rol</option>
-                        @foreach($roles as $value => $label)
-                            <option value="{{ $value }}">{{ $label }}</option>
-                        @endforeach
-                    </select>
+                    <x-ui.searchable-select
+                        wire:model.live="role"
+                        :options="$roles"
+                        placeholder="Selecciona un rol"
+                        empty-label="Selecciona un rol"
+                        search-placeholder="Buscar rol…" />
                     @error('role')
                         <span class="text-red-500 text-xs">{{ $message }}</span>
                     @enderror
@@ -68,19 +67,11 @@
                         <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                             Dependencias
                         </label>
-                        <div class="max-h-48 overflow-y-auto rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 p-3 space-y-2">
-                            @foreach($dependencies as $value => $label)
-                                <label class="flex items-center gap-2 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-700 rounded p-1.5 transition-colors">
-                                    <input 
-                                        type="checkbox" 
-                                        wire:model="dependency_ids" 
-                                        value="{{ $value }}"
-                                        class="rounded border-zinc-300 dark:border-zinc-600 text-blue-600 focus:ring-blue-500"
-                                    >
-                                    <span class="text-sm text-zinc-700 dark:text-zinc-300">{{ $label }}</span>
-                                </label>
-                            @endforeach
-                        </div>
+                        <x-ui.multi-searchable-select
+                            wire:model="dependency_ids"
+                            :options="$dependencies"
+                            placeholder="Agregar dependencias…"
+                            search-placeholder="Buscar dependencia…" />
                         @error('dependency_ids')
                             <span class="text-red-500 text-xs">{{ $message }}</span>
                         @enderror

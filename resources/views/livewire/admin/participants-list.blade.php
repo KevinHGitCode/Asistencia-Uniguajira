@@ -435,13 +435,13 @@
                                             <label class="text-xs font-medium text-gray-600 dark:text-gray-400">
                                                 Estamento <span class="text-red-500">*</span>
                                             </label>
-                                            <select wire:model.live="editRoles.{{ $index }}.participant_type_id"
-                                                class="px-3 py-2 rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
-                                                <option value="">Selecciona un estamento…</option>
-                                                @foreach($catalogTypes as $type)
-                                                    <option value="{{ $type['id'] }}">{{ $type['name'] }}</option>
-                                                @endforeach
-                                            </select>
+                                            <x-ui.searchable-select
+                                                wire:key="type-select-{{ $index }}"
+                                                wire:model.live="editRoles.{{ $index }}.participant_type_id"
+                                                :options="$catalogTypes"
+                                                placeholder="Selecciona un estamento…"
+                                                empty-label="Selecciona un estamento…"
+                                                search-placeholder="Buscar estamento…" />
                                             @error("editRoles.{$index}.participant_type_id")
                                                 <p class="text-xs text-red-500">{{ $message }}</p>
                                             @enderror
@@ -451,13 +451,13 @@
                                         @if($typeCategory === 'program')
                                             <div class="flex flex-col gap-1.5">
                                                 <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Programa</label>
-                                                <select wire:model="editRoles.{{ $index }}.program_id"
-                                                    class="px-3 py-2 rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
-                                                    <option value="">Sin programa</option>
-                                                    @foreach($catalogPrograms as $program)
-                                                        <option value="{{ $program['id'] }}">{{ $program['name'] }}</option>
-                                                    @endforeach
-                                                </select>
+                                                <x-ui.searchable-select
+                                                    wire:key="program-select-{{ $index }}"
+                                                    wire:model="editRoles.{{ $index }}.program_id"
+                                                    :options="$catalogPrograms"
+                                                    placeholder="Sin programa"
+                                                    empty-label="Sin programa"
+                                                    search-placeholder="Buscar programa…" />
                                             </div>
                                         @endif
 
@@ -465,13 +465,13 @@
                                         @if($typeCategory === 'dependency')
                                             <div class="flex flex-col gap-1.5">
                                                 <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Dependencia</label>
-                                                <select wire:model="editRoles.{{ $index }}.dependency_id"
-                                                    class="px-3 py-2 rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
-                                                    <option value="">Sin dependencia</option>
-                                                    @foreach($catalogDependencies as $dep)
-                                                        <option value="{{ $dep['id'] }}">{{ $dep['name'] }}</option>
-                                                    @endforeach
-                                                </select>
+                                                <x-ui.searchable-select
+                                                    wire:key="dependency-select-{{ $index }}"
+                                                    wire:model="editRoles.{{ $index }}.dependency_id"
+                                                    :options="$catalogDependencies"
+                                                    placeholder="Sin dependencia"
+                                                    empty-label="Sin dependencia"
+                                                    search-placeholder="Buscar dependencia…" />
                                             </div>
                                         @endif
 
@@ -516,13 +516,13 @@
                                         @if(in_array($typeCategory, ['program', 'dependency']))
                                             <div class="flex flex-col gap-1.5">
                                                 <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Vinculación</label>
-                                                <select wire:model="editRoles.{{ $index }}.affiliation_id"
-                                                    class="px-3 py-2 rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
-                                                    <option value="">Sin vinculación</option>
-                                                    @foreach($catalogAffiliations as $aff)
-                                                        <option value="{{ $aff['id'] }}">{{ $aff['name'] }}</option>
-                                                    @endforeach
-                                                </select>
+                                                <x-ui.searchable-select
+                                                    wire:key="affiliation-select-{{ $index }}"
+                                                    wire:model="editRoles.{{ $index }}.affiliation_id"
+                                                    :options="$catalogAffiliations"
+                                                    placeholder="Sin vinculación"
+                                                    empty-label="Sin vinculación"
+                                                    search-placeholder="Buscar vinculación…" />
                                             </div>
                                         @endif
                                     </div>
