@@ -12,7 +12,13 @@ class Program extends Model
     protected $fillable = [
         'name',
         'program_type',
+        'campus_id',
     ];
+
+    public function campus()
+    {
+        return $this->belongsTo(Campus::class);
+    }
 
     public function participants()
     {

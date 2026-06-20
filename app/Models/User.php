@@ -18,6 +18,7 @@ class User extends Authenticatable
         'role',
         'avatar',
         'is_active',
+        'campus_id',
     ];
 
     protected $hidden = [
@@ -45,6 +46,11 @@ class User extends Authenticatable
     public function events()
     {
         return $this->hasMany(Event::class);
+    }
+
+    public function campus()
+    {
+        return $this->belongsTo(Campus::class);
     }
 
     // ------------------------------------
