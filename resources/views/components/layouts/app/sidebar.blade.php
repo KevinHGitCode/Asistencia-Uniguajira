@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="dark">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="dark h-dvh overflow-hidden">
 
 <head>
     @include('partials.head')
@@ -37,8 +37,8 @@
     </style>
 </head>
 
-<body class="relative min-h-screen bg-white dark:bg-zinc-800">
-    <flux:sidebar stashable class="min-h-screen max-lg:h-dvh max-lg:overflow-y-auto border-e border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
+<body class="relative h-dvh overflow-hidden bg-white dark:bg-zinc-800">
+    <flux:sidebar sticky stashable class="min-h-0 max-lg:h-dvh max-lg:overflow-y-auto border-e border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
         <flux:sidebar.toggle class="lg:hidden" icon="x-mark" />
 
         {{-- Debounce wrapper: prevents rapid multi-clicks on wire:navigate links.
