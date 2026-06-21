@@ -14,7 +14,7 @@
     </div>
     
     <div class="break-words">
-        <span class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white break-all">
+        <span data-card-stat-value class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white break-all">
             {{ $value }}
         </span>
     </div>

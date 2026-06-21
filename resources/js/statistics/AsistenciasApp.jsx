@@ -1,9 +1,10 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 
 import { useTheme }            from './hooks/useTheme.js';
 import { useAsistenciasStats } from './hooks/useAsistenciasStats.js';
 import { useFilters }          from './hooks/useFilters.js';
 import { useEventFilter }      from './hooks/useEventFilter.js';
+import { useCampusRefresh }    from './hooks/useCampusRefresh.js';
 
 import { FiltersPanel }          from './components/FiltersPanel.jsx';
 import { StatCounters }          from './components/StatCounters.jsx';
@@ -47,6 +48,10 @@ export default function AsistenciasApp() {
   useEffect(() => {
     fetchAll(filters, evFilter.effectiveEventIds);
   }, [filters, evFilter.effectiveEventIds, fetchAll]);
+
+  useCampusRefresh(useCallback(() => {
+    fetchAll(filters, evFilter.effectiveEventIds);
+  }, [filters, evFilter.effectiveEventIds, fetchAll]));
 
   const { counters, charts, loading } = state;
 

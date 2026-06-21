@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Campus;
 use App\Models\Event;
 use App\Models\User;
+use App\Services\CampusScopeService;
 use App\Services\StatisticsService;
 use App\Traits\AppliesStatisticsFilters;
 use Illuminate\Http\JsonResponse;
@@ -13,6 +15,8 @@ use Illuminate\Support\Facades\Auth;
 class StatisticsController extends Controller
 {
     use AppliesStatisticsFilters;
+
+    public function __construct(private readonly CampusScopeService $campusScope) {}
 
     // ── Endpoints de resumen (1 request = todos los datos del módulo) ────────
 
@@ -26,16 +30,16 @@ class StatisticsController extends Controller
         if ($filters === null) {
             return response()->json([
                 'counters' => ['events' => 0, 'attendances' => 0, 'participants' => 0],
-                'charts'   => [
-                    'attendancesByProgram'      => [],
-                    'attendancesByDependency'   => [],
+                'charts' => [
+                    'attendancesByProgram' => [],
+                    'attendancesByDependency' => [],
                     'attendancesByOrganization' => [],
-                    'attendancesUnclassified'   => 0,
-                    'topEvents'                => [],
-                    'topParticipants'          => [],
-                    'byRole'                   => [],
-                    'bySex'                    => [],
-                    'byGroup'                  => [],
+                    'attendancesUnclassified' => 0,
+                    'topEvents' => [],
+                    'topParticipants' => [],
+                    'byRole' => [],
+                    'bySex' => [],
+                    'byGroup' => [],
                 ],
             ]);
         }
@@ -44,20 +48,20 @@ class StatisticsController extends Controller
 
         return response()->json([
             'counters' => [
-                'events'       => $s->totalEvents(),
-                'attendances'  => $s->totalAttendances(),
+                'events' => $s->totalEvents(),
+                'attendances' => $s->totalAttendances(),
                 'participants' => $s->totalParticipants(),
             ],
             'charts' => [
-                'attendancesByProgram'      => $s->attendancesByProgram(),
-                'attendancesByDependency'   => $s->attendancesByDependency(),
+                'attendancesByProgram' => $s->attendancesByProgram(),
+                'attendancesByDependency' => $s->attendancesByDependency(),
                 'attendancesByOrganization' => $s->attendancesByOrganization(),
-                'attendancesUnclassified'   => $s->attendancesUnclassified(),
-                'topEvents'                => $s->topEvents(),
-                'topParticipants'          => $s->topParticipants(),
-                'byRole'                   => $s->attendancesByType(),
-                'bySex'                    => $s->attendancesByDetailField('gender'),
-                'byGroup'                  => $s->attendancesByDetailField('priority_group'),
+                'attendancesUnclassified' => $s->attendancesUnclassified(),
+                'topEvents' => $s->topEvents(),
+                'topParticipants' => $s->topParticipants(),
+                'byRole' => $s->attendancesByType(),
+                'bySex' => $s->attendancesByDetailField('gender'),
+                'byGroup' => $s->attendancesByDetailField('priority_group'),
             ],
         ]);
     }
@@ -72,14 +76,14 @@ class StatisticsController extends Controller
         if ($filters === null) {
             return response()->json([
                 'counters' => ['events' => 0, 'participants' => 0],
-                'charts'   => [
-                    'participantsByProgram'      => [],
-                    'participantsByDependency'   => [],
+                'charts' => [
+                    'participantsByProgram' => [],
+                    'participantsByDependency' => [],
                     'participantsByOrganization' => [],
-                    'participantsUnclassified'   => 0,
-                    'byRole'                     => [],
-                    'bySex'                      => [],
-                    'byGroup'                    => [],
+                    'participantsUnclassified' => 0,
+                    'byRole' => [],
+                    'bySex' => [],
+                    'byGroup' => [],
                 ],
             ]);
         }
@@ -88,17 +92,17 @@ class StatisticsController extends Controller
 
         return response()->json([
             'counters' => [
-                'events'       => $s->totalEvents(),
+                'events' => $s->totalEvents(),
                 'participants' => $s->totalParticipants(),
             ],
             'charts' => [
-                'participantsByProgram'      => $s->participantsByProgram(),
-                'participantsByDependency'   => $s->participantsByDependency(),
+                'participantsByProgram' => $s->participantsByProgram(),
+                'participantsByDependency' => $s->participantsByDependency(),
                 'participantsByOrganization' => $s->participantsByOrganization(),
-                'participantsUnclassified'   => $s->participantsUnclassified(),
-                'byRole'                    => $s->participantsByTypeDedup(),
-                'bySex'                     => $s->participantsByDetailField('gender'),
-                'byGroup'                   => $s->participantsByGroupDedup(),
+                'participantsUnclassified' => $s->participantsUnclassified(),
+                'byRole' => $s->participantsByTypeDedup(),
+                'bySex' => $s->participantsByDetailField('gender'),
+                'byGroup' => $s->participantsByGroupDedup(),
             ],
         ]);
     }
@@ -215,11 +219,38 @@ class StatisticsController extends Controller
         return response()->json($this->svc($request)->participantsByOrganization());
     }
 
+    public function updateCampus(Request $request)
+    {
+        abort_unless($request->user()?->isSuperadmin(), 403);
+
+        $validated = $request->validate([
+            'campus_id' => ['nullable', 'integer', 'exists:campuses,id'],
+        ]);
+
+        $campusId = empty($validated['campus_id']) ? null : (int) $validated['campus_id'];
+
+        if ($campusId === null) {
+            $request->session()->forget(CampusScopeService::SESSION_KEY);
+        } else {
+            $request->session()->put(CampusScopeService::SESSION_KEY, $campusId);
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json(['campus_id' => $campusId]);
+        }
+
+        return redirect()->back();
+    }
+
     // ── Helpers privados ────────────────────────────────────────────────────
 
     private function svc(Request $request): StatisticsService
     {
-        return new StatisticsService($this->getFilters($request));
+        $filters = $this->getFilters($request);
+
+        return new StatisticsService(
+            $this->scopeToUser($filters, Auth::user()) ?? $this->emptyFilters($filters)
+        );
     }
 
     /**
@@ -228,11 +259,34 @@ class StatisticsController extends Controller
      */
     private function scopeToUser(array $filters, ?User $user): ?array
     {
-        if (! $user || $user->role === 'admin') {
+        if (! $user) {
+            return null;
+        }
+
+        $campusId = $this->campusScope->activeCampusId($user);
+
+        if ($campusId !== null) {
+            $filters['campusId'] = $campusId;
+        }
+
+        if ($user->hasAdminAccess()) {
             return $filters;
         }
 
-        $userEventIds = Event::where('user_id', $user->id)->pluck('id')->toArray();
+        $user->loadMissing('dependencies');
+        $dependencyIds = $user->dependencies->pluck('id')->all();
+
+        $userEventIdsQuery = Event::query()->select('id');
+        $this->campusScope->applyToQuery($userEventIdsQuery, $user);
+        $userEventIdsQuery->where(function ($query) use ($user, $dependencyIds) {
+            $query->where('user_id', $user->id);
+
+            if ($dependencyIds !== []) {
+                $query->orWhereIn('dependency_id', $dependencyIds);
+            }
+        });
+
+        $userEventIds = $userEventIdsQuery->pluck('id')->all();
 
         if (empty($userEventIds)) {
             return null;
@@ -245,5 +299,15 @@ class StatisticsController extends Controller
         }
 
         return array_merge($filters, ['eventIds' => $userEventIds]);
+    }
+
+    private function emptyFilters(array $filters): array
+    {
+        return array_merge($filters, ['eventIds' => [-1]]);
+    }
+
+    public static function campusOptions(): array
+    {
+        return Campus::orderBy('name')->pluck('name', 'id')->toArray();
     }
 }

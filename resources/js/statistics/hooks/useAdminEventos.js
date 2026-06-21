@@ -87,5 +87,5 @@ export function useAdminEventos() {
     }
   }, []);
 
-  return { state, fetchAll };
+  return { state, fetchAll, fetchFilterOptions };
 }

@@ -44,6 +44,36 @@ $applyCalendarVisibility = function ($query, User $user, CampusScopeService $cam
     });
 };
 
+$applyStatisticsEventVisibility = function ($query, User $user, CampusScopeService $campusScope): void {
+    $campusScope->applyToQuery($query, $user, 'events.campus_id');
+
+    if ($user->hasAdminAccess()) {
+        return;
+    }
+
+    $user->loadMissing('dependencies');
+    $dependencyIds = $user->dependencies->pluck('id')->all();
+
+    $query->where(function ($eventQuery) use ($user, $dependencyIds) {
+        $eventQuery->where('events.user_id', $user->id);
+
+        if ($dependencyIds !== []) {
+            $eventQuery->orWhereIn('events.dependency_id', $dependencyIds);
+        }
+    });
+};
+
+$authorizeStatisticsEvent = function (int $eventId, CampusScopeService $campusScope) use ($applyStatisticsEventVisibility): int {
+    $user = Auth::user();
+    $query = DB::table('events')->where('events.id', $eventId);
+
+    $applyStatisticsEventVisibility($query, $user, $campusScope);
+
+    abort_unless($query->exists(), 403);
+
+    return $eventId;
+};
+
 // Ruta para obtener eventos en formato JSON para el calendario
 Route::middleware(['web', 'auth'])->get('/eventos-json', function (CampusScopeService $campusScope) use ($applyCalendarVisibility) {
     $user = Auth::user();
@@ -106,7 +136,9 @@ Route::middleware(['web', 'auth'])->get('/mis-eventos-json', function (CampusSco
  */
 
 // Ruta para obtener datos de programas específicos del evento
-Route::get('/statistics/event/{event}/programs', function ($event) {
+Route::middleware(['web', 'auth'])->get('/statistics/event/{event}/programs', function ($event, CampusScopeService $campusScope) use ($authorizeStatisticsEvent) {
+    $event = $authorizeStatisticsEvent((int) $event, $campusScope);
+
     return DB::table('attendances')
         ->join('attendance_details', 'attendances.id', '=', 'attendance_details.attendance_id')
         ->join('participant_roles', 'attendance_details.participant_role_id', '=', 'participant_roles.id')
@@ -119,7 +151,9 @@ Route::get('/statistics/event/{event}/programs', function ($event) {
 });
 
 // Ruta para obtener estamentos específicos del evento
-Route::get('/statistics/event/{event}/roles', function ($event) {
+Route::middleware(['web', 'auth'])->get('/statistics/event/{event}/roles', function ($event, CampusScopeService $campusScope) use ($authorizeStatisticsEvent) {
+    $event = $authorizeStatisticsEvent((int) $event, $campusScope);
+
     return DB::table('attendances')
         ->join('attendance_details', 'attendances.id', '=', 'attendance_details.attendance_id')
         ->join('participant_roles', 'attendance_details.participant_role_id', '=', 'participant_roles.id')
@@ -132,7 +166,9 @@ Route::get('/statistics/event/{event}/roles', function ($event) {
 });
 
 // Distribución por género de un evento específico
-Route::get('/statistics/event/{event}/sex', function ($event) {
+Route::middleware(['web', 'auth'])->get('/statistics/event/{event}/sex', function ($event, CampusScopeService $campusScope) use ($authorizeStatisticsEvent) {
+    $event = $authorizeStatisticsEvent((int) $event, $campusScope);
+
     return DB::table('attendances')
         ->join('attendance_details', 'attendances.id', '=', 'attendance_details.attendance_id')
         ->select(
@@ -146,7 +182,9 @@ Route::get('/statistics/event/{event}/sex', function ($event) {
 });
 
 // Distribución por grupo priorizado de un evento específico
-Route::get('/statistics/event/{event}/group', function ($event) {
+Route::middleware(['web', 'auth'])->get('/statistics/event/{event}/group', function ($event, CampusScopeService $campusScope) use ($authorizeStatisticsEvent) {
+    $event = $authorizeStatisticsEvent((int) $event, $campusScope);
+
     return DB::table('attendances')
         ->join('attendance_details', 'attendances.id', '=', 'attendance_details.attendance_id')
         ->select(
@@ -160,7 +198,9 @@ Route::get('/statistics/event/{event}/group', function ($event) {
 });
 
 // Distribución por dependencia de un evento específico
-Route::get('/statistics/event/{event}/dependencies', function ($event) {
+Route::middleware(['web', 'auth'])->get('/statistics/event/{event}/dependencies', function ($event, CampusScopeService $campusScope) use ($authorizeStatisticsEvent) {
+    $event = $authorizeStatisticsEvent((int) $event, $campusScope);
+
     return DB::table('attendances')
         ->join('attendance_details', 'attendances.id', '=', 'attendance_details.attendance_id')
         ->join('participant_roles', 'attendance_details.participant_role_id', '=', 'participant_roles.id')
@@ -173,7 +213,9 @@ Route::get('/statistics/event/{event}/dependencies', function ($event) {
 });
 
 // Distribución por organización de un evento específico
-Route::get('/statistics/event/{event}/organizations', function ($event) {
+Route::middleware(['web', 'auth'])->get('/statistics/event/{event}/organizations', function ($event, CampusScopeService $campusScope) use ($authorizeStatisticsEvent) {
+    $event = $authorizeStatisticsEvent((int) $event, $campusScope);
+
     return DB::table('attendances')
         ->join('attendance_details', 'attendances.id', '=', 'attendance_details.attendance_id')
         ->join('participant_roles', 'attendance_details.participant_role_id', '=', 'participant_roles.id')
@@ -192,9 +234,8 @@ Route::get('/statistics/event/{event}/organizations', function ($event) {
  */
 
 // Lista de eventos disponibles para comparar (admin ve todos; usuario ve solo los suyos)
-Route::middleware(['web', 'auth'])->get('/statistics/compare/events', function (Request $request) {
+Route::middleware(['web', 'auth'])->get('/statistics/compare/events', function (Request $request, CampusScopeService $campusScope) use ($applyStatisticsEventVisibility) {
     $user = Auth::user();
-    $isAdmin = $user->hasAdminAccess();
 
     $query = DB::table('events')
         ->leftJoin('attendances', 'events.id', '=', 'attendances.event_id')
@@ -207,9 +248,7 @@ Route::middleware(['web', 'auth'])->get('/statistics/compare/events', function (
         ->groupBy('events.id', 'events.title', 'events.date')
         ->orderByDesc('events.date');
 
-    if (! $isAdmin) {
-        $query->where('events.user_id', $user->id);
-    }
+    $applyStatisticsEventVisibility($query, $user, $campusScope);
 
     $dateFrom = $request->get('dateFrom');
     $dateTo = $request->get('dateTo');
@@ -224,8 +263,20 @@ Route::middleware(['web', 'auth'])->get('/statistics/compare/events', function (
 });
 
 // Datos comparativos para los eventos seleccionados (asistencias + demografía)
-Route::get('/statistics/compare/data', function (Request $request) {
+Route::middleware(['web', 'auth'])->get('/statistics/compare/data', function (Request $request, CampusScopeService $campusScope) use ($applyStatisticsEventVisibility) {
     $eventIds = array_values(array_filter(array_map('intval', (array) $request->get('eventIds', []))));
+
+    if (empty($eventIds)) {
+        return ['attendances' => [], 'byRole' => [], 'bySex' => [], 'byGroup' => []];
+    }
+
+    $allowedEventsQuery = DB::table('events')
+        ->whereIn('events.id', $eventIds)
+        ->select('events.id');
+
+    $applyStatisticsEventVisibility($allowedEventsQuery, Auth::user(), $campusScope);
+
+    $eventIds = $allowedEventsQuery->pluck('events.id')->all();
 
     if (empty($eventIds)) {
         return ['attendances' => [], 'byRole' => [], 'bySex' => [], 'byGroup' => []];
@@ -301,7 +352,7 @@ Route::middleware(['web', 'auth'])->prefix('statistics')->controller(StatisticsC
     Route::get('/participantes-summary', 'participantesSummary');
 });
 
-Route::prefix('statistics')->controller(StatisticsController::class)->group(function () {
+Route::middleware(['web', 'auth'])->prefix('statistics')->controller(StatisticsController::class)->group(function () {
     Route::get('/total-events', 'totalEvents');
     Route::get('/events-by-role', 'eventsByRole');
     Route::get('/events-by-user', 'eventsByUser');

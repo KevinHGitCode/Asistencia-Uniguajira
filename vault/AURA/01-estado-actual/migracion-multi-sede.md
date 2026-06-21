@@ -62,14 +62,14 @@ Leyenda: ✅ implementado · 🟡 parcial · ⬜ pendiente · 🚫 no aplica / g
 
 | Modulo | Estado sede | Evidencia / notas |
 |---|---:|---|
-| Dashboard | ✅ | `DashboardController` aplica `CampusScopeService` a conteos y dependencias. Superadmin tiene selector de sede activa. |
-| Calendario dashboard | ✅ | `/api/eventos-json`, `/api/events/{date}` y `/api/mis-eventos-json` pasan por auth web y filtran por sede. |
+| Dashboard | ✅ | `DashboardController` aplica `CampusScopeService` a conteos y dependencias. Superadmin tiene selector de sede activa con AJAX; al cambiar sede actualiza solo las 3 cards. |
+| Calendario dashboard | ✅ | `/api/eventos-json`, `/api/events/{date}` y `/api/mis-eventos-json` pasan por auth web y filtran por sede. Al cambiar sede desde dashboard se repinta Cal-Heatmap sin recargar pagina. |
 | Eventos privados (listado, crear, detalle, editar, eliminar, terminar) | ✅ | `EventController`, `EventService`, `CreateEventWizard` y `EditEventModal` aplican sede. Admin gestiona solo su sede; superadmin respeta sede activa o ve todo sin seleccion. |
 | Detalle de evento desde calendario | ✅ | `EventController::show` valida sede antes de permitir ver detalle. |
 | Ruta publica QR `/events/acceso/{slug}` | 🚫 | Debe seguir publica y sin filtro de sede. No romper. |
 | Confirmacion publica de asistencia | 🚫 | Debe seguir publica. Revisar solo seguridad anti-abuso, no sede. |
-| Estadisticas | ⬜ | No tocar todavia. Alto riesgo de mezcla por endpoints `/api/statistics/*`. |
-| Comparador de eventos | ⬜ | Vive en `routes/api.php`; aun puede mezclar sedes. Revisar cuando toque estadisticas. |
+| Estadisticas | ✅ | `StatisticsController` resuelve sede activa con `CampusScopeService`; `StatisticsService` filtra bases por `events.campus_id`. Endpoints `/api/statistics/*` requieren sesion. El selector de sede de superadmin actualiza graficas por AJAX sin recargar toda la pagina. |
+| Comparador de eventos | ✅ | `/api/statistics/compare/events` y `/api/statistics/compare/data` aplican visibilidad por sede/usuario antes de listar o comparar eventos. |
 | Descarga privada de PDF de evento | ✅ | No cambia generacion PDF; se agrego autorizacion por sede para evitar bypass por URL directa. |
 | Wizard de creacion de evento | ✅ | Limita dependencias/areas por sede y asigna `events.campus_id`. |
 | Administracion dependencias | ⬜ | Listados, CRUD, import/export deben filtrar o asignar sede. |
@@ -94,7 +94,8 @@ Leyenda: ✅ implementado · 🟡 parcial · ⬜ pendiente · 🚫 no aplica / g
 - [ ] Agregar pruebas del modulo antes de marcarlo como ✅.
 
 ## Riesgos activos
-- Estadisticas e imports pueden mezclar sedes si se filtran parcialmente.
+- Imports y administracion pueden mezclar sedes si se filtran parcialmente.
+- Estadisticas ya filtra por sede desde eventos/asistencias; mantener vigilancia al agregar nuevas graficas para no consultar `participants` globalmente sin pasar por eventos.
 - Crear eventos sin asignar `campus_id` deja datos invisibles para admin/user una vez se endurezcan reglas.
 - `campus_id` sigue nullable para migracion progresiva; no volver `NOT NULL` hasta completar auditoria y backfill.
 - Tests feature requieren driver SQLite local; si falta, las pruebas con DB fallan antes de aserciones.

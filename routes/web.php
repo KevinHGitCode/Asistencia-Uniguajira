@@ -1,26 +1,27 @@
 <?php
 
-use App\Http\Controllers\DashboardController;
-use App\Livewire\Settings\About;
-use App\Livewire\Settings\Appearance;
-use App\Livewire\Settings\Password;
-use App\Livewire\Settings\Profile;
-use App\Livewire\Settings\Language;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\UserController;
-use \App\Http\Controllers\Lang\LanguageController;
-use App\Http\Controllers\EventController;
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\Configuration\ActivityLogController;
 use App\Http\Controllers\Configuration\AdministrationController;
 use App\Http\Controllers\Configuration\AffiliationController;
 use App\Http\Controllers\Configuration\AreaController;
 use App\Http\Controllers\Configuration\DependencyController;
-use App\Http\Controllers\Configuration\ParticipantTypeController;
-use App\Http\Controllers\Configuration\ProgramController;
 use App\Http\Controllers\Configuration\FormatController;
 use App\Http\Controllers\Configuration\OrganizationController;
 use App\Http\Controllers\Configuration\ParticipantImportController;
-use App\Http\Controllers\Configuration\ActivityLogController;
+use App\Http\Controllers\Configuration\ParticipantTypeController;
+use App\Http\Controllers\Configuration\ProgramController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EventController;
+use App\Http\Controllers\Lang\LanguageController;
+use App\Http\Controllers\StatisticsController;
+use App\Http\Controllers\UserController;
+use App\Livewire\Settings\About;
+use App\Livewire\Settings\Appearance;
+use App\Livewire\Settings\Language;
+use App\Livewire\Settings\Password;
+use App\Livewire\Settings\Profile;
+use Illuminate\Support\Facades\Route;
 
 /**
  * ================================================================
@@ -38,7 +39,6 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
 Route::post('/dashboard/campus', [DashboardController::class, 'updateCampus'])
     ->middleware(['auth', 'verified'])
     ->name('dashboard.campus');
-
 
 /**
  * ================================================================
@@ -69,7 +69,6 @@ Route::middleware(['auth', 'verified', 'role:admin,superadmin'])->group(function
     })->name('admin.events.index');
 });
 
-
 /**
  * ================================================================
  *  RUTAS DE REGISTRO Y CONFIRMACIÓN DE ASISTENCIA
@@ -88,24 +87,24 @@ Route::get('/events/acceso/{slug}', [EventController::class, 'access'])
 Route::post('/events/acceso/{slug}', [AttendanceController::class, 'store'])
     ->name('attendance.store');
 
-
 /**
  * ================================================================
  *  RUTAS DE ESTADÍSTICAS
  * ================================================================
  */
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::view('estadisticas',                   'statistics.statistics')       ->name('statistics');
-    Route::view('estadisticas/asistencias',       'statistics.asistencias')      ->name('statistics.asistencias');
-    Route::view('estadisticas/participantes',     'statistics.participantes')    ->name('statistics.participantes');
-    Route::view('estadisticas/eventos',           'statistics.eventos')          ->name('statistics.eventos');
-    Route::view('estadisticas/compara-eventos',   'statistics.compara-eventos')  ->name('statistics.compara-eventos');
+    Route::view('estadisticas', 'statistics.statistics')->name('statistics');
+    Route::view('estadisticas/asistencias', 'statistics.asistencias')->name('statistics.asistencias');
+    Route::view('estadisticas/participantes', 'statistics.participantes')->name('statistics.participantes');
+    Route::view('estadisticas/eventos', 'statistics.eventos')->name('statistics.eventos');
+    Route::view('estadisticas/compara-eventos', 'statistics.compara-eventos')->name('statistics.compara-eventos');
+    Route::post('estadisticas/campus', [StatisticsController::class, 'updateCampus'])
+        ->name('statistics.campus');
 });
 
 Route::middleware(['auth', 'verified', 'role:admin,superadmin'])->group(function () {
     Route::view('estadisticas/usuarios', 'statistics.usuarios')->name('statistics.usuarios');
 });
-
 
 /**
  * ================================================================
@@ -115,7 +114,7 @@ Route::middleware(['auth', 'verified', 'role:admin,superadmin'])->group(function
 Route::middleware(['auth', 'verified', 'role:admin,superadmin'])
     ->prefix('usuarios')
     ->group(function () {
-        
+
         Route::get('/', [UserController::class, 'index'])->name('users.index');
         Route::get('/create', [UserController::class, 'create'])->name('user.form');
         Route::post('/', [UserController::class, 'store'])->name('users.store');
@@ -138,7 +137,7 @@ Route::middleware(['auth', 'verified', 'role:admin,superadmin'])
 Route::middleware(['auth', 'verified', 'role:admin,superadmin'])
     ->prefix('administracion')
     ->group(function () {
-        
+
         Route::get('/', [AdministrationController::class, 'index'])->name('administracion.index');
 
         // Rutas específicas de dependencias
@@ -162,7 +161,6 @@ Route::middleware(['auth', 'verified', 'role:admin,superadmin'])
         Route::get('/areas/edit/{area}', [AreaController::class, 'edit'])->name('areas.edit');
         Route::post('/areas/edit/{area}', [AreaController::class, 'update'])->name('areas.update');
         Route::post('/areas/delete/{area}', [AreaController::class, 'destroy'])->name('areas.delete');
-
 
         // Rutas específicas de formatos
         Route::get('/formats', [FormatController::class, 'index'])->name('formats.index');
@@ -252,6 +250,4 @@ Route::middleware(['auth'])->group(function () {
         ->name('settings.language.switch');
 });
 
-
-
-require __DIR__ . '/auth.php';
+require __DIR__.'/auth.php';

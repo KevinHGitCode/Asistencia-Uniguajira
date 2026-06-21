@@ -99,3 +99,11 @@ document.addEventListener("livewire:navigated", () => {
     const routeName = path.split('/').pop();
     handleRouteChange(routeName);
 });
+
+window.addEventListener('dashboard:campus-changed', async () => {
+    if (!window.location.pathname.includes('dashboard')) return;
+
+    const { paintCalendar } = await import('./calendar/paint.js');
+    const isDarkTheme = document.documentElement.classList.contains('dark');
+    paintCalendar(isDarkTheme);
+});

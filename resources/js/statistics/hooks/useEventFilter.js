@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { useCampusRefresh } from './useCampusRefresh.js';
 
 /**
  * Hook para seleccionar eventos específicos dentro del período de fechas.
@@ -69,6 +70,10 @@ export function useEventFilter(filters) {
     fetchEvents(filters);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters.dateFrom, filters.dateTo, fetchEvents]);
+
+  useCampusRefresh(useCallback(() => {
+    fetchEvents(filters);
+  }, [filters, fetchEvents]));
 
   // ── Acciones de selección ───────────────────────────────────────────────────
 

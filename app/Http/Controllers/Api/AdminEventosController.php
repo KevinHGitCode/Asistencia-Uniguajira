@@ -3,9 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Dependency;
 use App\Models\Event;
 use App\Models\User;
-use App\Models\Dependency;
+use App\Services\CampusScopeService;
 use Illuminate\Http\Request;
 
 class AdminEventosController extends Controller
@@ -20,10 +21,12 @@ class AdminEventosController extends Controller
      *   &dependencies[]=1&dependencies[]=2
      *   &users[]=3&users[]=5
      */
-    public function index(Request $request)
+    public function index(Request $request, CampusScopeService $campusScope)
     {
         $query = Event::query()
             ->with(['user:id,name', 'dependency:id,name', 'area:id,name']);
+
+        $campusScope->applyToQuery($query, $request->user());
 
         // ── Filtro de fecha ──
         if ($request->filled('from')) {
@@ -52,26 +55,26 @@ class AdminEventosController extends Controller
         }
 
         $events = $query->orderByDesc('date')
-                        ->orderByDesc('start_time')
-                        ->limit(500)
-                        ->get();
+            ->orderByDesc('start_time')
+            ->limit(500)
+            ->get();
 
         $mapped = $events->map(fn ($e) => [
-            'id'              => $e->id,
-            'title'           => $e->title,
-            'description'     => $e->description,
-            'date'            => $e->date,
-            'start_time'      => $e->start_time,
-            'end_time'        => $e->end_time,
-            'location'        => $e->location,
-            'user_name'       => $e->user?->name,
+            'id' => $e->id,
+            'title' => $e->title,
+            'description' => $e->description,
+            'date' => $e->date,
+            'start_time' => $e->start_time,
+            'end_time' => $e->end_time,
+            'location' => $e->location,
+            'user_name' => $e->user?->name,
             'dependency_name' => $e->dependency?->name,
-            'area_name'       => $e->area?->name,
+            'area_name' => $e->area?->name,
         ]);
 
         return response()->json([
             'events' => $mapped->values(),
-            'total'  => $mapped->count(),
+            'total' => $mapped->count(),
         ]);
     }
 
@@ -81,25 +84,31 @@ class AdminEventosController extends Controller
      *
      * GET /api/statistics/admin-eventos/filter-options
      */
-    public function filterOptions()
+    public function filterOptions(Request $request, CampusScopeService $campusScope)
     {
         // Solo dependencias que tienen al menos un evento (JOIN es más rápido que whereHas)
         $dependencies = Dependency::select('dependencies.id', 'dependencies.name')
             ->join('events', 'dependencies.id', '=', 'events.dependency_id')
             ->distinct()
-            ->orderBy('dependencies.name')
-            ->get();
+            ->orderBy('dependencies.name');
+
+        $campusScope->applyToQuery($dependencies, $request->user(), 'events.campus_id');
+
+        $dependencies = $dependencies->get();
 
         // Solo usuarios que han creado al menos un evento (JOIN es más rápido que whereHas)
         $users = User::select('users.id', 'users.name')
             ->join('events', 'users.id', '=', 'events.user_id')
             ->distinct()
-            ->orderBy('users.name')
-            ->get();
+            ->orderBy('users.name');
+
+        $campusScope->applyToQuery($users, $request->user(), 'events.campus_id');
+
+        $users = $users->get();
 
         return response()->json([
             'dependencies' => $dependencies,
-            'users'        => $users,
+            'users' => $users,
         ]);
     }
 }

@@ -1,8 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 
 import { useTheme }         from './hooks/useTheme.js';
 import { useUsuariosStats } from './hooks/useUsuariosStats.js';
 import { useFilters }       from './hooks/useFilters.js';
+import { useCampusRefresh } from './hooks/useCampusRefresh.js';
 
 import { FiltersPanel }     from './components/FiltersPanel.jsx';
 import { ChartCard }        from './components/ChartCard.jsx';
@@ -49,6 +50,10 @@ export default function UsuariosApp() {
   useEffect(() => {
     fetchAll(filters);
   }, [filters, fetchAll]);
+
+  useCampusRefresh(useCallback(() => {
+    fetchAll(filters);
+  }, [filters, fetchAll]));
 
   const { counters, charts, loading } = state;
 
