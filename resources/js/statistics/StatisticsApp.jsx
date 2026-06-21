@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 
 import { useTheme }      from './hooks/useTheme.js';
 import { useStatistics } from './hooks/useStatistics.js';
+import { useCampusRefresh } from './hooks/useCampusRefresh.js';
 
 import { FiltersPanel }  from './components/FiltersPanel.jsx';
 import { StatCounters }  from './components/StatCounters.jsx';
@@ -70,6 +71,10 @@ export default function StatisticsApp() {
   useEffect(() => {
     fetchAll(applied);
   }, [applied, fetchAll]);
+
+  useCampusRefresh(useCallback(() => {
+    fetchAll(applied);
+  }, [applied, fetchAll]));
 
   const handleApply = useCallback(() => {
     setApplied({ ...pending });

@@ -68,7 +68,7 @@ Leyenda: ✅ implementado · 🟡 parcial · ⬜ pendiente · 🚫 no aplica / g
 | Detalle de evento desde calendario | ✅ | `EventController::show` valida sede antes de permitir ver detalle. |
 | Ruta publica QR `/events/acceso/{slug}` | 🚫 | Debe seguir publica y sin filtro de sede. No romper. |
 | Confirmacion publica de asistencia | 🚫 | Debe seguir publica. Revisar solo seguridad anti-abuso, no sede. |
-| Estadisticas | ✅ | `StatisticsController` resuelve sede activa con `CampusScopeService`; `StatisticsService` filtra bases por `events.campus_id`. Endpoints `/api/statistics/*` requieren sesion. |
+| Estadisticas | ✅ | `StatisticsController` resuelve sede activa con `CampusScopeService`; `StatisticsService` filtra bases por `events.campus_id`. Endpoints `/api/statistics/*` requieren sesion. El selector de sede de superadmin actualiza graficas por AJAX sin recargar toda la pagina. |
 | Comparador de eventos | ✅ | `/api/statistics/compare/events` y `/api/statistics/compare/data` aplican visibilidad por sede/usuario antes de listar o comparar eventos. |
 | Descarga privada de PDF de evento | ✅ | No cambia generacion PDF; se agrego autorizacion por sede para evitar bypass por URL directa. |
 | Wizard de creacion de evento | ✅ | Limita dependencias/areas por sede y asigna `events.campus_id`. |

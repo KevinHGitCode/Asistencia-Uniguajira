@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback, useRef, useMemo } from "react"
 
 import { useTheme }        from "./hooks/useTheme.js";
 import { useAdminEventos } from "./hooks/useAdminEventos.js";
+import { useCampusRefresh } from "./hooks/useCampusRefresh.js";
 
 import { CalendarIcon }      from "./components/AdminEventosIcons.jsx";
 import AdminFiltersPanel     from "./components/AdminFiltersPanel.jsx";
@@ -74,7 +75,7 @@ function classifyEvents(events) {
 
 export default function AdminEventosApp() {
     useTheme();
-    const { state, fetchAll } = useAdminEventos();
+    const { state, fetchAll, fetchFilterOptions } = useAdminEventos();
 
     // Filtros
     const [from, setFrom]               = useState("");
@@ -99,6 +100,11 @@ export default function AdminEventosApp() {
     );
 
     useEffect(() => { fetchAll(filters); }, [filters, fetchAll]);
+
+    useCampusRefresh(useCallback(() => {
+        fetchFilterOptions();
+        fetchAll(filters);
+    }, [fetchAll, fetchFilterOptions, filters]));
 
     const { events, total, loading, error, filterOptions } = state;
 

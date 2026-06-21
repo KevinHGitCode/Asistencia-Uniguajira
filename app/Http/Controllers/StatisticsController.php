@@ -227,10 +227,16 @@ class StatisticsController extends Controller
             'campus_id' => ['nullable', 'integer', 'exists:campuses,id'],
         ]);
 
-        if (empty($validated['campus_id'])) {
+        $campusId = empty($validated['campus_id']) ? null : (int) $validated['campus_id'];
+
+        if ($campusId === null) {
             $request->session()->forget(CampusScopeService::SESSION_KEY);
         } else {
-            $request->session()->put(CampusScopeService::SESSION_KEY, (int) $validated['campus_id']);
+            $request->session()->put(CampusScopeService::SESSION_KEY, $campusId);
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json(['campus_id' => $campusId]);
         }
 
         return redirect()->back();

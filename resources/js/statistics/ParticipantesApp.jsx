@@ -1,9 +1,10 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 
 import { useTheme }              from './hooks/useTheme.js';
 import { useParticipantesStats } from './hooks/useParticipantesStats.js';
 import { useFilters }            from './hooks/useFilters.js';
 import { useEventFilter }        from './hooks/useEventFilter.js';
+import { useCampusRefresh }      from './hooks/useCampusRefresh.js';
 
 import { FiltersPanel }           from './components/FiltersPanel.jsx';
 import { ChartCard }              from './components/ChartCard.jsx';
@@ -75,6 +76,10 @@ export default function ParticipantesApp() {
   useEffect(() => {
     fetchAll(filters, evFilter.effectiveEventIds);
   }, [filters, evFilter.effectiveEventIds, fetchAll]);
+
+  useCampusRefresh(useCallback(() => {
+    fetchAll(filters, evFilter.effectiveEventIds);
+  }, [filters, evFilter.effectiveEventIds, fetchAll]));
 
   const { counters, charts, loading } = state;
 
