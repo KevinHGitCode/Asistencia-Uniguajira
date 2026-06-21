@@ -13,6 +13,7 @@ class Program extends Model
         'name',
         'program_type',
         'campus_id',
+        'offer_location',
         'academic_program_id',
     ];
 

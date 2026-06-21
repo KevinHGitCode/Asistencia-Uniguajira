@@ -4,6 +4,16 @@
         <h2 class="text-base font-semibold text-gray-900 dark:text-white">Listado de Programas</h2>
 
         <div class="flex items-center gap-3 ml-auto">
+
+            @if(auth()->user()?->isSuperadmin())
+                <select wire:model.live="campusId"
+                        class="rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-sm text-gray-700 shadow-sm focus:border-[#2563eb] focus:ring-[#2563eb] dark:border-zinc-700 dark:bg-zinc-800 dark:text-gray-200">
+                    <option value="">Todas las sedes</option>
+                    @foreach($campuses as $id => $name)
+                        <option value="{{ $id }}">{{ $name }}</option>
+                    @endforeach
+                </select>
+            @endif
             @if($programs->hasPages())
             <div class="flex items-center gap-0.5">
                 <button wire:click="previousPage"
@@ -46,6 +56,11 @@
                 <tr class="border-b border-neutral-100 dark:border-zinc-800 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                     <th class="px-4 sm:px-6 py-3 text-left font-medium">#</th>
                     <th class="px-4 sm:px-6 py-3 text-left font-medium">Programa</th>
+                    <th class="px-4 sm:px-6 py-3 text-left font-medium hidden lg:table-cell">Programa base</th>
+                    <th class="px-4 sm:px-6 py-3 text-left font-medium hidden xl:table-cell">Lugar de oferta</th>
+                    @if(auth()->user()?->isSuperadmin())
+                        <th class="px-4 sm:px-6 py-3 text-left font-medium hidden md:table-cell">Sede</th>
+                    @endif
                     <th class="px-4 sm:px-6 py-3 text-left font-medium hidden sm:table-cell">Tipo</th>
                     <th class="px-4 sm:px-6 py-3 text-center font-medium">Participantes</th>
                     <th class="px-4 sm:px-6 py-3 text-center font-medium hidden sm:table-cell">Creado</th>
@@ -64,6 +79,17 @@
                                 <span class="font-medium text-gray-900 dark:text-white">{{ $program->name }}</span>
                             </div>
                         </td>
+                        <td class="px-4 sm:px-6 py-4 text-gray-500 dark:text-gray-400 hidden lg:table-cell">
+                            {{ $program->academicProgram?->name ?? '—' }}
+                        </td>
+                        <td class="px-4 sm:px-6 py-4 text-gray-500 dark:text-gray-400 hidden xl:table-cell">
+                            {{ $program->offer_location ?? '—' }}
+                        </td>
+                        @if(auth()->user()?->isSuperadmin())
+                            <td class="px-4 sm:px-6 py-4 text-gray-500 dark:text-gray-400 hidden md:table-cell">
+                                {{ $program->campus?->name ?? 'Sin sede' }}
+                            </td>
+                        @endif
                         <td class="px-4 sm:px-6 py-4 text-gray-500 dark:text-gray-400 hidden sm:table-cell">
                             {{ $program->program_type ?? '—' }}
                         </td>
@@ -78,7 +104,7 @@
                         <td class="px-4 sm:px-6 py-4">
                             <div class="flex items-center justify-end gap-2">
                                 <button
-                                    @click="openEdit({{ $program->id }}, {{ Js::from($program->name) }}, {{ Js::from($program->program_type ?? '') }})"
+                                    @click="openEdit({{ $program->id }}, {{ Js::from($program->academicProgram?->name ?? $program->name) }}, {{ Js::from($program->program_type ?? '') }}, {{ Js::from((string) $program->campus_id) }}, {{ Js::from((string) $program->academic_program_id) }}, {{ Js::from($program->offer_location ?? '') }})"
                                     class="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 dark:hover:text-blue-400 transition-colors cursor-pointer"
                                     title="Editar">
                                     <flux:icon.pencil-square class="size-4" />

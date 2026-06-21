@@ -4,29 +4,52 @@ namespace App\Http\Controllers\Configuration;
 
 use App\Exports\SkippedProgramsExport;
 use App\Http\Controllers\Controller;
+use App\Models\AcademicProgram;
+use App\Models\Campus;
 use App\Models\Program;
+use App\Services\ActivityLogService;
+use App\Services\CampusNameResolver;
+use App\Services\CampusScopeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Services\ActivityLogService;
 
 class ProgramController extends Controller
 {
-    public function index()
+    public function index(Request $request, CampusScopeService $campusScope)
     {
-        $totalPrograms = Program::count();
+        $campusScope->syncSelectedCampusFromRequest($request);
 
-        return view('administration.programs.index', compact('totalPrograms'));
+        $totalPrograms = $campusScope->applyToQuery(Program::query(), $request->user())->count();
+        $campuses = Campus::orderBy('name')->pluck('name', 'id')->toArray();
+        $academicPrograms = AcademicProgram::orderBy('name')->pluck('name', 'id')->toArray();
+        $activeCampusId = $campusScope->activeCampusId($request->user());
+        $isSuperadmin = $request->user()?->isSuperadmin() ?? false;
+
+        return view('administration.programs.index', compact(
+            'totalPrograms',
+            'campuses',
+            'academicPrograms',
+            'activeCampusId',
+            'isSuperadmin'
+        ));
     }
 
-    public function store(Request $request)
+    public function store(Request $request, CampusScopeService $campusScope)
     {
-        $this->validateProgram($request);
+        $campusId = $this->campusIdForWrite($request, $campusScope);
+        $academicProgram = $this->resolveAcademicProgram($request);
+        $this->ensureProgramOfferingIsUnique($academicProgram->id, $campusId, $request->offer_location);
+        $campus = Campus::findOrFail($campusId);
 
         $program = Program::create([
-            'name'         => self::normalizeName(trim($request->name)),
+            'name' => $this->compatibleProgramName($academicProgram->name, $campus->name, $request->offer_location),
             'program_type' => $request->program_type ?: null,
+            'campus_id' => $campusId,
+            'offer_location' => $request->offer_location ?: null,
+            'academic_program_id' => $academicProgram->id,
         ]);
 
         ActivityLogService::log('crear', 'programas', "Creó el programa '{$program->name}'", $program);
@@ -35,15 +58,22 @@ class ProgramController extends Controller
             ->with('success', 'Programa creado exitosamente.');
     }
 
-    public function update(Request $request, Program $program)
+    public function update(Request $request, Program $program, CampusScopeService $campusScope)
     {
-        $this->validateProgram($request, $program->id);
+        $campusScope->authorizeResource($request->user(), $program);
+        $campusId = $this->campusIdForWrite($request, $campusScope, (int) $program->campus_id);
+        $academicProgram = $this->resolveAcademicProgram($request, $program->academic_program_id);
+        $this->ensureProgramOfferingIsUnique($academicProgram->id, $campusId, $request->offer_location, $program->id);
+        $campus = Campus::findOrFail($campusId);
 
-        $original = $program->only(['name', 'program_type']);
+        $original = $program->only(['name', 'program_type', 'campus_id', 'offer_location', 'academic_program_id']);
 
         $program->update([
-            'name'         => self::normalizeName(trim($request->name)),
+            'name' => $this->compatibleProgramName($academicProgram->name, $campus->name, $request->offer_location),
             'program_type' => $request->program_type ?: null,
+            'campus_id' => $campusId,
+            'offer_location' => $request->offer_location ?: null,
+            'academic_program_id' => $academicProgram->id,
         ]);
 
         $changes = [];
@@ -60,8 +90,10 @@ class ProgramController extends Controller
             ->with('success', 'Programa actualizado exitosamente.');
     }
 
-    public function destroy(Program $program)
+    public function destroy(Request $request, Program $program, CampusScopeService $campusScope)
     {
+        $campusScope->authorizeResource($request->user(), $program);
+
         $program->loadCount('participants');
         $count = $program->participants_count;
 
@@ -79,7 +111,7 @@ class ProgramController extends Controller
             ->with('success', "Programa \"{$name}\" eliminado exitosamente.");
     }
 
-    public function importExcel(Request $request)
+    public function importExcel(Request $request, CampusScopeService $campusScope)
     {
         set_time_limit(0);
 
@@ -87,12 +119,12 @@ class ProgramController extends Controller
             'excel_file' => 'required|file|mimes:xlsx,xls,csv|max:10240',
         ], [
             'excel_file.required' => 'Debes seleccionar un archivo Excel.',
-            'excel_file.mimes'    => 'El archivo debe ser .xlsx, .xls o .csv.',
-            'excel_file.max'      => 'El archivo no debe superar los 10 MB.',
+            'excel_file.mimes' => 'El archivo debe ser .xlsx, .xls o .csv.',
+            'excel_file.max' => 'El archivo no debe superar los 10 MB.',
         ]);
 
         $sheets = Excel::toArray([], $request->file('excel_file'));
-        $rows   = $sheets[0] ?? [];
+        $rows = $sheets[0] ?? [];
 
         if (empty($rows)) {
             return back()->withErrors(['excel_file' => 'El archivo esta vacio.']);
@@ -109,10 +141,18 @@ class ProgramController extends Controller
 
         array_shift($rows);
 
-        // Cache: clave sin acentos y en minusculas.
-        $existingSet = array_flip(
-            Program::all(['name'])->map(fn ($p) => self::comparisonKey($p->name))->toArray()
-        );
+        $user = $request->user();
+        $isSuperadmin = $user?->isSuperadmin() ?? false;
+        $fixedCampusId = $isSuperadmin ? null : $this->campusIdForWrite($request, $campusScope);
+        $campuses = Campus::orderBy('name')->get(['id', 'name']);
+        $fixedCampus = $fixedCampusId ? $campuses->firstWhere('id', $fixedCampusId) : null;
+        $campusResolver = app(CampusNameResolver::class);
+
+        $existingSet = Program::query()
+            ->whereNotNull('academic_program_id')
+            ->get(['campus_id', 'academic_program_id', 'offer_location'])
+            ->mapWithKeys(fn (Program $program) => [$this->offeringKey($program->campus_id, $program->academic_program_id, $program->offer_location) => true])
+            ->toArray();
 
         $created = 0;
         $skippedRows = [];
@@ -127,32 +167,60 @@ class ProgramController extends Controller
 
             if ($rawName === '') {
                 $skippedRows[] = $this->skippedRow($rawName, $rawType, 'Nombre vacio');
+
                 continue;
             }
 
-            $programName = self::normalizeName($rawName);
-            $nameKey = self::comparisonKey($programName);
-
-            if (isset($existingSet[$nameKey])) {
+            $detectedCampus = $campusResolver->resolve($rawName, $campuses);
+            if (! $isSuperadmin && $detectedCampus && $detectedCampus->id !== $fixedCampusId) {
                 $skippedRows[] = $this->skippedRow(
-                    $programName,
+                    $rawName,
                     $rawType,
-                    "Programa duplicado o ya existente: \"{$programName}\""
+                    "La sede indicada ({$detectedCampus->name}) no corresponde a tu sede ({$fixedCampus?->name})."
                 );
+
                 continue;
             }
+
+            $fallbackCampus = $campuses->first(fn (Campus $campus) => mb_strtolower($campus->name, 'UTF-8') === 'riohacha');
+            if ($isSuperadmin && ! $detectedCampus && ! $fallbackCampus) {
+                $skippedRows[] = $this->skippedRow($rawName, $rawType, 'No existe la sede responsable Riohacha.');
+
+                continue;
+            }
+
+            $targetCampus = $isSuperadmin ? ($detectedCampus ?? $fallbackCampus) : $fixedCampus;
+            $offerLocation = $detectedCampus ? null : $campusResolver->suffix($rawName);
+            $academicName = self::normalizeName(
+                ($detectedCampus || $offerLocation) ? $campusResolver->withoutSuffix($rawName) : $rawName
+            );
+            $academicProgram = $this->findOrCreateAcademicProgram($academicName);
 
             $programType = null;
             if ($rawType !== '') {
                 $programType = $typeMap[mb_strtolower($rawType, 'UTF-8')] ?? null;
             }
 
-            $existingSet[$nameKey] = true;
+            $programKey = $this->offeringKey($targetCampus->id, $academicProgram->id, $offerLocation);
+            if (isset($existingSet[$programKey])) {
+                $skippedRows[] = $this->skippedRow(
+                    $academicName,
+                    $rawType,
+                    "Programa ya existe para la sede {$targetCampus->name}: \"{$academicName}\""
+                );
+
+                continue;
+            }
+
+            $existingSet[$programKey] = true;
             $batch[] = [
-                'name'         => $programName,
+                'name' => $this->compatibleProgramName($academicProgram->name, $targetCampus->name, $offerLocation),
                 'program_type' => $programType,
-                'created_at'   => $now,
-                'updated_at'   => $now,
+                'campus_id' => $targetCampus->id,
+                'offer_location' => $offerLocation,
+                'academic_program_id' => $academicProgram->id,
+                'created_at' => $now,
+                'updated_at' => $now,
             ];
             $created++;
         }
@@ -190,7 +258,7 @@ class ProgramController extends Controller
 
         return Excel::download(
             new SkippedProgramsExport($skipped),
-            'programas_omitidos_' . now()->format('Ymd_His') . '.xlsx'
+            'programas_omitidos_'.now()->format('Ymd_His').'.xlsx'
         );
     }
 
@@ -199,38 +267,144 @@ class ProgramController extends Controller
         ActivityLogService::log('exportar', 'programas', 'Descargó la plantilla de importación de programas');
 
         return Excel::download(
-            new \App\Exports\ProgramTemplateExport(),
+            new \App\Exports\ProgramTemplateExport,
             'plantilla_programas.xlsx'
         );
     }
 
-    public function downloadExport()
+    public function downloadExport(Request $request, CampusScopeService $campusScope)
     {
         ActivityLogService::log('exportar', 'programas', 'Descargó el listado de programas en Excel');
 
         return Excel::download(
-            new \App\Exports\ProgramExport(),
+            new \App\Exports\ProgramExport($campusScope->activeCampusId($request->user())),
             'programas.xlsx'
         );
     }
 
-    private function validateProgram(Request $request, ?int $ignoreId = null): void
+    private function validateProgram(Request $request): void
     {
-        $uniqueRule = Rule::unique('programs', 'name');
-
-        if ($ignoreId) {
-            $uniqueRule = $uniqueRule->ignore($ignoreId);
-        }
-
         $request->validate([
-            'name'         => ['required', 'string', 'max:200', $uniqueRule],
+            'academic_program_id' => ['nullable', 'integer', 'exists:academic_programs,id'],
+            'name' => ['nullable', 'required_without:academic_program_id', 'string', 'max:200'],
             'program_type' => ['nullable', Rule::in(['Pregrado', 'Posgrado'])],
+            'offer_location' => ['nullable', 'string', 'max:100'],
         ], [
-            'name.required' => 'El nombre del programa es obligatorio.',
-            'name.unique'   => 'Ya existe un programa con ese nombre.',
-            'name.max'      => 'El nombre no puede superar los 200 caracteres.',
+            'name.required_without' => 'Selecciona un programa académico o escribe el nombre del nuevo programa.',
+            'name.max' => 'El nombre no puede superar los 200 caracteres.',
             'program_type.in' => 'El tipo de programa no es valido.',
         ]);
+    }
+
+    private function campusIdForWrite(Request $request, CampusScopeService $campusScope, ?int $fallbackCampusId = null): int
+    {
+        $user = $request->user();
+
+        if (! $user?->isSuperadmin()) {
+            if (! $user?->campus_id) {
+                throw ValidationException::withMessages([
+                    'campus_id' => 'Tu usuario no tiene sede asignada para crear registros.',
+                ]);
+            }
+
+            return (int) $user->campus_id;
+        }
+
+        $validated = $request->validate([
+            'campus_id' => ['nullable', 'integer', 'exists:campuses,id'],
+        ]);
+
+        $campusId = $validated['campus_id'] ?? $fallbackCampusId ?? $campusScope->activeCampusId($user);
+
+        if (! $campusId) {
+            throw ValidationException::withMessages([
+                'campus_id' => 'Selecciona una sede antes de crear o importar programas.',
+            ]);
+        }
+
+        return (int) $campusId;
+    }
+
+    private function resolveAcademicProgram(Request $request, ?int $fallbackAcademicProgramId = null): AcademicProgram
+    {
+        $this->validateProgram($request);
+
+        $academicProgramId = $request->integer('academic_program_id') ?: $fallbackAcademicProgramId;
+
+        if ($academicProgramId) {
+            return AcademicProgram::findOrFail($academicProgramId);
+        }
+
+        $academicName = $this->baseAcademicProgramName(self::normalizeName((string) $request->name));
+
+        if ($academicName === '') {
+            throw ValidationException::withMessages([
+                'name' => 'Escribe el nombre del programa académico.',
+            ]);
+        }
+
+        return $this->findOrCreateAcademicProgram($academicName);
+    }
+
+    private function findOrCreateAcademicProgram(string $name): AcademicProgram
+    {
+        $key = self::comparisonKey($name);
+        $existing = AcademicProgram::all(['id', 'name'])
+            ->first(fn (AcademicProgram $program) => self::comparisonKey($program->name) === $key);
+
+        if ($existing) {
+            return $existing;
+        }
+
+        return AcademicProgram::create(['name' => $name]);
+    }
+
+    private function ensureProgramOfferingIsUnique(int $academicProgramId, int $campusId, ?string $offerLocation = null, ?int $ignoreProgramId = null): void
+    {
+        $exists = Program::query()
+            ->where('campus_id', $campusId)
+            ->where('academic_program_id', $academicProgramId)
+            ->where('offer_location', $offerLocation ?: null)
+            ->when($ignoreProgramId, fn ($query) => $query->where('id', '<>', $ignoreProgramId))
+            ->exists();
+
+        if ($exists) {
+            throw ValidationException::withMessages([
+                'academic_program_id' => 'Este programa académico ya está registrado para la sede seleccionada.',
+            ]);
+        }
+    }
+
+    private function compatibleProgramName(string $academicProgramName, string $campusName, ?string $offerLocation = null): string
+    {
+        $name = self::normalizeName($academicProgramName);
+        $suffix = ' - '.($offerLocation ?: $campusName);
+
+        if (mb_strtolower(mb_substr($name, -mb_strlen($suffix)), 'UTF-8') === mb_strtolower($suffix, 'UTF-8')) {
+            return $name;
+        }
+
+        return "{$name}{$suffix}";
+    }
+
+    private function offeringKey(int $campusId, int $academicProgramId, ?string $offerLocation): string
+    {
+        return "{$campusId}:{$academicProgramId}:".self::comparisonKey($offerLocation ?? '');
+    }
+
+    private function baseAcademicProgramName(string $name): string
+    {
+        $normalized = trim(preg_replace('/\s+/u', ' ', $name) ?? $name);
+
+        $campusNames = Campus::orderBy('name')->pluck('name')->all();
+        foreach ($campusNames as $campusName) {
+            $suffix = " - {$campusName}";
+            if (mb_strtolower(mb_substr($normalized, -mb_strlen($suffix)), 'UTF-8') === mb_strtolower($suffix, 'UTF-8')) {
+                return trim(mb_substr($normalized, 0, mb_strlen($normalized) - mb_strlen($suffix), 'UTF-8'));
+            }
+        }
+
+        return $normalized;
     }
 
     /**
@@ -242,7 +416,7 @@ class ProgramController extends Controller
         $lower = preg_replace('/\s+/u', ' ', $lower);
 
         return mb_strtoupper(mb_substr($lower, 0, 1, 'UTF-8'), 'UTF-8')
-             . mb_substr($lower, 1, null, 'UTF-8');
+             .mb_substr($lower, 1, null, 'UTF-8');
     }
 
     /**
@@ -276,14 +450,15 @@ class ProgramController extends Controller
         }
 
         $converted = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value);
+
         return $converted !== false ? $converted : $value;
     }
 
     private function skippedRow(string $name, string $type, string $motivo): array
     {
         return [
-            'Nombre'  => $name !== '' ? $name : null,
-            'Tipo'    => $type !== '' ? $type : null,
+            'Nombre' => $name !== '' ? $name : null,
+            'Tipo' => $type !== '' ? $type : null,
             '_motivo' => $motivo,
         ];
     }

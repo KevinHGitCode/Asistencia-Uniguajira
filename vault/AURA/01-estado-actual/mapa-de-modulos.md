@@ -21,9 +21,9 @@ Leyenda: ✅ funcional · 🟡 parcial / con deuda · 🧟 legacy vivo pero sin 
 | Registro de asistencia (controlador) | 🧟 | `AttendanceController::store` + `confirmation`, vista `events/confirmation`, ruta `attendance.store` | Legacy vivo. No romper rutas publicas |
 | PDF de asistencia | ✅ | `EventController::descargarAsistencia`, `AttendancePdfService`, FPDI | Generacion sin cambios; descarga privada valida sede |
 | Formatos (plantillas PDF + mapper) | ✅ | `FormatController`, `config/attendance_formats.php` | Global; no filtrar `formats` directamente |
-| Administracion | 🟡 | `app/Http/Controllers/Configuration/*`, `app/Livewire/Administration/*` | Patron 2 pestanas + Excel + paginacion; pendiente filtrar/asignar sede por entidad |
-| └ Dependencias / Areas | 🟡 | `DependencyController`, `AreaController` | Tienen `campus_id`; falta aplicar filtros CRUD/import/export |
-| └ Programas / Afiliaciones / Estamentos | 🟡 | `Program/Affiliation/ParticipantTypeController` | Programas tiene `campus_id` + `academic_program_id`; afiliaciones y estamentos son globales |
+| Administracion | 🟡 | `app/Http/Controllers/Configuration/*`, `app/Livewire/Administration/*` | Patron 2 pestanas + Excel + paginacion; dependencias y programas ya tienen sede, falta revisar entidades restantes |
+| └ Dependencias / Areas | 🟡 | `DependencyController`, `AreaController` | Dependencias filtra/asigna/exporta/importa por sede. Areas queda fuera de la fase actual y sigue pendiente. |
+| └ Programas / Afiliaciones / Estamentos | 🟡 | `Program/Affiliation/ParticipantTypeController` | Programas filtra/asigna/exporta/importa por sede y usa `academic_program_id`; afiliaciones y estamentos son globales |
 | └ Organizaciones | ✅ | `OrganizationController` | Global por ahora |
 | └ Importacion de participantes | ✅ | `ParticipantImportController` | Participantes globales; no filtrar participantes directamente |
 | └ Registros de actividad | 🟡 | `ActivityLogController`, `ActivityLogService` | Pendiente decidir si auditoria se filtra por sede o queda global para superadmin |

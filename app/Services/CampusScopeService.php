@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
+use Illuminate\Http\Request;
 
 class CampusScopeService
 {
@@ -22,6 +23,27 @@ class CampusScopeService
         $campusId = session(self::SESSION_KEY);
 
         return $campusId !== null && $campusId !== '' ? (int) $campusId : null;
+    }
+
+    public function syncSelectedCampusFromRequest(Request $request, string $key = 'campus_id'): ?int
+    {
+        if (! $request->user()?->isSuperadmin() || ! $request->query->has($key)) {
+            return $this->selectedCampusId();
+        }
+
+        $validated = $request->validate([
+            $key => ['nullable', 'integer', 'exists:campuses,id'],
+        ]);
+
+        $campusId = empty($validated[$key]) ? null : (int) $validated[$key];
+
+        if ($campusId === null) {
+            $request->session()->forget(self::SESSION_KEY);
+        } else {
+            $request->session()->put(self::SESSION_KEY, $campusId);
+        }
+
+        return $campusId;
     }
 
     public function activeCampusId(?User $user = null): ?int

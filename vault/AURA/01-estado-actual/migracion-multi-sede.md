@@ -72,9 +72,9 @@ Leyenda: ✅ implementado · 🟡 parcial · ⬜ pendiente · 🚫 no aplica / g
 | Comparador de eventos | ✅ | `/api/statistics/compare/events` y `/api/statistics/compare/data` aplican visibilidad por sede/usuario antes de listar o comparar eventos. |
 | Descarga privada de PDF de evento | ✅ | No cambia generacion PDF; se agrego autorizacion por sede para evitar bypass por URL directa. |
 | Wizard de creacion de evento | ✅ | Limita dependencias/areas por sede y asigna `events.campus_id`. |
-| Administracion dependencias | ⬜ | Listados, CRUD, import/export deben filtrar o asignar sede. |
+| Administracion dependencias | 🟡 | `DependencyController`, `DependencyTable`, modal, import y export ya usan sede: admin queda limitado a su campus; superadmin filtra por sede activa y debe seleccionar sede para crear/importar si no hay sede activa. Sigue existiendo `dependencies.name` unico global por esquema actual. |
 | Administracion areas | ⬜ | Listados, CRUD, import/export deben filtrar o asignar sede. |
-| Administracion programas | ⬜ | Listados, CRUD, import/export deben filtrar o asignar sede y respetar `academic_program_id`. |
+| Administracion programas | 🟡 | `ProgramController`, `ProgramTable`, modal, import y export ya usan sede. Los nuevos registros crean/reutilizan `academic_programs`, guardan `campus_id` y evitan duplicar el mismo `academic_program_id` dentro de la misma sede. |
 | Administracion afiliaciones | 🚫 | Global por ahora, sin `campus_id`. |
 | Administracion estamentos | 🚫 | Global por ahora, sin `campus_id`. |
 | Administracion organizaciones | 🚫 | Global por ahora, sin `campus_id`. |
@@ -94,7 +94,7 @@ Leyenda: ✅ implementado · 🟡 parcial · ⬜ pendiente · 🚫 no aplica / g
 - [ ] Agregar pruebas del modulo antes de marcarlo como ✅.
 
 ## Riesgos activos
-- Imports y administracion pueden mezclar sedes si se filtran parcialmente.
+- Imports y administracion pueden mezclar sedes si se filtran parcialmente; dependencias y programas ya tienen primera capa aplicada, areas queda fuera de la fase actual.
 - Estadisticas ya filtra por sede desde eventos/asistencias; mantener vigilancia al agregar nuevas graficas para no consultar `participants` globalmente sin pasar por eventos.
 - Crear eventos sin asignar `campus_id` deja datos invisibles para admin/user una vez se endurezcan reglas.
 - `campus_id` sigue nullable para migracion progresiva; no volver `NOT NULL` hasta completar auditoria y backfill.

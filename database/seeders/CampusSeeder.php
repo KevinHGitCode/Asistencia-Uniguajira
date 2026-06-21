@@ -14,6 +14,7 @@ class CampusSeeder extends Seeder
             'Riohacha',
             'Fonseca',
             'Villanueva',
+            'Manaure',
         ];
 
         foreach ($campuses as $name) {

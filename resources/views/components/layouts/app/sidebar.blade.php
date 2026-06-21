@@ -206,7 +206,7 @@
                         open: false,
                         ready: false,
                         init() {
-                            if (@js(request()->routeIs('administracion.*', 'dependencies.*', 'areas.*', 'programs.*', 'formats.*', 'participant-types.*', 'affiliations.*', 'organizations.*', 'participants-import.*', 'activity-logs.*'))) {
+                            if (@js(request()->routeIs('administracion.*', 'campuses.*', 'dependencies.*', 'areas.*', 'programs.*', 'formats.*', 'participant-types.*', 'affiliations.*', 'organizations.*', 'participants-import.*', 'activity-logs.*'))) {
                                 this.open = true;
                             } else {
                                 this.open = localStorage.getItem('sidebar-admin-open') === 'true';
@@ -255,6 +255,12 @@
                         >
                             {{-- LÃ­nea vertical decorativa --}}
                             <div class="absolute inset-y-1 left-[11px] w-px rounded-full bg-zinc-200 dark:bg-white/20"></div>
+
+                            @if(auth()->user()->isSuperadmin())
+                                <flux:navlist.item :href="route('campuses.index')" :current="request()->routeIs('campuses.*')" wire:navigate>
+                                    {{ __('Sedes') }}
+                                </flux:navlist.item>
+                            @endif
 
                             <flux:navlist.item :href="route('dependencies.index')" :current="request()->routeIs('dependencies.*')" wire:navigate>
                                 {{ __('Dependencias') }}

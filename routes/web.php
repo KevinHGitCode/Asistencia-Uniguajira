@@ -5,6 +5,7 @@ use App\Http\Controllers\Configuration\ActivityLogController;
 use App\Http\Controllers\Configuration\AdministrationController;
 use App\Http\Controllers\Configuration\AffiliationController;
 use App\Http\Controllers\Configuration\AreaController;
+use App\Http\Controllers\Configuration\CampusController;
 use App\Http\Controllers\Configuration\DependencyController;
 use App\Http\Controllers\Configuration\FormatController;
 use App\Http\Controllers\Configuration\OrganizationController;
@@ -140,10 +141,21 @@ Route::middleware(['auth', 'verified', 'role:admin,superadmin'])
 
         Route::get('/', [AdministrationController::class, 'index'])->name('administracion.index');
 
+        Route::middleware('role:superadmin')->group(function () {
+            Route::get('/campuses', [CampusController::class, 'index'])->name('campuses.index');
+            Route::post('/campuses', [CampusController::class, 'store'])->name('campuses.store');
+            Route::post('/campuses/import', [CampusController::class, 'importExcel'])->name('campuses.import');
+            Route::get('/campuses/download-template', [CampusController::class, 'downloadTemplate'])->name('campuses.download-template');
+            Route::get('/campuses/download-export', [CampusController::class, 'downloadExport'])->name('campuses.download-export');
+            Route::post('/campuses/edit/{campus}', [CampusController::class, 'update'])->name('campuses.update');
+            Route::delete('/campuses/{campus}', [CampusController::class, 'destroy'])->name('campuses.destroy');
+        });
+
         // Rutas específicas de dependencias
         Route::get('/dependencies', [DependencyController::class, 'index'])->name('dependencies.index');
         Route::get('/dependencies/create', [DependencyController::class, 'create'])->name('dependencies.create');
         Route::post('/dependencies/import', [DependencyController::class, 'importExcel'])->name('dependencies.import');
+        Route::get('/dependencies/download-skipped', [DependencyController::class, 'downloadSkipped'])->name('dependencies.download-skipped');
         Route::get('/dependencies/download-template', [DependencyController::class, 'downloadTemplate'])->name('dependencies.download-template');
         Route::get('/dependencies/download-export', [DependencyController::class, 'downloadExport'])->name('dependencies.download-export');
         Route::post('/dependencies', [DependencyController::class, 'store'])->name('dependencies.store');

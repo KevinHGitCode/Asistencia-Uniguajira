@@ -15,6 +15,23 @@
         {{-- Grid de tarjetas de administración --}}
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
 
+            @if(auth()->user()?->isSuperadmin())
+                <a href="{{ route('campuses.index') }}"
+                   class="group relative flex flex-col gap-4 p-5 sm:p-6 rounded-2xl border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 overflow-hidden">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center justify-center w-12 h-12 rounded-lg group-hover:scale-110 transition-transform duration-200">
+                            <flux:icon name="map-pin" class="size-16 text-[#0f766e]" />
+                        </div>
+                        <flux:icon.chevron-right class="size-5 text-gray-400 dark:text-gray-500 group-hover:translate-x-1 transition-transform duration-200" />
+                    </div>
+                    <div>
+                        <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-1">Sedes</h3>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Administra las sedes disponibles para la operación multisede.</p>
+                    </div>
+                    <div class="absolute bottom-0 left-0 w-0 h-0.5 rounded-b-xl bg-[#0f766e] group-hover:w-full transition-all duration-300"></div>
+                </a>
+            @endif
+
             {{-- Card: Dependencias --}}
             <a href="{{ route('dependencies.index') }}"
                class="group relative flex flex-col gap-4 p-5 sm:p-6 rounded-2xl border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 overflow-hidden">

@@ -18,7 +18,8 @@ que esta incompleta (ver [[brechas-conocidas]]).
   nullable durante migracion. `superadmin` debe tener `campus_id = null`; `admin` y `user`
   pertenecen a una sede.
 - **dependencies** - `campus_id` nullable, `hasMany areas`, `belongsToMany formats`
-  (pivot `dependency_format`).
+  (pivot `dependency_format`). Administracion ya asigna/filtra por sede, pero `name`
+  conserva el indice unico global del esquema actual.
 - **areas** - `campus_id` nullable, pertenecen a una dependencia (opcional en eventos).
 - **dependency_user** - pivot usuario-dependencia. El codigo real es
   `User belongsToMany Dependency`, no `belongsTo`.
@@ -39,7 +40,8 @@ que esta incompleta (ver [[brechas-conocidas]]).
   `organization_id?` + `is_active`.
 - **participant_types** - estamentos.
 - **programs** - instancias por sede/importacion; `campus_id` nullable y
-  `academic_program_id` nullable durante migracion.
+  `academic_program_id` nullable durante migracion. Administracion crea/reutiliza el
+  `academic_program` global y mantiene `programs.name` compatible como oferta por sede.
 - **academic_programs** - catalogo global del programa academico normalizado. Se pobla desde
   `programs.name` quitando sufijos de sede (` - Maicao`, ` - Riohacha`, ` - Fonseca`,
   ` - Villanueva`) sin modificar `programs.name`.

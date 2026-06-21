@@ -1,6 +1,7 @@
 
 import './administration/dependencies/dependencies-manager'
 import './administration/affiliations/affiliations-manager'
+import './administration/campuses/campuses-manager'
 import './administration/participant-types/participant-types-manager'
 import './administration/programs/programs-manager'
 import './administration/areas/areas-manager'
