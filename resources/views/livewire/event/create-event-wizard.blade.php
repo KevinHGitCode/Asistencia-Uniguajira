@@ -106,7 +106,7 @@
 
                     <div>
                         <h2 class="text-lg font-semibold text-zinc-900 dark:text-white">¿Dónde y quién organiza?</h2>
-                        <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">Todos los campos de este paso son opcionales.</p>
+                        <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">Selecciona la sede y dependencia que respaldan el evento.</p>
                     </div>
 
                     {{-- Ubicación --}}
@@ -120,25 +120,52 @@
                         />
                     </div>
 
+                    {{-- Sede --}}
+                    @if($isSuperadmin)
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                                Sede
+                                <span class="text-red-400 ml-0.5">*</span>
+                            </label>
+                            <select
+                                wire:model.live="campus_id"
+                                class="{{ $inputError('campus_id') }} cursor-pointer"
+                            >
+                                <option value="">Selecciona una sede</option>
+                                @foreach($campuses as $campusId => $campusName)
+                                    <option value="{{ $campusId }}">{{ $campusName }}</option>
+                                @endforeach
+                            </select>
+                            @error('campus_id')
+                                <p class="text-xs text-red-400 mt-1">{{ $message }}</p>
+                            @enderror
+                            <p class="text-xs text-zinc-500 dark:text-zinc-500 mt-1">La dependencia se filtra según la sede seleccionada.</p>
+                        </div>
+                    @endif
+
                     {{-- Dependencia --}}
                     @if($showDependencySelect)
-                        <div>
-                            <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Dependencia</label>
+                        <div wire:key="dependencies-field-{{ $campus_id ?: 'sin-sede' }}">
+                            <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                                Dependencia
+                                <span class="text-red-400 ml-0.5">*</span>
+                            </label>
                             <select
                                 wire:model.live="dependency_id"
-                                class="{{ $inputNormal }} cursor-pointer"
+                                class="{{ $inputError('dependency_id') }} cursor-pointer"
+                                @disabled($isSuperadmin && !$campus_id)
                             >
-                                <option value="">{{ $isAdmin ? '— Sin dependencia —' : 'Selecciona una dependencia' }}</option>
+                                <option value="">{{ $isSuperadmin && !$campus_id ? 'Primero selecciona una sede' : 'Selecciona una dependencia' }}</option>
                                 @foreach($dependencies as $depId => $depName)
-                                    <option value="{{ $depId }}" @selected($dependency_id == $depId)>{{ $depName }}</option>
+                                    <option value="{{ $depId }}">{{ $depName }}</option>
                                 @endforeach
                             </select>
                             @error('dependency_id')
                                 <p class="text-xs text-red-400 mt-1">{{ $message }}</p>
                             @enderror
-                            @if($isAdmin)
-                                <p class="text-xs text-zinc-500 dark:text-zinc-500 mt-1">Sin dependencia seleccionada, el evento no estará asociado a ninguna.</p>
-                            @endif
+                            <p class="text-xs text-zinc-500 dark:text-zinc-500 mt-1">
+                                {{ $isSuperadmin ? 'El evento quedará ligado a la sede de esta dependencia.' : 'La sede del evento se toma de tu usuario.' }}
+                            </p>
                         </div>
                     @endif
 

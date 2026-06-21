@@ -124,7 +124,7 @@ class CreateEventWizardTest extends TestCase
     // ── Paso 2: Organización ─────────────────────────────────────────────────
 
     #[Test]
-    public function paso_dos_es_completamente_opcional(): void
+    public function paso_dos_avanza_con_dependencia_autoasignada_para_usuario_con_una_sola(): void
     {
         $this->actingAs($this->user);
 
@@ -474,7 +474,7 @@ class CreateEventWizardTest extends TestCase
     // ── Admin ────────────────────────────────────────────────────────────────
 
     #[Test]
-    public function admin_puede_crear_evento_sin_dependencia(): void
+    public function admin_debe_crear_evento_con_dependencia_de_su_sede(): void
     {
         $admin = User::factory()->create([
             'role' => 'admin',
@@ -486,7 +486,7 @@ class CreateEventWizardTest extends TestCase
             ->assertSet('isAdmin', true)
             ->set('title', 'Evento admin')
             ->call('nextStep')
-            ->set('dependency_id', '')  // sin dependencia
+            ->set('dependency_id', (string) $this->dependency->id)
             ->call('nextStep')
             ->set('date', '2026-09-01')
             ->set('start_time', '09:00')
@@ -497,7 +497,83 @@ class CreateEventWizardTest extends TestCase
 
         $this->assertDatabaseHas('events', [
             'title' => 'Evento admin',
-            'dependency_id' => null,
+            'dependency_id' => $this->dependency->id,
+            'campus_id' => $this->campus->id,
+        ]);
+    }
+
+    #[Test]
+    public function admin_no_puede_crear_evento_sin_dependencia(): void
+    {
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'campus_id' => $this->campus->id,
+        ]);
+        $this->actingAs($admin);
+
+        Livewire::test(CreateEventWizard::class)
+            ->assertSet('isAdmin', true)
+            ->set('title', 'Evento admin sin dependencia')
+            ->call('nextStep')
+            ->set('dependency_id', '')
+            ->call('nextStep')
+            ->assertHasErrors(['dependency_id' => 'required']);
+    }
+
+    #[Test]
+    public function superadmin_selecciona_sede_y_solo_ve_dependencias_de_esa_sede(): void
+    {
+        $riohacha = Campus::create(['name' => 'Riohacha']);
+        $dependencyRiohacha = Dependency::factory()->create([
+            'name' => 'Bienestar Riohacha',
+            'campus_id' => $riohacha->id,
+        ]);
+        $superadmin = User::factory()->create([
+            'role' => User::ROLE_SUPERADMIN,
+            'campus_id' => null,
+        ]);
+        $this->actingAs($superadmin);
+
+        Livewire::test(CreateEventWizard::class)
+            ->assertSet('isSuperadmin', true)
+            ->assertSet('dependencies', [])
+            ->set('campus_id', (string) $riohacha->id)
+            ->assertSet('dependencies', [
+                $dependencyRiohacha->id => $dependencyRiohacha->name,
+            ]);
+    }
+
+    #[Test]
+    public function superadmin_crea_evento_con_sede_y_dependencia_seleccionadas(): void
+    {
+        $riohacha = Campus::create(['name' => 'Riohacha']);
+        $dependencyRiohacha = Dependency::factory()->create([
+            'name' => 'Bienestar Riohacha',
+            'campus_id' => $riohacha->id,
+        ]);
+        $superadmin = User::factory()->create([
+            'role' => User::ROLE_SUPERADMIN,
+            'campus_id' => null,
+        ]);
+        $this->actingAs($superadmin);
+
+        Livewire::test(CreateEventWizard::class)
+            ->set('title', 'Evento superadmin')
+            ->call('nextStep')
+            ->set('campus_id', (string) $riohacha->id)
+            ->set('dependency_id', (string) $dependencyRiohacha->id)
+            ->call('nextStep')
+            ->set('date', '2026-09-01')
+            ->set('start_time', '09:00')
+            ->set('end_time', '10:00')
+            ->call('save')
+            ->assertHasNoErrors()
+            ->assertRedirect(route('events.list'));
+
+        $this->assertDatabaseHas('events', [
+            'title' => 'Evento superadmin',
+            'dependency_id' => $dependencyRiohacha->id,
+            'campus_id' => $riohacha->id,
         ]);
     }
 

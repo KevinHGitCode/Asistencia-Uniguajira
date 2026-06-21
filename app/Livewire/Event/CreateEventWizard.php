@@ -3,11 +3,13 @@
 namespace App\Livewire\Event;
 
 use App\Models\Area;
+use App\Models\Campus;
 use App\Models\Dependency;
 use App\Services\CampusScopeService;
 use App\Services\EventService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 
 class CreateEventWizard extends Component
@@ -24,6 +26,8 @@ class CreateEventWizard extends Component
     // ── Paso 2: Organización ──────────────────────────────────────────────────
     public string $location = '';
 
+    public ?string $campus_id = null;
+
     public ?string $dependency_id = null;
 
     public ?string $area_id = null;
@@ -39,10 +43,15 @@ class CreateEventWizard extends Component
     /** @var array<int|string, string>  id => name */
     public array $dependencies = [];
 
+    /** @var array<int|string, string>  id => name */
+    public array $campuses = [];
+
     /** @var array<int, array{id: int, name: string}> */
     public array $areas = [];
 
     public bool $isAdmin = false;
+
+    public bool $isSuperadmin = false;
 
     public bool $showDependencySelect = false;
 
@@ -57,7 +66,21 @@ class CreateEventWizard extends Component
             ],
             2 => [
                 'location' => ['nullable', 'string', 'max:255'],
-                'dependency_id' => ['nullable', 'exists:dependencies,id'],
+                'campus_id' => [
+                    $this->isSuperadmin ? 'required' : 'nullable',
+                    'integer',
+                    'exists:campuses,id',
+                ],
+                'dependency_id' => [
+                    'required',
+                    Rule::exists('dependencies', 'id')->where(function ($query) {
+                        if ($this->isSuperadmin && $this->campus_id) {
+                            $query->where('campus_id', $this->campus_id);
+                        } elseif (! $this->isSuperadmin && Auth::user()?->campus_id) {
+                            $query->where('campus_id', Auth::user()->campus_id);
+                        }
+                    }),
+                ],
                 'area_id' => ['nullable', 'exists:areas,id'],
             ],
             3 => [
@@ -81,16 +104,19 @@ class CreateEventWizard extends Component
     public function mount(): void
     {
         $user = Auth::user();
-        $campusScope = app(CampusScopeService::class);
         $this->isAdmin = $user->hasAdminAccess();
+        $this->isSuperadmin = $user->isSuperadmin();
 
-        if ($this->isAdmin) {
-            $this->dependencies = $campusScope->applyToQuery(Dependency::query(), $user)
-                ->orderBy('name')
-                ->pluck('name', 'id')
-                ->toArray();
+        if ($this->isSuperadmin) {
+            $this->campuses = Campus::orderBy('name')->pluck('name', 'id')->toArray();
+            $this->dependencies = [];
+            $this->showDependencySelect = true;
+        } elseif ($this->isAdmin) {
+            $this->campus_id = $user->campus_id !== null ? (string) $user->campus_id : null;
+            $this->loadDependenciesForCampus($this->campus_id);
             $this->showDependencySelect = true;
         } else {
+            $this->campus_id = $user->campus_id !== null ? (string) $user->campus_id : null;
             $userDeps = $user->dependencies()
                 ->where('dependencies.campus_id', $user->campus_id)
                 ->orderBy('name')
@@ -110,6 +136,19 @@ class CreateEventWizard extends Component
         }
     }
 
+    public function updatedCampusId(): void
+    {
+        if (! $this->isSuperadmin) {
+            return;
+        }
+
+        $this->dependency_id = null;
+        $this->area_id = null;
+        $this->areas = [];
+        $this->resetValidation(['campus_id', 'dependency_id', 'area_id']);
+        $this->loadDependenciesForCampus($this->campus_id);
+    }
+
     public function updatedStartTime(): void
     {
         if ($this->start_time && $this->end_time === '') {
@@ -126,6 +165,7 @@ class CreateEventWizard extends Component
     public function updatedDependencyId(): void
     {
         $this->area_id = null;
+        $this->resetValidation(['dependency_id', 'area_id']);
         $this->loadAreas();
     }
 
@@ -140,7 +180,7 @@ class CreateEventWizard extends Component
         $query = Area::select(['id', 'name'])
             ->where('dependency_id', $this->dependency_id);
 
-        $campusId = app(CampusScopeService::class)->activeCampusId(Auth::user());
+        $campusId = $this->selectedCampusId();
         if ($campusId !== null) {
             $query->where('campus_id', $campusId);
         }
@@ -176,6 +216,7 @@ class CreateEventWizard extends Component
             'title' => $this->title,
             'description' => $this->description ?: null,
             'location' => $this->location ?: null,
+            'campus_id' => $this->campus_id ?: null,
             'dependency_id' => $this->dependency_id ?: null,
             'area_id' => $this->area_id ?: null,
             'date' => $this->date,
@@ -189,5 +230,29 @@ class CreateEventWizard extends Component
     public function render()
     {
         return view('livewire.event.create-event-wizard');
+    }
+
+    private function loadDependenciesForCampus(?string $campusId): void
+    {
+        if (! $campusId) {
+            $this->dependencies = [];
+
+            return;
+        }
+
+        $this->dependencies = Dependency::query()
+            ->where('campus_id', $campusId)
+            ->orderBy('name')
+            ->pluck('name', 'id')
+            ->toArray();
+    }
+
+    private function selectedCampusId(): ?int
+    {
+        if ($this->isSuperadmin) {
+            return $this->campus_id !== null && $this->campus_id !== '' ? (int) $this->campus_id : null;
+        }
+
+        return app(CampusScopeService::class)->activeCampusId(Auth::user());
     }
 }

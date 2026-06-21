@@ -89,7 +89,8 @@ class EventController extends Controller
                 'start_time' => 'nullable|date_format:H:i',
                 'end_time' => 'nullable|date_format:H:i|after_or_equal:start_time',
                 'location' => 'required|string|max:255',
-                'dependency_id' => 'nullable|exists:dependencies,id',
+                'campus_id' => 'nullable|exists:campuses,id',
+                'dependency_id' => 'required|exists:dependencies,id',
                 'area_id' => 'nullable|exists:areas,id',
             ]);
 
