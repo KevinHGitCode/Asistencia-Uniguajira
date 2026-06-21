@@ -40,18 +40,24 @@ trait HasStatisticsScenario
 {
     // ── Constantes esperadas ─────────────────────────────────────────
 
-    protected const WIDE_DATE_FROM  = '2026-01-01';
-    protected const WIDE_DATE_TO    = '2026-03-31';
-    protected const NARROW_DATE     = '2026-03-01';
+    protected const WIDE_DATE_FROM = '2026-01-01';
 
-    protected const WIDE_ATTENDANCES  = 4;
+    protected const WIDE_DATE_TO = '2026-03-31';
+
+    protected const NARROW_DATE = '2026-03-01';
+
+    protected const WIDE_ATTENDANCES = 4;
+
     protected const WIDE_PARTICIPANTS = 3;
-    protected const WIDE_EVENTS       = 2;
 
-    protected const NARROW_ATTENDANCES  = 2;
+    protected const WIDE_EVENTS = 2;
+
+    protected const NARROW_ATTENDANCES = 2;
+
     protected const NARROW_PARTICIPANTS = 2;
 
-    protected const ALL_ATTENDANCES  = 5;
+    protected const ALL_ATTENDANCES = 5;
+
     protected const ALL_PARTICIPANTS = 3;
 
     // ── Constructor del escenario ─────────────────────────────────────
@@ -63,35 +69,37 @@ trait HasStatisticsScenario
 
         $admin = User::factory()->create(['role' => 'admin']);
 
-        $event1   = Event::factory()->create(['user_id' => $admin->id, 'date' => '2026-01-10']);
-        $event2   = Event::factory()->create(['user_id' => $admin->id, 'date' => '2026-03-01']);
+        $this->actingAs($admin);
+
+        $event1 = Event::factory()->create(['user_id' => $admin->id, 'date' => '2026-01-10']);
+        $event2 = Event::factory()->create(['user_id' => $admin->id, 'date' => '2026-03-01']);
         $eventOld = Event::factory()->create(['user_id' => $admin->id, 'date' => '2025-11-01']);
 
         $alice = Participant::factory()->create([
-            'first_name'       => 'Alice',
-            'last_name'        => 'García',
-            'role'             => 'Estudiante',
-            'sexo'             => 'F',
+            'first_name' => 'Alice',
+            'last_name' => 'García',
+            'role' => 'Estudiante',
+            'sexo' => 'F',
             'grupo_priorizado' => 'Víctimas',
-            'program_id'       => $progA->id,
+            'program_id' => $progA->id,
         ]);
 
         $bob = Participant::factory()->create([
-            'first_name'       => 'Bob',
-            'last_name'        => 'Martínez',
-            'role'             => 'Docente',
-            'sexo'             => 'M',
+            'first_name' => 'Bob',
+            'last_name' => 'Martínez',
+            'role' => 'Docente',
+            'sexo' => 'M',
             'grupo_priorizado' => null,
-            'program_id'       => $progB->id,
+            'program_id' => $progB->id,
         ]);
 
         $carol = Participant::factory()->create([
-            'first_name'       => 'Carol',
-            'last_name'        => 'López',
-            'role'             => 'Estudiante',
-            'sexo'             => 'F',
+            'first_name' => 'Carol',
+            'last_name' => 'López',
+            'role' => 'Estudiante',
+            'sexo' => 'F',
             'grupo_priorizado' => 'LGBTQ+',
-            'program_id'       => $progA->id,
+            'program_id' => $progA->id,
         ]);
 
         // Alice asiste a los 3 eventos (2 dentro del periodo amplio + 1 fuera)
@@ -106,7 +114,7 @@ trait HasStatisticsScenario
         Attendance::create(['event_id' => $event2->id, 'participant_id' => $carol->id]);
 
         return compact('admin', 'progA', 'progB', 'alice', 'bob', 'carol',
-                       'event1', 'event2', 'eventOld');
+            'event1', 'event2', 'eventOld');
     }
 
     protected function wideFilter(): array

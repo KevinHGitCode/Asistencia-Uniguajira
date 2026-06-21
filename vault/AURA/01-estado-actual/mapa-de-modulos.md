@@ -27,7 +27,7 @@ Leyenda: ✅ funcional · 🟡 parcial / con deuda · 🧟 legacy vivo pero sin 
 | └ Organizaciones | ✅ | `OrganizationController` | Global por ahora |
 | └ Importacion de participantes | ✅ | `ParticipantImportController` | Participantes globales; no filtrar participantes directamente |
 | └ Registros de actividad | 🟡 | `ActivityLogController`, `ActivityLogService` | Pendiente decidir si auditoria se filtra por sede o queda global para superadmin |
-| Estadisticas | 🟡 | `StatisticsController` + `routes/api.php`, React en `resources/js/statistics/` | No migrado a sede todavia; alto riesgo de mezcla |
+| Estadisticas | ✅ | `StatisticsController`, `StatisticsService`, `routes/api.php`, React en `resources/js/statistics/` | Filtra por sede desde eventos/asistencias con `CampusScopeService`; no filtrar `participants` globalmente |
 | Usuarios (admin) | 🟡 | `UserController`, `app/Livewire/User/*` | Roles `user/admin/superadmin` ya existen; revisar listados/edicion por sede en cada flujo |
 | Settings | ✅ | `app/Livewire/Settings/*` | Perfil, password, apariencia, idioma, about |
 | Correo de confirmacion | ✅ | `AttendanceRegisteredMail` | Se envia al registrar si hay email |

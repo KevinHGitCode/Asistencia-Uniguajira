@@ -144,31 +144,24 @@ class StatisticsAccessTest extends TestCase
     }
 
     // ─────────────────────────────────────────────
-    //  API de estadísticas — acceso público (bug conocido)
+    //  API de estadísticas — requiere sesión para resolver sede
     // ─────────────────────────────────────────────
 
-    /**
-     * NOTA: Los endpoints /api/statistics/* son actualmente públicos.
-     * Esto es un bug — deberían requerir autenticación.
-     * Estos tests documentan el comportamiento actual.
-     *
-     * @see https://github.com/tu-repo/issues/XX (pendiente de corrección)
-     */
-    public function test_api_total_events_es_accesible_sin_autenticacion(): void
+    public function test_api_total_events_requiere_autenticacion(): void
     {
         $this->getJson('/api/statistics/total-events')
-            ->assertOk();
+            ->assertUnauthorized();
     }
 
-    public function test_api_total_attendances_es_accesible_sin_autenticacion(): void
+    public function test_api_total_attendances_requiere_autenticacion(): void
     {
         $this->getJson('/api/statistics/total-attendances')
-            ->assertOk();
+            ->assertUnauthorized();
     }
 
-    public function test_api_total_participants_es_accesible_sin_autenticacion(): void
+    public function test_api_total_participants_requiere_autenticacion(): void
     {
         $this->getJson('/api/statistics/total-participants')
-            ->assertOk();
+            ->assertUnauthorized();
     }
 }
