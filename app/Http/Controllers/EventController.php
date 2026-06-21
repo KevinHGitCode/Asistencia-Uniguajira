@@ -242,6 +242,7 @@ class EventController extends Controller
     public function descargarAsistencia(AttendancePdfService $pdfService, CampusScopeService $campusScope, $id, $formatSlug = null)
     {
         $evento = Event::with([
+            'campus',
             'asistencias.participant.activeRoles.type',
             'asistencias.participant.activeRoles.program',
             'asistencias.participant.activeRoles.dependency',
@@ -249,6 +250,7 @@ class EventController extends Controller
             'asistencias.detail.participantRole.type',
             'asistencias.detail.participantRole.program',
             'asistencias.detail.participantRole.organization',
+            'dependency.campus',
             'dependency.formats',
             'area',
             'user',
@@ -262,7 +264,7 @@ class EventController extends Controller
                 ->where('dependencies.id', $evento->dependency_id)
                 ->exists();
 
-        if (! $campusScope->canAccessResource($user, $evento)
+        if (! $this->canAccessEventPdf($user, $evento, $campusScope)
             || (! $user->hasAdminAccess()
                 && (int) $evento->user_id !== (int) $user->id
                 && ! $perteneceDependencia)) {
@@ -300,6 +302,13 @@ class EventController extends Controller
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => "attachment; filename=\"{$nombreArchivo}\"",
         ]);
+    }
+
+    private function canAccessEventPdf(User $user, Event $event, CampusScopeService $campusScope): bool
+    {
+        $campusId = $event->campus_id ?? $event->dependency?->campus_id;
+
+        return $campusScope->canAccessCampus($user, $campusId !== null ? (int) $campusId : null);
     }
 
     private function canManagePrivateEvent(User $user, Event $event, CampusScopeService $campusScope): bool

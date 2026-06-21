@@ -187,12 +187,15 @@
                     $eventEndDateTime = \Carbon\Carbon::parse($event->date . ' ' . $event->end_time);
                     $eventHasEnded = now()->greaterThan($eventEndDateTime);
                     $formats = $event->dependency->formats ?? collect();
+                    $downloadFormats = collect([
+                        (object) ['name' => 'General', 'slug' => 'general'],
+                    ])->merge($formats->reject(fn ($format) => $format->slug === 'general'));
                 @endphp
 
                 @if($eventHasEnded)
-                    @if($formats->count() <= 1)
+                    @if($downloadFormats->count() <= 1)
                         {{-- Solo un formato o ninguno: descarga directa --}}
-                        <a href="{{ route('events.download', [$event->id, $formats->first()->slug ?? 'general']) }}"
+                        <a href="{{ route('events.download', [$event->id, $downloadFormats->first()->slug]) }}"
                         class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors cursor-pointer">
                             <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
@@ -231,5 +234,5 @@
     </flux:modal>
 
     {{-- Modal de selección de formato --}}
-    <x-events.format-select-modal :eventId="$eventId" :formats="$formats" :event="$event" />
+    <x-events.format-select-modal :eventId="$eventId" :formats="$downloadFormats" :event="$event" />
 </div>
