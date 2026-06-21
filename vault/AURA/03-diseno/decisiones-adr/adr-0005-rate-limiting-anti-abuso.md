@@ -39,7 +39,7 @@ Devolver `429 Too Many Requests` con cabeceras `Retry-After`.
   tipo Cloudflare, reglas del proveedor). Documentar esta limitación; el rate limit de app es la
   capa de aplicación, no la de red.
 - ➖ Riesgo de falsos positivos detrás de NAT/proxy (varios usuarios, una IP) → afinar claves y
-  límites; considerar `X-Forwarded-For` correcto en Render.
+  límites; considerar `X-Forwarded-For` correcto en Hostinger.
 - 🔁 Toca la definición de rutas (contratos de respuesta: ahora pueden devolver 429).
 
 ## Alternativas consideradas
@@ -49,7 +49,7 @@ Devolver `429 Too Many Requests` con cabeceras `Retry-After`.
 
 ## Pendiente para aceptar
 - [ ] Acordar límites concretos por limitador.
-- [ ] Verificar resolución de IP real tras el proxy de Render (trusted proxies).
+- [ ] Verificar resolución de IP real tras el proxy de Hostinger (trusted proxies).
 - [ ] Rama sugerida: `feat/rate-limiting-rutas` (🔴 cambia contratos de rutas).
 
 ## Relacionado

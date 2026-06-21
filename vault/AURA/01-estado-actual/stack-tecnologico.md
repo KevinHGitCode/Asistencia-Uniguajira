@@ -29,14 +29,14 @@ desactualizado — ver [[brechas-conocidas]]).
 
 ## Base de datos
 - **SQLite** en local (`database/database.sqlite`)
-- **MySQL** en producción (Render)
+- **MySQL** en producción (Hostinger)
 - `SESSION_DRIVER=database`, `QUEUE_CONNECTION=database`
 
 ## Internacionalización
 - Locale por defecto `es` / `es_CO` (`laravel-lang`), middleware `SetLocale`.
 
 ## Despliegue
-- Producción en **Render**: `https://asistencia-uniguajira.onrender.com/`
+- Producción en **Hostinger** (hosting compartido)
 
 ## Comandos clave
 - `composer run dev` — server + queue + vite a la vez

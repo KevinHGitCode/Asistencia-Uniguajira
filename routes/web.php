@@ -221,6 +221,13 @@ Route::middleware(['auth', 'verified', 'role:admin,superadmin'])
         Route::get('/participants/download-template', [ParticipantImportController::class, 'downloadTemplate'])->name('participants-import.download-template');
         Route::post('/participants', [ParticipantImportController::class, 'store'])->name('participants-import.store');
 
+        // Pasarela de revisión de importación (ADR-0004)
+        Route::get('/participants/imports', [ParticipantImportController::class, 'batches'])->name('participants-import.batches');
+        Route::get('/participants/imports/{batch}', [ParticipantImportController::class, 'review'])->name('participants-import.review');
+        Route::get('/participants/imports/{batch}/skipped', [ParticipantImportController::class, 'downloadBatchSkipped'])->name('participants-import.batch-skipped');
+        Route::post('/participants/imports/{batch}/approve', [ParticipantImportController::class, 'approve'])->name('participants-import.approve');
+        Route::post('/participants/imports/{batch}/reject', [ParticipantImportController::class, 'reject'])->name('participants-import.reject');
+
         // Rutas de registros de actividad
         Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
         Route::post('/activity-logs/clear', [ActivityLogController::class, 'clear'])->name('activity-logs.clear');

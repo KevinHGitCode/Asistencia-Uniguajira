@@ -6,7 +6,7 @@ actualizado: 2026-06-20
 
 # ADR-0004 · Pasarela de revisión para importación de participantes
 
-- **Estado:** 🟡 Propuesta
+- **Estado:** 🟢 Aceptada — núcleo implementado (síncrono); encolado/async pendiente
 - **Fecha:** 2026-06-20
 - **Contexto del repo:** `app/Http/Controllers/Configuration/ParticipantImportController.php`
   (`participants-import.import`), formulario en `resources/views/administration/participants/index.blade.php`
@@ -47,7 +47,8 @@ Introducir una **pasarela de revisión** (staging) entre la carga y el commit:
 - ➕ Vista previa con clasificación (nuevo/actualiza/duplicado/inválido) antes de confirmar.
 - ➕ El proceso pesado sale del request (no bloquea), sin doble envío.
 - ➖ Más **esquema** (2 tablas), más UI, y requiere un **worker de cola corriendo** en producción
-  (en Render: un proceso/worker adicional o `queue:work` gestionado).
+  (en **Hostinger** / hosting compartido normalmente no hay demonios persistentes: usar cron +
+  `queue:work --stop-when-empty` o el scheduler, no un worker permanente).
 - 🔁 Hay que migrar el flujo actual del importador y adaptar/ampliar `ProgramImportTest` y añadir
   pruebas del staging.
 
@@ -57,8 +58,57 @@ Introducir una **pasarela de revisión** (staging) entre la carga y el commit:
 - **Procesar en background sin staging** (solo cola): resuelve el bloqueo pero **no** la revisión
   previa, que es el objetivo central.
 
+## Progreso (2026-06-20)
+
+**Incremento 1 — anti doble-cargue + UX:**
+- [x] Anti doble-cargue (botón deshabilitado + guard Alpine + validación de archivo).
+- [x] Indicador de carga (spinner + “Procesando…” + aviso de no recargar).
+- [x] La vista abre en la **lista** y muestra el **conteo de participantes** bajo el título.
+
+**Incremento 2 — pasarela de revisión (núcleo del ADR):**
+- [x] Tablas `import_batches` y `staged_participants` (migraciones `2026_06_21_000001/2`) + modelos
+  `ImportBatch` / `StagedParticipant` (casts JSON, borrado en cascada).
+- [x] `ParticipantImportController::import` ahora **parsea a staging** (no commitea); el plan se
+  guarda en `staged_participants` clasificado en `nuevo` / `actualiza` / `omitido`.
+- [x] **Vista de revisión** (`review.blade.php`) con contadores, filtros por estado, tabla y
+  acciones **Aprobar e importar** / **Rechazar** (la aprobación corre en una transacción y
+  reutiliza la lógica original en `commitPlan`, recalculando roles activos al confirmar).
+- [x] Rutas `participants-import.{review,approve,reject,batch-skipped}` + aviso de **lotes
+  pendientes** en el índice + descarga de omitidos por lote.
+
+**Incremento 3 — acceso, confirmación segura y velocidad:**
+- [x] **Historial de importaciones** (`participants-import.batches` + `batches.blade.php`): se
+  puede volver a cualquier lote ya procesado a **revisarlo o descargar sus omitidos**.
+- [x] **Confirmación con modal** para aprobar y rechazar; **aprobar exige la contraseña** del
+  admin (`current_password`) como re-autenticación antes de tocar la BD.
+- [x] **Velocidad (commit):** `commitPlan` corre en una transacción y `persistStaging` envuelve
+  todos los inserts en **una sola transacción** (en SQLite evita un fsync por sentencia).
+  También se quitó el fetch de roles activos del parseo (estaba muerto) y se `disableQueryLog`.
+- [x] **Tests de feature** (`ParticipantStagingImportTest`): staging sin tocar la tabla,
+  contraseña obligatoria al aprobar, rechazo sin efectos, descarga de omitidos.
+
+**Incremento 4 — fast-path de CSV:**
+- [x] Lectura nativa de CSV con `fgetcsv` (`readCsvRows`): BOM, normalización de codificación
+  (Windows-1252 → UTF-8) y detección de separador (`,` / `;` / tab). Para `.xlsx/.xls` se
+  mantiene PhpSpreadsheet.
+- [x] **Medición (10.000 filas, SQLite local):**
+  - **CSV con fast-path:** `parse+staging` ≈ **0,54 s** (antes, CSV vía PhpSpreadsheet: 10,4 s).
+  - **XLSX (sigue por PhpSpreadsheet):** `parse+staging` ≈ **4,2 s** — el fast-path NO aplica a xlsx.
+  - `approve/commit` ≈ **0,6 s** en ambos.
+  - → CSV es ~**8×** más rápido que xlsx ahora. Para máxima velocidad: subir **CSV**.
+
+> Stored procedure descartado: durante el parseo los datos aún no están en la BD y no sería
+> portable (SQLite local / MySQL en Hostinger). El commit ya es rápido por la transacción.
+
+**Pendiente (solo para archivos `.xlsx` grandes o no bloquear el request):**
+- [ ] **Encolar el parseo** (`ShouldQueue`) → quita la espera del request; en Hostinger compartido,
+  vía cron + `queue:work --stop-when-empty`. El progreso pasaría a poll del estado del lote.
+- [ ] Lectura por *chunks* para `.xlsx` muy grandes (o recomendar exportar a CSV, que ya es ~19× más rápido).
+- [ ] Política de retención/limpieza de lotes y prueba en navegador con un Excel real.
+
 ## Pendiente para aceptar
-- [ ] Confirmar disponibilidad de un **worker de cola** en el despliegue (Render).
+- [ ] Si se encola el parseo: definir el mecanismo en **Hostinger** (cron + `queue:work --stop-when-empty`,
+  ya que el hosting compartido no mantiene workers permanentes).
 - [ ] Definir política de retención/limpieza de lotes ya aprobados/rechazados.
 - [ ] Rama sugerida: `feat/pasarela-importacion-participantes` (🔴 crea migraciones).
 

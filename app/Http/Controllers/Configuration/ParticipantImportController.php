@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Configuration;
 use App\Http\Controllers\Controller;
 use App\Models\Affiliation;
 use App\Models\Dependency;
+use App\Models\ImportBatch;
 use App\Models\Participant;
 use App\Models\ParticipantType;
 use App\Models\Program;
@@ -43,7 +44,17 @@ class ParticipantImportController extends Controller
         $affiliations = Affiliation::orderBy('name')->get(['id', 'name']);
         $estamentos   = ParticipantType::orderBy('name')->get(['id', 'name']);
 
-        return view('administration.participants.index', compact('programs', 'dependencies', 'affiliations', 'estamentos'));
+        // Total de participantes (globales; no se filtran por sede) para mostrarlo
+        // bajo el título y que se distinga de un vistazo si hay datos o no.
+        $participantsCount = Participant::count();
+
+        // Lotes de importación pendientes de revisión (pasarela ADR-0004).
+        $pendingBatches = ImportBatch::where('status', 'en_revision')
+            ->latest()
+            ->take(5)
+            ->get();
+
+        return view('administration.participants.index', compact('programs', 'dependencies', 'affiliations', 'estamentos', 'participantsCount', 'pendingBatches'));
     }
 
     public function downloadTemplate()
@@ -65,6 +76,10 @@ class ParticipantImportController extends Controller
         // memoria de una sola vez.
         ini_set('memory_limit', '1024M');
 
+        // El cargue no necesita el query log; desactivarlo evita que la memoria
+        // crezca con cada consulta en archivos grandes.
+        DB::connection()->disableQueryLog();
+
         $request->validate([
             'excel_file' => 'required|file|mimes:xlsx,xls,csv|max:20480',
         ], [
@@ -76,8 +91,18 @@ class ParticipantImportController extends Controller
             'excel_file' => 'archivo Excel',
         ]);
 
-        $sheets  = Excel::toArray([], $request->file('excel_file'));
-        $allRows = $sheets[0] ?? [];
+        // ── Lectura del archivo ───────────────────────────────────────────
+        // Fast-path para CSV: `fgetcsv` nativo es mucho más rápido que
+        // PhpSpreadsheet. Para .xlsx/.xls se mantiene maatwebsite/excel.
+        $uploaded  = $request->file('excel_file');
+        $extension = strtolower($uploaded->getClientOriginalExtension());
+
+        if (in_array($extension, ['csv', 'txt'], true)) {
+            $allRows = $this->readCsvRows($uploaded->getRealPath());
+        } else {
+            $sheets  = Excel::toArray([], $uploaded);
+            $allRows = $sheets[0] ?? [];
+        }
 
         if (empty($allRows)) {
             return back()->withErrors(['excel_file' => 'El archivo está vacío.']);
@@ -190,23 +215,10 @@ class ParticipantImportController extends Controller
             }
         }
 
-        // ── Roles activos: solo de los participantes que sí aparecen en el
-        //    Excel. Con esto reducimos de cientos de miles de filas a unos
-        //    pocos miles, y además troceamos el whereIn. ─────────────────
-        $activeRoles = [];
-
-        if (! empty($existingDocToId)) {
-            foreach (array_chunk(array_values($existingDocToId), 500) as $idChunk) {
-                DB::table('participant_roles')
-                    ->whereIn('participant_id', $idChunk)
-                    ->where('is_active', 1)
-                    ->get(['id', 'participant_id', 'participant_type_id', 'program_id', 'dependency_id', 'affiliation_id'])
-                    ->each(function ($r) use (&$activeRoles) {
-                        $key = ($r->participant_type_id ?? 0) . '|' . ($r->program_id ?? 0) . '|' . ($r->dependency_id ?? 0) . '|' . ($r->affiliation_id ?? 0);
-                        $activeRoles[$r->participant_id][$key] = $r->id;
-                    });
-            }
-        }
+        // Nota: los roles activos de los participantes existentes ya NO se
+        // consultan aquí. El commit ocurre al APROBAR el lote y `commitPlan`
+        // recalcula los roles activos en ese momento (estado fresco), así que
+        // hacerlo en el parseo era trabajo y memoria desperdiciados.
 
         $now = now()->toDateTimeString();
 
@@ -392,8 +404,160 @@ class ParticipantImportController extends Controller
         }
 
         // ══════════════════════════════════════════════════════════════════
-        // ── Insertar nuevos participantes ─────────────────────────────────
+        // ── Pasarela de revisión (ADR-0004): NO se toca la tabla principal.
+        //    Se guarda el plan en staging y el commit real ocurre al APROBAR.
         // ══════════════════════════════════════════════════════════════════
+        $importBatch = $this->persistStaging(
+            $request->file('excel_file')->getClientOriginalName(),
+            $newParticipants,
+            $newRoles,
+            $excelRolesForExisting,
+            $skipped,
+        );
+
+        ActivityLogService::log(
+            'importar',
+            'participantes',
+            "Cargó un lote de importación (#{$importBatch->id}) para revisión",
+            $importBatch,
+            [
+                'new'     => $importBatch->new_count,
+                'update'  => $importBatch->update_count,
+                'skipped' => $importBatch->skipped_count,
+            ],
+        );
+
+        return redirect()
+            ->route('participants-import.review', $importBatch)
+            ->with('success', 'Archivo procesado. Revisa los registros antes de confirmar: nada se guarda hasta que apruebes el lote.');
+    }
+
+    /**
+     * Guarda el plan calculado (nuevos, actualizaciones y omitidos) en las
+     * tablas de staging para revisión. NO toca las tablas principales.
+     */
+    private function persistStaging(
+        string $filename,
+        array $newParticipants,
+        array $newRoles,
+        array $excelRolesForExisting,
+        array $skipped,
+    ): ImportBatch {
+        // Una sola transacción para todos los inserts del staging: en SQLite
+        // evita un fsync por sentencia y acelera mucho el guardado.
+        DB::beginTransaction();
+
+        try {
+        $now = now();
+
+        $batch = ImportBatch::create([
+            'user_id'           => auth()->id(),
+            'original_filename' => $filename,
+            'status'            => 'en_revision',
+            'total_rows'        => count($newParticipants) + count($excelRolesForExisting) + count($skipped),
+            'new_count'         => count($newParticipants),
+            'update_count'      => count($excelRolesForExisting),
+            'skipped_count'     => count($skipped),
+        ]);
+
+        $buffer = [];
+        $flush = function () use (&$buffer) {
+            if (! empty($buffer)) {
+                DB::table('staged_participants')->insert($buffer);
+                $buffer = [];
+            }
+        };
+
+        // Nuevos participantes (agregados por documento)
+        foreach ($newParticipants as $doc => $data) {
+            $buffer[] = [
+                'import_batch_id'         => $batch->id,
+                'status'                  => 'nuevo',
+                'document'                => $doc,
+                'first_name'              => $data['first_name'] ?? null,
+                'last_name'               => $data['last_name'] ?? null,
+                'email'                   => $data['email'] ?? null,
+                'existing_participant_id' => null,
+                'roles'                   => json_encode(array_values($newRoles[$doc] ?? [])),
+                'error'                   => null,
+                'raw'                     => null,
+                'created_at'              => $now,
+                'updated_at'              => $now,
+            ];
+            if (count($buffer) >= self::BATCH_SIZE) {
+                $flush();
+            }
+        }
+
+        // Actualizaciones a participantes existentes
+        $existingIds  = array_keys($excelRolesForExisting);
+        $existingInfo = Participant::whereIn('id', $existingIds)
+            ->get(['id', 'document', 'first_name', 'last_name'])
+            ->keyBy('id');
+
+        foreach ($excelRolesForExisting as $pid => $wantedRoles) {
+            $info = $existingInfo->get($pid);
+            $buffer[] = [
+                'import_batch_id'         => $batch->id,
+                'status'                  => 'actualiza',
+                'document'                => $info?->document,
+                'first_name'              => $info?->first_name,
+                'last_name'               => $info?->last_name,
+                'email'                   => null,
+                'existing_participant_id' => $pid,
+                'roles'                   => json_encode(array_values($wantedRoles)),
+                'error'                   => null,
+                'raw'                     => null,
+                'created_at'              => $now,
+                'updated_at'              => $now,
+            ];
+            if (count($buffer) >= self::BATCH_SIZE) {
+                $flush();
+            }
+        }
+
+        // Filas omitidas (una por fila del Excel)
+        foreach ($skipped as $row) {
+            $buffer[] = [
+                'import_batch_id'         => $batch->id,
+                'status'                  => 'omitido',
+                'document'                => $row['Documento'] ?? null,
+                'first_name'              => $row['Nombres'] ?? null,
+                'last_name'               => $row['Apellidos'] ?? null,
+                'email'                   => $row['Correo'] ?? null,
+                'existing_participant_id' => null,
+                'roles'                   => null,
+                'error'                   => $row['_motivo'] ?? null,
+                'raw'                     => json_encode($row),
+                'created_at'              => $now,
+                'updated_at'              => $now,
+            ];
+            if (count($buffer) >= self::BATCH_SIZE) {
+                $flush();
+            }
+        }
+
+        $flush();
+
+        DB::commit();
+
+        return $batch;
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Aplica el plan a las tablas principales. Mismo comportamiento que el
+     * importador original, pero ejecutado al APROBAR un lote ya revisado.
+     * Recalcula los roles activos en el momento del commit.
+     */
+    private function commitPlan(array $newParticipants, array $newRoles, array $excelRolesForExisting): array
+    {
+        $now = now()->toDateTimeString();
+
+        // ── Insertar nuevos participantes ─────────────────────────────────
         $saved   = 0;
         $batch   = [];
         $docKeys = [];
@@ -451,9 +615,21 @@ class ParticipantImportController extends Controller
             }
         }
 
-        // ══════════════════════════════════════════════════════════════════
+        // ── Roles activos actuales de los participantes existentes ────────
+        $activeRoles = [];
+        $existingIds = array_keys($excelRolesForExisting);
+        foreach (array_chunk($existingIds, 500) as $idChunk) {
+            DB::table('participant_roles')
+                ->whereIn('participant_id', $idChunk)
+                ->where('is_active', 1)
+                ->get(['id', 'participant_id', 'participant_type_id', 'program_id', 'dependency_id', 'affiliation_id'])
+                ->each(function ($r) use (&$activeRoles) {
+                    $key = ($r->participant_type_id ?? 0) . '|' . ($r->program_id ?? 0) . '|' . ($r->dependency_id ?? 0) . '|' . ($r->affiliation_id ?? 0);
+                    $activeRoles[$r->participant_id][$key] = $r->id;
+                });
+        }
+
         // ── Sincronizar participantes existentes ──────────────────────────
-        // ══════════════════════════════════════════════════════════════════
         $rolesActivated      = 0;
         $rolesDeactivated    = 0;
         $rolesCreated        = 0;
@@ -519,26 +695,176 @@ class ParticipantImportController extends Controller
             }
         }
 
-        session(['import_skipped' => $skipped]);
-
-        ActivityLogService::log('importar', 'participantes', "Importó {$saved} participante(s) desde Excel", metadata: [
-            'created' => $saved,
+        return [
+            'saved'                => $saved,
             'updated_participants' => $updatedParticipants,
-            'roles_activated' => $rolesActivated,
-            'roles_deactivated' => $rolesDeactivated,
-            'roles_created' => $rolesCreated,
-            'skipped' => count($skipped),
+            'roles_activated'      => $rolesActivated,
+            'roles_deactivated'    => $rolesDeactivated,
+            'roles_created'        => $rolesCreated,
+        ];
+    }
+
+    /**
+     * Historial de lotes de importación. Permite volver a un lote ya procesado
+     * (p. ej. para descargar sus filas omitidas).
+     */
+    public function batches()
+    {
+        $batches = ImportBatch::with('user')
+            ->latest()
+            ->paginate(20);
+
+        return view('administration.participants.batches', compact('batches'));
+    }
+
+    /**
+     * Pantalla de revisión de un lote en staging.
+     */
+    public function review(Request $request, ImportBatch $batch)
+    {
+        $estado = $request->query('estado');
+        $estado = in_array($estado, ['nuevo', 'actualiza', 'omitido'], true) ? $estado : null;
+
+        $rows = $batch->stagedParticipants()
+            ->when($estado, fn ($q) => $q->where('status', $estado))
+            ->orderBy('id')
+            ->paginate(50)
+            ->withQueryString();
+
+        $typeNames        = ParticipantType::pluck('name', 'id');
+        $programNames     = Program::pluck('name', 'id');
+        $dependencyNames  = Dependency::pluck('name', 'id');
+        $affiliationNames = Affiliation::pluck('name', 'id');
+
+        return view('administration.participants.review', compact(
+            'batch', 'rows', 'estado',
+            'typeNames', 'programNames', 'dependencyNames', 'affiliationNames',
+        ));
+    }
+
+    /**
+     * Aprueba un lote: aplica el plan a las tablas principales.
+     */
+    public function approve(Request $request, ImportBatch $batch)
+    {
+        if ($batch->status !== 'en_revision') {
+            return redirect()->route('participants-import.index')
+                ->with('error', 'Este lote ya fue procesado.');
+        }
+
+        // Re-autenticación: el admin confirma con su contraseña antes de aplicar
+        // el lote a las tablas principales.
+        $request->validate([
+            'password' => ['required', 'current_password'],
+        ], [
+            'password.required'         => 'Ingresa tu contraseña para confirmar la importación.',
+            'password.current_password' => 'La contraseña no es correcta. Inténtalo de nuevo.',
         ]);
 
+        set_time_limit(0);
+        ini_set('memory_limit', '1024M');
+        DB::connection()->disableQueryLog();
+
+        $now = now()->toDateTimeString();
+
+        $newParticipants       = [];
+        $newRoles              = [];
+        $excelRolesForExisting = [];
+
+        $rebuildRoles = function ($rolesJson): array {
+            $roles = [];
+            foreach (($rolesJson ?? []) as $r) {
+                $key = ($r['participant_type_id'] ?? 0) . '|' . ($r['program_id'] ?? 0) . '|' . ($r['dependency_id'] ?? 0) . '|' . ($r['affiliation_id'] ?? 0);
+                $roles[$key] = [
+                    'participant_type_id' => $r['participant_type_id'] ?? null,
+                    'program_id'          => $r['program_id'] ?? null,
+                    'dependency_id'       => $r['dependency_id'] ?? null,
+                    'affiliation_id'      => $r['affiliation_id'] ?? null,
+                ];
+            }
+            return $roles;
+        };
+
+        $batch->stagedParticipants()->where('status', 'nuevo')->orderBy('id')
+            ->chunkById(500, function ($chunk) use (&$newParticipants, &$newRoles, $now, $rebuildRoles) {
+                foreach ($chunk as $s) {
+                    if (! $s->document) {
+                        continue;
+                    }
+                    $newParticipants[$s->document] = [
+                        'document'     => $s->document,
+                        'student_code' => null,
+                        'first_name'   => $s->first_name,
+                        'last_name'    => $s->last_name,
+                        'email'        => $s->email ?: null,
+                        'created_at'   => $now,
+                        'updated_at'   => $now,
+                    ];
+                    $newRoles[$s->document] = $rebuildRoles($s->roles);
+                }
+            });
+
+        $batch->stagedParticipants()->where('status', 'actualiza')->orderBy('id')
+            ->chunkById(500, function ($chunk) use (&$excelRolesForExisting, $rebuildRoles) {
+                foreach ($chunk as $s) {
+                    if (! $s->existing_participant_id) {
+                        continue;
+                    }
+                    $excelRolesForExisting[$s->existing_participant_id] = $rebuildRoles($s->roles);
+                }
+            });
+
+        $result = DB::transaction(fn () => $this->commitPlan($newParticipants, $newRoles, $excelRolesForExisting));
+
+        $batch->update(['status' => 'aprobado', 'applied_at' => now()]);
+
+        // Compatibilidad con el botón "Descargar omitidos" del banner del índice.
+        $skippedRaws = $batch->stagedParticipants()->where('status', 'omitido')
+            ->get()->map(fn ($s) => $s->raw ?? [])->filter()->values()->all();
+        session(['import_skipped' => $skippedRaws]);
+
+        ActivityLogService::log('importar', 'participantes', "Aprobó e importó el lote #{$batch->id}", $batch, $result + ['skipped' => $batch->skipped_count]);
+
         return redirect()->route('participants-import.index')
-            ->with('import_result', [
-                'saved'                => $saved,
-                'updated_participants' => $updatedParticipants,
-                'roles_activated'      => $rolesActivated,
-                'roles_deactivated'    => $rolesDeactivated,
-                'roles_created'        => $rolesCreated,
-                'skipped'              => count($skipped),
-            ]);
+            ->with('active_tab', 'list')
+            ->with('import_result', $result + ['skipped' => $batch->skipped_count]);
+    }
+
+    /**
+     * Rechaza un lote sin tocar las tablas principales.
+     */
+    public function reject(ImportBatch $batch)
+    {
+        if ($batch->status !== 'en_revision') {
+            return redirect()->route('participants-import.index')
+                ->with('error', 'Este lote ya fue procesado.');
+        }
+
+        $batch->update(['status' => 'rechazado']);
+
+        ActivityLogService::log('importar', 'participantes', "Rechazó el lote de importación #{$batch->id}");
+
+        return redirect()->route('participants-import.index')
+            ->with('success', 'Lote rechazado. No se guardó ningún registro.');
+    }
+
+    /**
+     * Descarga en Excel las filas omitidas de un lote.
+     */
+    public function downloadBatchSkipped(ImportBatch $batch)
+    {
+        $rows = $batch->stagedParticipants()->where('status', 'omitido')
+            ->get()->map(fn ($s) => $s->raw ?? [])->filter()->values()->all();
+
+        if (empty($rows)) {
+            return redirect()->route('participants-import.review', $batch)
+                ->with('error', 'No hay filas omitidas para descargar en este lote.');
+        }
+
+        return Excel::download(
+            new \App\Exports\SkippedParticipantsExport($rows),
+            'omitidos_lote_' . $batch->id . '.xlsx'
+        );
     }
 
     public function downloadSkipped()
@@ -625,6 +951,65 @@ class ParticipantImportController extends Controller
 
         return redirect()->route('participants-import.index')
             ->with('success', 'Participante registrado exitosamente.');
+    }
+
+    /**
+     * Lee un CSV de forma nativa (rápido) devolviendo filas como arrays
+     * numéricos, equivalente a lo que entrega `Excel::toArray()[0]`.
+     * - Quita BOM UTF-8.
+     * - Normaliza la codificación a UTF-8 (Windows-1252 es común en Excel Windows).
+     * - Detecta el separador (',' / ';' / tabulador).
+     * - Usa fgetcsv para respetar comillas y saltos de línea dentro de campos.
+     */
+    private function readCsvRows(string $path): array
+    {
+        $content = file_get_contents($path);
+        if ($content === false || $content === '') {
+            return [];
+        }
+
+        // Quitar BOM UTF-8 si existe.
+        if (str_starts_with($content, "\xEF\xBB\xBF")) {
+            $content = substr($content, 3);
+        }
+
+        // Si no es UTF-8 válido, asumir Windows-1252 (Excel en Windows).
+        if (! mb_check_encoding($content, 'UTF-8')) {
+            $content = mb_convert_encoding($content, 'UTF-8', 'Windows-1252');
+        }
+
+        $delimiter = $this->detectCsvDelimiter($content);
+
+        $rows   = [];
+        $handle = fopen('php://temp', 'r+');
+        fwrite($handle, $content);
+        rewind($handle);
+
+        while (($data = fgetcsv($handle, 0, $delimiter, '"', '')) !== false) {
+            $rows[] = $data;
+        }
+
+        fclose($handle);
+
+        return $rows;
+    }
+
+    /**
+     * Detecta el separador del CSV mirando la primera línea.
+     */
+    private function detectCsvDelimiter(string $content): string
+    {
+        $firstLine = strtok($content, "\r\n") ?: '';
+
+        $counts = [
+            ','  => substr_count($firstLine, ','),
+            ';'  => substr_count($firstLine, ';'),
+            "\t" => substr_count($firstLine, "\t"),
+        ];
+        arsort($counts);
+        $best = array_key_first($counts);
+
+        return $counts[$best] > 0 ? $best : ',';
     }
 
     private static function normalizeExcelText(mixed $value): string

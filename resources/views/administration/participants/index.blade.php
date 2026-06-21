@@ -4,7 +4,7 @@
      x-data="{
          activeTab: new URLSearchParams(window.location.search).get('filtro') === 'sin_clasificar'
              ? 'list'
-             : (new URLSearchParams(window.location.search).get('tab') || '{{ session('active_tab', 'bulk') }}'),
+             : (new URLSearchParams(window.location.search).get('tab') || '{{ session('active_tab', 'list') }}'),
          role: '{{ old('role', '') }}',
          showProgram()    { return ['Estudiante', 'Graduado', 'Docente'].includes(this.role); },
          showDependency() { return this.role === 'Administrativo'; },
@@ -49,9 +49,16 @@
             <flux:icon name="users" class="size-16 text-[#3b82f6]" />
             <span>Gestión de Participantes</span>
         </h1>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Importa participantes desde Excel o registra uno individualmente.
-        </p>
+        <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span class="inline-flex items-center gap-1.5 rounded-full bg-blue-50 dark:bg-blue-900/30 px-3 py-1 text-sm font-semibold text-blue-700 dark:text-blue-300">
+                <flux:icon.users class="size-4" />
+                {{ number_format($participantsCount) }}
+                {{ $participantsCount === 1 ? 'participante registrado' : 'participantes registrados' }}
+            </span>
+            <span class="text-sm text-gray-500 dark:text-gray-400">
+                Importa desde Excel o registra uno individualmente.
+            </span>
+        </div>
     </div>
 
     {{-- Alertas globales --}}
@@ -135,17 +142,42 @@
         </div>
     @endif
 
+    {{-- Lotes de importación pendientes de revisión (pasarela ADR-0004) --}}
+    @if(!empty($pendingBatches) && $pendingBatches->isNotEmpty())
+        <div class="flex flex-col gap-2 rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 p-4">
+            <div class="flex items-center gap-2 text-amber-800 dark:text-amber-300 text-sm font-semibold">
+                <flux:icon.clock class="size-4" />
+                Tienes lotes de importación pendientes de revisión
+            </div>
+            <ul class="flex flex-col divide-y divide-amber-200/60 dark:divide-amber-800/60">
+                @foreach($pendingBatches as $pb)
+                    <li class="flex flex-wrap items-center gap-x-3 gap-y-1 py-1.5 text-sm">
+                        <span class="font-medium text-gray-700 dark:text-gray-300">#{{ $pb->id }}</span>
+                        <span class="text-gray-600 dark:text-gray-400 truncate max-w-[16rem]">{{ $pb->original_filename }}</span>
+                        <span class="text-xs text-gray-500 dark:text-zinc-500">
+                            {{ $pb->new_count }} nuevos · {{ $pb->update_count }} actualizan · {{ $pb->skipped_count }} omitidos
+                        </span>
+                        <a href="{{ route('participants-import.review', $pb) }}"
+                           class="ml-auto inline-flex items-center gap-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white px-3 py-1 text-xs font-medium transition-colors">
+                            Revisar
+                        </a>
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     {{-- Tabs --}}
     <div class="border-b border-neutral-200 dark:border-zinc-700">
         <nav class="flex gap-1">
             <button
-                @click="setTab('bulk')"
-                :class="activeTab === 'bulk'
+                @click="setTab('list')"
+                :class="activeTab === 'list'
                     ? 'border-b-2 border-[#3b82f6] text-[#3b82f6] dark:text-blue-400'
                     : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
                 class="flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors cursor-pointer">
-                <flux:icon.document-arrow-up class="size-4" />
-                Carga masiva Excel
+                <flux:icon.users class="size-4" />
+                Lista de participantes
             </button>
             <button
                 @click="setTab('single')"
@@ -157,13 +189,13 @@
                 Registro individual
             </button>
             <button
-                @click="setTab('list')"
-                :class="activeTab === 'list'
+                @click="setTab('bulk')"
+                :class="activeTab === 'bulk'
                     ? 'border-b-2 border-[#3b82f6] text-[#3b82f6] dark:text-blue-400'
                     : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
                 class="flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors cursor-pointer">
-                <flux:icon.users class="size-4" />
-                Lista de participantes
+                <flux:icon.document-arrow-up class="size-4" />
+                Carga masiva Excel
             </button>
         </nav>
     </div>
@@ -180,11 +212,18 @@
                         quedan omitidas y las puedes descargar al final.
                     </p>
                 </div>
-                <a href="{{ route('participants-import.download-template') }}"
-                   class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 text-xs font-medium transition-colors shrink-0">
-                    <flux:icon.arrow-down-tray class="size-3.5 text-[#3b82f6]" />
-                    Descargar plantilla
-                </a>
+                <div class="flex items-center gap-2 shrink-0">
+                    <a href="{{ route('participants-import.batches') }}"
+                       class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 text-xs font-medium transition-colors">
+                        <flux:icon.rectangle-stack class="size-3.5 text-[#3b82f6]" />
+                        Historial
+                    </a>
+                    <a href="{{ route('participants-import.download-template') }}"
+                       class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 text-xs font-medium transition-colors">
+                        <flux:icon.arrow-down-tray class="size-3.5 text-[#3b82f6]" />
+                        Descargar plantilla
+                    </a>
+                </div>
             </div>
 
             <div class="px-4 sm:px-6 py-6">
@@ -236,7 +275,16 @@
 
                 {{-- Formulario de carga --}}
                 <form action="{{ route('participants-import.import') }}" method="POST" enctype="multipart/form-data"
-                      x-data="{ fileName: '', dragging: false }"
+                      x-data="{ fileName: '', dragging: false, submitting: false, fileError: false }"
+                      @submit="
+                          if (submitting) { $event.preventDefault(); return; }
+                          if (!$refs.fileInput.files || $refs.fileInput.files.length === 0) {
+                              $event.preventDefault();
+                              fileError = true;
+                              return;
+                          }
+                          submitting = true;
+                      "
                       class="flex flex-col gap-4">
                     @csrf
 
@@ -247,7 +295,7 @@
                         @drop.prevent="
                             dragging = false;
                             const file = $event.dataTransfer.files[0];
-                            if (file) { fileName = file.name; $refs.fileInput.files = $event.dataTransfer.files; }
+                            if (file) { fileName = file.name; fileError = false; $refs.fileInput.files = $event.dataTransfer.files; }
                         "
                         :class="dragging ? 'border-[#3b82f6] bg-blue-50 dark:bg-blue-900/20' : 'border-neutral-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50'"
                         class="relative flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-8 transition-colors text-center cursor-pointer">
@@ -268,14 +316,26 @@
                             name="excel_file"
                             accept=".xlsx,.xls,.csv"
                             class="absolute inset-0 opacity-0 cursor-pointer"
-                            @change="fileName = $event.target.files[0]?.name ?? ''" />
+                            @change="fileName = $event.target.files[0]?.name ?? ''; fileError = false" />
                     </div>
 
-                    <div class="flex justify-end">
-                        <button type="submit"
-                            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#3b82f6] hover:bg-blue-700 text-white text-sm font-medium transition-colors shadow-sm cursor-pointer">
-                            <flux:icon.arrow-up-tray class="size-4" />
-                            Importar participantes
+                    <div class="flex flex-col items-end gap-2">
+                        <p x-show="fileError" x-cloak class="text-xs text-red-500">
+                            Selecciona un archivo Excel antes de importar.
+                        </p>
+                        <p x-show="submitting" x-cloak class="text-xs text-gray-500 dark:text-gray-400 text-right">
+                            Procesando el archivo… esto puede tardar con listas grandes.
+                            No cierres ni recargues la página.
+                        </p>
+                        <button type="submit" :disabled="submitting"
+                            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#3b82f6] hover:bg-blue-700 text-white text-sm font-medium transition-colors shadow-sm cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
+                            {{-- Spinner mientras procesa --}}
+                            <svg x-show="submitting" x-cloak class="size-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4z"></path>
+                            </svg>
+                            <span x-show="!submitting"><flux:icon.arrow-up-tray class="size-4" /></span>
+                            <span x-text="submitting ? 'Procesando…' : 'Importar participantes'"></span>
                         </button>
                     </div>
                 </form>

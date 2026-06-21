@@ -31,7 +31,7 @@ actualizado: 2026-06-20
 
 ## Restricciones / sensibilidades
 - **Tratamiento de datos personales**: el registro exige aceptación explícita.
-- Producción en **Render** (recursos limitados) → atención al rendimiento (hay tests de
+- Producción en **Hostinger** (hosting compartido, recursos limitados) → atención al rendimiento (hay tests de
   rendimiento, ver [[estrategia-de-pruebas]]).
 
 ## Relacionado
