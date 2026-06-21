@@ -4,16 +4,18 @@ namespace App\Http\Controllers\Configuration;
 
 use App\Http\Controllers\Controller;
 use App\Models\Affiliation;
+use App\Models\Campus;
 use App\Models\Dependency;
 use App\Models\ImportBatch;
 use App\Models\Participant;
 use App\Models\ParticipantType;
 use App\Models\Program;
+use App\Services\ActivityLogService;
+use App\Services\CampusScopeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Services\ActivityLogService;
 
 class ParticipantImportController extends Controller
 {
@@ -37,12 +39,14 @@ class ParticipantImportController extends Controller
      */
     private const DEPENDENCY_ROLE_KEYS = ['administrativo'];
 
-    public function index()
+    public function index(CampusScopeService $campusScope)
     {
-        $programs     = Program::orderBy('name')->get(['id', 'name']);
-        $dependencies = Dependency::orderBy('name')->get(['id', 'name']);
+        $programs = $campusScope->applyToQuery(Program::query(), request()->user())
+            ->orderBy('name')->get(['id', 'name']);
+        $dependencies = $campusScope->applyToQuery(Dependency::query(), request()->user())
+            ->orderBy('name')->get(['id', 'name']);
         $affiliations = Affiliation::orderBy('name')->get(['id', 'name']);
-        $estamentos   = ParticipantType::orderBy('name')->get(['id', 'name']);
+        $estamentos = ParticipantType::orderBy('name')->get(['id', 'name']);
 
         // Total de participantes (globales; no se filtran por sede) para mostrarlo
         // bajo el título y que se distinga de un vistazo si hay datos o no.
@@ -62,12 +66,12 @@ class ParticipantImportController extends Controller
         ActivityLogService::log('exportar', 'participantes', 'Descargó la plantilla de importación de participantes');
 
         return Excel::download(
-            new \App\Exports\ParticipantTemplateExport(),
+            new \App\Exports\ParticipantTemplateExport,
             'plantilla_participantes.xlsx'
         );
     }
 
-    public function import(Request $request)
+    public function import(Request $request, CampusScopeService $campusScope)
     {
         $startedAt = microtime(true);
 
@@ -86,8 +90,8 @@ class ParticipantImportController extends Controller
             'excel_file' => 'required|file|mimes:xlsx,xls,csv|max:20480',
         ], [
             'excel_file.required' => 'Debes seleccionar un archivo Excel.',
-            'excel_file.mimes'    => 'El archivo debe ser .xlsx, .xls o .csv.',
-            'excel_file.max'      => 'El archivo no debe superar los 20 MB.',
+            'excel_file.mimes' => 'El archivo debe ser .xlsx, .xls o .csv.',
+            'excel_file.max' => 'El archivo no debe superar los 20 MB.',
             'excel_file.uploaded' => 'No se pudo subir el archivo Excel. Verifica el tamano del archivo y vuelve a intentarlo.',
         ], [
             'excel_file' => 'archivo Excel',
@@ -96,13 +100,13 @@ class ParticipantImportController extends Controller
         // ── Lectura del archivo ───────────────────────────────────────────
         // Fast-path para CSV: `fgetcsv` nativo es mucho más rápido que
         // PhpSpreadsheet. Para .xlsx/.xls se mantiene maatwebsite/excel.
-        $uploaded  = $request->file('excel_file');
+        $uploaded = $request->file('excel_file');
         $extension = strtolower($uploaded->getClientOriginalExtension());
 
         if (in_array($extension, ['csv', 'txt'], true)) {
             $allRows = $this->readCsvRows($uploaded->getRealPath());
         } else {
-            $sheets  = Excel::toArray([], $uploaded);
+            $sheets = Excel::toArray([], $uploaded);
             $allRows = $sheets[0] ?? [];
         }
 
@@ -112,7 +116,7 @@ class ParticipantImportController extends Controller
 
         // ── Leer y validar cabeceras ──────────────────────────────────────
         $headerRow = array_values((array) $allRows[0]);
-        $headers   = array_map(fn ($h) => trim((string) ($h ?? '')), $headerRow);
+        $headers = array_map(fn ($h) => trim((string) ($h ?? '')), $headerRow);
 
         $colIndex = [];
         foreach ($headers as $pos => $name) {
@@ -129,10 +133,13 @@ class ParticipantImportController extends Controller
         if (! empty($missing)) {
             return back()->withErrors([
                 'excel_file' => 'El archivo no tiene las siguientes columnas requeridas: '
-                    . implode(', ', array_map(fn ($c) => "«{$c}»", $missing))
-                    . '. Descarga la plantilla oficial y vuelve a intentarlo.',
+                    .implode(', ', array_map(fn ($c) => "«{$c}»", $missing))
+                    .'. Descarga la plantilla oficial y vuelve a intentarlo.',
             ]);
         }
+
+        $hasCampusColumn = isset($colIndex['Sede']);
+        $defaultCampusId = $this->defaultCampusIdForImport($request, $campusScope, ! $hasCampusColumn);
 
         $get = function (array $raw, string $col) use ($colIndex) {
             return isset($colIndex[$col]) ? ($raw[$colIndex[$col]] ?? null) : null;
@@ -142,17 +149,32 @@ class ParticipantImportController extends Controller
         $rows = $allRows;
 
         // ── Cachés de lookup ──────────────────────────────────────────────
-        $programByNameHash = [];
-        foreach (Program::all(['id', 'name']) as $p) {
-            $k = ProgramController::comparisonKey($p->name);
-            if (! isset($programByNameHash[$k])) {
-                $programByNameHash[$k] = $p->id;
+        $campusByNameHash = Campus::orderBy('name')->get(['id', 'name'])
+            ->mapWithKeys(fn (Campus $campus) => [ProgramController::comparisonKey($campus->name) => $campus->id])
+            ->all();
+
+        $programByCampusAndNameHash = [];
+        $academicProgramIdByProgramId = [];
+        foreach (Program::with('academicProgram:id,name')->get(['id', 'name', 'campus_id', 'academic_program_id']) as $p) {
+            if (! $p->campus_id) {
+                continue;
             }
+
+            $k = ProgramController::comparisonKey($p->name);
+            if (! isset($programByCampusAndNameHash[$p->campus_id][$k])) {
+                $programByCampusAndNameHash[$p->campus_id][$k] = $p->id;
+            }
+            if ($p->academicProgram && ! isset($programByCampusAndNameHash[$p->campus_id][ProgramController::comparisonKey($p->academicProgram->name)])) {
+                $programByCampusAndNameHash[$p->campus_id][ProgramController::comparisonKey($p->academicProgram->name)] = $p->id;
+            }
+            $academicProgramIdByProgramId[$p->id] = $p->academic_program_id ? (int) $p->academic_program_id : null;
         }
 
-        $dependencyHash = [];
-        foreach (Dependency::all(['id', 'name']) as $d) {
-            $dependencyHash[ProgramController::comparisonKey($d->name)] = $d->id;
+        $dependencyByCampusAndNameHash = [];
+        foreach (Dependency::all(['id', 'name', 'campus_id']) as $d) {
+            if ($d->campus_id) {
+                $dependencyByCampusAndNameHash[$d->campus_id][ProgramController::comparisonKey($d->name)] = $d->id;
+            }
         }
 
         $affiliationHash = [];
@@ -170,7 +192,7 @@ class ParticipantImportController extends Controller
         //    traen los registros relevantes, en lugar de toda la tabla
         //    participants (que en producción podría tener decenas de miles
         //    de filas y agotar la memoria en fetchAll). ───────────────────
-        $excelDocs   = [];
+        $excelDocs = [];
         $excelEmails = [];
 
         foreach ($rows as $row) {
@@ -201,6 +223,19 @@ class ParticipantImportController extends Controller
                 ->toArray();
         }
 
+        $activeProgramsByParticipantAndAcademic = [];
+        foreach (array_chunk(array_values($existingDocToId), 500) as $participantIds) {
+            DB::table('participant_roles')
+                ->join('programs', 'programs.id', '=', 'participant_roles.program_id')
+                ->whereIn('participant_roles.participant_id', $participantIds)
+                ->where('participant_roles.is_active', 1)
+                ->whereNotNull('programs.academic_program_id')
+                ->get(['participant_roles.participant_id', 'participant_roles.program_id', 'programs.academic_program_id'])
+                ->each(function ($role) use (&$activeProgramsByParticipantAndAcademic) {
+                    $activeProgramsByParticipantAndAcademic[$role->participant_id][$role->academic_program_id][(int) $role->program_id] = true;
+                });
+        }
+
         // ── Correos ya existentes. Solo interesa conocer los correos que
         //    podrían colisionar con los del Excel; no tiene sentido cargar
         //    la tabla entera. ─────────────────────────────────────────────
@@ -225,9 +260,10 @@ class ParticipantImportController extends Controller
         $now = now()->toDateTimeString();
 
         $newParticipants = [];
-        $newRoles        = [];
+        $newRoles = [];
 
         $excelRolesForExisting = [];
+        $plannedProgramsByParticipantAndAcademic = [];
 
         $skipped = [];
 
@@ -238,14 +274,15 @@ class ParticipantImportController extends Controller
                 continue;
             }
 
-            $document        = trim((string) ($get($rawValues, 'Documento') ?? ''));
-            $firstNameRaw    = self::normalizeExcelText($get($rawValues, 'Nombres'));
-            $lastNameRaw     = self::normalizeExcelText($get($rawValues, 'Apellidos'));
-            $roleName        = self::normalizeExcelText($get($rawValues, 'Tipo de Estamento'));
-            $emailRaw        = self::normalizeExcelText($get($rawValues, 'Correo'));
-            $programName     = self::normalizeExcelText($get($rawValues, 'Programa o Dependencia'));
-            $programTypeRaw  = self::normalizeExcelText($get($rawValues, 'Tipo_progama'));
+            $document = trim((string) ($get($rawValues, 'Documento') ?? ''));
+            $firstNameRaw = self::normalizeExcelText($get($rawValues, 'Nombres'));
+            $lastNameRaw = self::normalizeExcelText($get($rawValues, 'Apellidos'));
+            $roleName = self::normalizeExcelText($get($rawValues, 'Tipo de Estamento'));
+            $emailRaw = self::normalizeExcelText($get($rawValues, 'Correo'));
+            $programName = self::normalizeExcelText($get($rawValues, 'Programa o Dependencia'));
+            $programTypeRaw = self::normalizeExcelText($get($rawValues, 'Tipo_progama'));
             $affiliationType = self::normalizeExcelText($get($rawValues, 'Vinculacion'));
+            $campusName = $hasCampusColumn ? self::normalizeExcelText($get($rawValues, 'Sede')) : '';
 
             $firstName = $firstNameRaw === ''
                 ? ''
@@ -259,11 +296,31 @@ class ParticipantImportController extends Controller
 
             if ($document === '') {
                 $skipped[] = $this->skippedRow($rawValues, $headers, 'Documento vacío');
+
+                continue;
+            }
+
+            $rowCampusId = $this->resolveImportCampusId(
+                $request,
+                $campusName,
+                $defaultCampusId,
+                $campusByNameHash,
+            );
+
+            if (! $rowCampusId) {
+                $skipped[] = $this->skippedRow(
+                    $rawValues,
+                    $headers,
+                    $campusName === ''
+                        ? 'No se pudo determinar la sede de la fila. Selecciona una sede activa o agrega la columna opcional Sede.'
+                        : "Sede no válida o no autorizada: \"{$campusName}\""
+                );
+
                 continue;
             }
 
             // ── Validar tipo de estamento ─────────────────────────────────
-            $roleKey  = ProgramController::comparisonKey($roleName);
+            $roleKey = ProgramController::comparisonKey($roleName);
             $typeData = $typeHash[$roleKey] ?? null;
             if (! $typeData) {
                 $skipped[] = $this->skippedRow(
@@ -272,6 +329,7 @@ class ParticipantImportController extends Controller
                         ? 'Tipo de Estamento vacío'
                         : "Tipo de Estamento no válido: \"{$roleName}\""
                 );
+
                 continue;
             }
             $typeId = $typeData['id'];
@@ -291,7 +349,7 @@ class ParticipantImportController extends Controller
                 true
             );
 
-            $programId    = null;
+            $programId = null;
             $dependencyId = null;
 
             if ($isDependencyRole) {
@@ -304,32 +362,36 @@ class ParticipantImportController extends Controller
                         $rawValues, $headers,
                         'Dependencia vacía para estamento Administrativo'
                     );
+
                     continue;
                 }
 
-                $nameKey      = ProgramController::comparisonKey($programName);
-                $dependencyId = $dependencyHash[$nameKey] ?? null;
+                $nameKey = ProgramController::comparisonKey($programName);
+                $dependencyId = $dependencyByCampusAndNameHash[$rowCampusId][$nameKey] ?? null;
 
                 if (! $dependencyId) {
                     $skipped[] = $this->skippedRow(
                         $rawValues, $headers,
                         "Dependencia no encontrada: \"{$programName}\""
                     );
+
                     continue;
                 }
             } elseif ($programName !== '') {
                 $rawProgramName = $programName;
-                $nameKey        = ProgramController::comparisonKey($rawProgramName);
+                $nameKey = ProgramController::comparisonKey($rawProgramName);
 
                 if ($isProgramType) {
-                    $programId = $programByNameHash[$nameKey]
-                        ?? $this->findClosestProgramId($rawProgramName, $programByNameHash);
+                    $programsForCampus = $programByCampusAndNameHash[$rowCampusId] ?? [];
+                    $programId = $programsForCampus[$nameKey]
+                        ?? $this->findClosestProgramId($rawProgramName, $programsForCampus);
 
                     if (! $programId) {
                         $skipped[] = $this->skippedRow(
                             $rawValues, $headers,
                             "Programa no encontrado: \"{$rawProgramName}\""
                         );
+
                         continue;
                     }
                 } else {
@@ -344,7 +406,7 @@ class ParticipantImportController extends Controller
                     //     $dep = Dependency::create(['name' => $cleanName]);
                     //     $dependencyHash[$nameKey] = $dep->id;
                     // }
-                    $dependencyId = $dependencyHash[$nameKey] ?? null;
+                    $dependencyId = $dependencyByCampusAndNameHash[$rowCampusId][$nameKey] ?? null;
                 }
             }
 
@@ -361,17 +423,43 @@ class ParticipantImportController extends Controller
             }
 
             // ── Construir clave compuesta del rol ─────────────────────────
-            $compositeKey = ($typeId ?? 0) . '|' . ($programId ?? 0) . '|' . ($dependencyId ?? 0) . '|' . ($affiliationId ?? 0);
+            $compositeKey = ($typeId ?? 0).'|'.($programId ?? 0).'|'.($dependencyId ?? 0).'|'.($affiliationId ?? 0);
             $roleData = [
                 'participant_type_id' => $typeId,
-                'program_id'          => $programId,
-                'dependency_id'       => $dependencyId,
-                'affiliation_id'      => $affiliationId,
+                'program_id' => $programId,
+                'dependency_id' => $dependencyId,
+                'affiliation_id' => $affiliationId,
             ];
+
+            $academicProgramId = $programId ? ($academicProgramIdByProgramId[$programId] ?? null) : null;
+            $existingParticipantId = $existingDocToId[$document] ?? null;
+
+            if ($academicProgramId) {
+                $plannedPrograms = $plannedProgramsByParticipantAndAcademic[$document][$academicProgramId] ?? [];
+                $activePrograms = $existingParticipantId
+                    ? ($activeProgramsByParticipantAndAcademic[$existingParticipantId][$academicProgramId] ?? [])
+                    : [];
+
+                $hasOtherPlannedProgram = ! empty($plannedPrograms) && ! isset($plannedPrograms[$programId]);
+                $hasOtherActiveProgram = ! empty($activePrograms) && ! isset($activePrograms[$programId]);
+
+                if ($hasOtherPlannedProgram || $hasOtherActiveProgram) {
+                    $skipped[] = $this->skippedRow(
+                        $rawValues,
+                        $headers,
+                        'El participante ya tiene un rol activo para este programa académico en otra sede.'
+                    );
+
+                    continue;
+                }
+
+                $plannedProgramsByParticipantAndAcademic[$document][$academicProgramId][$programId] = true;
+            }
 
             // ── 1) Doc ya visto en este archivo (nuevo) ───────────────────
             if (isset($newParticipants[$document])) {
                 $newRoles[$document][$compositeKey] = $roleData;
+
                 continue;
             }
 
@@ -379,24 +467,26 @@ class ParticipantImportController extends Controller
             if (isset($existingDocToId[$document])) {
                 $pid = $existingDocToId[$document];
                 $excelRolesForExisting[$pid][$compositeKey] = $roleData;
+
                 continue;
             }
 
             // ── 3) Email duplicado ────────────────────────────────────────
             if ($email !== null && isset($existingEmails[$email])) {
                 $skipped[] = $this->skippedRow($rawValues, $headers, "Correo duplicado ({$email})");
+
                 continue;
             }
 
             // ── 4) Nuevo participante ─────────────────────────────────────
             $newParticipants[$document] = [
-                'document'     => $document,
+                'document' => $document,
                 'student_code' => null,
-                'first_name'   => $firstName,
-                'last_name'    => $lastName,
-                'email'        => $email ?: null,
-                'created_at'   => $now,
-                'updated_at'   => $now,
+                'first_name' => $firstName,
+                'last_name' => $lastName,
+                'email' => $email ?: null,
+                'created_at' => $now,
+                'updated_at' => $now,
             ];
             $newRoles[$document] = [$compositeKey => $roleData];
 
@@ -428,8 +518,8 @@ class ParticipantImportController extends Controller
             "Cargó un lote de importación (#{$importBatch->id}) para revisión",
             $importBatch,
             [
-                'new'     => $importBatch->new_count,
-                'update'  => $importBatch->update_count,
+                'new' => $importBatch->new_count,
+                'update' => $importBatch->update_count,
                 'skipped' => $importBatch->skipped_count,
             ],
         );
@@ -455,100 +545,100 @@ class ParticipantImportController extends Controller
         DB::beginTransaction();
 
         try {
-        $now = now();
+            $now = now();
 
-        $batch = ImportBatch::create([
-            'user_id'           => auth()->id(),
-            'original_filename' => $filename,
-            'status'            => 'en_revision',
-            'total_rows'        => count($newParticipants) + count($excelRolesForExisting) + count($skipped),
-            'new_count'         => count($newParticipants),
-            'update_count'      => count($excelRolesForExisting),
-            'skipped_count'     => count($skipped),
-        ]);
+            $batch = ImportBatch::create([
+                'user_id' => auth()->id(),
+                'original_filename' => $filename,
+                'status' => 'en_revision',
+                'total_rows' => count($newParticipants) + count($excelRolesForExisting) + count($skipped),
+                'new_count' => count($newParticipants),
+                'update_count' => count($excelRolesForExisting),
+                'skipped_count' => count($skipped),
+            ]);
 
-        $buffer = [];
-        $flush = function () use (&$buffer) {
-            if (! empty($buffer)) {
-                DB::table('staged_participants')->insert($buffer);
-                $buffer = [];
+            $buffer = [];
+            $flush = function () use (&$buffer) {
+                if (! empty($buffer)) {
+                    DB::table('staged_participants')->insert($buffer);
+                    $buffer = [];
+                }
+            };
+
+            // Nuevos participantes (agregados por documento)
+            foreach ($newParticipants as $doc => $data) {
+                $buffer[] = [
+                    'import_batch_id' => $batch->id,
+                    'status' => 'nuevo',
+                    'document' => $doc,
+                    'first_name' => $data['first_name'] ?? null,
+                    'last_name' => $data['last_name'] ?? null,
+                    'email' => $data['email'] ?? null,
+                    'existing_participant_id' => null,
+                    'roles' => json_encode(array_values($newRoles[$doc] ?? [])),
+                    'error' => null,
+                    'raw' => null,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+                if (count($buffer) >= self::BATCH_SIZE) {
+                    $flush();
+                }
             }
-        };
 
-        // Nuevos participantes (agregados por documento)
-        foreach ($newParticipants as $doc => $data) {
-            $buffer[] = [
-                'import_batch_id'         => $batch->id,
-                'status'                  => 'nuevo',
-                'document'                => $doc,
-                'first_name'              => $data['first_name'] ?? null,
-                'last_name'               => $data['last_name'] ?? null,
-                'email'                   => $data['email'] ?? null,
-                'existing_participant_id' => null,
-                'roles'                   => json_encode(array_values($newRoles[$doc] ?? [])),
-                'error'                   => null,
-                'raw'                     => null,
-                'created_at'              => $now,
-                'updated_at'              => $now,
-            ];
-            if (count($buffer) >= self::BATCH_SIZE) {
-                $flush();
+            // Actualizaciones a participantes existentes
+            $existingIds = array_keys($excelRolesForExisting);
+            $existingInfo = Participant::whereIn('id', $existingIds)
+                ->get(['id', 'document', 'first_name', 'last_name'])
+                ->keyBy('id');
+
+            foreach ($excelRolesForExisting as $pid => $wantedRoles) {
+                $info = $existingInfo->get($pid);
+                $buffer[] = [
+                    'import_batch_id' => $batch->id,
+                    'status' => 'actualiza',
+                    'document' => $info?->document,
+                    'first_name' => $info?->first_name,
+                    'last_name' => $info?->last_name,
+                    'email' => null,
+                    'existing_participant_id' => $pid,
+                    'roles' => json_encode(array_values($wantedRoles)),
+                    'error' => null,
+                    'raw' => null,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+                if (count($buffer) >= self::BATCH_SIZE) {
+                    $flush();
+                }
             }
-        }
 
-        // Actualizaciones a participantes existentes
-        $existingIds  = array_keys($excelRolesForExisting);
-        $existingInfo = Participant::whereIn('id', $existingIds)
-            ->get(['id', 'document', 'first_name', 'last_name'])
-            ->keyBy('id');
-
-        foreach ($excelRolesForExisting as $pid => $wantedRoles) {
-            $info = $existingInfo->get($pid);
-            $buffer[] = [
-                'import_batch_id'         => $batch->id,
-                'status'                  => 'actualiza',
-                'document'                => $info?->document,
-                'first_name'              => $info?->first_name,
-                'last_name'               => $info?->last_name,
-                'email'                   => null,
-                'existing_participant_id' => $pid,
-                'roles'                   => json_encode(array_values($wantedRoles)),
-                'error'                   => null,
-                'raw'                     => null,
-                'created_at'              => $now,
-                'updated_at'              => $now,
-            ];
-            if (count($buffer) >= self::BATCH_SIZE) {
-                $flush();
+            // Filas omitidas (una por fila del Excel)
+            foreach ($skipped as $row) {
+                $buffer[] = [
+                    'import_batch_id' => $batch->id,
+                    'status' => 'omitido',
+                    'document' => $row['Documento'] ?? null,
+                    'first_name' => $row['Nombres'] ?? null,
+                    'last_name' => $row['Apellidos'] ?? null,
+                    'email' => $row['Correo'] ?? null,
+                    'existing_participant_id' => null,
+                    'roles' => null,
+                    'error' => $row['_motivo'] ?? null,
+                    'raw' => json_encode($row),
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+                if (count($buffer) >= self::BATCH_SIZE) {
+                    $flush();
+                }
             }
-        }
 
-        // Filas omitidas (una por fila del Excel)
-        foreach ($skipped as $row) {
-            $buffer[] = [
-                'import_batch_id'         => $batch->id,
-                'status'                  => 'omitido',
-                'document'                => $row['Documento'] ?? null,
-                'first_name'              => $row['Nombres'] ?? null,
-                'last_name'               => $row['Apellidos'] ?? null,
-                'email'                   => $row['Correo'] ?? null,
-                'existing_participant_id' => null,
-                'roles'                   => null,
-                'error'                   => $row['_motivo'] ?? null,
-                'raw'                     => json_encode($row),
-                'created_at'              => $now,
-                'updated_at'              => $now,
-            ];
-            if (count($buffer) >= self::BATCH_SIZE) {
-                $flush();
-            }
-        }
+            $flush();
 
-        $flush();
+            DB::commit();
 
-        DB::commit();
-
-        return $batch;
+            return $batch;
         } catch (\Throwable $e) {
             DB::rollBack();
             throw $e;
@@ -565,17 +655,17 @@ class ParticipantImportController extends Controller
         $now = now()->toDateTimeString();
 
         // ── Insertar nuevos participantes ─────────────────────────────────
-        $saved   = 0;
-        $batch   = [];
+        $saved = 0;
+        $batch = [];
         $docKeys = [];
 
         foreach ($newParticipants as $doc => $data) {
-            $batch[]   = $data;
+            $batch[] = $data;
             $docKeys[] = $doc;
             if (count($batch) === self::BATCH_SIZE) {
                 DB::table('participants')->insert($batch);
                 $saved += self::BATCH_SIZE;
-                $batch  = [];
+                $batch = [];
             }
         }
         if (! empty($batch)) {
@@ -600,14 +690,14 @@ class ParticipantImportController extends Controller
 
                 foreach ($newRoles[$doc] ?? [] as $role) {
                     $roleBatch[] = [
-                        'participant_id'      => $pid,
+                        'participant_id' => $pid,
                         'participant_type_id' => $role['participant_type_id'],
-                        'program_id'          => $role['program_id'],
-                        'dependency_id'       => $role['dependency_id'],
-                        'affiliation_id'      => $role['affiliation_id'],
-                        'is_active'           => 1,
-                        'created_at'          => $now,
-                        'updated_at'          => $now,
+                        'program_id' => $role['program_id'],
+                        'dependency_id' => $role['dependency_id'],
+                        'affiliation_id' => $role['affiliation_id'],
+                        'is_active' => 1,
+                        'created_at' => $now,
+                        'updated_at' => $now,
                     ];
 
                     if (count($roleBatch) === self::BATCH_SIZE) {
@@ -631,38 +721,56 @@ class ParticipantImportController extends Controller
                 ->where('is_active', 1)
                 ->get(['id', 'participant_id', 'participant_type_id', 'program_id', 'dependency_id', 'affiliation_id'])
                 ->each(function ($r) use (&$activeRoles) {
-                    $key = ($r->participant_type_id ?? 0) . '|' . ($r->program_id ?? 0) . '|' . ($r->dependency_id ?? 0) . '|' . ($r->affiliation_id ?? 0);
+                    $key = ($r->participant_type_id ?? 0).'|'.($r->program_id ?? 0).'|'.($r->dependency_id ?? 0).'|'.($r->affiliation_id ?? 0);
                     $activeRoles[$r->participant_id][$key] = $r->id;
                 });
         }
 
         // ── Sincronizar participantes existentes ──────────────────────────
-        $rolesActivated      = 0;
-        $rolesDeactivated    = 0;
-        $rolesCreated        = 0;
+        $rolesActivated = 0;
+        $rolesCreated = 0;
+        $rolesSkippedConflict = 0;
         $updatedParticipants = 0;
+
+        $programAcademicIds = DB::table('programs')
+            ->whereIn('id', collect($excelRolesForExisting)
+                ->flatMap(fn (array $roles) => array_column($roles, 'program_id'))
+                ->filter()
+                ->unique()
+                ->values()
+                ->all())
+            ->pluck('academic_program_id', 'id')
+            ->map(fn ($id) => $id ? (int) $id : null)
+            ->all();
 
         foreach ($excelRolesForExisting as $pid => $wantedRoles) {
             $currentRoleKeys = $activeRoles[$pid] ?? [];
-            $wantedKeys      = array_keys($wantedRoles);
-            $currentKeys     = array_keys($currentRoleKeys);
+            $wantedKeys = array_keys($wantedRoles);
+            $currentKeys = array_keys($currentRoleKeys);
 
-            $toDeactivate = array_diff($currentKeys, $wantedKeys);
-            $toActivate   = array_diff($wantedKeys, $currentKeys);
+            $toActivate = array_diff($wantedKeys, $currentKeys);
 
             $changed = false;
 
-            if (! empty($toDeactivate)) {
-                $idsToDeactivate = array_map(fn ($k) => $currentRoleKeys[$k], $toDeactivate);
-                DB::table('participant_roles')
-                    ->whereIn('id', $idsToDeactivate)
-                    ->update(['is_active' => 0, 'updated_at' => $now]);
-                $rolesDeactivated += count($toDeactivate);
-                $changed = true;
-            }
-
             foreach ($toActivate as $roleKey) {
                 $role = $wantedRoles[$roleKey];
+                $academicProgramId = $role['program_id'] ? ($programAcademicIds[$role['program_id']] ?? null) : null;
+
+                if ($academicProgramId) {
+                    $hasRoleInAnotherCampus = DB::table('participant_roles')
+                        ->join('programs', 'programs.id', '=', 'participant_roles.program_id')
+                        ->where('participant_roles.participant_id', $pid)
+                        ->where('participant_roles.is_active', 1)
+                        ->where('programs.academic_program_id', $academicProgramId)
+                        ->where('participant_roles.program_id', '<>', $role['program_id'])
+                        ->exists();
+
+                    if ($hasRoleInAnotherCampus) {
+                        $rolesSkippedConflict++;
+
+                        continue;
+                    }
+                }
 
                 $updated = DB::table('participant_roles')
                     ->where('participant_id', $pid)
@@ -683,14 +791,14 @@ class ParticipantImportController extends Controller
                     $rolesActivated++;
                 } else {
                     DB::table('participant_roles')->insert([
-                        'participant_id'      => $pid,
+                        'participant_id' => $pid,
                         'participant_type_id' => $role['participant_type_id'],
-                        'program_id'          => $role['program_id'],
-                        'dependency_id'       => $role['dependency_id'],
-                        'affiliation_id'      => $role['affiliation_id'],
-                        'is_active'           => 1,
-                        'created_at'          => $now,
-                        'updated_at'          => $now,
+                        'program_id' => $role['program_id'],
+                        'dependency_id' => $role['dependency_id'],
+                        'affiliation_id' => $role['affiliation_id'],
+                        'is_active' => 1,
+                        'created_at' => $now,
+                        'updated_at' => $now,
                     ]);
                     $rolesCreated++;
                 }
@@ -703,11 +811,11 @@ class ParticipantImportController extends Controller
         }
 
         return [
-            'saved'                => $saved,
+            'saved' => $saved,
             'updated_participants' => $updatedParticipants,
-            'roles_activated'      => $rolesActivated,
-            'roles_deactivated'    => $rolesDeactivated,
-            'roles_created'        => $rolesCreated,
+            'roles_activated' => $rolesActivated,
+            'roles_created' => $rolesCreated,
+            'roles_skipped_conflict' => $rolesSkippedConflict,
         ];
     }
 
@@ -738,9 +846,9 @@ class ParticipantImportController extends Controller
             ->paginate(50)
             ->withQueryString();
 
-        $typeNames        = ParticipantType::pluck('name', 'id');
-        $programNames     = Program::pluck('name', 'id');
-        $dependencyNames  = Dependency::pluck('name', 'id');
+        $typeNames = ParticipantType::pluck('name', 'id');
+        $programNames = Program::pluck('name', 'id');
+        $dependencyNames = Dependency::pluck('name', 'id');
         $affiliationNames = Affiliation::pluck('name', 'id');
 
         return view('administration.participants.review', compact(
@@ -764,7 +872,7 @@ class ParticipantImportController extends Controller
         $request->validate([
             'password' => ['required', 'current_password'],
         ], [
-            'password.required'         => 'Ingresa tu contraseña para confirmar la importación.',
+            'password.required' => 'Ingresa tu contraseña para confirmar la importación.',
             'password.current_password' => 'La contraseña no es correcta. Inténtalo de nuevo.',
         ]);
 
@@ -774,21 +882,22 @@ class ParticipantImportController extends Controller
 
         $now = now()->toDateTimeString();
 
-        $newParticipants       = [];
-        $newRoles              = [];
+        $newParticipants = [];
+        $newRoles = [];
         $excelRolesForExisting = [];
 
         $rebuildRoles = function ($rolesJson): array {
             $roles = [];
             foreach (($rolesJson ?? []) as $r) {
-                $key = ($r['participant_type_id'] ?? 0) . '|' . ($r['program_id'] ?? 0) . '|' . ($r['dependency_id'] ?? 0) . '|' . ($r['affiliation_id'] ?? 0);
+                $key = ($r['participant_type_id'] ?? 0).'|'.($r['program_id'] ?? 0).'|'.($r['dependency_id'] ?? 0).'|'.($r['affiliation_id'] ?? 0);
                 $roles[$key] = [
                     'participant_type_id' => $r['participant_type_id'] ?? null,
-                    'program_id'          => $r['program_id'] ?? null,
-                    'dependency_id'       => $r['dependency_id'] ?? null,
-                    'affiliation_id'      => $r['affiliation_id'] ?? null,
+                    'program_id' => $r['program_id'] ?? null,
+                    'dependency_id' => $r['dependency_id'] ?? null,
+                    'affiliation_id' => $r['affiliation_id'] ?? null,
                 ];
             }
+
             return $roles;
         };
 
@@ -799,13 +908,13 @@ class ParticipantImportController extends Controller
                         continue;
                     }
                     $newParticipants[$s->document] = [
-                        'document'     => $s->document,
+                        'document' => $s->document,
                         'student_code' => null,
-                        'first_name'   => $s->first_name,
-                        'last_name'    => $s->last_name,
-                        'email'        => $s->email ?: null,
-                        'created_at'   => $now,
-                        'updated_at'   => $now,
+                        'first_name' => $s->first_name,
+                        'last_name' => $s->last_name,
+                        'email' => $s->email ?: null,
+                        'created_at' => $now,
+                        'updated_at' => $now,
                     ];
                     $newRoles[$s->document] = $rebuildRoles($s->roles);
                 }
@@ -870,7 +979,7 @@ class ParticipantImportController extends Controller
 
         return Excel::download(
             new \App\Exports\SkippedParticipantsExport($rows),
-            'omitidos_lote_' . $batch->id . '.xlsx'
+            'omitidos_lote_'.$batch->id.'.xlsx'
         );
     }
 
@@ -885,79 +994,127 @@ class ParticipantImportController extends Controller
 
         return Excel::download(
             new \App\Exports\SkippedParticipantsExport($skipped),
-            'participantes_omitidos_' . now()->format('Ymd_His') . '.xlsx'
+            'participantes_omitidos_'.now()->format('Ymd_His').'.xlsx'
         );
     }
 
-    public function store(Request $request)
+    public function store(Request $request, CampusScopeService $campusScope)
     {
         $validTypes = ParticipantType::pluck('name')->toArray();
 
         $request->validate([
-            'document'          => 'required|string|max:20|unique:participants,document',
-            'first_name'        => 'required|string|max:100',
-            'last_name'         => 'required|string|max:100',
-            'email'             => 'nullable|email|max:255|unique:participants,email',
-            'role'              => ['required', 'string', Rule::in($validTypes)],
-            'student_code'      => 'nullable|string|max:20|unique:participants,student_code',
-            'affiliation_id'    => 'nullable|exists:affiliations,id',
-            'program_id'        => 'nullable|exists:programs,id',
-            'dependency_id'     => 'nullable|exists:dependencies,id',
+            'document' => 'required|string|max:20|unique:participants,document',
+            'first_name' => 'required|string|max:100',
+            'last_name' => 'required|string|max:100',
+            'email' => 'nullable|email|max:255|unique:participants,email',
+            'role' => ['required', 'string', Rule::in($validTypes)],
+            'student_code' => 'nullable|string|max:20|unique:participants,student_code',
+            'affiliation_id' => 'nullable|exists:affiliations,id',
+            'program_id' => 'nullable|exists:programs,id',
+            'dependency_id' => 'nullable|exists:dependencies,id',
             'organization_name' => 'nullable|string|max:150',
-            'organization_id'   => 'nullable|exists:organizations,id',
+            'organization_id' => 'nullable|exists:organizations,id',
         ], [
-            'document.required'   => 'El documento es obligatorio.',
-            'document.unique'     => 'Ya existe un participante con ese documento.',
+            'document.required' => 'El documento es obligatorio.',
+            'document.unique' => 'Ya existe un participante con ese documento.',
             'first_name.required' => 'El nombre es obligatorio.',
-            'last_name.required'  => 'El apellido es obligatorio.',
-            'email.email'         => 'El correo no tiene un formato válido.',
-            'email.unique'        => 'Ya existe un participante con ese correo.',
-            'role.required'       => 'El estamento es obligatorio.',
-            'role.in'             => 'El estamento seleccionado no es válido.',
+            'last_name.required' => 'El apellido es obligatorio.',
+            'email.email' => 'El correo no tiene un formato válido.',
+            'email.unique' => 'Ya existe un participante con ese correo.',
+            'role.required' => 'El estamento es obligatorio.',
+            'role.in' => 'El estamento seleccionado no es válido.',
             'student_code.unique' => 'Ya existe un participante con ese código estudiantil.',
         ]);
 
-        $participant = Participant::create([
-            'document'       => trim($request->document),
-            'first_name'     => mb_convert_case(mb_strtolower(trim($request->first_name), 'UTF-8'), MB_CASE_TITLE, 'UTF-8'),
-            'last_name'      => mb_convert_case(mb_strtolower(trim($request->last_name), 'UTF-8'), MB_CASE_TITLE, 'UTF-8'),
-            'email'          => $request->email ?: null,
-            'student_code'   => $request->student_code ?: null,
-        ]);
-
-        $type = ParticipantType::where('name', $request->role)->first();
-
-        if ($type) {
-            // Resolver organization_id para Comunidad Externa
-            $organizationId = null;
-            if (mb_strtolower(trim($request->role), 'UTF-8') === 'comunidad externa') {
-                $organizationId = $request->organization_id ?: null;
-                if (! $organizationId && ! empty($request->organization_name)) {
-                    $normalizedInput = trim($request->organization_name);
-                    $org = \App\Models\Organization::whereRaw('LOWER(name) = ?', [mb_strtolower($normalizedInput, 'UTF-8')])->first()
-                        ?? \App\Models\Organization::create(['name' => $normalizedInput]);
-                    $organizationId = $org->id;
-                }
-            }
-
-            DB::table('participant_roles')->insert([
-                'participant_id'      => $participant->id,
-                'participant_type_id' => $type->id,
-                'program_id'          => $request->program_id ?: null,
-                'dependency_id'       => $request->dependency_id ?: null,
-                'affiliation_id'      => $request->affiliation_id ?: null,
-                'organization_id'     => $organizationId,
-                'is_active'           => 1,
-                'created_at'          => now(),
-                'updated_at'          => now(),
-            ]);
+        $program = $request->program_id ? Program::findOrFail($request->integer('program_id')) : null;
+        if ($program) {
+            $campusScope->authorizeResource($request->user(), $program);
         }
 
-        $fullName = trim($participant->first_name . ' ' . $participant->last_name);
+        DB::beginTransaction();
+
+        try {
+            $participant = Participant::create([
+                'document' => trim($request->document),
+                'first_name' => mb_convert_case(mb_strtolower(trim($request->first_name), 'UTF-8'), MB_CASE_TITLE, 'UTF-8'),
+                'last_name' => mb_convert_case(mb_strtolower(trim($request->last_name), 'UTF-8'), MB_CASE_TITLE, 'UTF-8'),
+                'email' => $request->email ?: null,
+                'student_code' => $request->student_code ?: null,
+            ]);
+
+            $type = ParticipantType::where('name', $request->role)->first();
+
+            if ($type) {
+                // Resolver organization_id para Comunidad Externa
+                $organizationId = null;
+                if (mb_strtolower(trim($request->role), 'UTF-8') === 'comunidad externa') {
+                    $organizationId = $request->organization_id ?: null;
+                    if (! $organizationId && ! empty($request->organization_name)) {
+                        $normalizedInput = trim($request->organization_name);
+                        $org = \App\Models\Organization::whereRaw('LOWER(name) = ?', [mb_strtolower($normalizedInput, 'UTF-8')])->first()
+                            ?? \App\Models\Organization::create(['name' => $normalizedInput]);
+                        $organizationId = $org->id;
+                    }
+                }
+
+                \App\Models\ParticipantRole::create([
+                    'participant_id' => $participant->id,
+                    'participant_type_id' => $type->id,
+                    'program_id' => $request->program_id ?: null,
+                    'dependency_id' => $request->dependency_id ?: null,
+                    'affiliation_id' => $request->affiliation_id ?: null,
+                    'organization_id' => $organizationId,
+                    'is_active' => 1,
+                ]);
+            }
+
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+
+            throw $e;
+        }
+
+        $fullName = trim($participant->first_name.' '.$participant->last_name);
         ActivityLogService::log('crear', 'participantes', "Creó el participante '{$fullName}' (Doc: {$participant->document})", $participant);
 
         return redirect()->route('participants-import.index')
             ->with('success', 'Participante registrado exitosamente.');
+    }
+
+    private function defaultCampusIdForImport(Request $request, CampusScopeService $campusScope, bool $required): ?int
+    {
+        $user = $request->user();
+        $campusId = $campusScope->activeCampusId($user);
+
+        if ($required && ! $campusId) {
+            $message = $user?->isSuperadmin()
+                ? 'Selecciona una sede activa antes de importar o agrega la columna opcional Sede al archivo.'
+                : 'Tu usuario no tiene una sede asignada para importar participantes.';
+
+            throw \Illuminate\Validation\ValidationException::withMessages(['excel_file' => $message]);
+        }
+
+        return $campusId ? (int) $campusId : null;
+    }
+
+    private function resolveImportCampusId(Request $request, string $campusName, ?int $defaultCampusId, array $campusByNameHash): ?int
+    {
+        $campusId = $campusName === ''
+            ? $defaultCampusId
+            : ($campusByNameHash[ProgramController::comparisonKey($campusName)] ?? null);
+
+        if (! $campusId) {
+            return null;
+        }
+
+        $user = $request->user();
+
+        if (! $user?->isSuperadmin() && (int) $user?->campus_id !== (int) $campusId) {
+            return null;
+        }
+
+        return (int) $campusId;
     }
 
     /**
@@ -987,7 +1144,7 @@ class ParticipantImportController extends Controller
 
         $delimiter = $this->detectCsvDelimiter($content);
 
-        $rows   = [];
+        $rows = [];
         $handle = fopen('php://temp', 'r+');
         fwrite($handle, $content);
         rewind($handle);
@@ -1009,8 +1166,8 @@ class ParticipantImportController extends Controller
         $firstLine = strtok($content, "\r\n") ?: '';
 
         $counts = [
-            ','  => substr_count($firstLine, ','),
-            ';'  => substr_count($firstLine, ';'),
+            ',' => substr_count($firstLine, ','),
+            ';' => substr_count($firstLine, ';'),
             "\t" => substr_count($firstLine, "\t"),
         ];
         arsort($counts);
@@ -1046,7 +1203,7 @@ class ParticipantImportController extends Controller
             'Ã‘' => 'Ñ',
             'Ã¼' => 'ü',
             'Ãœ' => 'Ü',
-            'Â'  => '',
+            'Â' => '',
         ]);
 
         return preg_replace('/\s+/u', ' ', $text) ?? $text;
@@ -1091,6 +1248,7 @@ class ParticipantImportController extends Controller
             }
         }
         $row['_motivo'] = $motivo;
+
         return $row;
     }
 }

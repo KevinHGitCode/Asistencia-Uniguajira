@@ -22,6 +22,7 @@ class ParticipantTemplateExport implements FromArray, WithHeadings, WithStyles
                 'Ingeniería de Sistemas - Riohacha',
                 'Pregrado',
                 '',
+                'Riohacha',
             ],
         ];
     }
@@ -38,6 +39,7 @@ class ParticipantTemplateExport implements FromArray, WithHeadings, WithStyles
             'Programa o Dependencia',
             'Tipo_progama',
             'Vinculacion',
+            'Sede',
         ];
     }
 
@@ -52,6 +54,7 @@ class ParticipantTemplateExport implements FromArray, WithHeadings, WithStyles
         $sheet->getColumnDimension('F')->setWidth(38);
         $sheet->getColumnDimension('G')->setWidth(16);
         $sheet->getColumnDimension('H')->setWidth(22);
+        $sheet->getColumnDimension('I')->setWidth(18);
 
         return [
             // Fila 1: encabezado (azul oscuro + blanco)
@@ -61,8 +64,8 @@ class ParticipantTemplateExport implements FromArray, WithHeadings, WithStyles
             ],
             // Fila 2: ejemplo (gris suave)
             2 => [
-                'font'  => ['color' => ['argb' => 'FF6B7280'], 'italic' => true],
-                'fill'  => ['fillType' => 'solid', 'startColor' => ['argb' => 'FFF9FAFB']],
+                'font' => ['color' => ['argb' => 'FF6B7280'], 'italic' => true],
+                'fill' => ['fillType' => 'solid', 'startColor' => ['argb' => 'FFF9FAFB']],
             ],
         ];
     }

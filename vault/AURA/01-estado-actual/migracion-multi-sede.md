@@ -78,7 +78,7 @@ Leyenda: ✅ implementado · 🟡 parcial · ⬜ pendiente · 🚫 no aplica / g
 | Administracion afiliaciones | 🚫 | Global por ahora, sin `campus_id`. |
 | Administracion estamentos | 🚫 | Global por ahora, sin `campus_id`. |
 | Administracion organizaciones | 🚫 | Global por ahora, sin `campus_id`. |
-| Importacion de participantes | 🚫 | `participants` global; revisar roles asociados sin filtrar participantes directamente. |
+| Importacion de participantes | 🟡 | `participants` sigue global. La importacion valida que un participante no tenga dos `participant_roles` activos para el mismo `academic_program_id` en programas de sedes distintas; `Sede` es columna opcional y no se filtran participantes directamente. |
 | Usuarios | 🟡 | Roles `user/admin/superadmin` y reglas base ya existen; revisar listados/edicion por sede en cada flujo. |
 | Formatos PDF | 🚫 | Global; no filtrar directamente. La asociacion por dependencia puede heredar sede indirectamente. |
 | Activity logs | ⬜ | Revisar si se requiere filtro por sede o solo auditoria global para superadmin. |

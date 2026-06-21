@@ -85,7 +85,7 @@
 
     {{-- Panel --}}
     <div x-show="open" x-cloak x-transition
-         class="absolute z-30 mt-1 w-full rounded-lg border border-neutral-200 dark:border-zinc-600 bg-white dark:bg-zinc-800 shadow-lg">
+         class="absolute z-[70] mt-1 w-full rounded-lg border border-neutral-200 dark:border-zinc-600 bg-white dark:bg-zinc-800 shadow-lg">
 
         {{-- Buscador (solo si hay más de SEARCH_MIN_ITEMS opciones) --}}
         <div x-show="showSearch" class="p-2 border-b border-neutral-100 dark:border-zinc-700">

@@ -37,7 +37,8 @@ que esta incompleta (ver [[brechas-conocidas]]).
 ### Identidad del participante
 - **participant_roles** - un participante puede tener varios roles activos. Cada rol =
   `participant_type_id` + `program_id?` + `dependency_id?` + `affiliation_id?` +
-  `organization_id?` + `is_active`.
+  `organization_id?` + `is_active`. No puede coexistir un segundo rol activo del mismo
+  participante para el mismo `academic_program_id`, aunque el `program_id` pertenezca a otra sede.
 - **participant_types** - estamentos.
 - **programs** - instancias por sede/importacion; `campus_id` nullable y
   `academic_program_id` nullable durante migracion. Administracion crea/reutiliza el

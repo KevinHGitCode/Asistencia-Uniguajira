@@ -4,7 +4,7 @@
      x-data="{
          activeTab: new URLSearchParams(window.location.search).get('filtro') === 'sin_clasificar'
              ? 'list'
-             : (new URLSearchParams(window.location.search).get('tab') || '{{ session('active_tab', 'list') }}'),
+             : (new URLSearchParams(window.location.search).get('tab') || @js($errors->any() && ! $errors->has('excel_file') ? 'single' : session('active_tab', 'list'))),
          role: '{{ old('role', '') }}',
          showProgram()    { return ['Estudiante', 'Graduado', 'Docente'].includes(this.role); },
          showDependency() { return this.role === 'Administrativo'; },
@@ -84,6 +84,16 @@
         </div>
     @endif
 
+    @if($errors->any() && ! $errors->has('excel_file'))
+        <div class="flex items-start gap-3 px-4 py-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">
+            <flux:icon.x-circle class="size-5 shrink-0 mt-0.5" />
+            <div>
+                <p class="font-medium">No se pudo registrar el participante.</p>
+                <p class="mt-0.5">{{ $errors->first() }}</p>
+            </div>
+        </div>
+    @endif
+
     {{-- Resultado de importación --}}
     @if(session('import_result'))
         @php $result = session('import_result'); @endphp
@@ -107,11 +117,11 @@
                         @if(($result['roles_activated'] ?? 0) > 0)
                             · {{ $result['roles_activated'] }} {{ $result['roles_activated'] === 1 ? 'rol activado' : 'roles activados' }}
                         @endif
-                        @if(($result['roles_deactivated'] ?? 0) > 0)
-                            · {{ $result['roles_deactivated'] }} {{ $result['roles_deactivated'] === 1 ? 'rol desactivado' : 'roles desactivados' }}
-                        @endif
                         @if(($result['roles_created'] ?? 0) > 0)
                             · {{ $result['roles_created'] }} {{ $result['roles_created'] === 1 ? 'rol nuevo creado' : 'roles nuevos creados' }}
+                        @endif
+                        @if(($result['roles_skipped_conflict'] ?? 0) > 0)
+                            · {{ $result['roles_skipped_conflict'] }} {{ $result['roles_skipped_conflict'] === 1 ? 'rol omitido por conflicto de programa académico' : 'roles omitidos por conflicto de programa académico' }}
                         @endif
                     </span>
                 </div>
@@ -258,7 +268,8 @@
                         </table>
                     </div>
                     <p class="text-xs text-blue-600 dark:text-blue-400 mt-2 opacity-80">
-                        * <code class="font-mono">Tipo_progama</code> es opcional.
+                        * <code class="font-mono">Tipo_progama</code> y <code class="font-mono">Sede</code> son opcionales.
+                        Si no incluyes <code class="font-mono">Sede</code>, se usa la sede del admin o la sede activa del superadmin.
                         El valor de <code class="font-mono">Tipo de Estamento</code> debe coincidir
                         exactamente con un estamento registrado en el sistema.
                         Si la columna no existe en el archivo, la importación falla con un error claro.
@@ -345,7 +356,7 @@
 
     {{-- ===================== TAB: REGISTRO INDIVIDUAL ===================== --}}
     <div x-show="activeTab === 'single'" x-transition>
-        <div class="border border-neutral-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm overflow-hidden">
+        <div class="border border-neutral-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm overflow-visible">
 
             <div class="px-4 sm:px-6 py-4 border-b border-neutral-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900">
                 <h2 class="text-base font-semibold text-gray-900 dark:text-white">Nuevo Participante</h2>
