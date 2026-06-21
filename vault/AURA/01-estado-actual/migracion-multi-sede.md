@@ -62,8 +62,8 @@ Leyenda: ✅ implementado · 🟡 parcial · ⬜ pendiente · 🚫 no aplica / g
 
 | Modulo | Estado sede | Evidencia / notas |
 |---|---:|---|
-| Dashboard | ✅ | `DashboardController` aplica `CampusScopeService` a conteos y dependencias. Superadmin tiene selector de sede activa. |
-| Calendario dashboard | ✅ | `/api/eventos-json`, `/api/events/{date}` y `/api/mis-eventos-json` pasan por auth web y filtran por sede. |
+| Dashboard | ✅ | `DashboardController` aplica `CampusScopeService` a conteos y dependencias. Superadmin tiene selector de sede activa con AJAX; al cambiar sede actualiza solo las 3 cards. |
+| Calendario dashboard | ✅ | `/api/eventos-json`, `/api/events/{date}` y `/api/mis-eventos-json` pasan por auth web y filtran por sede. Al cambiar sede desde dashboard se repinta Cal-Heatmap sin recargar pagina. |
 | Eventos privados (listado, crear, detalle, editar, eliminar, terminar) | ✅ | `EventController`, `EventService`, `CreateEventWizard` y `EditEventModal` aplican sede. Admin gestiona solo su sede; superadmin respeta sede activa o ve todo sin seleccion. |
 | Detalle de evento desde calendario | ✅ | `EventController::show` valida sede antes de permitir ver detalle. |
 | Ruta publica QR `/events/acceso/{slug}` | 🚫 | Debe seguir publica y sin filtro de sede. No romper. |
