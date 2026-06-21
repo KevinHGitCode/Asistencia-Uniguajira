@@ -69,6 +69,8 @@ class ParticipantImportController extends Controller
 
     public function import(Request $request)
     {
+        $startedAt = microtime(true);
+
         set_time_limit(0);
         // Subimos el límite de memoria. Si el servidor ignora este ini_set
         // (por ejemplo por configuración de hosting), igual el resto del
@@ -414,6 +416,11 @@ class ParticipantImportController extends Controller
             $excelRolesForExisting,
             $skipped,
         );
+
+        // Medición interna (solo BD) del tiempo de procesamiento del cargue.
+        $importBatch->update([
+            'duration_ms' => (int) round((microtime(true) - $startedAt) * 1000),
+        ]);
 
         ActivityLogService::log(
             'importar',

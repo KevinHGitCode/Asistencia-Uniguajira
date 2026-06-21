@@ -33,6 +33,10 @@ y prefijos en [[convencion-de-ramas]]. Reserva la tarea en [[tablero-trabajo-en-
 | Formularios a modal centrado | `refactor/formularios-modal-centrado` | 🟢 | Solo UI ([[adr-0006-formularios-en-modal-centrado]]) |
 | Paleta de comandos admin | `feat/paleta-comandos-admin` | 🟢 | UI/JS, sin esquema ([[adr-0007-paleta-de-comandos-admin]]) |
 | Listado de participantes en React | `feat/participantes-listado-react` | 🔴 | Nuevo endpoint/contrato API ([[adr-0008-listado-participantes-en-react]]) |
+| Mejoras al módulo de usuarios | `feat/modulo-usuarios-mejoras` | 🟢 | UI + lectura de sessions/logs ([[adr-0010-mejoras-modulo-usuarios]]) |
+| Mejores filtros en participantes | `feat/participantes-filtros` | 🟢 | Lectura/UI (🔴 si añade índices) ([[adr-0011-mejores-filtros-en-participantes]]) |
+| Búsqueda y filtros en eventos | `feat/eventos-busqueda-filtros` | 🟢 | Lectura/UI ([[adr-0012-busqueda-y-filtros-en-eventos]]) |
+| Breadcrumbs detalle de evento | `fix/breadcrumbs-detalle-evento` | 🟢 | UI/navegación ([[adr-0013-breadcrumbs-detalle-evento]]) |
 
 > Añade filas cuando propongas una funcionalidad nueva. Una funcionalidad sin rama propuesta
 > aquí no debería empezar a codificarse (ver [[reglas-de-oro]]).

@@ -49,3 +49,7 @@ Monolito Laravel 12 con UI hibrida. Stack exacto en [[stack-tecnologico]].
 - [[adr-0007-paleta-de-comandos-admin]] 🟡
 - [[adr-0008-listado-participantes-en-react]] 🟡
 - [[adr-0009-migracion-multi-sede-progresiva]] 🟢
+- [[adr-0010-mejoras-modulo-usuarios]] 🟡
+- [[adr-0011-mejores-filtros-en-participantes]] 🟡
+- [[adr-0012-busqueda-y-filtros-en-eventos]] 🟡
+- [[adr-0013-breadcrumbs-detalle-evento]] 🟡

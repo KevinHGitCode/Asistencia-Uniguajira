@@ -16,6 +16,7 @@ class ImportBatch extends Model
         'new_count',
         'update_count',
         'skipped_count',
+        'duration_ms',
         'applied_at',
     ];
 

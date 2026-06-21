@@ -41,6 +41,10 @@ Iniciativas formalizadas como ADR o seguimiento vivo. Ramas sugeridas en
 - **Formularios en modal centrado** -> [[adr-0006-formularios-en-modal-centrado]].
 - **Paleta de comandos para administradores** -> [[adr-0007-paleta-de-comandos-admin]].
 - **Listado de participantes en React** -> [[adr-0008-listado-participantes-en-react]].
+- **Mejoras al modulo de usuarios** (diseno + activos en vivo + estadisticas) -> [[adr-0010-mejoras-modulo-usuarios]].
+- **Mejores filtros en participantes** -> [[adr-0011-mejores-filtros-en-participantes]].
+- **Busqueda y filtros en eventos** -> [[adr-0012-busqueda-y-filtros-en-eventos]].
+- **Breadcrumbs correctos en detalle de evento** -> [[adr-0013-breadcrumbs-detalle-evento]].
 
 ## 🚀 Candidatos de producto
 - Notificaciones reales.
