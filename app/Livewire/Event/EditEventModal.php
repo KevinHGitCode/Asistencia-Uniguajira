@@ -59,7 +59,7 @@ class EditEventModal extends Component
             $userDeps = $user->dependencies()
                 ->where('dependencies.campus_id', $user->campus_id)
                 ->orderBy('name')
-                ->pluck('name', 'id')
+                ->pluck('dependencies.name', 'dependencies.id')
                 ->toArray();
 
             if (count($userDeps) > 1) {

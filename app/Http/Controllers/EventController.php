@@ -116,12 +116,13 @@ class EventController extends Controller
 
         $event = Event::with(['dependency.formats', 'area', 'user'])->findOrFail($id);
         $asistenciasCount = Attendance::where('event_id', $event->id)->count();
+        $eventCampusId = $event->campus_id ?? $event->dependency?->campus_id;
 
         $perteneceDependencia = $user->dependencies()
             ->where('dependencies.id', $event->dependency_id)
             ->exists();
 
-        $tienePermiso = $campusScope->canAccessResource($user, $event) && (
+        $tienePermiso = $campusScope->canAccessCampus($user, $eventCampusId !== null ? (int) $eventCampusId : null) && (
             $user->hasAdminAccess()
             || (int) $event->user_id === (int) $user->id
             || $perteneceDependencia
@@ -209,7 +210,13 @@ class EventController extends Controller
         /** @var User $user */
         $user = Auth::user();
 
-        $query = Event::with(['dependency:id,name', 'area:id,name', 'user:id,name'])
+        $query = Event::with([
+            'campus:id,name',
+            'dependency:id,name,campus_id',
+            'dependency.campus:id,name',
+            'area:id,name',
+            'user:id,name',
+        ])
             ->whereDate('date', $date);
 
         $campusScope->applyToQuery($query, $user);
@@ -227,12 +234,37 @@ class EventController extends Controller
             });
         }
 
+        $userDependencyIds = $user->dependencies
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
         $events = $query
             ->get()
-            ->map(function ($event) {
+            ->map(function ($event) use ($campusScope, $user, $userDependencyIds) {
+                $eventCampusId = $event->campus_id ?? $event->dependency?->campus_id;
+                $canAccessCampus = $campusScope->canAccessCampus(
+                    $user,
+                    $eventCampusId !== null ? (int) $eventCampusId : null
+                );
+                $isDependencyEvent = $event->dependency_id !== null
+                    && in_array((int) $event->dependency_id, $userDependencyIds, true)
+                    && (int) $event->user_id !== (int) $user->id;
+                $canView = $canAccessCampus && (
+                    $user->hasAdminAccess()
+                    || (int) $event->user_id === (int) $user->id
+                    || $isDependencyEvent
+                );
+
                 $event->dependency_name = $event->dependency?->name;
                 $event->area_name = $event->area?->name;
                 $event->creator_name = $event->user?->name;
+                $event->campus_name = $user->isSuperadmin()
+                    ? ($event->campus?->name ?? $event->dependency?->campus?->name)
+                    : null;
+                $event->can_view = $canView;
+                $event->is_dependency_event = $isDependencyEvent;
+                $event->show_url = $canView ? route('events.show', $event->id) : null;
 
                 return $event;
             });
