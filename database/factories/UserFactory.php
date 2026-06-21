@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Campus;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -40,5 +41,10 @@ class UserFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
         ]);
+    }
+
+    public function forCampus(Campus $campus): static
+    {
+        return $this->state(fn () => ['campus_id' => $campus->id]);
     }
 }

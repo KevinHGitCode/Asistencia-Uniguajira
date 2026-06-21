@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Event;
+use App\Models\Campus;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -22,5 +23,10 @@ class EventFactory extends Factory
             'link' => $this->faker->url(),
             'user_id' => User::inRandomOrder()->first()->id ?? User::factory(),
         ];
+    }
+
+    public function forCampus(Campus $campus): static
+    {
+        return $this->state(fn () => ['campus_id' => $campus->id]);
     }
 }

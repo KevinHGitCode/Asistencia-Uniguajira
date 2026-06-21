@@ -213,10 +213,10 @@ class DependencyController extends Controller
 
             if ($isSuperadmin && ! $detectedCampus) {
                 $detectedCampus = $campusResolver->resolveMentioned($rawName, $campuses)
-                    ?? $campuses->first(fn (Campus $campus) => mb_strtolower($campus->name, 'UTF-8') === 'riohacha');
+                    ?? $campuses->first(fn (Campus $campus) => mb_strtolower($campus->name, 'UTF-8') === 'maicao');
 
                 if (! $detectedCampus) {
-                    $skippedRows[] = $this->skippedRow($rawName, 'No existe la sede predeterminada Riohacha.');
+                    $skippedRows[] = $this->skippedRow($rawName, 'No existe la sede predeterminada Maicao.');
 
                     continue;
                 }

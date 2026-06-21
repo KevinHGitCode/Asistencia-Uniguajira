@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Program;
+use App\Models\Campus;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -17,5 +18,10 @@ class ProgramFactory extends Factory
         return [
             'name' => fake('es_CO')->unique()->bs(),
         ];
+    }
+
+    public function forCampus(Campus $campus): static
+    {
+        return $this->state(fn () => ['campus_id' => $campus->id]);
     }
 }

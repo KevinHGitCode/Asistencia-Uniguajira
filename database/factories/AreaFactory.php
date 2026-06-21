@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Area;
+use App\Models\Campus;
 use App\Models\Dependency;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -19,5 +20,10 @@ class AreaFactory extends Factory
             'name'          => fake('es_CO')->words(2, true),
             'dependency_id' => Dependency::factory(),
         ];
+    }
+
+    public function forCampus(Campus $campus): static
+    {
+        return $this->state(fn () => ['campus_id' => $campus->id]);
     }
 }

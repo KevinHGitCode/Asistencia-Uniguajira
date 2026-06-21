@@ -182,9 +182,9 @@ class ProgramController extends Controller
                 continue;
             }
 
-            $fallbackCampus = $campuses->first(fn (Campus $campus) => mb_strtolower($campus->name, 'UTF-8') === 'riohacha');
+            $fallbackCampus = $campuses->first(fn (Campus $campus) => mb_strtolower($campus->name, 'UTF-8') === 'maicao');
             if ($isSuperadmin && ! $detectedCampus && ! $fallbackCampus) {
-                $skippedRows[] = $this->skippedRow($rawName, $rawType, 'No existe la sede responsable Riohacha.');
+                $skippedRows[] = $this->skippedRow($rawName, $rawType, 'No existe la sede responsable Maicao.');
 
                 continue;
             }

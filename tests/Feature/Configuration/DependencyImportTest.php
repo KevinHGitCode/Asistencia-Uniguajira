@@ -12,7 +12,7 @@ class DependencyImportTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_superadmin_importa_dependencias_con_riohacha_por_defecto_y_crea_manaure(): void
+    public function test_superadmin_importa_dependencias_con_maicao_por_defecto_y_crea_manaure(): void
     {
         $maicao = Campus::create(['name' => 'Maicao']);
         $riohacha = Campus::create(['name' => 'Riohacha']);
@@ -34,7 +34,7 @@ class DependencyImportTest extends TestCase
 
         $this->assertDatabaseHas('dependencies', ['name' => 'Biblioteca', 'campus_id' => $maicao->id]);
         $this->assertDatabaseHas('dependencies', ['name' => 'Bienestar', 'campus_id' => $riohacha->id]);
-        $this->assertDatabaseHas('dependencies', ['name' => 'Oficina sin sede', 'campus_id' => $riohacha->id]);
+        $this->assertDatabaseHas('dependencies', ['name' => 'Oficina sin sede', 'campus_id' => $maicao->id]);
         $this->assertDatabaseHas('dependencies', ['campus_id' => $manaure->id]);
         $this->assertDatabaseHas('campuses', ['name' => 'Manaure']);
     }

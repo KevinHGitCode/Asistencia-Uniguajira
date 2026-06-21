@@ -83,7 +83,7 @@ class ProgramImportTest extends TestCase
         $this->assertStringContainsString('.xlsx', $contentDisposition);
     }
 
-    public function test_superadmin_asigna_ubicaciones_externas_a_riohacha_como_sede_responsable(): void
+    public function test_superadmin_asigna_ubicaciones_externas_a_maicao_como_sede_responsable(): void
     {
         $maicao = Campus::create(['name' => 'Maicao']);
         $riohacha = Campus::create(['name' => 'Riohacha']);
@@ -104,7 +104,7 @@ class ProgramImportTest extends TestCase
         $this->assertDatabaseHas('programs', ['name' => 'Derecho - Riohacha', 'campus_id' => $riohacha->id]);
         $this->assertDatabaseHas('programs', [
             'name' => 'Licenciatura en etnoeducacion - Convenio Jorge Artel',
-            'campus_id' => $riohacha->id,
+            'campus_id' => $maicao->id,
             'offer_location' => 'Convenio Jorge Artel',
         ]);
     }
