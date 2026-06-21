@@ -30,7 +30,7 @@ class AuthenticationTest extends TestCase
 
         $response
             ->assertHasNoErrors()
-            ->assertRedirect(route('dashboard', absolute: false));
+            ->assertDispatched('show-login-portal', target: route('dashboard', absolute: false));
 
         $this->assertAuthenticated();
     }

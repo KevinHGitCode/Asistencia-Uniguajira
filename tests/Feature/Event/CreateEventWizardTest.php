@@ -241,12 +241,13 @@ class CreateEventWizardTest extends TestCase
     public function paso_tres_requiere_hora_inicio(): void
     {
         $this->actingAs($this->user);
+        $validDate = now()->addMonth()->toDateString();
 
         Livewire::test(CreateEventWizard::class)
             ->set('title', 'Mi evento')
             ->call('nextStep')
             ->call('nextStep')
-            ->set('date', '2026-06-15')
+            ->set('date', $validDate)
             ->set('start_time', '')
             ->call('save')
             ->assertHasErrors(['start_time' => 'required'])
@@ -257,12 +258,13 @@ class CreateEventWizardTest extends TestCase
     public function hora_fin_sin_hora_inicio_es_valida(): void
     {
         $this->actingAs($this->user);
+        $validDate = now()->addMonth()->toDateString();
 
         Livewire::test(CreateEventWizard::class)
             ->set('title', 'Mi evento')
             ->call('nextStep')
             ->call('nextStep')
-            ->set('date', '2026-06-15')
+            ->set('date', $validDate)
             ->set('start_time', '')
             ->set('end_time', '14:00')
             ->call('save')
@@ -273,12 +275,13 @@ class CreateEventWizardTest extends TestCase
     public function hora_fin_anterior_a_hora_inicio_es_invalida(): void
     {
         $this->actingAs($this->user);
+        $validDate = now()->addMonth()->toDateString();
 
         Livewire::test(CreateEventWizard::class)
             ->set('title', 'Mi evento')
             ->call('nextStep')
             ->call('nextStep')
-            ->set('date', '2026-06-15')
+            ->set('date', $validDate)
             ->set('start_time', '14:00')
             ->set('end_time', '09:00')
             ->call('save')
@@ -289,12 +292,13 @@ class CreateEventWizardTest extends TestCase
     public function hora_fin_igual_a_hora_inicio_es_valida(): void
     {
         $this->actingAs($this->user);
+        $validDate = now()->addMonth()->toDateString();
 
         Livewire::test(CreateEventWizard::class)
             ->set('title', 'Mi evento')
             ->call('nextStep')
             ->call('nextStep')
-            ->set('date', '2026-06-15')
+            ->set('date', $validDate)
             ->set('start_time', '09:00')
             ->set('end_time', '09:00')
             ->call('save')
@@ -348,6 +352,7 @@ class CreateEventWizardTest extends TestCase
     public function flujo_completo_crea_el_evento_y_redirige(): void
     {
         $this->actingAs($this->user);
+        $validDate = now()->addMonth()->toDateString();
 
         Livewire::test(CreateEventWizard::class)
             ->set('title', 'Día del amor y la amistad')
@@ -355,7 +360,7 @@ class CreateEventWizardTest extends TestCase
             ->call('nextStep')                          // → paso 2
             ->set('location', 'Auditorio principal')
             ->call('nextStep')                          // → paso 3
-            ->set('date', '2026-06-15')
+            ->set('date', $validDate)
             ->set('start_time', '09:00')
             ->set('end_time', '12:00')
             ->call('save')
@@ -365,7 +370,7 @@ class CreateEventWizardTest extends TestCase
         $this->assertDatabaseHas('events', [
             'title' => 'Día del amor y la amistad',
             'location' => 'Auditorio principal',
-            'date' => '2026-06-15',
+            'date' => $validDate,
             'user_id' => $this->user->id,
         ]);
     }
@@ -427,13 +432,14 @@ class CreateEventWizardTest extends TestCase
         $this->user->dependencies()->attach($dep2); // para que showDependencySelect sea true
 
         $this->actingAs($this->user);
+        $validDate = now()->addMonth()->toDateString();
 
         Livewire::test(CreateEventWizard::class)
             ->set('title', 'Evento malicioso')
             ->call('nextStep')
             ->set('dependency_id', (string) $otraDependencia->id)
             ->call('nextStep')
-            ->set('date', '2026-06-15')
+            ->set('date', $validDate)
             ->set('start_time', '10:00')
             ->set('end_time', '11:00')
             ->call('save')
@@ -455,6 +461,7 @@ class CreateEventWizardTest extends TestCase
         $this->user->dependencies()->attach($dep2);
 
         $this->actingAs($this->user);
+        $validDate = now()->addMonth()->toDateString();
 
         Livewire::test(CreateEventWizard::class)
             ->set('title', 'Evento con área ajena')
@@ -462,7 +469,7 @@ class CreateEventWizardTest extends TestCase
             ->set('dependency_id', (string) $this->dependency->id)
             ->set('area_id', (string) $areaAjena->id)
             ->call('nextStep')
-            ->set('date', '2026-06-15')
+            ->set('date', $validDate)
             ->set('start_time', '10:00')
             ->set('end_time', '11:00')
             ->call('save')
@@ -583,12 +590,13 @@ class CreateEventWizardTest extends TestCase
     public function paso_tres_requiere_hora_fin(): void
     {
         $this->actingAs($this->user);
+        $validDate = now()->addMonth()->toDateString();
 
         Livewire::test(CreateEventWizard::class)
             ->set('title', 'Mi evento')
             ->call('nextStep')
             ->call('nextStep')
-            ->set('date', '2026-06-15')
+            ->set('date', $validDate)
             ->set('start_time', '09:00')
             ->set('end_time', '')
             ->call('save')

@@ -68,6 +68,7 @@ class ParticipantRelationsTest extends TestCase
         $affB  = Affiliation::create(['name' => 'Ocasional']);
 
         $programA = Program::create(['name' => 'Ingenieria']);
+        $programB = Program::create(['name' => 'Derecho']);
 
         ParticipantRole::create([
             'participant_id'      => $participant->id,
@@ -87,7 +88,7 @@ class ParticipantRelationsTest extends TestCase
         ParticipantRole::create([
             'participant_id'      => $participant->id,
             'participant_type_id' => $typeB->id,
-            'program_id'          => $programA->id,
+            'program_id'          => $programB->id,
             'affiliation_id'      => $affB->id,
             'is_active'           => true,
         ]);

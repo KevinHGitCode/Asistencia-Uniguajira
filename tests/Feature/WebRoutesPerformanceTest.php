@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Affiliation;
 use App\Models\Area;
 use App\Models\Attendance;
+use App\Models\Campus;
 use App\Models\Dependency;
 use App\Models\Event;
 use App\Models\Format;
@@ -31,12 +32,15 @@ class WebRoutesPerformanceTest extends TestCase
     {
         parent::setUp();
 
+        $campus = Campus::create(['name' => 'Riohacha']);
+
         $this->admin = User::factory()->create([
-            'role' => 'admin',
+            'role' => 'superadmin',
+            'campus_id' => null,
             'email_verified_at' => now(),
         ]);
 
-        $dependency = Dependency::factory()->create();
+        $dependency = Dependency::factory()->create(['campus_id' => $campus->id]);
         $area = Area::factory()->create(['dependency_id' => $dependency->id]);
 
         $program = Program::create([
@@ -76,6 +80,7 @@ class WebRoutesPerformanceTest extends TestCase
             'location' => 'Riohacha',
             'link' => 'evento-demo',
             'user_id' => $this->admin->id,
+            'campus_id' => $campus->id,
             'dependency_id' => $dependency->id,
             'area_id' => $area->id,
         ]);

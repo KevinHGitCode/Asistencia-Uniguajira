@@ -23,7 +23,7 @@ class ParticipantAcademicProgramRoleTest extends TestCase
     {
         [$maicao, $riohacha, $academicProgram] = $this->campusesAndAcademicProgram();
         $participant = Participant::factory()->create();
-        $type = ParticipantType::create(['name' => 'Estudiante']);
+        $type = ParticipantType::firstOrCreate(['name' => 'Estudiante']);
         $maicaoProgram = Program::factory()->create([
             'campus_id' => $maicao->id,
             'academic_program_id' => $academicProgram->id,
@@ -55,7 +55,7 @@ class ParticipantAcademicProgramRoleTest extends TestCase
         [$maicao, $riohacha, $academicProgram] = $this->campusesAndAcademicProgram();
         $otherAcademicProgram = AcademicProgram::create(['name' => 'Derecho']);
         $participant = Participant::factory()->create();
-        $type = ParticipantType::create(['name' => 'Estudiante']);
+        $type = ParticipantType::firstOrCreate(['name' => 'Estudiante']);
         $inactiveProgram = Program::factory()->create([
             'campus_id' => $maicao->id,
             'academic_program_id' => $academicProgram->id,
@@ -90,7 +90,7 @@ class ParticipantAcademicProgramRoleTest extends TestCase
         [$maicao, $riohacha, $academicProgram] = $this->campusesAndAcademicProgram();
         $superadmin = User::factory()->create(['role' => 'superadmin', 'campus_id' => null]);
         $participant = Participant::factory()->create(['document' => '9001']);
-        $type = ParticipantType::create(['name' => 'Estudiante']);
+        $type = ParticipantType::firstOrCreate(['name' => 'Estudiante']);
         $maicaoProgram = Program::factory()->create([
             'name' => 'Ingenieria de sistemas - Maicao',
             'campus_id' => $maicao->id,

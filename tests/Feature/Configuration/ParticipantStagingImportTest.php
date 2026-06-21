@@ -3,6 +3,7 @@
 namespace Tests\Feature\Configuration;
 
 use App\Models\ImportBatch;
+use App\Models\Campus;
 use App\Models\Participant;
 use App\Models\ParticipantType;
 use App\Models\Program;
@@ -25,16 +26,24 @@ class ParticipantStagingImportTest extends TestCase
         );
     }
 
-    private function seedCatalogs(): void
+    private function seedCatalogs(?Campus $campus = null): Campus
     {
-        ParticipantType::create(['name' => 'Estudiante']);
-        Program::factory()->create(['name' => 'Ingenieria de sistemas', 'program_type' => 'Pregrado']);
+        $campus ??= Campus::create(['name' => 'Maicao']);
+
+        ParticipantType::firstOrCreate(['name' => 'Estudiante']);
+        Program::factory()->create([
+            'name' => 'Ingenieria de sistemas',
+            'program_type' => 'Pregrado',
+            'campus_id' => $campus->id,
+        ]);
+
+        return $campus;
     }
 
     public function test_la_importacion_guarda_en_staging_sin_tocar_la_tabla_principal(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
-        $this->seedCatalogs();
+        $campus = $this->seedCatalogs();
+        $admin = User::factory()->create(['role' => 'admin', 'campus_id' => $campus->id]);
 
         $file = $this->csv([
             '1001,Ana,Perez,Estudiante,ana@u.co,Ingenieria de sistemas,Pregrado,',
@@ -62,8 +71,8 @@ class ParticipantStagingImportTest extends TestCase
     public function test_aprobar_requiere_la_contrasena_del_admin(): void
     {
         // El cast 'hashed' del modelo hashea la contraseña en texto plano.
-        $admin = User::factory()->create(['role' => 'admin', 'password' => 'secret-123']);
-        $this->seedCatalogs();
+        $campus = $this->seedCatalogs();
+        $admin = User::factory()->create(['role' => 'admin', 'campus_id' => $campus->id, 'password' => 'secret-123']);
 
         $this->actingAs($admin)->post(route('participants-import.import'), [
             'excel_file' => $this->csv(['2001,Ana,Perez,Estudiante,ana2@u.co,Ingenieria de sistemas,Pregrado,']),
@@ -89,8 +98,8 @@ class ParticipantStagingImportTest extends TestCase
 
     public function test_rechazar_no_crea_participantes(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
-        $this->seedCatalogs();
+        $campus = $this->seedCatalogs();
+        $admin = User::factory()->create(['role' => 'admin', 'campus_id' => $campus->id]);
 
         $this->actingAs($admin)->post(route('participants-import.import'), [
             'excel_file' => $this->csv(['3001,Ana,Perez,Estudiante,ana3@u.co,Ingenieria de sistemas,Pregrado,']),
@@ -107,8 +116,8 @@ class ParticipantStagingImportTest extends TestCase
 
     public function test_se_pueden_descargar_los_omitidos_de_un_lote_ya_procesado(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
-        $this->seedCatalogs();
+        $campus = $this->seedCatalogs();
+        $admin = User::factory()->create(['role' => 'admin', 'campus_id' => $campus->id]);
 
         $this->actingAs($admin)->post(route('participants-import.import'), [
             'excel_file' => $this->csv([',Sin,Documento,Estudiante,,Ingenieria de sistemas,Pregrado,']),

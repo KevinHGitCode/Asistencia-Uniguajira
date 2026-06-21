@@ -32,28 +32,34 @@
             
             @php
                 $now = now();
+                $eventDateTime = function ($event, ?string $time) {
+                    $date = \Carbon\Carbon::parse($event->date)->toDateString();
 
-                $myEventsInProgress = $myEvents->filter(function($event) use ($now) {
+                    return \Carbon\Carbon::parse($date . ' ' . ($time ?: '00:00:00'));
+                };
+                $eventSortKey = fn ($event, ?string $time) => \Carbon\Carbon::parse($event->date)->toDateString() . ' ' . ($time ?: '00:00:00');
+
+                $myEventsInProgress = $myEvents->filter(function($event) use ($now, $eventDateTime) {
                     // Terminado manualmente → no está en proceso
                     if ($event->ended_at !== null) return false;
-                    $startDateTime = \Carbon\Carbon::parse($event->date . ' ' . $event->start_time);
-                    $endDateTime = \Carbon\Carbon::parse($event->date . ' ' . $event->end_time);
+                    $startDateTime = $eventDateTime($event, $event->start_time);
+                    $endDateTime = $eventDateTime($event, $event->end_time);
                     return $now->greaterThanOrEqualTo($startDateTime) && $now->lessThanOrEqualTo($endDateTime);
-                })->sortBy(fn($e) => $e->date . ' ' . $e->start_time);
+                })->sortBy(fn($e) => $eventSortKey($e, $e->start_time));
 
-                $myEventsUpcoming = $myEvents->filter(function($event) use ($now) {
+                $myEventsUpcoming = $myEvents->filter(function($event) use ($now, $eventDateTime) {
                     // Terminado manualmente → no es próximo
                     if ($event->ended_at !== null) return false;
-                    $startDateTime = \Carbon\Carbon::parse($event->date . ' ' . $event->start_time);
+                    $startDateTime = $eventDateTime($event, $event->start_time);
                     return $now->lessThan($startDateTime);
-                })->sortBy(fn($e) => $e->date . ' ' . $e->start_time);
+                })->sortBy(fn($e) => $eventSortKey($e, $e->start_time));
 
-                $myEventsFinished = $myEvents->filter(function($event) use ($now) {
+                $myEventsFinished = $myEvents->filter(function($event) use ($now, $eventDateTime) {
                     // Terminado manualmente → siempre es finalizado
                     if ($event->ended_at !== null) return true;
-                    $endDateTime = \Carbon\Carbon::parse($event->date . ' ' . $event->end_time);
+                    $endDateTime = $eventDateTime($event, $event->end_time);
                     return $now->greaterThan($endDateTime);
-                })->sortByDesc(fn($e) => $e->date . ' ' . $e->end_time);
+                })->sortByDesc(fn($e) => $eventSortKey($e, $e->end_time));
             @endphp
     
     {{-- *

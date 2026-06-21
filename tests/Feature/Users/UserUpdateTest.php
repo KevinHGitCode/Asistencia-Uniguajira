@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Users;
 
+use App\Models\Campus;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -61,16 +62,21 @@ class UserUpdateTest extends TestCase
 
     public function test_admin_puede_actualizar_nombre_y_email(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $campus = Campus::create(['name' => 'Riohacha']);
+        $admin = User::factory()->create(['role' => 'admin', 'campus_id' => $campus->id]);
         $user  = User::factory()->create([
             'name'  => 'Nombre Viejo',
             'email' => 'viejo@example.com',
+            'role' => 'admin',
+            'campus_id' => $campus->id,
         ]);
 
         $this->actingAs($admin)
             ->post(route('user.update', $user->id), [
                 'name'  => 'Nombre Nuevo',
                 'email' => 'nuevo@example.com',
+                'role' => 'admin',
+                'campus_id' => $campus->id,
             ])
             ->assertRedirect(route('users.index'));
 
@@ -83,13 +89,16 @@ class UserUpdateTest extends TestCase
 
     public function test_update_redirige_con_mensaje_de_exito(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
-        $user  = User::factory()->create();
+        $campus = Campus::create(['name' => 'Riohacha']);
+        $admin = User::factory()->create(['role' => 'admin', 'campus_id' => $campus->id]);
+        $user  = User::factory()->create(['role' => 'admin', 'campus_id' => $campus->id]);
 
         $this->actingAs($admin)
             ->post(route('user.update', $user->id), [
                 'name'  => 'Actualizado',
                 'email' => 'actualizado@example.com',
+                'role' => 'admin',
+                'campus_id' => $campus->id,
             ])
             ->assertRedirect(route('users.index'))
             ->assertSessionHas('success');
@@ -97,12 +106,19 @@ class UserUpdateTest extends TestCase
 
     public function test_usuario_puede_mantener_su_propio_email(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
-        $user  = User::factory()->create(['email' => 'mismo@example.com']);
+        $campus = Campus::create(['name' => 'Riohacha']);
+        $admin = User::factory()->create(['role' => 'admin', 'campus_id' => $campus->id]);
+        $user  = User::factory()->create([
+            'email' => 'mismo@example.com',
+            'role' => 'admin',
+            'campus_id' => $campus->id,
+        ]);
 
         $this->actingAs($admin)
             ->post(route('user.update', $user->id), [
                 'name'  => 'Nombre Actualizado',
+                'role' => 'admin',
+                'campus_id' => $campus->id,
                 'email' => 'mismo@example.com', // mismo email — debe pasar
             ])
             ->assertRedirect(route('users.index'));

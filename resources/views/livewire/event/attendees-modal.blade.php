@@ -184,7 +184,8 @@
             <div class="flex items-center gap-2 border-t border-zinc-200 dark:border-zinc-700 pt-4">
                 @php
                     $event = \App\Models\Event::with('dependency.formats')->find($eventId);
-                    $eventEndDateTime = \Carbon\Carbon::parse($event->date . ' ' . $event->end_time);
+                    $eventDate = \Carbon\Carbon::parse($event->date)->toDateString();
+                    $eventEndDateTime = \Carbon\Carbon::parse($eventDate . ' ' . ($event->end_time ?: '00:00:00'));
                     $eventHasEnded = now()->greaterThan($eventEndDateTime);
                     $formats = $event->dependency->formats ?? collect();
                     $downloadFormats = collect([

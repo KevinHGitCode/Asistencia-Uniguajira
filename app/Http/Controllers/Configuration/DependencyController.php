@@ -203,9 +203,11 @@ class DependencyController extends Controller
                 continue;
             }
 
+            $suffix = $campusResolver->suffix($rawName);
             $detectedCampus = $campusResolver->resolve($rawName, $campuses);
-            if ($isSuperadmin && ! $detectedCampus && mb_strtolower((string) $campusResolver->suffix($rawName), 'UTF-8') === 'manaure') {
-                $detectedCampus = Campus::firstOrCreate(['name' => 'Manaure']);
+
+            if ($isSuperadmin && ! $detectedCampus && $suffix !== null) {
+                $detectedCampus = Campus::firstOrCreate(['name' => self::normalizeName($suffix)]);
                 $campuses->push($detectedCampus);
             }
 
@@ -220,10 +222,14 @@ class DependencyController extends Controller
                 }
             }
 
-            if (! $isSuperadmin && $detectedCampus && $detectedCampus->id !== $fixedCampusId) {
+            $suffixDoesNotMatchFixedCampus = ! $isSuperadmin
+                && $suffix !== null
+                && self::comparisonKey($suffix) !== self::comparisonKey((string) $fixedCampus?->name);
+
+            if (! $isSuperadmin && (($detectedCampus && $detectedCampus->id !== $fixedCampusId) || $suffixDoesNotMatchFixedCampus)) {
                 $skippedRows[] = $this->skippedRow(
                     $rawName,
-                    "La sede indicada ({$detectedCampus->name}) no corresponde a tu sede ({$fixedCampus?->name})."
+                    'La sede indicada ('.($detectedCampus?->name ?? $suffix).") no corresponde a tu sede ({$fixedCampus?->name})."
                 );
 
                 continue;
@@ -231,7 +237,10 @@ class DependencyController extends Controller
 
             $targetCampusId = $isSuperadmin ? $detectedCampus->id : $fixedCampusId;
 
-            $normalized = self::normalizeName($rawName);
+            $nameForStorage = $suffix !== null && ($detectedCampus || ! $isSuperadmin)
+                ? $campusResolver->withoutSuffix($rawName)
+                : $rawName;
+            $normalized = self::normalizeName($nameForStorage);
             $nameKey = self::comparisonKey($normalized);
 
             if (isset($existingSet[$nameKey])) {

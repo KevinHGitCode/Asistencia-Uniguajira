@@ -19,10 +19,10 @@ class DependencyImportTest extends TestCase
         $superadmin = User::factory()->create(['role' => 'superadmin', 'campus_id' => null]);
         $file = UploadedFile::fake()->createWithContent('dependencias.csv', implode("\n", [
             'Nombre',
-            'Biblioteca - Maicao',
-            'Bienestar - Riohacha',
+            '"Biblioteca - Maicao"',
+            '"Bienestar - Riohacha"',
             'Oficina sin sede',
-            'Dirección de bienes - Manaure',
+            '"Dirección de bienes - Manaure"',
         ]));
 
         $this->actingAs($superadmin)
@@ -30,9 +30,12 @@ class DependencyImportTest extends TestCase
             ->assertRedirect(route('dependencies.index'))
             ->assertSessionHas('import_result', ['created' => 4, 'skipped' => 0]);
 
-        $this->assertDatabaseHas('dependencies', ['name' => 'Biblioteca - maicao', 'campus_id' => $maicao->id]);
-        $this->assertDatabaseHas('dependencies', ['name' => 'Bienestar - riohacha', 'campus_id' => $riohacha->id]);
+        $manaure = Campus::where('name', 'Manaure')->firstOrFail();
+
+        $this->assertDatabaseHas('dependencies', ['name' => 'Biblioteca', 'campus_id' => $maicao->id]);
+        $this->assertDatabaseHas('dependencies', ['name' => 'Bienestar', 'campus_id' => $riohacha->id]);
         $this->assertDatabaseHas('dependencies', ['name' => 'Oficina sin sede', 'campus_id' => $riohacha->id]);
+        $this->assertDatabaseHas('dependencies', ['campus_id' => $manaure->id]);
         $this->assertDatabaseHas('campuses', ['name' => 'Manaure']);
     }
 
@@ -43,8 +46,8 @@ class DependencyImportTest extends TestCase
         $admin = User::factory()->create(['role' => 'admin', 'campus_id' => $maicao->id]);
         $file = UploadedFile::fake()->createWithContent('dependencias.csv', implode("\n", [
             'Nombre',
-            'Biblioteca - Maicao',
-            'Bienestar - Riohacha',
+            '"Biblioteca - Maicao"',
+            '"Bienestar - Riohacha"',
         ]));
 
         $this->actingAs($admin)
@@ -56,8 +59,8 @@ class DependencyImportTest extends TestCase
                     && str_contains($rows[0]['_motivo'], 'no corresponde a tu sede');
             });
 
-        $this->assertDatabaseMissing('dependencies', ['name' => 'Bienestar - riohacha']);
-        $this->assertDatabaseHas('dependencies', ['name' => 'Biblioteca - maicao', 'campus_id' => $maicao->id]);
+        $this->assertDatabaseMissing('dependencies', ['name' => 'Bienestar']);
+        $this->assertDatabaseHas('dependencies', ['name' => 'Biblioteca', 'campus_id' => $maicao->id]);
     }
 
     public function test_descarga_el_reporte_de_dependencias_omitidas(): void

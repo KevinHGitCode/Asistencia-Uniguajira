@@ -92,6 +92,8 @@ class StatisticsUsuariosTest extends TestCase
 
     public function test_total_events_cero_sin_datos(): void
     {
+        $this->actingAs(User::factory()->create(['role' => 'admin']));
+
         $response = $this->getJson('/api/statistics/total-events');
         $response->assertOk();
         $this->assertEquals(0, $response->json());
@@ -107,13 +109,14 @@ class StatisticsUsuariosTest extends TestCase
 
         $this->getJson('/api/statistics/events-by-role')
             ->assertOk()
-            ->assertJsonStructure([['role', 'count']]);
+            ->assertJsonStructure([['name', 'value']]);
     }
 
     public function test_events_by_role_agrupa_por_rol_del_creador(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
         $user  = User::factory()->create(['role' => 'user']);
+        $this->actingAs($admin);
 
         // Admin crea 3 eventos, user crea 2 eventos
         Event::factory(3)->create(['user_id' => $admin->id, 'date' => '2026-02-01']);
@@ -124,20 +127,21 @@ class StatisticsUsuariosTest extends TestCase
 
         $data = collect($response->json());
 
-        $this->assertEquals(3, $data->firstWhere('role', 'admin')['count'] ?? 0);
-        $this->assertEquals(2, $data->firstWhere('role', 'user')['count'] ?? 0);
+        $this->assertEquals(3, $data->firstWhere('name', 'admin')['value'] ?? 0);
+        $this->assertEquals(2, $data->firstWhere('name', 'user')['value'] ?? 0);
     }
 
     public function test_events_by_role_retorna_ordenado_descendente(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
         $user  = User::factory()->create(['role' => 'user']);
+        $this->actingAs($admin);
 
         Event::factory(5)->create(['user_id' => $admin->id, 'date' => '2026-02-01']);
         Event::factory(2)->create(['user_id' => $user->id,  'date' => '2026-02-01']);
 
         $response = $this->getJson('/api/statistics/events-by-role');
-        $counts = collect($response->json())->pluck('count')->toArray();
+        $counts = collect($response->json())->pluck('value')->toArray();
 
         $sorted = collect($counts)->sortDesc()->values()->toArray();
         $this->assertEquals($sorted, $counts);
@@ -153,13 +157,14 @@ class StatisticsUsuariosTest extends TestCase
 
         $this->getJson('/api/statistics/events-by-user')
             ->assertOk()
-            ->assertJsonStructure([['name', 'count']]);
+            ->assertJsonStructure([['name', 'value']]);
     }
 
     public function test_events_by_user_asigna_correctamente_por_creador(): void
     {
         $admin  = User::factory()->create(['role' => 'admin', 'name' => 'Admin Principal']);
         $userA  = User::factory()->create(['role' => 'user',  'name' => 'Usuario Alfa']);
+        $this->actingAs($admin);
 
         Event::factory(4)->create(['user_id' => $admin->id, 'date' => '2026-02-01']);
         Event::factory(1)->create(['user_id' => $userA->id, 'date' => '2026-02-01']);
@@ -169,8 +174,8 @@ class StatisticsUsuariosTest extends TestCase
 
         $data = collect($response->json());
 
-        $this->assertEquals(4, $data->firstWhere('name', 'Admin Principal')['count'] ?? 0);
-        $this->assertEquals(1, $data->firstWhere('name', 'Usuario Alfa')['count'] ?? 0);
+        $this->assertEquals(4, $data->firstWhere('name', 'Admin Principal')['value'] ?? 0);
+        $this->assertEquals(1, $data->firstWhere('name', 'Usuario Alfa')['value'] ?? 0);
     }
 
     // ─────────────────────────────────────────────
@@ -183,7 +188,7 @@ class StatisticsUsuariosTest extends TestCase
 
         $this->getJson('/api/statistics/top-users')
             ->assertOk()
-            ->assertJsonStructure([['name', 'count']]);
+            ->assertJsonStructure([['name', 'value']]);
     }
 
     public function test_top_users_mide_asistencias_en_sus_eventos(): void
@@ -191,12 +196,12 @@ class StatisticsUsuariosTest extends TestCase
         // El "conteo" de top-users es el número de ASISTENCIAS
         // que recibieron los eventos del usuario, no los eventos creados.
         $admin  = User::factory()->create(['role' => 'admin', 'name' => 'Admin Mega']);
-        $prog   = Program::factory()->create();
+        $this->actingAs($admin);
 
         // Admin crea un evento con 5 asistencias
         $event = Event::factory()->create(['user_id' => $admin->id, 'date' => '2026-02-01']);
         for ($i = 0; $i < 5; $i++) {
-            $part = Participant::factory()->create(['program_id' => $prog->id]);
+            $part = Participant::factory()->create();
             Attendance::create(['event_id' => $event->id, 'participant_id' => $part->id]);
         }
 
@@ -204,18 +209,19 @@ class StatisticsUsuariosTest extends TestCase
         $response->assertOk();
 
         $data = collect($response->json());
-        $this->assertEquals(5, $data->firstWhere('name', 'Admin Mega')['count'] ?? 0);
+        $this->assertEquals(5, $data->firstWhere('name', 'Admin Mega')['value'] ?? 0);
     }
 
     public function test_top_users_retorna_maximo_5(): void
     {
-        $prog = Program::factory()->create();
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
 
         // Crear 7 usuarios con eventos y asistencias
         for ($i = 1; $i <= 7; $i++) {
             $user  = User::factory()->create(['role' => 'admin']);
             $event = Event::factory()->create(['user_id' => $user->id, 'date' => '2026-02-01']);
-            $part  = Participant::factory()->create(['program_id' => $prog->id]);
+            $part  = Participant::factory()->create();
             Attendance::create(['event_id' => $event->id, 'participant_id' => $part->id]);
         }
 
@@ -227,16 +233,16 @@ class StatisticsUsuariosTest extends TestCase
 
     public function test_top_users_ordenado_por_asistencias_descendente(): void
     {
-        $prog  = Program::factory()->create();
         $admin = User::factory()->create(['role' => 'admin', 'name' => 'Admin A']);
         $user  = User::factory()->create(['role' => 'user',  'name' => 'User B']);
+        $this->actingAs($admin);
 
         // Admin A tiene 3 asistencias en sus eventos
         $eventA = Event::factory()->create(['user_id' => $admin->id, 'date' => '2026-02-01']);
         for ($i = 0; $i < 3; $i++) {
             Attendance::create([
                 'event_id'       => $eventA->id,
-                'participant_id' => Participant::factory()->create(['program_id' => $prog->id])->id,
+                'participant_id' => Participant::factory()->create()->id,
             ]);
         }
 
@@ -244,13 +250,13 @@ class StatisticsUsuariosTest extends TestCase
         $eventB = Event::factory()->create(['user_id' => $user->id, 'date' => '2026-02-01']);
         Attendance::create([
             'event_id'       => $eventB->id,
-            'participant_id' => Participant::factory()->create(['program_id' => $prog->id])->id,
+            'participant_id' => Participant::factory()->create()->id,
         ]);
 
         $response = $this->getJson('/api/statistics/top-users?' . http_build_query($this->wideFilter()));
         $response->assertOk();
 
-        $counts = collect($response->json())->pluck('count')->toArray();
+        $counts = collect($response->json())->pluck('value')->toArray();
         $sorted = collect($counts)->sortDesc()->values()->toArray();
 
         $this->assertEquals($sorted, $counts);
