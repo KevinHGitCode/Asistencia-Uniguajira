@@ -54,6 +54,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('eventos/{id}', [EventController::class, 'destroy'])->name('events.destroy');
 
     Route::get('eventos/{id}/descargar-asistencia/{formatSlug?}', [EventController::class, 'descargarAsistencia'])
+        ->middleware('throttle:pdf')
         ->name('events.download');
 
     Route::post('eventos/{event}/terminar', [EventController::class, 'end'])
@@ -78,14 +79,17 @@ Route::middleware(['auth', 'verified', 'role:admin,superadmin'])->group(function
 
 // Ruta pública para mostrar confirmación de asistencia
 Route::get('/events/acceso/{slug}/confirmacion/{attendanceId}', [AttendanceController::class, 'confirmation'])
+    ->middleware('throttle:public')
     ->name('attendance.confirmation');
 
 // Ruta pública para acceder al evento
 Route::get('/events/acceso/{slug}', [EventController::class, 'access'])
+    ->middleware('throttle:public')
     ->name('events.access');
 
 // Ruta pública para registrar asistencia
 Route::post('/events/acceso/{slug}', [AttendanceController::class, 'store'])
+    ->middleware('throttle:attendance')
     ->name('attendance.store');
 
 /**

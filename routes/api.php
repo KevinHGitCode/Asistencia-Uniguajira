@@ -234,7 +234,7 @@ Route::middleware(['web', 'auth'])->get('/statistics/event/{event}/organizations
  */
 
 // Lista de eventos disponibles para comparar (admin ve todos; usuario ve solo los suyos)
-Route::middleware(['web', 'auth'])->get('/statistics/compare/events', function (Request $request, CampusScopeService $campusScope) use ($applyStatisticsEventVisibility) {
+Route::middleware(['web', 'auth', 'throttle:api-stats'])->get('/statistics/compare/events', function (Request $request, CampusScopeService $campusScope) use ($applyStatisticsEventVisibility) {
     $user = Auth::user();
 
     $query = DB::table('events')
@@ -263,7 +263,7 @@ Route::middleware(['web', 'auth'])->get('/statistics/compare/events', function (
 });
 
 // Datos comparativos para los eventos seleccionados (asistencias + demografía)
-Route::middleware(['web', 'auth'])->get('/statistics/compare/data', function (Request $request, CampusScopeService $campusScope) use ($applyStatisticsEventVisibility) {
+Route::middleware(['web', 'auth', 'throttle:api-stats'])->get('/statistics/compare/data', function (Request $request, CampusScopeService $campusScope) use ($applyStatisticsEventVisibility) {
     $eventIds = array_values(array_filter(array_map('intval', (array) $request->get('eventIds', []))));
 
     if (empty($eventIds)) {
@@ -335,7 +335,7 @@ Route::middleware(['web', 'auth'])->get('/statistics/compare/data', function (Re
 });
 
 // ✅ Usa sesión web + auth, igual que las demás rutas
-Route::middleware(['web', 'auth', 'role:admin,superadmin'])->group(function () {
+Route::middleware(['web', 'auth', 'role:admin,superadmin', 'throttle:api-stats'])->group(function () {
     Route::get('/statistics/admin-eventos', [AdminEventosController::class, 'index']);
     Route::get('/statistics/admin-eventos/filter-options', [AdminEventosController::class, 'filterOptions']);
 });
@@ -347,12 +347,12 @@ Route::middleware(['web', 'auth', 'role:admin,superadmin'])->group(function () {
  */
 
 // ── Endpoints de resumen: requieren sesión para filtrar por rol de usuario ──
-Route::middleware(['web', 'auth'])->prefix('statistics')->controller(StatisticsController::class)->group(function () {
+Route::middleware(['web', 'auth', 'throttle:api-stats'])->prefix('statistics')->controller(StatisticsController::class)->group(function () {
     Route::get('/asistencias-summary', 'asistenciasSummary');
     Route::get('/participantes-summary', 'participantesSummary');
 });
 
-Route::middleware(['web', 'auth'])->prefix('statistics')->controller(StatisticsController::class)->group(function () {
+Route::middleware(['web', 'auth', 'throttle:api-stats'])->prefix('statistics')->controller(StatisticsController::class)->group(function () {
     Route::get('/total-events', 'totalEvents');
     Route::get('/events-by-role', 'eventsByRole');
     Route::get('/events-by-user', 'eventsByUser');

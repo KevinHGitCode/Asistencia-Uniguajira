@@ -19,6 +19,7 @@ que dos personas/IAs choquen, sobre todo en cambios 🔴 que tocan el esquema.
 | Tarea | Responsable | Rama | Tipo | Desde |
 |---|---|---|---|---|
 | _(ejemplo)_ Crear el vault AURA | equipo | `docs/crear-vault-aura` | 🟢 | 2026-06-20 |
+| Rate limiting anti-abuso (ADR-0005) | equipo | `feat/rate-limiting-rutas` | 🔴 | 2026-06-21 |
 
 ## 🟨 En revisión (PR abierto)
 | Tarea | Responsable | Rama | PR |
@@ -36,6 +37,9 @@ que dos personas/IAs choquen, sobre todo en cambios 🔴 que tocan el esquema.
 - Migracion multi-sede progresiva activa: antes de tocar eventos, administracion,
   estadisticas, imports/exports o usuarios, revisar [[migracion-multi-sede]] y confirmar
   si el modulo ya aplica `CampusScopeService`.
+- Rate limiting (`feat/rate-limiting-rutas`, ADR-0005): las rutas publicas `events.access`,
+  `attendance.store`, `attendance.confirmation`, la descarga de PDF y los grupos
+  `/api/statistics/*` ahora pueden devolver **429**. Coordinar si tocas esos contratos.
 
 ---
 > Cambios de esquema = migraciones nuevas/alteradas. Mira el orden cronológico en
