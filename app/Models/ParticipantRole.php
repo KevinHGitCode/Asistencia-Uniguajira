@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
-use Illuminate\Validation\ValidationException;
 
 class ParticipantRole extends Model
 {
@@ -22,30 +21,6 @@ class ParticipantRole extends Model
     protected $casts = [
         'is_active' => 'boolean',
     ];
-
-    protected static function booted(): void
-    {
-        static::creating(function (ParticipantRole $role): void {
-            if (! $role->is_active || ! $role->program_id) {
-                return;
-            }
-
-            $academicProgramId = Program::query()
-                ->whereKey($role->program_id)
-                ->value('academic_program_id');
-
-            if (! $academicProgramId || ! app(\App\Services\ParticipantAcademicProgramService::class)
-                ->hasActiveRoleForAcademicProgram((int) $role->participant_id, (int) $academicProgramId)) {
-                return;
-            }
-
-            $academicProgramName = AcademicProgram::query()->find($academicProgramId)?->name ?? 'seleccionado';
-
-            throw ValidationException::withMessages([
-                'program_id' => "El participante ya tiene un rol activo para el programa académico \"{$academicProgramName}\".",
-            ]);
-        });
-    }
 
     public function participant(): BelongsTo
     {
