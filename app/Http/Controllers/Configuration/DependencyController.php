@@ -56,7 +56,12 @@ class DependencyController extends Controller
         $request->merge(['name' => $normalizedName]);
 
         $request->validate([
-            'name' => ['required', 'string', 'max:255', Rule::unique('dependencies', 'name')],
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('dependencies', 'name')->where('campus_id', $campusId),
+            ],
         ], [
             'name.required' => 'El nombre de la dependencia es obligatorio.',
             'name.unique' => 'Ya existe una dependencia con ese nombre.',
@@ -106,7 +111,14 @@ class DependencyController extends Controller
         $request->merge(['name' => $normalizedName]);
 
         $request->validate([
-            'name' => ['required', 'string', 'max:255', Rule::unique('dependencies', 'name')->ignore($dependency->id)],
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('dependencies', 'name')
+                    ->ignore($dependency->id)
+                    ->where('campus_id', $campusId),
+            ],
         ], [
             'name.required' => 'El nombre de la dependencia es obligatorio.',
             'name.unique' => 'Ya existe una dependencia con ese nombre.',

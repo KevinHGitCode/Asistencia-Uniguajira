@@ -18,6 +18,7 @@ class BackfillCampusIds extends Command
         'Riohacha',
         'Fonseca',
         'Villanueva',
+        'Manaure',
     ];
 
     /**
@@ -55,6 +56,13 @@ class BackfillCampusIds extends Command
 
         $dryRun = (bool) $this->option('dry-run');
         $this->campuses = $this->campusesByName();
+        $missingCampuses = array_diff(self::CAMPUS_NAMES, array_keys($this->campuses));
+        if ($missingCampuses !== []) {
+            $this->error('Faltan las sedes requeridas: '.implode(', ', $missingCampuses).'. Ejecuta CampusSeeder antes del backfill.');
+
+            return self::FAILURE;
+        }
+
         $this->fallbackCampusId = $this->campuses['Maicao'];
         $summary = [];
 
@@ -82,13 +90,11 @@ class BackfillCampusIds extends Command
      */
     private function campusesByName(): array
     {
-        $ids = [];
-
-        foreach (self::CAMPUS_NAMES as $name) {
-            $ids[$name] = Campus::firstOrCreate(['name' => $name])->id;
-        }
-
-        return $ids;
+        return Campus::query()
+            ->whereIn('name', self::CAMPUS_NAMES)
+            ->pluck('id', 'name')
+            ->map(fn ($id) => (int) $id)
+            ->all();
     }
 
     /**
@@ -135,6 +141,7 @@ class BackfillCampusIds extends Command
         DB::table('users')
             ->select(['id'])
             ->whereNull('campus_id')
+            ->where('role', '!=', 'superadmin')
             ->orderBy('id')
             ->chunkById(500, function ($users) use ($dryRun, &$counts) {
                 foreach ($users as $user) {

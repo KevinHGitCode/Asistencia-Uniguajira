@@ -6,6 +6,7 @@ use App\Models\Event;
 use App\Models\Campus;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 class EventFactory extends Factory
 {
@@ -20,7 +21,7 @@ class EventFactory extends Factory
             'start_time' => $this->faker->time('H:i:s'),
             'end_time' => $this->faker->time('H:i:s'),
             'location' => $this->faker->city(),
-            'link' => $this->faker->url(),
+            'link' => Str::uuid()->toString(),
             'user_id' => User::inRandomOrder()->first()->id ?? User::factory(),
         ];
     }

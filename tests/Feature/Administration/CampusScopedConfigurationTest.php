@@ -30,6 +30,36 @@ class CampusScopedConfigurationTest extends TestCase
         ]);
     }
 
+    public function test_superadmin_puede_crear_la_misma_dependencia_en_sedes_distintas(): void
+    {
+        $maicao = Campus::create(['name' => 'Maicao']);
+        $riohacha = Campus::create(['name' => 'Riohacha']);
+        $superadmin = User::factory()->create(['role' => User::ROLE_SUPERADMIN, 'campus_id' => null]);
+
+        $this->actingAs($superadmin)
+            ->post(route('dependencies.store'), [
+                'name' => 'Aseguramiento de la calidad',
+                'campus_id' => $maicao->id,
+            ])
+            ->assertRedirect(route('dependencies.index'));
+
+        $this->actingAs($superadmin)
+            ->post(route('dependencies.store'), [
+                'name' => 'Aseguramiento de la calidad',
+                'campus_id' => $riohacha->id,
+            ])
+            ->assertRedirect(route('dependencies.index'));
+
+        $this->assertDatabaseHas('dependencies', [
+            'name' => 'Aseguramiento de la calidad',
+            'campus_id' => $maicao->id,
+        ]);
+        $this->assertDatabaseHas('dependencies', [
+            'name' => 'Aseguramiento de la calidad',
+            'campus_id' => $riohacha->id,
+        ]);
+    }
+
     public function test_admin_no_puede_editar_dependencia_de_otra_sede(): void
     {
         $maicao = Campus::create(['name' => 'Maicao']);
