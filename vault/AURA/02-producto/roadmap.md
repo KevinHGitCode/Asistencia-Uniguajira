@@ -45,6 +45,7 @@ Iniciativas formalizadas como ADR o seguimiento vivo. Ramas sugeridas en
 - **Mejores filtros en participantes** -> [[adr-0011-mejores-filtros-en-participantes]].
 - **Busqueda y filtros en eventos** -> [[adr-0012-busqueda-y-filtros-en-eventos]].
 - **Breadcrumbs correctos en detalle de evento** -> [[adr-0013-breadcrumbs-detalle-evento]].
+- **Proteger/retirar rutas API de prueba sin auth** -> [[adr-0014-proteger-rutas-api-de-prueba-sin-auth]].
 
 ## 🚀 Candidatos de producto
 - Notificaciones reales.

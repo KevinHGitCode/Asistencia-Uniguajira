@@ -53,3 +53,4 @@ Monolito Laravel 12 con UI hibrida. Stack exacto en [[stack-tecnologico]].
 - [[adr-0011-mejores-filtros-en-participantes]] 🟡
 - [[adr-0012-busqueda-y-filtros-en-eventos]] 🟡
 - [[adr-0013-breadcrumbs-detalle-evento]] 🟢
+- [[adr-0014-proteger-rutas-api-de-prueba-sin-auth]] 🟡
