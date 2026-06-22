@@ -127,15 +127,12 @@
                                 Sede
                                 <span class="text-red-400 ml-0.5">*</span>
                             </label>
-                            <select
+                            <x-ui.searchable-select
                                 wire:model.live="campus_id"
-                                class="{{ $inputError('campus_id') }} cursor-pointer"
-                            >
-                                <option value="">Selecciona una sede</option>
-                                @foreach($campuses as $campusId => $campusName)
-                                    <option value="{{ $campusId }}">{{ $campusName }}</option>
-                                @endforeach
-                            </select>
+                                :options="$campuses"
+                                placeholder="Selecciona una sede"
+                                empty-label="Selecciona una sede"
+                                search-placeholder="Buscar sede..." />
                             @error('campus_id')
                                 <p class="text-xs text-red-400 mt-1">{{ $message }}</p>
                             @enderror
@@ -145,21 +142,19 @@
 
                     {{-- Dependencia --}}
                     @if($showDependencySelect)
+                        @php($dependenciaBloqueada = $isSuperadmin && !$campus_id)
                         <div wire:key="dependencies-field-{{ $campus_id ?: 'sin-sede' }}">
                             <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                                 Dependencia
                                 <span class="text-red-400 ml-0.5">*</span>
                             </label>
-                            <select
+                            <x-ui.searchable-select
                                 wire:model.live="dependency_id"
-                                class="{{ $inputError('dependency_id') }} cursor-pointer"
-                                @disabled($isSuperadmin && !$campus_id)
-                            >
-                                <option value="">{{ $isSuperadmin && !$campus_id ? 'Primero selecciona una sede' : 'Selecciona una dependencia' }}</option>
-                                @foreach($dependencies as $depId => $depName)
-                                    <option value="{{ $depId }}">{{ $depName }}</option>
-                                @endforeach
-                            </select>
+                                :options="$dependencies"
+                                :disabled="$dependenciaBloqueada"
+                                :placeholder="$dependenciaBloqueada ? 'Primero selecciona una sede' : 'Selecciona una dependencia'"
+                                :empty-label="$dependenciaBloqueada ? 'Primero selecciona una sede' : 'Selecciona una dependencia'"
+                                search-placeholder="Buscar dependencia..." />
                             @error('dependency_id')
                                 <p class="text-xs text-red-400 mt-1">{{ $message }}</p>
                             @enderror

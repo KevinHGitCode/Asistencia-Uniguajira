@@ -6,8 +6,9 @@ actualizado: 2026-06-20
 
 # ADR-0013 · Breadcrumbs del detalle de evento (contexto de origen)
 
-- **Estado:** 🟡 Propuesta
+- **Estado:** 🟢 Implementado
 - **Fecha:** 2026-06-20
+- **Implementado:** 2026-06-21
 - **Contexto del repo:** `resources/views/events/show.blade.php` (detalle de evento) tiene el
   breadcrumb **hardcodeado**: `['label' => 'Eventos', 'route' => 'events.list']` → 'Información'.
 
@@ -39,10 +40,21 @@ Hacer el breadcrumb del detalle **consciente del origen**:
 - **Usar el referer HTTP**: frágil (puede faltar o falsearse); el parámetro explícito es más fiable.
 - **Dejar el breadcrumb fijo**: mantiene el bug.
 
-## Pendiente para aceptar
-- [ ] Elegir mecanismo (parámetro `from` vs. otro) y sanitización.
-- [ ] Inventario de enlaces a `events.show` a actualizar.
-- [ ] Rama sugerida: `fix/breadcrumbs-detalle-evento` (🟢 UI/navegación).
+## Implementación
+
+- **Mecanismo**: parámetro `?from=mis|usuario|todos` en la URL; lista blanca en `EventController::resolveBreadcrumb()`.
+- **`from=usuario`**: también recibe `user_id`; se valida que el usuario exista antes de mostrarlo.
+- **`from` inválido o usuario no encontrado**: cae al default (`mis`).
+- **Rama**: `fix/breadcrumbs-detalle-evento`.
+- **Tests**: `tests/Feature/Event/EventBreadcrumbContextTest.php` (6 casos, todos verdes).
+
+### Inventario de enlaces actualizados
+| Vista | Enlace | Cambio |
+|---|---|---|
+| `resources/views/users/information.blade.php` | L138 (eventos propios) | `?from=usuario&user_id={user.id}` |
+| `resources/views/users/information.blade.php` | L229 (eventos de dependencia) | `?from=usuario&user_id={user.id}` |
+| `resources/views/events/list.blade.php` | no enlaza a `events.show` por Blade | sin cambio (defecto `mis`) |
+| `resources/views/events/admin-events.blade.php` | no enlaza a `events.show` por Blade | sin cambio (`from=todos` vía JS si aplica) |
 
 ## Relacionado
 [[mapa-de-modulos]] · [[adr-0012-busqueda-y-filtros-en-eventos]]

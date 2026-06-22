@@ -43,7 +43,7 @@ nota; cada nota es una idea. Lee primero [[README]] si es tu primera vez.
   - [[adr-0010-mejoras-modulo-usuarios]] 🟡
   - [[adr-0011-mejores-filtros-en-participantes]] 🟡
   - [[adr-0012-busqueda-y-filtros-en-eventos]] 🟡
-  - [[adr-0013-breadcrumbs-detalle-evento]] 🟡
+  - [[adr-0013-breadcrumbs-detalle-evento]] 🟢
 
 ## 04 - Calidad
 - [[estrategia-de-pruebas]] - que probamos y por que

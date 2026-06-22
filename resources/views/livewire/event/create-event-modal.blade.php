@@ -47,13 +47,12 @@
                             Sede del evento
                             <span class="text-red-500">*</span>
                         </label>
-                        <select wire:model.live="campus_id"
-                            class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800">
-                            <option value="">Selecciona una sede</option>
-                            @foreach($campuses as $id => $name)
-                                <option value="{{ $id }}">{{ $name }}</option>
-                            @endforeach
-                        </select>
+                        <x-ui.searchable-select
+                            wire:model.live="campus_id"
+                            :options="$campuses"
+                            placeholder="Selecciona una sede"
+                            empty-label="Selecciona una sede"
+                            search-placeholder="Buscar sede..." />
                         @error('campus_id')
                             <p class="text-xs text-red-500">{{ $message }}</p>
                         @enderror
@@ -62,19 +61,19 @@
                 @endif
 
                 @if($showDependencySelect)
+                    @php($dependenciaBloqueada = $isSuperadmin && !$campus_id)
                     <div class="flex flex-col gap-1" wire:key="modal-dependencies-{{ $campus_id ?: 'sin-sede' }}">
                         <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                             Dependencia del evento
                             <span class="text-red-500">*</span>
                         </label>
-                        <select wire:model.live="dependency_id"
-                            @disabled($isSuperadmin && !$campus_id)
-                            class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800">
-                            <option value="">{{ $isSuperadmin && !$campus_id ? 'Primero selecciona una sede' : 'Selecciona una dependencia' }}</option>
-                            @foreach($dependencies as $id => $name)
-                                <option value="{{ $id }}">{{ $name }}</option>
-                            @endforeach
-                        </select>
+                        <x-ui.searchable-select
+                            wire:model.live="dependency_id"
+                            :options="$dependencies"
+                            :disabled="$dependenciaBloqueada"
+                            :placeholder="$dependenciaBloqueada ? 'Primero selecciona una sede' : 'Selecciona una dependencia'"
+                            :empty-label="$dependenciaBloqueada ? 'Primero selecciona una sede' : 'Selecciona una dependencia'"
+                            search-placeholder="Buscar dependencia..." />
                         @error('dependency_id')
                             <p class="text-xs text-red-500">{{ $message }}</p>
                         @enderror

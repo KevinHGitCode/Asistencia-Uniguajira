@@ -15,6 +15,7 @@
       - empty-label   etiqueta de la opción "sin selección"
       - allow-empty   muestra la opción vacía (def. true)
       - name          (opcional) genera <input hidden> para formularios sin Livewire
+      - disabled      bloquea la interacción y atenúa el control (def. false)
 --}}
 @props([
     'options' => [],
@@ -26,6 +27,7 @@
     'emptyLabel' => 'Sin selección',
     'value' => null,
     'name' => null,
+    'disabled' => false,
 ])
 @php
     $wireDirective = $attributes->wire('model');
@@ -44,6 +46,7 @@
         'emptyLabel' => $emptyLabel,
         'placeholder' => $placeholder,
         'initialValue' => $value,
+        'disabled' => (bool) $disabled,
     ];
 @endphp
 
@@ -65,7 +68,8 @@
         x-on:keydown.arrow-down.prevent="move(1)"
         x-on:keydown.arrow-up.prevent="move(-1)"
         x-on:keydown.enter.prevent="open ? onEnter() : openPanel()"
-        :class="open ? 'ring-2 ring-blue-500 border-blue-500' : ''"
+        :disabled="disabled"
+        :class="disabled ? 'opacity-50 cursor-not-allowed' : (open ? 'ring-2 ring-blue-500 border-blue-500' : '')"
         class="flex w-full items-center justify-between gap-2 px-3 py-2 rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-left text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
         <span class="truncate" :class="selectedLabel ? '' : 'text-gray-400'"
               x-text="selectedLabel || @js($placeholder)"></span>

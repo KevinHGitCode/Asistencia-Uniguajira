@@ -1,9 +1,6 @@
 <x-layouts.app :title="__('Evento')">
 
-    <x-breadcrumb class="mb-4" :items="[
-        ['label' => 'Eventos', 'route' => 'events.list'],
-        ['label' => 'Información'],
-    ]" />
+    <x-breadcrumb class="mb-4" :items="$breadcrumbItems" />
 
     @if(session('success'))
         <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)"

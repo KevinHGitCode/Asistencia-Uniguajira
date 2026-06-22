@@ -42,6 +42,7 @@ window.searchableSelect = function (config) {
         emptyLabel: config.emptyLabel || 'Sin selección',
         placeholder: config.placeholder || 'Selecciona una opción…',
         live: !!config.live,
+        disabled: !!config.disabled,
         showSearch: (config.options || []).length > SEARCH_MIN_ITEMS,
 
         open: false,
@@ -71,10 +72,12 @@ window.searchableSelect = function (config) {
         },
 
         toggle() {
+            if (this.disabled) return;
             this.open ? this.close() : this.openPanel();
         },
 
         openPanel() {
+            if (this.disabled) return;
             this.open = true;
             this.search = '';
             this.highlighted = 0;
@@ -116,6 +119,7 @@ window.searchableSelect = function (config) {
         },
 
         move(dir) {
+            if (this.disabled) return;
             if (!this.open) {
                 this.openPanel();
                 return;

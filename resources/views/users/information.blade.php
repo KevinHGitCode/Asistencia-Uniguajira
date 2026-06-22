@@ -135,7 +135,7 @@
         @else
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 @foreach ($events as $event)
-                    <a href="{{ route('events.show', $event->id) }}" 
+                    <a href="{{ route('events.show', [$event->id, 'from' => 'usuario', 'user_id' => $user->id]) }}"
                     class="block p-4 rounded-2xl border border-neutral-200 dark:border-neutral-600 hover:border-[#e2a542] hover:shadow-lg transition-all duration-200 bg-white dark:bg-zinc-800">
                         <div class="flex items-start justify-between mb-2">
                             <h3 class="text-lg font-semibold text-gray-900 dark:text-white line-clamp-1">
@@ -226,7 +226,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     @foreach ($group['events'] as $event)
 
-                        <a href="{{ route('events.show', $event->id) }}"
+                        <a href="{{ route('events.show', [$event->id, 'from' => 'usuario', 'user_id' => $user->id]) }}"
                         class="block p-4 rounded-2xl border border-neutral-200 dark:border-neutral-600 hover:border-[#e2a542] hover:shadow-lg transition-all duration-200 bg-white dark:bg-zinc-800">
                             
                             <h3 class="text-lg font-semibold mb-2">

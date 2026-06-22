@@ -109,7 +109,7 @@ class EventController extends Controller
         }
     }
 
-    public function show(string $id, CampusScopeService $campusScope)
+    public function show(string $id, Request $request, CampusScopeService $campusScope)
     {
         /** @var User $user */
         $user = Auth::user();
@@ -132,7 +132,47 @@ class EventController extends Controller
             abort(403, 'No tienes permiso para ver este evento.');
         }
 
-        return view('events.show', compact('event', 'asistenciasCount'));
+        $breadcrumbItems = $this->resolveBreadcrumb($request, $user);
+
+        return view('events.show', compact('event', 'asistenciasCount', 'breadcrumbItems'));
+    }
+
+    private function resolveBreadcrumb(Request $request, User $user): array
+    {
+        $from = $request->query('from', 'mis');
+        $allowedOrigins = ['mis', 'usuario', 'todos'];
+
+        if (! in_array($from, $allowedOrigins, true)) {
+            $from = 'mis';
+        }
+
+        if ($from === 'usuario') {
+            $userId = $request->query('user_id');
+            $originUser = is_numeric($userId)
+                ? User::select('id', 'name')->find((int) $userId)
+                : null;
+
+            if ($originUser) {
+                return [
+                    ['label' => 'Usuarios', 'route' => 'users.index'],
+                    ['label' => $originUser->name, 'route' => 'users.information', 'params' => ['id' => $originUser->id]],
+                    ['label' => 'Información'],
+                ];
+            }
+        }
+
+        if ($from === 'todos' && $user->hasAdminAccess()) {
+            return [
+                ['label' => 'Dashboard', 'route' => 'dashboard'],
+                ['label' => 'Todos los eventos', 'route' => 'admin.events.index'],
+                ['label' => 'Información'],
+            ];
+        }
+
+        return [
+            ['label' => 'Eventos', 'route' => 'events.list'],
+            ['label' => 'Información'],
+        ];
     }
 
     public function access($slug)

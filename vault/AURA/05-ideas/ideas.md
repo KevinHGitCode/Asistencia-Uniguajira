@@ -28,4 +28,15 @@ Espacio de bajo compromiso. Una idea que madura y tiene consecuencias se promuev
 - Caché de agregados de estadísticas para eventos grandes.
 - Unificar el estilo de UI (reducir la convivencia Blade/Alpine/React donde no aporte).
 
+## Navegación (derivadas de ADR-0013)
+- **Origen calendario en breadcrumb**: `EventController::getByDate` (L307) genera `show_url`
+  sin `?from`. Abrir un evento desde el calendario da "Eventos → Información". Con `?from=calendario`
+  podría mostrar "Inicio → Calendario → Información". Pequeño cambio: añadir `from=calendario`
+  en `getByDate` y un cuarto `if` en `resolveBreadcrumb`.
+- **Redirección post-eliminar pierde contexto**: `EventController::destroy` hace
+  `redirect()->route('events.list')` independientemente del origen. Si venías del detalle de
+  un usuario y eliminas, te lleva a "Tus eventos". Solución: pasar `from` y `user_id` como
+  campos ocultos en `x-events.delete-modal` y usar `request('from')` en `destroy` para redirigir
+  correctamente. Baja prioridad, impacto percibido mediano.
+
 > Formato sugerido por idea: una línea de qué + por qué. Si crece, dale su propia nota.
