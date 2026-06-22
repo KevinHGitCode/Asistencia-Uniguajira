@@ -106,6 +106,22 @@ class EventBreadcrumbContextTest extends TestCase
         });
     }
 
+    public function test_breadcrumb_desde_calendario_muestra_dashboard(): void
+    {
+        [$admin, $event] = $this->adminWithEvent();
+
+        $response = $this->actingAs($admin)
+            ->get(route('events.show', [$event->id, 'from' => 'calendario']));
+
+        $response->assertOk();
+        $response->assertViewHas('breadcrumbItems', function ($items) {
+            return count($items) === 2
+                && $items[0]['label'] === 'Dashboard'
+                && $items[0]['route'] === 'dashboard'
+                && $items[1]['label'] === 'Información';
+        });
+    }
+
     public function test_from_invalido_cae_al_default(): void
     {
         [$admin, $event] = $this->adminWithEvent();

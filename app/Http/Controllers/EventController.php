@@ -145,10 +145,17 @@ class EventController extends Controller
     private function resolveBreadcrumb(Request $request, User $user): array
     {
         $from = $request->query('from', 'mis');
-        $allowedOrigins = ['mis', 'usuario', 'todos'];
+        $allowedOrigins = ['mis', 'usuario', 'todos', 'calendario'];
 
         if (! in_array($from, $allowedOrigins, true)) {
             $from = 'mis';
+        }
+
+        if ($from === 'calendario') {
+            return [
+                ['label' => 'Dashboard', 'route' => 'dashboard'],
+                ['label' => 'Información'],
+            ];
         }
 
         if ($from === 'usuario') {
@@ -320,7 +327,7 @@ class EventController extends Controller
                     : null;
                 $event->can_view = $canView;
                 $event->is_dependency_event = $isDependencyEvent;
-                $event->show_url = $canView ? route('events.show', $event->id) : null;
+                $event->show_url = $canView ? route('events.show', ['id' => $event->id, 'from' => 'calendario']) : null;
 
                 return $event;
             });

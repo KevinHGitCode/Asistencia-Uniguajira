@@ -275,7 +275,7 @@ class DashboardCalendarTest extends TestCase
             ->assertJsonPath('0.id', $event->id)
             ->assertJsonPath('0.can_view', true)
             ->assertJsonPath('0.is_dependency_event', true)
-            ->assertJsonPath('0.show_url', route('events.show', $event));
+            ->assertJsonPath('0.show_url', route('events.show', ['id' => $event->id, 'from' => 'calendario']));
 
         $this->actingAs($user)
             ->get(route('events.show', $event))
