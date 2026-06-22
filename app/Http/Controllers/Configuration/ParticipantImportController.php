@@ -154,26 +154,33 @@ class ParticipantImportController extends Controller
             ->all();
 
         $programByCampusAndNameHash = [];
-        $academicProgramIdByProgramId = [];
+        $programIdsByNameHash = [];
         foreach (Program::with('academicProgram:id,name')->get(['id', 'name', 'campus_id', 'academic_program_id']) as $p) {
             if (! $p->campus_id) {
                 continue;
             }
 
-            $k = ProgramController::comparisonKey($p->name);
+            $k = $this->programLookupKey($p->name);
             if (! isset($programByCampusAndNameHash[$p->campus_id][$k])) {
                 $programByCampusAndNameHash[$p->campus_id][$k] = $p->id;
             }
+            $programIdsByNameHash[$k][$p->id] = true;
             if ($p->academicProgram && ! isset($programByCampusAndNameHash[$p->campus_id][ProgramController::comparisonKey($p->academicProgram->name)])) {
                 $programByCampusAndNameHash[$p->campus_id][ProgramController::comparisonKey($p->academicProgram->name)] = $p->id;
             }
-            $academicProgramIdByProgramId[$p->id] = $p->academic_program_id ? (int) $p->academic_program_id : null;
+            if ($p->academicProgram) {
+                $academicKey = $this->programLookupKey($p->academicProgram->name);
+                $programIdsByNameHash[$academicKey][$p->id] = true;
+            }
         }
 
         $dependencyByCampusAndNameHash = [];
+        $dependencyIdsByNameHash = [];
         foreach (Dependency::all(['id', 'name', 'campus_id']) as $d) {
             if ($d->campus_id) {
-                $dependencyByCampusAndNameHash[$d->campus_id][ProgramController::comparisonKey($d->name)] = $d->id;
+                $key = ProgramController::comparisonKey($d->name);
+                $dependencyByCampusAndNameHash[$d->campus_id][$key] = $d->id;
+                $dependencyIdsByNameHash[$key][$d->id] = true;
             }
         }
 
@@ -223,19 +230,6 @@ class ParticipantImportController extends Controller
                 ->toArray();
         }
 
-        $activeProgramsByParticipantAndAcademic = [];
-        foreach (array_chunk(array_values($existingDocToId), 500) as $participantIds) {
-            DB::table('participant_roles')
-                ->join('programs', 'programs.id', '=', 'participant_roles.program_id')
-                ->whereIn('participant_roles.participant_id', $participantIds)
-                ->where('participant_roles.is_active', 1)
-                ->whereNotNull('programs.academic_program_id')
-                ->get(['participant_roles.participant_id', 'participant_roles.program_id', 'programs.academic_program_id'])
-                ->each(function ($role) use (&$activeProgramsByParticipantAndAcademic) {
-                    $activeProgramsByParticipantAndAcademic[$role->participant_id][$role->academic_program_id][(int) $role->program_id] = true;
-                });
-        }
-
         // ── Correos ya existentes. Solo interesa conocer los correos que
         //    podrían colisionar con los del Excel; no tiene sentido cargar
         //    la tabla entera. ─────────────────────────────────────────────
@@ -263,8 +257,6 @@ class ParticipantImportController extends Controller
         $newRoles = [];
 
         $excelRolesForExisting = [];
-        $plannedProgramsByParticipantAndAcademic = [];
-
         $skipped = [];
 
         // ── Primera pasada: clasificar cada fila ──────────────────────────
@@ -307,13 +299,21 @@ class ParticipantImportController extends Controller
                 $campusByNameHash,
             );
 
-            if (! $rowCampusId) {
+            if ($campusName !== '' && ! $rowCampusId) {
                 $skipped[] = $this->skippedRow(
                     $rawValues,
                     $headers,
-                    $campusName === ''
-                        ? 'No se pudo determinar la sede de la fila. Selecciona una sede activa o agrega la columna opcional Sede.'
-                        : "Sede no válida o no autorizada: \"{$campusName}\""
+                    "Sede no válida o no autorizada: \"{$campusName}\""
+                );
+
+                continue;
+            }
+
+            if (! $rowCampusId && ! $request->user()?->isSuperadmin()) {
+                $skipped[] = $this->skippedRow(
+                    $rawValues,
+                    $headers,
+                    'No se pudo determinar la sede de la fila.'
                 );
 
                 continue;
@@ -366,30 +366,44 @@ class ParticipantImportController extends Controller
                     continue;
                 }
 
-                $nameKey = ProgramController::comparisonKey($programName);
-                $dependencyId = $dependencyByCampusAndNameHash[$rowCampusId][$nameKey] ?? null;
+                $nameKey = $this->dependencyLookupKey($programName, $rowCampusId, $campusByNameHash);
+                $dependencyId = $rowCampusId
+                    ? ($dependencyByCampusAndNameHash[$rowCampusId][$nameKey] ?? null)
+                    : $this->uniqueCatalogId($dependencyIdsByNameHash[$nameKey] ?? []);
 
                 if (! $dependencyId) {
+                    $reason = ! $rowCampusId && isset($dependencyIdsByNameHash[$nameKey])
+                        ? "No se ha indicado la sede en el Excel para la dependencia: \"{$programName}\". Debes poner al final \"- Sede\"."
+                        : "Dependencia no encontrada: \"{$programName}\"";
+
                     $skipped[] = $this->skippedRow(
                         $rawValues, $headers,
-                        "Dependencia no encontrada: \"{$programName}\""
+                        $reason
                     );
 
                     continue;
                 }
             } elseif ($programName !== '') {
                 $rawProgramName = $programName;
-                $nameKey = ProgramController::comparisonKey($rawProgramName);
+                $nameKey = $this->programLookupKey($rawProgramName);
 
                 if ($isProgramType) {
-                    $programsForCampus = $programByCampusAndNameHash[$rowCampusId] ?? [];
-                    $programId = $programsForCampus[$nameKey]
-                        ?? $this->findClosestProgramId($rawProgramName, $programsForCampus);
+                    if ($rowCampusId) {
+                        $programsForCampus = $programByCampusAndNameHash[$rowCampusId] ?? [];
+                        $programId = $programsForCampus[$nameKey]
+                            ?? $this->findClosestProgramId($rawProgramName, $programsForCampus);
+                    } else {
+                        $programId = $this->uniqueCatalogId($programIdsByNameHash[$nameKey] ?? []);
+                    }
 
                     if (! $programId) {
+                        $reason = ! $rowCampusId && isset($programIdsByNameHash[$nameKey])
+                            ? "No se ha indicado la sede en el Excel para el programa: \"{$rawProgramName}\". Debes poner al final \"- Sede\"."
+                            : "Programa no encontrado: \"{$rawProgramName}\"";
+
                         $skipped[] = $this->skippedRow(
                             $rawValues, $headers,
-                            "Programa no encontrado: \"{$rawProgramName}\""
+                            $reason
                         );
 
                         continue;
@@ -406,7 +420,10 @@ class ParticipantImportController extends Controller
                     //     $dep = Dependency::create(['name' => $cleanName]);
                     //     $dependencyHash[$nameKey] = $dep->id;
                     // }
-                    $dependencyId = $dependencyByCampusAndNameHash[$rowCampusId][$nameKey] ?? null;
+                    $nameKey = $this->dependencyLookupKey($programName, $rowCampusId, $campusByNameHash);
+                    $dependencyId = $rowCampusId
+                        ? ($dependencyByCampusAndNameHash[$rowCampusId][$nameKey] ?? null)
+                        : $this->uniqueCatalogId($dependencyIdsByNameHash[$nameKey] ?? []);
                 }
             }
 
@@ -430,31 +447,6 @@ class ParticipantImportController extends Controller
                 'dependency_id' => $dependencyId,
                 'affiliation_id' => $affiliationId,
             ];
-
-            $academicProgramId = $programId ? ($academicProgramIdByProgramId[$programId] ?? null) : null;
-            $existingParticipantId = $existingDocToId[$document] ?? null;
-
-            if ($academicProgramId) {
-                $plannedPrograms = $plannedProgramsByParticipantAndAcademic[$document][$academicProgramId] ?? [];
-                $activePrograms = $existingParticipantId
-                    ? ($activeProgramsByParticipantAndAcademic[$existingParticipantId][$academicProgramId] ?? [])
-                    : [];
-
-                $hasOtherPlannedProgram = ! empty($plannedPrograms) && ! isset($plannedPrograms[$programId]);
-                $hasOtherActiveProgram = ! empty($activePrograms) && ! isset($activePrograms[$programId]);
-
-                if ($hasOtherPlannedProgram || $hasOtherActiveProgram) {
-                    $skipped[] = $this->skippedRow(
-                        $rawValues,
-                        $headers,
-                        'El participante ya tiene un rol activo para este programa académico en otra sede.'
-                    );
-
-                    continue;
-                }
-
-                $plannedProgramsByParticipantAndAcademic[$document][$academicProgramId][$programId] = true;
-            }
 
             // ── 1) Doc ya visto en este archivo (nuevo) ───────────────────
             if (isset($newParticipants[$document])) {
@@ -732,17 +724,6 @@ class ParticipantImportController extends Controller
         $rolesSkippedConflict = 0;
         $updatedParticipants = 0;
 
-        $programAcademicIds = DB::table('programs')
-            ->whereIn('id', collect($excelRolesForExisting)
-                ->flatMap(fn (array $roles) => array_column($roles, 'program_id'))
-                ->filter()
-                ->unique()
-                ->values()
-                ->all())
-            ->pluck('academic_program_id', 'id')
-            ->map(fn ($id) => $id ? (int) $id : null)
-            ->all();
-
         foreach ($excelRolesForExisting as $pid => $wantedRoles) {
             $currentRoleKeys = $activeRoles[$pid] ?? [];
             $wantedKeys = array_keys($wantedRoles);
@@ -754,23 +735,6 @@ class ParticipantImportController extends Controller
 
             foreach ($toActivate as $roleKey) {
                 $role = $wantedRoles[$roleKey];
-                $academicProgramId = $role['program_id'] ? ($programAcademicIds[$role['program_id']] ?? null) : null;
-
-                if ($academicProgramId) {
-                    $hasRoleInAnotherCampus = DB::table('participant_roles')
-                        ->join('programs', 'programs.id', '=', 'participant_roles.program_id')
-                        ->where('participant_roles.participant_id', $pid)
-                        ->where('participant_roles.is_active', 1)
-                        ->where('programs.academic_program_id', $academicProgramId)
-                        ->where('participant_roles.program_id', '<>', $role['program_id'])
-                        ->exists();
-
-                    if ($hasRoleInAnotherCampus) {
-                        $rolesSkippedConflict++;
-
-                        continue;
-                    }
-                }
 
                 $updated = DB::table('participant_roles')
                     ->where('participant_id', $pid)
@@ -1082,15 +1046,20 @@ class ParticipantImportController extends Controller
             ->with('success', 'Participante registrado exitosamente.');
     }
 
+    private function uniqueCatalogId(array $ids): ?int
+    {
+        $ids = array_keys($ids);
+
+        return count($ids) === 1 ? (int) $ids[0] : null;
+    }
+
     private function defaultCampusIdForImport(Request $request, CampusScopeService $campusScope, bool $required): ?int
     {
         $user = $request->user();
         $campusId = $campusScope->activeCampusId($user);
 
-        if ($required && ! $campusId) {
-            $message = $user?->isSuperadmin()
-                ? 'Selecciona una sede activa antes de importar o agrega la columna opcional Sede al archivo.'
-                : 'Tu usuario no tiene una sede asignada para importar participantes.';
+        if ($required && ! $campusId && ! $user?->isSuperadmin()) {
+            $message = 'Tu usuario no tiene una sede asignada para importar participantes.';
 
             throw \Illuminate\Validation\ValidationException::withMessages(['excel_file' => $message]);
         }
@@ -1209,9 +1178,34 @@ class ParticipantImportController extends Controller
         return preg_replace('/\s+/u', ' ', $text) ?? $text;
     }
 
+    private function programLookupKey(string $programName): string
+    {
+        $normalizedSeparator = preg_replace('/\s*-\s*/u', ' - ', trim($programName)) ?? $programName;
+
+        return ProgramController::comparisonKey($normalizedSeparator);
+    }
+
+    private function dependencyLookupKey(string $dependencyName, ?int $rowCampusId, array $campusByNameHash): string
+    {
+        $key = ProgramController::comparisonKey($dependencyName);
+
+        if (! preg_match('/\s*-\s*([^-]+)\s*$/u', trim($dependencyName), $matches)) {
+            return $key;
+        }
+
+        $suffixCampusId = $campusByNameHash[ProgramController::comparisonKey($matches[1])] ?? null;
+        if (! $suffixCampusId || ($rowCampusId !== null && (int) $suffixCampusId !== $rowCampusId)) {
+            return $key;
+        }
+
+        $withoutCampusSuffix = preg_replace('/\s*-\s*[^-]+\s*$/u', '', trim($dependencyName));
+
+        return ProgramController::comparisonKey($withoutCampusSuffix ?? $dependencyName);
+    }
+
     private function findClosestProgramId(string $programName, array $programByNameHash): ?int
     {
-        $targetKey = ProgramController::comparisonKey($programName);
+        $targetKey = $this->programLookupKey($programName);
         $targetCompact = preg_replace('/[^a-z0-9]+/i', '', $targetKey) ?? '';
 
         if ($targetCompact === '') {

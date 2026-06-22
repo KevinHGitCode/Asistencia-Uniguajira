@@ -114,7 +114,7 @@ class EventController extends Controller
         /** @var User $user */
         $user = Auth::user();
 
-        $event = Event::with(['dependency.formats', 'area', 'user'])->findOrFail($id);
+        $event = Event::with(['dependency.campus', 'dependency.formats', 'area', 'user'])->findOrFail($id);
         $asistenciasCount = Attendance::where('event_id', $event->id)->count();
         $eventCampusId = $event->campus_id ?? $event->dependency?->campus_id;
 
@@ -122,11 +122,16 @@ class EventController extends Controller
             ->where('dependencies.id', $event->dependency_id)
             ->exists();
 
-        $tienePermiso = $campusScope->canAccessCampus($user, $eventCampusId !== null ? (int) $eventCampusId : null) && (
-            $user->hasAdminAccess()
-            || (int) $event->user_id === (int) $user->id
-            || $perteneceDependencia
-        );
+        $dependencyCampusId = $event->dependency?->campus_id;
+        $canAccessCampus = $campusScope->canAccessCampus($user, $eventCampusId !== null ? (int) $eventCampusId : null)
+            || ($perteneceDependencia && $campusScope->canAccessCampus(
+                $user,
+                $dependencyCampusId !== null ? (int) $dependencyCampusId : null
+            ));
+
+        $tienePermiso = ($user->hasAdminAccess() || (int) $event->user_id === (int) $user->id)
+            ? $canAccessCampus
+            : $perteneceDependencia;
 
         if (! $tienePermiso) {
             abort(403, 'No tienes permiso para ver este evento.');
@@ -259,12 +264,21 @@ class EventController extends Controller
         ])
             ->whereDate('date', $date);
 
-        $campusScope->applyToQuery($query, $user);
+        $user->loadMissing('dependencies');
+        $dependencyIds = $user->dependencies->pluck('id')->all();
+        $activeCampusId = $campusScope->activeCampusId($user);
+        if ($activeCampusId !== null) {
+            $query->where(function ($campusQuery) use ($activeCampusId, $user, $dependencyIds) {
+                $campusQuery->where('events.campus_id', $activeCampusId)
+                    ->orWhereHas('dependency', fn ($dependencyQuery) => $dependencyQuery->where('campus_id', $activeCampusId));
+
+                if (! $user->hasAdminAccess() && $dependencyIds !== []) {
+                    $campusQuery->orWhereIn('events.dependency_id', $dependencyIds);
+                }
+            });
+        }
 
         if (! $user->hasAdminAccess()) {
-            $user->loadMissing('dependencies');
-            $dependencyIds = $user->dependencies->pluck('id')->all();
-
             $query->where(function ($eventQuery) use ($user, $dependencyIds) {
                 $eventQuery->where('user_id', $user->id);
 
@@ -283,18 +297,20 @@ class EventController extends Controller
             ->get()
             ->map(function ($event) use ($campusScope, $user, $userDependencyIds) {
                 $eventCampusId = $event->campus_id ?? $event->dependency?->campus_id;
-                $canAccessCampus = $campusScope->canAccessCampus(
-                    $user,
-                    $eventCampusId !== null ? (int) $eventCampusId : null
-                );
                 $isDependencyEvent = $event->dependency_id !== null
                     && in_array((int) $event->dependency_id, $userDependencyIds, true)
                     && (int) $event->user_id !== (int) $user->id;
-                $canView = $canAccessCampus && (
-                    $user->hasAdminAccess()
-                    || (int) $event->user_id === (int) $user->id
-                    || $isDependencyEvent
-                );
+                $dependencyCampusId = $event->dependency?->campus_id;
+                $canAccessCampus = $campusScope->canAccessCampus(
+                    $user,
+                    $eventCampusId !== null ? (int) $eventCampusId : null
+                ) || ($isDependencyEvent && $campusScope->canAccessCampus(
+                    $user,
+                    $dependencyCampusId !== null ? (int) $dependencyCampusId : null
+                ));
+                $canView = ($user->hasAdminAccess() || (int) $event->user_id === (int) $user->id)
+                    ? $canAccessCampus
+                    : $isDependencyEvent;
 
                 $event->dependency_name = $event->dependency?->name;
                 $event->area_name = $event->area?->name;

@@ -3,6 +3,7 @@
 namespace Tests\Feature\Dashboard;
 
 use App\Models\Campus;
+use App\Models\Dependency;
 use App\Models\Event;
 use App\Models\User;
 use App\Services\CampusScopeService;
@@ -246,6 +247,39 @@ class DashboardCalendarTest extends TestCase
         $this->actingAs($user)
             ->get(route('events.show', $event))
             ->assertForbidden();
+    }
+
+    public function test_usuario_puede_abrir_desde_el_calendario_un_evento_de_su_dependencia(): void
+    {
+        [$maicao, $riohacha] = $this->createCampuses();
+        $user = User::factory()->create([
+            'role' => User::ROLE_USER,
+            'campus_id' => null,
+        ]);
+        $creator = User::factory()->create([
+            'role' => User::ROLE_USER,
+            'campus_id' => $maicao->id,
+        ]);
+        $dependency = Dependency::factory()->create(['campus_id' => $maicao->id]);
+        $user->dependencies()->attach($dependency);
+        $event = Event::factory()->create([
+            'user_id' => $creator->id,
+            'dependency_id' => $dependency->id,
+            'campus_id' => $riohacha->id,
+            'date' => '2026-03-15',
+        ]);
+
+        $this->actingAs($user)
+            ->getJson('/api/events/2026-03-15')
+            ->assertOk()
+            ->assertJsonPath('0.id', $event->id)
+            ->assertJsonPath('0.can_view', true)
+            ->assertJsonPath('0.is_dependency_event', true)
+            ->assertJsonPath('0.show_url', route('events.show', $event));
+
+        $this->actingAs($user)
+            ->get(route('events.show', $event))
+            ->assertOk();
     }
 
     public function test_ruta_publica_por_slug_sigue_funcionando(): void

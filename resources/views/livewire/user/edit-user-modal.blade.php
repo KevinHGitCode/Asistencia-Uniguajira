@@ -86,8 +86,9 @@
                             Dependencias
                         </label>
                         <x-ui.multi-searchable-select
+                            wire:key="edit-user-dependencies-{{ $campus_id ?? 'none' }}"
                             wire:model="dependency_ids"
-                            :options="$dependencies"
+                            :options="$this->filteredDependencies"
                             placeholder="Agregar dependencias…"
                             search-placeholder="Buscar dependencia…" />
                         @error('dependency_ids')

@@ -101,7 +101,15 @@ class ParticipantsList extends Component
         // Cargar catálogos
         $this->catalogTypes        = ParticipantType::orderBy('name')->get(['id', 'name'])->toArray();
         $this->catalogPrograms     = Program::orderBy('name')->get(['id', 'name'])->toArray();
-        $this->catalogDependencies = Dependency::orderBy('name')->get(['id', 'name'])->toArray();
+        $this->catalogDependencies = Dependency::query()
+            ->with('campus:id,name')
+            ->orderBy('name')
+            ->get(['id', 'name', 'campus_id'])
+            ->map(fn (Dependency $dependency) => [
+                'id' => $dependency->id,
+                'name' => $dependency->name.($dependency->campus?->name ? ' - '.$dependency->campus->name : ''),
+            ])
+            ->all();
         $this->catalogAffiliations = Affiliation::orderBy('name')->get(['id', 'name'])->toArray();
 
         // Cargar roles existentes

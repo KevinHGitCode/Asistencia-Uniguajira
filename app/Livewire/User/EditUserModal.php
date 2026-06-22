@@ -2,6 +2,7 @@
 
 namespace App\Livewire\User;
 
+use App\Models\Dependency;
 use App\Models\User;
 use App\Services\ActivityLogService;
 use Closure;
@@ -111,6 +112,29 @@ class EditUserModal extends Component
         if (auth()->user()?->isAdmin()) {
             $this->campus_id = (string) auth()->user()->campus_id;
         }
+    }
+
+    public function updatedCampusId(): void
+    {
+        $this->discardDependenciesOutsideSelectedCampus();
+    }
+
+    public function getFilteredDependenciesProperty(): array
+    {
+        if (! $this->campus_id) {
+            return [];
+        }
+
+        return Dependency::query()
+            ->with('campus:id,name')
+            ->where('campus_id', $this->campus_id)
+            ->orderBy('name')
+            ->get(['id', 'name', 'campus_id'])
+            ->map(fn (Dependency $dependency) => [
+                'id' => $dependency->id,
+                'name' => $dependency->name.($dependency->campus?->name ? ' - '.$dependency->campus->name : ''),
+            ])
+            ->all();
     }
 
     public function save()
@@ -225,5 +249,24 @@ class EditUserModal extends Component
         if (! $matchesCampus) {
             $fail('La dependencia seleccionada no pertenece a la sede indicada.');
         }
+    }
+
+    private function discardDependenciesOutsideSelectedCampus(): void
+    {
+        if (! $this->campus_id) {
+            $this->dependency_ids = [];
+
+            return;
+        }
+
+        $validIds = Dependency::where('campus_id', $this->campus_id)
+            ->pluck('id')
+            ->map(fn ($id) => (string) $id)
+            ->all();
+
+        $this->dependency_ids = array_values(array_filter(
+            $this->dependency_ids,
+            fn ($id) => in_array((string) $id, $validIds, true),
+        ));
     }
 }

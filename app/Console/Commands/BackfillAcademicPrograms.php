@@ -18,6 +18,7 @@ class BackfillAcademicPrograms extends Command
         'Riohacha',
         'Fonseca',
         'Villanueva',
+        'Manaure',
     ];
 
     public function handle(): int
