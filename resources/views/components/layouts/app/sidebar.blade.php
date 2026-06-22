@@ -65,6 +65,23 @@
             <x-app-logo />
         </a>
 
+        {{-- Disparador de la paleta de comandos (solo admins, solo escritorio) — abre con Cmd/Ctrl+K.
+             No se escribe aquí (abre un modal), así que es compacto: lupa + atajo. --}}
+        @if(auth()->user()->hasAdminAccess())
+            <button
+                type="button"
+                onclick="window.dispatchEvent(new CustomEvent('open-command-palette'))"
+                title="{{ __('Buscar (Ctrl/Cmd + K)') }}"
+                aria-label="{{ __('Buscar (Ctrl/Cmd + K)') }}"
+                class="mt-1.5 hidden w-full items-center justify-between gap-2 rounded-lg border border-neutral-200 bg-white px-2.5 py-1 text-gray-400 transition-colors hover:border-blue-400 hover:text-gray-600 lg:flex dark:border-zinc-700 dark:bg-zinc-800 dark:hover:text-gray-200"
+            >
+                <svg class="size-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.3-4.3M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z" />
+                </svg>
+                <kbd class="rounded border border-neutral-200 px-1.5 py-0.5 text-[10px] font-medium dark:border-zinc-600">Ctrl K</kbd>
+            </button>
+        @endif
+
         <style>
             .aura-sidebar-link .aura-logo-sidebar {
                 transition: transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1),
@@ -100,7 +117,7 @@
         </style>
 
         <flux:navlist variant="outline">
-            <flux:navlist.group :heading="__('Platform')" class="grid">
+            <flux:navlist.group class="grid">
 
                 <flux:navlist.item icon="home" :href="route('dashboard')" class="hover:scale-103 transition-transform" :current="request()->routeIs('dashboard')"
                     wire:navigate>{{ __('Home') }}</flux:navlist.item>
@@ -427,6 +444,9 @@
     </flux:header>
 
     {{ $slot }}
+
+    {{-- Paleta de comandos para administradores (ADR-0007) — Cmd/Ctrl+K --}}
+    <x-command-palette />
 
     @fluxScripts
 </body>

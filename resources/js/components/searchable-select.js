@@ -11,26 +11,11 @@
  * por cada tecla).
  */
 
+import { filtrarOpciones } from './text-filter';
+
 // El buscador escrito solo aparece cuando hay MÁS de esta cantidad de opciones.
 // Cámbialo aquí para ajustar el umbral en todos los selectores a la vez.
 const SEARCH_MIN_ITEMS = 3;
-
-// Quita acentos/diacríticos y normaliza para comparar de forma amable.
-function normalizar(str) {
-    return (str ?? '')
-        .toString()
-        .normalize('NFD')
-        .replace(/[̀-ͯ]/g, '')
-        .toLowerCase()
-        .trim();
-}
-
-// Filtro compartido por ambos selectores.
-function filtrarOpciones(opciones, busqueda) {
-    const q = normalizar(busqueda);
-    if (!q) return opciones;
-    return opciones.filter((o) => normalizar(o.label).includes(q));
-}
 
 // ── Selección única ──────────────────────────────────────────────────────────
 window.searchableSelect = function (config) {

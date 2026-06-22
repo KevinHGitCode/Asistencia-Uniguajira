@@ -20,6 +20,7 @@ que dos personas/IAs choquen, sobre todo en cambios 🔴 que tocan el esquema.
 |---|---|---|---|---|
 | _(ejemplo)_ Crear el vault AURA | equipo | `docs/crear-vault-aura` | 🟢 | 2026-06-20 |
 | Rate limiting anti-abuso (ADR-0005) | equipo | `feat/rate-limiting-rutas` | 🔴 | 2026-06-21 |
+| Paleta de comandos admin · MVP (ADR-0007) | equipo | `feat/paleta-comandos-admin` | 🟢 | 2026-06-21 |
 
 ## 🟨 En revisión (PR abierto)
 | Tarea | Responsable | Rama | PR |

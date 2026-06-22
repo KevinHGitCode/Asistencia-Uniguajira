@@ -46,7 +46,7 @@ Monolito Laravel 12 con UI hibrida. Stack exacto en [[stack-tecnologico]].
 - [[adr-0004-pasarela-de-revision-para-importacion-de-participantes]] 🟢
 - [[adr-0005-rate-limiting-anti-abuso]] 🟢
 - [[adr-0006-formularios-en-modal-centrado]] 🟡
-- [[adr-0007-paleta-de-comandos-admin]] 🟡
+- [[adr-0007-paleta-de-comandos-admin]] 🟢
 - [[adr-0008-listado-participantes-en-react]] 🟡
 - [[adr-0009-migracion-multi-sede-progresiva]] 🟢
 - [[adr-0010-mejoras-modulo-usuarios]] 🟡
