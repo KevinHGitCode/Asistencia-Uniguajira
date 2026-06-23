@@ -10,7 +10,7 @@
 <x-layouts.app :title="__('Dashboard')">
     @include('calendar.modal')
 
-    <div class="flex h-full w-full flex-1 flex-col gap-5 p-1 sm:p-2 md:px-4 md:py-2">
+    <div class="flex min-h-full w-full flex-1 flex-col gap-5 p-1 sm:p-2 md:px-4 md:py-2">
         <!-- Header de bienvenida -->
         <div class="mb-2">
             <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
@@ -197,7 +197,10 @@
         </div>
 
         <!-- Contenedor del calendario -->
-        <div class="relative border border-neutral-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-2xl shadow-md overflow-hidden">
+        {{-- shrink-0: evita que el flex column del dashboard comprima la tarjeta cuando hay
+             poco alto; así no se recorta el calendario y el sobrante lo absorbe el scroll de
+             flux:main (toda la página). --}}
+        <div class="relative shrink-0 border border-neutral-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-2xl shadow-md overflow-hidden">
             <!-- Header del calendario -->
             <div class="px-3 sm:px-6 py-3 border-b border-neutral-200 dark:border-neutral-700 bg-zinc-50 dark:bg-zinc-900 text-center">
                 <h2 class="flex items-center justify-center gap-2 text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
