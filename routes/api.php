@@ -3,12 +3,7 @@
 use App\Http\Controllers\Api\AdminEventosController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\StatisticsController;
-use App\Models\Affiliation;
-use App\Models\Attendance;
-use App\Models\Dependency;
 use App\Models\Event;
-use App\Models\Participant;
-use App\Models\Program;
 use App\Models\User;
 use App\Services\CampusScopeService;
 use Illuminate\Http\Request;
@@ -377,82 +372,6 @@ Route::middleware(['web', 'auth', 'throttle:api-stats'])->prefix('statistics')->
     Route::get('/participants-by-organization', 'participantsByOrganization');
 });
 
-/**
- * =============================================
- * RUTAS DE PRUEBA
- * =============================================
- */
-// Route to get all events in JSON format
-// Todas estas rutas tiene el prefix /api
-
-// Get all events
-Route::get('/events', function () {
-    return Event::all();
-});
-
-// Get events by user ID
-Route::get('/events/user/{user_id}', function ($user_id) {
-    return Event::where('user_id', $user_id)->get();
-});
-
-// consultar eventos con información del usuario
-Route::get('/events-with-user', function () {
-    return Event::with('user')->get();
-});
-
-// Get all participants
-Route::get('/participants', function () {
-    return Participant::all();
-});
-
-// Get participants by program ID (via pivot)
-Route::get('/participants/program/{program_id}', function ($program_id) {
-    return DB::table('participants')
-        ->join('participant_roles', 'participants.id', '=', 'participant_roles.participant_id')
-        ->where('participant_roles.program_id', $program_id)
-        ->where('participant_roles.is_active', 1)
-        ->select('participants.*')
-        ->distinct()
-        ->get();
-});
-
-// Get count of participants by program (via pivot)
-Route::get('/participants/count-by-program', function () {
-    return DB::table('participant_roles')
-        ->join('programs', 'participant_roles.program_id', '=', 'programs.id')
-        ->where('participant_roles.is_active', 1)
-        ->select('programs.name as program', DB::raw('COUNT(DISTINCT participant_roles.participant_id) as count'))
-        ->groupBy('programs.id', 'programs.name')
-        ->orderByDesc('count')
-        ->get();
-});
-
-// Get all estamentos (participant types)
-Route::get('/roles', function () {
-    return \App\Models\ParticipantType::orderBy('name')->get(['id', 'name']);
-});
-
-// Get all programs
-Route::get('/programs', function () {
-    return Program::all();
-});
-
-// Get all affiliations
-Route::get('/affiliations', function () {
-    return Affiliation::all();
-});
-
-// Get all attendances
-Route::get('/attendances', function () {
-    return Attendance::all();
-});
-
-// Get all users
-Route::get('/users', function () {
-    return User::all();
-});
-
-// Get all dependencies
-Route::get('/dependencies', function () {
-    return Dependency::all();
-});
+// NOTA: el bloque "RUTAS DE PRUEBA" (Event::all, Participant::all, User::all, …) se retiró
+// (ADR-0014). Eran endpoints públicos sin auth que filtraban toda la base y nadie consumía.
+// Si se necesita un endpoint de datos, definirlo bajo ['web','auth'] (+ CampusScopeService).

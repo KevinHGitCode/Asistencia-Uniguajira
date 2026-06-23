@@ -22,6 +22,7 @@ que dos personas/IAs choquen, sobre todo en cambios 🔴 que tocan el esquema.
 | Rate limiting anti-abuso (ADR-0005) | equipo | `feat/rate-limiting-rutas` | 🔴 | 2026-06-21 |
 | Paleta de comandos admin · MVP (ADR-0007) | equipo | `feat/paleta-comandos-admin` | 🟢 | 2026-06-21 |
 | Formularios de usuario a modal centrado (ADR-0006) | equipo | `refactor/formularios-modal-centrado` | 🟢 | 2026-06-21 |
+| Retirar rutas API de prueba sin auth (ADR-0014) | equipo | `fix/retirar-rutas-api-de-prueba` | 🔴 | 2026-06-21 |
 
 ## 🟨 En revisión (PR abierto)
 | Tarea | Responsable | Rama | PR |
@@ -42,6 +43,9 @@ que dos personas/IAs choquen, sobre todo en cambios 🔴 que tocan el esquema.
 - Rate limiting (`feat/rate-limiting-rutas`, ADR-0005): las rutas publicas `events.access`,
   `attendance.store`, `attendance.confirmation`, la descarga de PDF y los grupos
   `/api/statistics/*` ahora pueden devolver **429**. Coordinar si tocas esos contratos.
+- Retiro de rutas API de prueba (`fix/retirar-rutas-api-de-prueba`, ADR-0014): se **eliminaron** 12
+  endpoints publicos sin auth de `routes/api.php` (`/api/events`, `/api/participants`, `/api/users`,
+  `/api/programs`, `/api/dependencies`, etc.). Si los necesitabas, recrealos bajo `['web','auth']`.
 
 ---
 > Cambios de esquema = migraciones nuevas/alteradas. Mira el orden cronológico en
