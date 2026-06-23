@@ -36,7 +36,7 @@ nota; cada nota es una idea. Lee primero [[README]] si es tu primera vez.
   - [[adr-0003-retirar-flujo-legacy-de-asistencia]] 🟡
   - [[adr-0004-pasarela-de-revision-para-importacion-de-participantes]] 🟢
   - [[adr-0005-rate-limiting-anti-abuso]] 🟢
-  - [[adr-0006-formularios-en-modal-centrado]] 🟡
+  - [[adr-0006-formularios-en-modal-centrado]] 🟢
   - [[adr-0007-paleta-de-comandos-admin]] 🟢
   - [[adr-0008-listado-participantes-en-react]] 🟡
   - [[adr-0009-migracion-multi-sede-progresiva]] 🟢

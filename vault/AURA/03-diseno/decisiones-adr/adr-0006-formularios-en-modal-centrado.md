@@ -6,8 +6,9 @@ actualizado: 2026-06-20
 
 # ADR-0006 · Formularios en modal centrado (no flyout lateral)
 
-- **Estado:** 🟡 Propuesta
+- **Estado:** 🟢 Implementado
 - **Fecha:** 2026-06-20
+- **Implementado:** 2026-06-21
 - **Contexto del repo:** `resources/views/livewire/user/create-user-modal.blade.php` y
   `edit-user-modal.blade.php` usan `<flux:modal variant="flyout">` (panel lateral). Otros modales
   (eventos, administración) ya son centrados.
@@ -33,10 +34,36 @@ en los campos donde tenga sentido, aprovechando mejor el ancho.
 - **Mantener flyout** pero más ancho: sigue siendo inconsistente con el resto.
 - **Rediseño completo** de los formularios: fuera de alcance; esto es solo el contenedor.
 
-## Pendiente para aceptar
-- [ ] Inventario de todos los `variant="flyout"` a migrar.
-- [ ] Definir anchos y grilla de campos por formulario.
-- [ ] Rama sugerida: `refactor/formularios-modal-centrado` (🟢 solo UI).
+## Implementación
+
+- **Rama:** `refactor/formularios-modal-centrado`.
+- **Migrados a modal centrado** (quitado `variant="flyout"`, ancho `max-w-lg` → `max-w-2xl`):
+  - [`resources/views/livewire/user/create-user-modal.blade.php`](../../../../resources/views/livewire/user/create-user-modal.blade.php)
+  - [`resources/views/livewire/user/edit-user-modal.blade.php`](../../../../resources/views/livewire/user/edit-user-modal.blade.php)
+- **Grilla de 2 columnas** (`sm:grid-cols-2`): Nombre | Correo, Rol | Sede. Dependencias (chips) y
+  Contraseña ocupan ancho completo (`sm:col-span-2`). En `sm` baja a 1 columna (móvil cómodo).
+- En `edit-user-modal` se quitaron los hacks de altura del flyout (`-m-6 p-6 min-h-full`).
+- **Lógica Livewire intacta** (mismos `wire:model`, `@error`, condicionales y `wire:key`).
+- **Tests:** `tests/Feature/Users/UserCreateTest.php` y `UserUpdateTest.php` siguen verdes (31).
+
+### Inventario de `variant="flyout"` (hallazgo)
+La ADR asumía que los modales de **eventos** ya eran centrados, pero **no lo son**: siguen como
+flyout. Quedan fuera de este cambio (alcance = formularios de usuario), pero conviene unificarlos
+para la consistencia que persigue esta ADR:
+
+| Archivo | ¿Migrado? |
+|---|---|
+| `user/create-user-modal.blade.php` | ✅ sí |
+| `user/edit-user-modal.blade.php` | ✅ sí |
+| `event/create-event-modal.blade.php` | ✅ sí (centrado; quitar `flyout` también eliminó el `overflow-y-auto` que **recortaba los desplegables** en pantallas pequeñas) |
+| `event/edit-event-modal.blade.php` | ⬜ pendiente (flyout) |
+| `event/attendees-modal.blade.php` | ⬜ es un listado, no un formulario — probablemente dejar como flyout |
+
+> **Nota sobre desplegables:** el recorte de opciones que se veía en los formularios **no** era
+> `overflow-hidden` propio nuestro, sino el `overflow-y-auto` que Flux añade **solo** a la variante
+> `flyout` (no a la centrada). Al centralizar, el `<dialog>` centrado usa `overflow: visible` y el
+> panel del `searchable-select` ya no se recorta. Teletransportarlo al `body` **no** sería opción:
+> los `flux:modal` usan `<dialog showModal()>` (top layer) y el panel quedaría por detrás.
 
 ## Relacionado
 [[convenciones]] · [[mapa-de-modulos]]
