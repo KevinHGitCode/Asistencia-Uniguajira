@@ -14,11 +14,14 @@ class BackfillCampusIds extends Command
     protected $description = 'Pobla campus_id en tablas base usando inferencia por nombre y fallback Maicao.';
 
     private const CAMPUS_NAMES = [
+        'Albania',
         'Maicao',
         'Riohacha',
         'Fonseca',
         'Villanueva',
         'Manaure',
+        'Monteria',
+        'Uribia',
     ];
 
     /**

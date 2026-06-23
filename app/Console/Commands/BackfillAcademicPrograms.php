@@ -14,11 +14,14 @@ class BackfillAcademicPrograms extends Command
     protected $description = 'Pobla academic_programs desde programs.name y relaciona programs.academic_program_id.';
 
     private const CAMPUS_SUFFIXES = [
+        'Albania',
         'Maicao',
         'Riohacha',
         'Fonseca',
         'Villanueva',
         'Manaure',
+        'Monteria',
+        'Uribia',
     ];
 
     public function handle(): int

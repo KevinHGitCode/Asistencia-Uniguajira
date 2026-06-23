@@ -17,10 +17,13 @@ class CampusSeederTest extends TestCase
         $this->seed(CampusSeeder::class);
 
         $this->assertSame([
+            'Albania',
             'Fonseca',
             'Maicao',
             'Manaure',
+            'Monteria',
             'Riohacha',
+            'Uribia',
             'Villanueva',
         ], Campus::orderBy('name')->pluck('name')->all());
     }

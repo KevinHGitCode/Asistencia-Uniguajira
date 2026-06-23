@@ -196,9 +196,13 @@ class DependencyController extends Controller
 
         // Cache: la dependencia se considera duplicada únicamente dentro de su sede.
         $existingSet = array_flip(
-            Dependency::all(['name', 'campus_id'])->map(
-                fn (Dependency $dependency) => $dependency->campus_id.'|'.self::comparisonKey($dependency->name)
-            )->toArray()
+            Dependency::all(['name', 'campus_id'])->map(function (Dependency $dependency) use ($campusResolver, $campuses) {
+                $name = $campusResolver->resolve($dependency->name, $campuses)
+                    ? $campusResolver->withoutSuffix($dependency->name)
+                    : $dependency->name;
+
+                return $dependency->campus_id.'|'.self::comparisonKey($name);
+            })->toArray()
         );
 
         $created = 0;
@@ -220,18 +224,16 @@ class DependencyController extends Controller
             // Solo un sufijo que coincida con una sede existente se interpreta como sede.
             // Los demás guiones hacen parte del nombre visible de la dependencia.
             $suffixCampus = $campusResolver->resolve($rawName, $campuses);
-            $detectedCampus = $suffixCampus;
+            if (! $suffixCampus) {
+                $skippedRows[] = $this->skippedRow(
+                    $rawName,
+                    'No se indicó una sede válida. Agrega al final "- Sede" (por ejemplo, "- Maicao").'
+                );
 
-            if ($isSuperadmin && ! $detectedCampus) {
-                $detectedCampus = $campusResolver->resolveMentioned($rawName, $campuses)
-                    ?? $campuses->first(fn (Campus $campus) => mb_strtolower($campus->name, 'UTF-8') === 'riohacha');
-
-                if (! $detectedCampus) {
-                    $skippedRows[] = $this->skippedRow($rawName, 'No existe la sede predeterminada Riohacha.');
-
-                    continue;
-                }
+                continue;
             }
+
+            $detectedCampus = $suffixCampus;
 
             if (! $isSuperadmin && $detectedCampus && $detectedCampus->id !== $fixedCampusId) {
                 $skippedRows[] = $this->skippedRow(
@@ -243,12 +245,11 @@ class DependencyController extends Controller
             }
 
             $targetCampusId = $isSuperadmin ? $detectedCampus->id : $fixedCampusId;
-
-            $nameForStorage = $suffixCampus
-                ? $campusResolver->withoutSuffix($rawName)
-                : $rawName;
-            $normalized = self::normalizeName($nameForStorage);
-            $nameKey = $targetCampusId.'|'.self::comparisonKey($normalized);
+            $normalized = self::normalizeName($campusResolver->withoutSuffix($rawName))
+                .' - '.$detectedCampus->name;
+            $nameKey = $targetCampusId.'|'.self::comparisonKey(
+                $campusResolver->withoutSuffix($rawName)
+            );
 
             if (isset($existingSet[$nameKey])) {
                 $skippedRows[] = $this->skippedRow($rawName, 'Dependencia duplicada o ya existente.');

@@ -10,11 +10,14 @@ class CampusSeeder extends Seeder
     public function run(): void
     {
         $campuses = [
+            'Albania',
             'Maicao',
             'Riohacha',
             'Fonseca',
             'Villanueva',
             'Manaure',
+            'Monteria',
+            'Uribia',
         ];
 
         foreach ($campuses as $name) {

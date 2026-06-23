@@ -119,13 +119,67 @@ class ParticipantStagingImportTest extends TestCase
         $this->assertSame($program->id, $batch->stagedParticipants()->firstOrFail()->roles[0]['program_id']);
     }
 
+    public function test_import_reconoce_programa_historico_sin_sufijo_cuando_el_excel_indica_la_sede(): void
+    {
+        $campus = Campus::create(['name' => 'Riohacha']);
+        $admin = User::factory()->create(['role' => 'admin', 'campus_id' => $campus->id]);
+        ParticipantType::firstOrCreate(['name' => 'Estudiante']);
+        $program = Program::create([
+            'name' => 'Licenciatura en música',
+            'program_type' => 'Pregrado',
+            'campus_id' => $campus->id,
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('participants-import.import'), [
+                'excel_file' => $this->csv([
+                    '5002,Abel,Medina,Estudiante,abel@u.co,LICENCIATURA EN MÚSICA - RIOHACHA,Pregrado,',
+                ]),
+            ])
+            ->assertRedirect();
+
+        $batch = ImportBatch::latest()->firstOrFail();
+        $this->assertSame(1, $batch->new_count);
+        $this->assertSame($program->id, $batch->stagedParticipants()->firstOrFail()->roles[0]['program_id']);
+    }
+
+    public function test_superadmin_usa_el_sufijo_del_programa_para_resolver_su_sede(): void
+    {
+        $maicao = Campus::create(['name' => 'Maicao']);
+        $riohacha = Campus::create(['name' => 'Riohacha']);
+        $superadmin = User::factory()->create(['role' => 'superadmin', 'campus_id' => null]);
+        ParticipantType::firstOrCreate(['name' => 'Estudiante']);
+        Program::create([
+            'name' => 'Licenciatura en música',
+            'program_type' => 'Pregrado',
+            'campus_id' => $maicao->id,
+        ]);
+        $riohachaProgram = Program::create([
+            'name' => 'Licenciatura en música',
+            'program_type' => 'Pregrado',
+            'campus_id' => $riohacha->id,
+        ]);
+
+        $this->actingAs($superadmin)
+            ->post(route('participants-import.import'), [
+                'excel_file' => $this->csv([
+                    '5003,Abel,Medina,Estudiante,abel.rio@u.co,LICENCIATURA EN MÚSICA - RIOHACHA,Pregrado,',
+                ]),
+            ])
+            ->assertRedirect();
+
+        $batch = ImportBatch::latest()->firstOrFail();
+        $this->assertSame(1, $batch->new_count);
+        $this->assertSame($riohachaProgram->id, $batch->stagedParticipants()->firstOrFail()->roles[0]['program_id']);
+    }
+
     public function test_import_reconoce_dependencia_con_sufijo_de_sede_en_el_excel(): void
     {
         $campus = Campus::create(['name' => 'Maicao']);
         $admin = User::factory()->create(['role' => 'admin', 'campus_id' => $campus->id]);
         ParticipantType::firstOrCreate(['name' => 'Administrativo']);
         $dependency = Dependency::create([
-            'name' => 'Coordinacion seguridad y salud en el trabajo',
+            'name' => 'Coordinacion seguridad y salud en el trabajo - Maicao',
             'campus_id' => $campus->id,
         ]);
 

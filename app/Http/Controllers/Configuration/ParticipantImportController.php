@@ -160,11 +160,12 @@ class ParticipantImportController extends Controller
                 continue;
             }
 
-            $k = $this->programLookupKey($p->name);
-            if (! isset($programByCampusAndNameHash[$p->campus_id][$k])) {
-                $programByCampusAndNameHash[$p->campus_id][$k] = $p->id;
+            foreach ($this->programLookupKeys($p->name, (int) $p->campus_id, $campusByNameHash) as $key) {
+                if (! isset($programByCampusAndNameHash[$p->campus_id][$key])) {
+                    $programByCampusAndNameHash[$p->campus_id][$key] = $p->id;
+                }
+                $programIdsByNameHash[$key][$p->id] = true;
             }
-            $programIdsByNameHash[$k][$p->id] = true;
             if ($p->academicProgram && ! isset($programByCampusAndNameHash[$p->campus_id][ProgramController::comparisonKey($p->academicProgram->name)])) {
                 $programByCampusAndNameHash[$p->campus_id][ProgramController::comparisonKey($p->academicProgram->name)] = $p->id;
             }
@@ -178,9 +179,15 @@ class ParticipantImportController extends Controller
         $dependencyIdsByNameHash = [];
         foreach (Dependency::all(['id', 'name', 'campus_id']) as $d) {
             if ($d->campus_id) {
-                $key = ProgramController::comparisonKey($d->name);
-                $dependencyByCampusAndNameHash[$d->campus_id][$key] = $d->id;
-                $dependencyIdsByNameHash[$key][$d->id] = true;
+                $keys = array_unique([
+                    ProgramController::comparisonKey($d->name),
+                    $this->dependencyLookupKey($d->name, (int) $d->campus_id, $campusByNameHash),
+                ]);
+
+                foreach ($keys as $key) {
+                    $dependencyByCampusAndNameHash[$d->campus_id][$key] = $d->id;
+                    $dependencyIdsByNameHash[$key][$d->id] = true;
+                }
             }
         }
 
@@ -385,19 +392,33 @@ class ParticipantImportController extends Controller
                 }
             } elseif ($programName !== '') {
                 $rawProgramName = $programName;
-                $nameKey = $this->programLookupKey($rawProgramName);
+                $programCampusId = $rowCampusId
+                    ?? $this->campusIdFromNameSuffix($rawProgramName, $campusByNameHash);
+                $programKeys = $this->programLookupKeys($rawProgramName, $programCampusId, $campusByNameHash);
+                $nameKey = $programKeys[0];
 
                 if ($isProgramType) {
-                    if ($rowCampusId) {
-                        $programsForCampus = $programByCampusAndNameHash[$rowCampusId] ?? [];
-                        $programId = $programsForCampus[$nameKey]
-                            ?? $this->findClosestProgramId($rawProgramName, $programsForCampus);
+                    if ($programCampusId) {
+                        $programsForCampus = $programByCampusAndNameHash[$programCampusId] ?? [];
+                        foreach ($programKeys as $key) {
+                            $programId = $programsForCampus[$key] ?? null;
+                            if ($programId) {
+                                break;
+                            }
+                        }
+                        $programId ??= $this->findClosestProgramId($rawProgramName, $programsForCampus);
                     } else {
-                        $programId = $this->uniqueCatalogId($programIdsByNameHash[$nameKey] ?? []);
+                        $candidateProgramIds = [];
+                        foreach ($programKeys as $key) {
+                            $candidateProgramIds += $programIdsByNameHash[$key] ?? [];
+                        }
+                        $programId = $this->uniqueCatalogId($candidateProgramIds);
                     }
 
                     if (! $programId) {
-                        $reason = ! $rowCampusId && isset($programIdsByNameHash[$nameKey])
+                        $hasProgramCandidate = collect($programKeys)
+                            ->contains(fn (string $key) => isset($programIdsByNameHash[$key]));
+                        $reason = ! $rowCampusId && $hasProgramCandidate
                             ? "No se ha indicado la sede en el Excel para el programa: \"{$rawProgramName}\". Debes poner al final \"- Sede\"."
                             : "Programa no encontrado: \"{$rawProgramName}\"";
 
@@ -1183,6 +1204,41 @@ class ParticipantImportController extends Controller
         $normalizedSeparator = preg_replace('/\s*-\s*/u', ' - ', trim($programName)) ?? $programName;
 
         return ProgramController::comparisonKey($normalizedSeparator);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function programLookupKeys(string $programName, ?int $campusId, array $campusByNameHash): array
+    {
+        $keys = [$this->programLookupKey($programName)];
+
+        if (! preg_match('/\s*-\s*([^-]+)\s*$/u', trim($programName), $matches)) {
+            return $keys;
+        }
+
+        $suffixCampusId = $campusByNameHash[ProgramController::comparisonKey($matches[1])] ?? null;
+        if (! $suffixCampusId || ($campusId !== null && (int) $suffixCampusId !== $campusId)) {
+            return $keys;
+        }
+
+        $withoutCampusSuffix = preg_replace('/\s*-\s*[^-]+\s*$/u', '', trim($programName));
+        if ($withoutCampusSuffix !== null && $withoutCampusSuffix !== '') {
+            $keys[] = $this->programLookupKey($withoutCampusSuffix);
+        }
+
+        return array_values(array_unique($keys));
+    }
+
+    private function campusIdFromNameSuffix(string $name, array $campusByNameHash): ?int
+    {
+        if (! preg_match('/\s*-\s*([^-]+)\s*$/u', trim($name), $matches)) {
+            return null;
+        }
+
+        $campusId = $campusByNameHash[ProgramController::comparisonKey($matches[1])] ?? null;
+
+        return $campusId ? (int) $campusId : null;
     }
 
     private function dependencyLookupKey(string $dependencyName, ?int $rowCampusId, array $campusByNameHash): string

@@ -29,10 +29,10 @@ class ProgramImportTest extends TestCase
 
         $csv = implode("\n", [
             'Nombre,Tipo',
-            'Ingenieria de sistemas,Pregrado',
+            'Ingenieria de sistemas - Maicao,Pregrado',
             ',Posgrado',
             'INGENIERIA DE SISTEMAS,Pregrado',
-            'Matematicas,Posgrado',
+            'Matematicas - Maicao,Posgrado',
         ]);
 
         $file = UploadedFile::fake()->createWithContent('programas.csv', $csv);
@@ -83,7 +83,7 @@ class ProgramImportTest extends TestCase
         $this->assertStringContainsString('.xlsx', $contentDisposition);
     }
 
-    public function test_superadmin_asigna_ubicaciones_externas_a_riohacha_como_sede_responsable(): void
+    public function test_superadmin_omite_programas_sin_sufijo_de_sede_valido(): void
     {
         $maicao = Campus::create(['name' => 'Maicao']);
         $riohacha = Campus::create(['name' => 'Riohacha']);
@@ -98,14 +98,15 @@ class ProgramImportTest extends TestCase
         $this->actingAs($superadmin)
             ->post(route('programs.import'), ['excel_file' => $file])
             ->assertRedirect(route('programs.index'))
-            ->assertSessionHas('import_result', ['created' => 3, 'skipped' => 0]);
+            ->assertSessionHas('import_result', ['created' => 2, 'skipped' => 1])
+            ->assertSessionHas('programs_import_skipped', function (array $rows) {
+                return str_contains($rows[0]['_motivo'], 'Agrega al final "- Sede"');
+            });
 
         $this->assertDatabaseHas('programs', ['name' => 'Ingenieria de sistemas - Maicao', 'campus_id' => $maicao->id]);
         $this->assertDatabaseHas('programs', ['name' => 'Derecho - Riohacha', 'campus_id' => $riohacha->id]);
-        $this->assertDatabaseHas('programs', [
+        $this->assertDatabaseMissing('programs', [
             'name' => 'Licenciatura en etnoeducacion - Convenio Jorge Artel',
-            'campus_id' => $riohacha->id,
-            'offer_location' => 'Convenio Jorge Artel',
         ]);
     }
 

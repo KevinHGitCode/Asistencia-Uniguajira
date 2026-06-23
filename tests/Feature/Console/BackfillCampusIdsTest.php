@@ -14,7 +14,7 @@ class BackfillCampusIdsTest extends TestCase
 
     public function test_el_backfill_no_asigna_sede_a_superadministradores(): void
     {
-        foreach (['Maicao', 'Riohacha', 'Fonseca', 'Villanueva', 'Manaure'] as $name) {
+        foreach (['Albania', 'Maicao', 'Riohacha', 'Fonseca', 'Villanueva', 'Manaure', 'Monteria', 'Uribia'] as $name) {
             Campus::create(['name' => $name]);
         }
 
@@ -35,7 +35,7 @@ class BackfillCampusIdsTest extends TestCase
 
     public function test_el_backfill_reconoce_manaure_desde_el_nombre_historico(): void
     {
-        foreach (['Maicao', 'Riohacha', 'Fonseca', 'Villanueva', 'Manaure'] as $name) {
+        foreach (['Albania', 'Maicao', 'Riohacha', 'Fonseca', 'Villanueva', 'Manaure', 'Monteria', 'Uribia'] as $name) {
             Campus::create(['name' => $name]);
         }
 
