@@ -114,11 +114,13 @@ class UserController extends Controller
         $authUser = request()->user();
         $user = $this->findManageableUser($authUser, $id)->load(['dependencies']);
 
+        // Colecciones completas (no paginadas) para que el buscador del contenedor
+        // <x-events.group> filtre sobre todo el conjunto, no solo una página (ADR-0012).
         $events = $user->events()
             ->with(['dependency', 'area', 'user'])
             ->orderBy('date', 'desc')
             ->orderBy('created_at', 'desc')
-            ->paginate(6);
+            ->get();
 
         $dependencyEvents = [];
 
@@ -130,7 +132,7 @@ class UserController extends Controller
                     ->where('user_id', '!=', $user->id)
                     ->orderBy('date', 'desc')
                     ->orderBy('created_at', 'desc')
-                    ->paginate(6, ['*'], 'page_'.$dependency->id),
+                    ->get(),
             ];
         }
 
