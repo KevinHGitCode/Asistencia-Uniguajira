@@ -11,7 +11,7 @@
     "name": "index"
   },
   "resources/css/app.css": {
-    "file": "assets/app-DnILfgOf.css",
+    "file": "assets/app-x-jV966A.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "names": [
@@ -28,7 +28,7 @@
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-BA33xRv3.js",
+    "file": "assets/app-DmU4VOQA.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
@@ -91,7 +91,7 @@
     "isEntry": true
   },
   "resources/js/statistics/index.jsx": {
-    "file": "assets/index-C91lAbZJ.js",
+    "file": "assets/index-Dg08jpls.js",
     "name": "index",
     "src": "resources/js/statistics/index.jsx",
     "isEntry": true,
@@ -99,5 +99,11 @@
       "_index-BwNU8OnE.js",
       "_ProgramParticipantsPie-DlmX1T2O.js"
     ]
+  },
+  "resources/js/users/users-create.js": {
+    "file": "assets/users-create-CLVaqZWI.js",
+    "name": "users-create",
+    "src": "resources/js/users/users-create.js",
+    "isEntry": true
   }
 }

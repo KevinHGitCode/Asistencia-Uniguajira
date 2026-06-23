@@ -110,150 +110,40 @@
         </div>
     </div>
 
-    {{-- Contenedor de eventos propios --}}
-    <div class="mt-6 relative flex w-full flex-1 flex-col gap-4 p-6 rounded-2xl border border-neutral-200 dark:border-neutral-700 bg-zinc-50 dark:bg-zinc-900">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
-                <svg class="inline-block w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    {{-- Eventos propios del usuario --}}
+    <div class="mt-6">
+        <x-events.group
+            :events="$events"
+            title="Eventos propios"
+            empty="No hay eventos creados"
+            :empty-hint="$user->name.' aún no ha creado ningún evento.'"
+            from="usuario"
+            :user-id="$user->id">
+            <x-slot:icon>
+                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
                 </svg>
-                Eventos propios
-            </h2>
-            <span class="px-3 py-1 text-sm font-medium bg-[#e2a542] text-white rounded-2xl">
-                {{ $events->count() }} {{ $events->count() === 1 ? 'evento' : 'eventos' }}
-            </span>
-        </div>
-
-        @if ($events->total()==0)
-            <div class="text-center py-8 text-gray-500 dark:text-gray-400">
-                <svg class="mx-auto h-12 w-12 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                <p class="text-lg font-medium">No hay eventos creados</p>
-                <p class="text-sm mt-1">{{ $user->name }} aún no ha creado ningún evento.</p>
-            </div>
-        @else
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                @foreach ($events as $event)
-                    <a href="{{ route('events.show', [$event->id, 'from' => 'usuario', 'user_id' => $user->id]) }}"
-                    class="block p-4 rounded-2xl border border-neutral-200 dark:border-neutral-600 hover:border-[#e2a542] hover:shadow-lg transition-all duration-200 bg-white dark:bg-zinc-800">
-                        <div class="flex items-start justify-between mb-2">
-                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white line-clamp-1">
-                                {{ $event->title }}
-                            </h3>
-                        </div>
-                        
-                        <div class="space-y-2 text-sm text-gray-600 dark:text-gray-300">
-                            <div class="flex items-center">
-                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                                <span>{{ \Carbon\Carbon::parse($event->date)->format('d/m/Y') }}</span>
-                            </div>
-                            
-                            @if($event->start_time)
-                                <div class="flex items-center">
-                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    <span>{{ \Carbon\Carbon::parse($event->start_time)->format('h:i A') }}</span>
-                                </div>
-                            @endif
-                            
-                            @if($event->location)
-                                <div class="flex items-center">
-                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    </svg>
-                                    <span class="line-clamp-1">{{ $event->location }}</span>
-                                </div>
-                            @endif
-                        </div>
-
-                        @if($event->dependency)
-                            <div class="flex items-center text-xs mt-2">
-                                <span class="px-2 py-1 bg-[#cc5e50] text-white rounded">
-                                    {{ $event->dependency->name }}
-                                </span>
-
-                                {{-- Área (deshabilitado temporalmente)
-                                @if($event->area)
-                                    <span class="ml-2 px-2 py-1 bg-[#62a9b6] text-white rounded">
-                                        {{ $event->area->name }}
-                                    </span>
-                                @endif
-                                --}}
-                            </div>
-                        @endif
-                        
-                        @if($event->description)
-                            <p class="mt-3 text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
-                                {{ $event->description }}
-                            </p>
-                        @endif
-                    </a>
-                @endforeach
-            </div>
-            {{ $events->links() }}
-        @endif
+            </x-slot:icon>
+        </x-events.group>
     </div>
 
-    {{-- Contenedor de eventos de la dependencia --}}
+    {{-- Eventos de las dependencias del usuario --}}
     @foreach($dependencyEvents as $group)
-
-        <div class="mt-6 relative flex w-full flex-1 flex-col gap-4 p-6 rounded-2xl border border-neutral-200 dark:border-neutral-700 bg-zinc-50 dark:bg-zinc-900">
-            
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-2xl font-bold">
-                    Eventos de {{ $group['dependency']->name }}
-                </h2>
-
-                <span class="px-3 py-1 text-sm font-medium bg-[#e2a542] text-white rounded-2xl">
-                    {{ $group['events']->total() }}
-                    {{ $group['events']->total() === 1 ? 'evento' : 'eventos' }}
-                </span>
-            </div>
-
-            @if ($group['events']->total() === 0)
-
-                <div class="text-center py-8 text-gray-500 dark:text-gray-400">
-                    No hay eventos en esta dependencia.
-                </div>
-
-            @else
-
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    @foreach ($group['events'] as $event)
-
-                        <a href="{{ route('events.show', [$event->id, 'from' => 'usuario', 'user_id' => $user->id]) }}"
-                        class="block p-4 rounded-2xl border border-neutral-200 dark:border-neutral-600 hover:border-[#e2a542] hover:shadow-lg transition-all duration-200 bg-white dark:bg-zinc-800">
-                            
-                            <h3 class="text-lg font-semibold mb-2">
-                                {{ $event->title }}
-                            </h3>
-
-                            <div class="text-sm text-gray-600 dark:text-gray-300">
-                                {{ \Carbon\Carbon::parse($event->date)->format('d/m/Y') }}
-                            </div>
-
-                            <div class="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                                Creado por: {{ $event->user->name }}
-                            </div>
-
-                        </a>
-
-                    @endforeach
-                </div>
-
-                <div class="mt-4">
-                    {{ $group['events']->links() }}
-                </div>
-
-            @endif
-
+        <div class="mt-6">
+            <x-events.group
+                :events="$group['events']"
+                :title="'Eventos de '.$group['dependency']->name"
+                empty="No hay eventos en esta dependencia."
+                from="usuario"
+                :user-id="$user->id"
+                :show-creator="true">
+                <x-slot:icon>
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                    </svg>
+                </x-slot:icon>
+            </x-events.group>
         </div>
-
     @endforeach
 
     {{-- Quita todo el div de los botones y modales, solo deja esto --}}

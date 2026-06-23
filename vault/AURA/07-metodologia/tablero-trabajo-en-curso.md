@@ -23,6 +23,7 @@ que dos personas/IAs choquen, sobre todo en cambios 🔴 que tocan el esquema.
 | Paleta de comandos admin · MVP (ADR-0007) | equipo | `feat/paleta-comandos-admin` | 🟢 | 2026-06-21 |
 | Formularios de usuario a modal centrado (ADR-0006) | equipo | `refactor/formularios-modal-centrado` | 🟢 | 2026-06-21 |
 | Retirar rutas API de prueba sin auth (ADR-0014) | equipo | `fix/retirar-rutas-api-de-prueba` | 🔴 | 2026-06-21 |
+| Contenedor de eventos con búsqueda (ADR-0012) | equipo | `feat/eventos-busqueda-filtros` | 🟢 | 2026-06-21 |
 
 ## 🟨 En revisión (PR abierto)
 | Tarea | Responsable | Rama | PR |

@@ -15,6 +15,7 @@ export default defineConfig({
                 'resources/js/statistics/index.jsx',
                 'resources/js/events/index.jsx',
                 'resources/js/events/show.js',
+                'resources/js/users/users-create.js',
                 'resources/js/administration/formats/pdf-mapper.jsx',
             ],
             refresh: true,
