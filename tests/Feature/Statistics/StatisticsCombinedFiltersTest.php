@@ -89,6 +89,97 @@ class StatisticsCombinedFiltersTest extends TestCase
             ->assertJsonMissingPath('dependencies.'.$otherDependency->id);
     }
 
+    public function test_superadmin_filtra_usuarios_por_sede_seleccionada(): void
+    {
+        [$maicao, $riohacha] = $this->campuses();
+        $superadmin = User::factory()->create(['role' => User::ROLE_SUPERADMIN, 'campus_id' => null]);
+        $otherSuperadmin = User::factory()->create(['name' => 'Super Admin', 'role' => User::ROLE_SUPERADMIN, 'campus_id' => null]);
+        $maicaoUser = User::factory()->create(['name' => 'Usuario Maicao', 'role' => User::ROLE_ADMIN, 'campus_id' => $maicao->id]);
+        $riohachaUser = User::factory()->create(['name' => 'Usuario Riohacha', 'role' => User::ROLE_ADMIN, 'campus_id' => $riohacha->id]);
+
+        Event::factory()->create(['user_id' => $maicaoUser->id, 'campus_id' => $maicao->id]);
+        Event::factory()->create(['user_id' => $riohachaUser->id, 'campus_id' => $riohacha->id]);
+        Event::factory()->create(['user_id' => $otherSuperadmin->id, 'campus_id' => $riohacha->id]);
+
+        $this->actingAs($superadmin)
+            ->getJson('/api/statistics/filter-options?campusIds[]='.$maicao->id)
+            ->assertOk()
+            ->assertJsonPath('showCampuses', true)
+            ->assertJsonPath('users.'.$maicaoUser->id, 'Usuario Maicao')
+            ->assertJsonMissingPath('users.'.$riohachaUser->id)
+            ->assertJsonMissingPath('users.'.$otherSuperadmin->id);
+
+        $this->actingAs($superadmin)
+            ->getJson('/api/statistics/filter-options?campusIds[]='.$maicao->id.'&includeSuperadmins=1')
+            ->assertOk()
+            ->assertJsonPath('users.'.$maicaoUser->id, 'Usuario Maicao')
+            ->assertJsonPath('users.'.$superadmin->id, $superadmin->name)
+            ->assertJsonPath('users.'.$otherSuperadmin->id, 'Super Admin')
+            ->assertJsonMissingPath('users.'.$riohachaUser->id);
+
+        $this->actingAs($superadmin)
+            ->getJson('/api/statistics/filter-options?campusIds[]='.$maicao->id.'&userIds[]='.$riohachaUser->id)
+            ->assertOk()
+            ->assertJsonPath('users.'.$maicaoUser->id, 'Usuario Maicao')
+            ->assertJsonPath('users.'.$riohachaUser->id, 'Usuario Riohacha');
+
+        $response = $this->actingAs($superadmin)
+            ->getJson('/api/statistics/total-events?campusIds[]='.$maicao->id.'&userIds[]='.$maicaoUser->id)
+            ->assertOk();
+        $this->assertSame(1, $response->json());
+
+        $response = $this->actingAs($superadmin)
+            ->getJson('/api/statistics/total-events?campusIds[]='.$maicao->id.'&userIds[]='.$riohachaUser->id)
+            ->assertOk();
+        $this->assertSame(1, $response->json());
+
+        $response = $this->actingAs($superadmin)
+            ->getJson('/api/statistics/total-events?campusIds[]='.$riohacha->id.'&userIds[]='.$otherSuperadmin->id)
+            ->assertOk();
+        $this->assertSame(0, $response->json());
+
+        $response = $this->actingAs($superadmin)
+            ->getJson('/api/statistics/total-events?campusIds[]='.$riohacha->id.'&includeSuperadmins=1&userIds[]='.$otherSuperadmin->id)
+            ->assertOk();
+        $this->assertSame(1, $response->json());
+    }
+
+    public function test_admin_filtra_solo_usuarios_de_su_sede(): void
+    {
+        [$maicao, $riohacha] = $this->campuses();
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN, 'campus_id' => $maicao->id]);
+        $superadmin = User::factory()->create(['role' => User::ROLE_SUPERADMIN, 'campus_id' => null]);
+        $maicaoUser = User::factory()->create(['name' => 'Usuario Maicao', 'role' => User::ROLE_USER, 'campus_id' => $maicao->id]);
+        $riohachaUser = User::factory()->create(['name' => 'Usuario Riohacha', 'role' => User::ROLE_USER, 'campus_id' => $riohacha->id]);
+
+        Event::factory()->create(['user_id' => $maicaoUser->id, 'campus_id' => $maicao->id]);
+        Event::factory()->create(['user_id' => $riohachaUser->id, 'campus_id' => $riohacha->id]);
+
+        $this->actingAs($admin)
+            ->getJson('/api/statistics/filter-options')
+            ->assertOk()
+            ->assertJsonPath('showCampuses', false)
+            ->assertJsonPath('users.'.$admin->id, $admin->name)
+            ->assertJsonPath('users.'.$maicaoUser->id, 'Usuario Maicao')
+            ->assertJsonMissingPath('users.'.$riohachaUser->id);
+
+        $this->actingAs($admin)
+            ->getJson('/api/statistics/filter-options?includeSuperadmins=1')
+            ->assertOk()
+            ->assertJsonMissingPath('users.'.$superadmin->id)
+            ->assertJsonMissingPath('users.'.$riohachaUser->id);
+
+        $response = $this->actingAs($admin)
+            ->getJson('/api/statistics/total-events?userIds[]='.$maicaoUser->id)
+            ->assertOk();
+        $this->assertSame(1, $response->json());
+
+        $response = $this->actingAs($admin)
+            ->getJson('/api/statistics/total-events?userIds[]='.$riohachaUser->id)
+            ->assertOk();
+        $this->assertSame(0, $response->json());
+    }
+
     private function campuses(): array
     {
         return [

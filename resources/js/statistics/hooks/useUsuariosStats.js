@@ -2,7 +2,13 @@ import { useState, useCallback, useRef } from 'react';
 import { buildStatisticsQuery } from '../utils/query.js';
 
 function buildQS(filters) {
-  return buildStatisticsQuery(filters);
+  return buildStatisticsQuery({
+    ...filters,
+    campusIds: [],
+    dependencyIds: [],
+    allCampuses: true,
+    onlyOwnEvents: false,
+  });
 }
 
 const EMPTY = {

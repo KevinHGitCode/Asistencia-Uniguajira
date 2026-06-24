@@ -20,8 +20,10 @@ export function defaultFilters() {
     dateTo: today(),
     campusIds: [],
     dependencyIds: [],
+    userIds: [],
     allCampuses: false,
     onlyOwnEvents: false,
+    includeSuperadmins: false,
   };
 }
 

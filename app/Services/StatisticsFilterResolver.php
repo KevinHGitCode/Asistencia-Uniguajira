@@ -30,6 +30,8 @@ class StatisticsFilterResolver
             'hasDependencyFilter' => $request->has('dependencyIds'),
             'onlyOwnEvents' => $request->boolean('onlyOwnEvents'),
             'userIds' => $toIntArray($request->input('userIds')),
+            'hasUserFilter' => $request->has('userIds'),
+            'includeSuperadmins' => $request->boolean('includeSuperadmins'),
             'eventIds' => $toIntArray($request->input('eventIds')),
         ];
     }
@@ -47,9 +49,20 @@ class StatisticsFilterResolver
             $filters['dependencyIds'] ?? [],
             $allowedDependencyIds
         ));
+        $selectedUserIds = array_values(array_intersect(
+            $filters['userIds'] ?? [],
+            $this->allowedUsers($user, [], $filters['includeSuperadmins'] ?? false)
+        ));
+        $selectedUserCampusIds = $this->campusIdsForUsers($selectedUserIds);
 
         $filters['campusIds'] = $campusIds;
+        if ($selectedUserCampusIds !== [] && ! ($filters['allCampuses'] ?? false)) {
+            $filters['campusIds'] = array_values(array_unique(array_merge($filters['campusIds'], $selectedUserCampusIds)));
+        }
         $filters['dependencyIds'] = $selectedDependencyIds;
+        $filters['userIds'] = ($filters['hasUserFilter'] ?? false) && $selectedUserIds === []
+            ? [-1]
+            : $selectedUserIds;
         $filters['actorUserId'] = $user->id;
 
         if ($user->hasAdminAccess()) {
@@ -109,15 +122,30 @@ class StatisticsFilterResolver
         if (($filters['dependencyIds'] ?? []) !== []) {
             $query->whereIn('events.dependency_id', $filters['dependencyIds']);
         }
+        if (($filters['userIds'] ?? []) !== []) {
+            $query->whereIn('events.user_id', $filters['userIds']);
+        }
         if (! empty($filters['onlyOwnEvents']) && ! empty($filters['actorUserId'])) {
             $query->where('events.user_id', $filters['actorUserId']);
         }
     }
 
-    /** @return array{role: string, showCampuses: bool, campusIds: int[], campuses: array<int, string>, dependencies: array<int, string>} */
+    /** @return array{role: string, showCampuses: bool, campusIds: int[], campuses: array<int, string>, dependencies: array<int, string>, users: array<int, string>, superadminIds: int[]} */
     public function options(array $filters, User $user): array
     {
         $campusIds = $this->resolvedCampusIds($filters, $user);
+        $includeSuperadmins = $filters['includeSuperadmins'] ?? false;
+        $selectedUserIds = array_values(array_intersect(
+            $filters['userIds'] ?? [],
+            $this->allowedUsers($user, [], $includeSuperadmins)
+        ));
+        $optionUserIds = array_values(array_unique(array_merge(
+            $this->allowedUsers($user, $campusIds, $includeSuperadmins),
+            $selectedUserIds
+        )));
+        $superadminIds = $user->isSuperadmin()
+            ? User::where('role', User::ROLE_SUPERADMIN)->pluck('id')->map(fn ($id) => (int) $id)->all()
+            : [];
         $dependencies = Dependency::query()
             ->whereIn('id', $this->allowedDependencies($user, $campusIds))
             ->orderBy('name')
@@ -129,10 +157,18 @@ class StatisticsFilterResolver
             'role' => $user->role,
             'showCampuses' => $user->isSuperadmin(),
             'campusIds' => $campusIds,
+            'includeSuperadmins' => $includeSuperadmins,
             'campuses' => $user->isSuperadmin()
                 ? Campus::orderBy('name')->pluck('name', 'id')->mapWithKeys(fn ($name, $id) => [(int) $id => $name])->all()
                 : [],
             'dependencies' => $dependencies,
+            'users' => User::query()
+                ->whereIn('id', $optionUserIds)
+                ->orderBy('name')
+                ->pluck('name', 'id')
+                ->mapWithKeys(fn ($name, $id) => [(int) $id => $name])
+                ->all(),
+            'superadminIds' => $superadminIds,
         ];
     }
 
@@ -174,6 +210,50 @@ class StatisticsFilterResolver
             ->when($campusIds !== [], fn ($query) => $query->whereIn('campus_id', $campusIds))
             ->pluck('id')
             ->map(fn ($id) => (int) $id)
+            ->all();
+    }
+
+    /** @return int[] */
+    private function allowedUsers(User $user, array $campusIds, bool $includeSuperadmins = false): array
+    {
+        if (! $user->hasAdminAccess()) {
+            return [$user->id];
+        }
+
+        return User::query()
+            ->when(
+                ! ($user->isSuperadmin() && $includeSuperadmins),
+                fn ($query) => $query->whereNot('role', User::ROLE_SUPERADMIN)
+            )
+            ->when($campusIds !== [], function ($query) use ($campusIds, $includeSuperadmins, $user): void {
+                $query->where(function ($scoped) use ($campusIds, $includeSuperadmins, $user): void {
+                    $scoped->whereIn('campus_id', $campusIds);
+
+                    if ($user->isSuperadmin() && $includeSuperadmins) {
+                        $scoped->orWhere('role', User::ROLE_SUPERADMIN);
+                    }
+                });
+            })
+            ->when($user->isAdmin(), fn ($query) => $query->where('campus_id', $user->campus_id))
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+    }
+
+    /** @return int[] */
+    private function campusIdsForUsers(array $userIds): array
+    {
+        if ($userIds === []) {
+            return [];
+        }
+
+        return User::query()
+            ->whereIn('id', $userIds)
+            ->whereNotNull('campus_id')
+            ->pluck('campus_id')
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
             ->all();
     }
 

@@ -5,7 +5,7 @@ import { useUsuariosStats } from './hooks/useUsuariosStats.js';
 import { useFilters }       from './hooks/useFilters.js';
 import { useCampusRefresh } from './hooks/useCampusRefresh.js';
 
-import { FiltersPanel }     from './components/FiltersPanel.jsx';
+import { UsersFiltersPanel } from './components/UsersFiltersPanel.jsx';
 import { ChartCard }        from './components/ChartCard.jsx';
 
 import { TopHorizontalBar }  from './charts/TopHorizontalBar.jsx';
@@ -60,7 +60,7 @@ export default function UsuariosApp() {
   return (
     <div>
       {/* ── Filtros ── */}
-      <FiltersPanel
+      <UsersFiltersPanel
         filters={filters}
         onUpdate={updateFilter}
         onClear={clearFilter}
