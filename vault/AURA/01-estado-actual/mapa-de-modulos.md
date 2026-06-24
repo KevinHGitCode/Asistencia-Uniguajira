@@ -18,7 +18,6 @@ Leyenda: ✅ funcional · 🟡 parcial / con deuda · 🧟 legacy vivo pero sin 
 | Dashboard + calendario | ✅ | `DashboardController`, `routes/api.php` (`eventos-json`, `events/{date}`, `mis-eventos-json`) | Ya respeta sede con `CampusScopeService`; superadmin puede seleccionar sede activa |
 | Eventos (CRUD) | ✅ | `EventController`, `CreateEventWizard`, `EditEventModal`, `EventService` | Listado, creacion, detalle privado, edicion, terminar y eliminacion ya respetan sede |
 | Registro publico de asistencia (QR) | ✅ | `AttendanceRegistration` (Livewire), vista `events/access` | Flujo publico; no filtrar por sede directamente. Ver [[registro-de-asistencia]] |
-| Registro de asistencia (controlador) | 🧟 | `AttendanceController::store` + `confirmation`, vista `events/confirmation`, ruta `attendance.store` | Legacy vivo. No romper rutas publicas |
 | PDF de asistencia | ✅ | `EventController::descargarAsistencia`, `AttendancePdfService`, FPDI | Generacion sin cambios; descarga privada valida sede |
 | Formatos (plantillas PDF + mapper) | ✅ | `FormatController`, `config/attendance_formats.php` | Global; no filtrar `formats` directamente |
 | Administracion | 🟡 | `app/Http/Controllers/Configuration/*`, `app/Livewire/Administration/*` | Patron 2 pestanas + Excel + paginacion; dependencias y programas ya tienen sede, falta revisar entidades restantes |

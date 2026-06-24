@@ -35,8 +35,8 @@ más usado del sistema. Ver [[registro-de-asistencia]].
 
 ## Notas técnicas
 - Anti-duplicado atómico (transacción + índice único). Detalle en [[registro-de-asistencia]].
-- ⚠️ Existe un flujo legacy paralelo en `AttendanceController` que **no** debe usarse
-  ([[adr-0003-retirar-flujo-legacy-de-asistencia]]).
+- El flujo legacy paralelo en `AttendanceController` fue **retirado** el 2026-06-24
+  ([[adr-0003-retirar-flujo-legacy-de-asistencia]]); el único registro es vía Livewire.
 
 ## Pruebas relacionadas
 Ver [[estrategia-de-pruebas]] (no hay aún test de feature específico de este componente —

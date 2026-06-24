@@ -37,6 +37,8 @@ que dos personas/IAs choquen, sobre todo en cambios 🔴 que tocan el esquema.
 | Contenedor de eventos con búsqueda · MVP (ADR-0012) | `feat/eventos-busqueda-filtros` | 2026-06-23 |
 | Breadcrumbs detalle de evento (ADR-0013) | `feat/breadcrumbs-evento` | 2026-06-23 |
 | Componente select buscable + uso en formatos | `feat/componente-select` | 2026-06-24 |
+| Retirar flujo legacy de asistencia (ADR-0003) | `refactor/retirar-asistencia-legacy` | 2026-06-24 |
+| Filtros estructurados en participantes (ADR-0011) | `feat/participantes-filtros` | 2026-06-24 |
 
 ## ⚠️ Avisos de serialización (🔴 activos)
 > Lista aquí los cambios de **esquema/rutas públicas** en vuelo para que nadie los solape.
@@ -50,6 +52,10 @@ que dos personas/IAs choquen, sobre todo en cambios 🔴 que tocan el esquema.
 - Retiro de rutas API de prueba (`fix/retirar-rutas-api-de-prueba`, ADR-0014): se **eliminaron** 12
   endpoints publicos sin auth de `routes/api.php` (`/api/events`, `/api/participants`, `/api/users`,
   `/api/programs`, `/api/dependencies`, etc.). Si los necesitabas, recrealos bajo `['web','auth']`.
+- Retiro de asistencia legacy (ADR-0003, 2026-06-24): se **eliminaron** las rutas publicas
+  `attendance.store` (POST) y `attendance.confirmation` (GET), el `AttendanceController` y la vista
+  `events/confirmation`. El registro publico unico es `events.access` + Livewire. Efecto colateral:
+  `throttle:attendance` quedo huerfano y el registro real no tiene rate limiting (ver ADR-0005).
 
 ---
 > Cambios de esquema = migraciones nuevas/alteradas. Mira el orden cronológico en

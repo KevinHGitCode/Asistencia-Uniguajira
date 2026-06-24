@@ -73,7 +73,7 @@
                 onclick="window.dispatchEvent(new CustomEvent('open-command-palette'))"
                 title="{{ __('Buscar (Ctrl/Cmd + K)') }}"
                 aria-label="{{ __('Buscar (Ctrl/Cmd + K)') }}"
-                class="mt-1.5 hidden w-full items-center justify-between gap-2 rounded-lg border border-neutral-200 bg-white px-2.5 py-1 text-gray-400 transition-colors hover:border-blue-400 hover:text-gray-600 lg:flex dark:border-zinc-700 dark:bg-zinc-800 dark:hover:text-gray-200"
+                class="mt-1 mb-1 hidden w-full items-center justify-between gap-2 rounded-lg border border-neutral-200 bg-white px-2.5 py-1 text-gray-400 transition-colors hover:border-blue-400 hover:text-gray-600 lg:flex dark:border-zinc-700 dark:bg-zinc-800 dark:hover:text-gray-200"
             >
                 <svg class="size-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.3-4.3M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z" />

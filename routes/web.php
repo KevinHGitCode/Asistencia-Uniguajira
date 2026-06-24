@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\Configuration\ActivityLogController;
 use App\Http\Controllers\Configuration\AdministrationController;
 use App\Http\Controllers\Configuration\AffiliationController;
@@ -73,24 +72,17 @@ Route::middleware(['auth', 'verified', 'role:admin,superadmin'])->group(function
 
 /**
  * ================================================================
- *  RUTAS DE REGISTRO Y CONFIRMACIÓN DE ASISTENCIA
+ *  RUTA PÚBLICA DE ACCESO AL EVENTO (registro de asistencia por QR)
  * ================================================================
+ *  El registro lo gestiona el componente Livewire AttendanceRegistration
+ *  montado en events/access.blade.php. El flujo legacy del
+ *  AttendanceController se retiró (ADR-0003).
  */
-
-// Ruta pública para mostrar confirmación de asistencia
-Route::get('/events/acceso/{slug}/confirmacion/{attendanceId}', [AttendanceController::class, 'confirmation'])
-    ->middleware('throttle:public')
-    ->name('attendance.confirmation');
 
 // Ruta pública para acceder al evento
 Route::get('/events/acceso/{slug}', [EventController::class, 'access'])
     ->middleware('throttle:public')
     ->name('events.access');
-
-// Ruta pública para registrar asistencia
-Route::post('/events/acceso/{slug}', [AttendanceController::class, 'store'])
-    ->middleware('throttle:attendance')
-    ->name('attendance.store');
 
 /**
  * ================================================================

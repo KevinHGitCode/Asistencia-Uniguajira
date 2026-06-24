@@ -13,6 +13,7 @@ use App\Models\Program;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use App\Services\ActivityLogService;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -22,6 +23,31 @@ class ParticipantsList extends Component
 
     public string $search = '';
     public bool $filterUnclassified = false;
+
+    // ── Filtros estructurados (ADR-0011) ─────────────────────────────────
+    // Se aplican del lado del servidor sobre los roles activos (AND combinado
+    // dentro del mismo rol) y se reflejan en la URL para compartir/volver.
+    #[Url(as: 'estamento')]
+    public string $filterType = '';
+
+    #[Url(as: 'programa')]
+    public string $filterProgram = '';
+
+    #[Url(as: 'dependencia')]
+    public string $filterDependency = '';
+
+    #[Url(as: 'vinculacion')]
+    public string $filterAffiliation = '';
+
+    /** '' = todos · 'con' = con correo · 'sin' = sin correo */
+    #[Url(as: 'correo')]
+    public string $filterEmail = '';
+
+    // ── Catálogos para los selects de filtro ─────────────────────────────
+    public array $typeOptions = [];
+    public array $programOptions = [];
+    public array $dependencyOptions = [];
+    public array $affiliationOptions = [];
 
     // ── Edición ──────────────────────────────────────────────────────────
     public bool $showEditModal = false;
@@ -68,6 +94,27 @@ class ParticipantsList extends Component
         if (request()->query('filtro') === 'sin_clasificar') {
             $this->filterUnclassified = true;
         }
+
+        $this->loadFilterCatalogs();
+    }
+
+    /**
+     * Carga (una sola vez) los catálogos que alimentan los selects de filtro.
+     */
+    private function loadFilterCatalogs(): void
+    {
+        $this->typeOptions        = ParticipantType::orderBy('name')->get(['id', 'name'])->toArray();
+        $this->programOptions     = Program::orderBy('name')->get(['id', 'name'])->toArray();
+        $this->affiliationOptions = Affiliation::orderBy('name')->get(['id', 'name'])->toArray();
+        $this->dependencyOptions  = Dependency::query()
+            ->with('campus:id,name')
+            ->orderBy('name')
+            ->get(['id', 'name', 'campus_id'])
+            ->map(fn (Dependency $dependency) => [
+                'id'   => $dependency->id,
+                'name' => $dependency->name.($dependency->campus?->name ? ' - '.$dependency->campus->name : ''),
+            ])
+            ->all();
     }
 
     public function updatingSearch(): void
@@ -83,6 +130,55 @@ class ParticipantsList extends Component
     public function toggleUnclassifiedFilter(): void
     {
         $this->filterUnclassified = ! $this->filterUnclassified;
+        $this->resetPage();
+    }
+
+    /**
+     * Vuelve a la primera página cuando cambia cualquier filtro estructurado.
+     */
+    public function updated(string $name): void
+    {
+        if (in_array($name, ['filterType', 'filterProgram', 'filterDependency', 'filterAffiliation', 'filterEmail'], true)) {
+            $this->resetPage();
+        }
+    }
+
+    /**
+     * ¿Hay algún filtro activo además de la búsqueda de texto?
+     */
+    public function getHasActiveFiltersProperty(): bool
+    {
+        return $this->filterType !== ''
+            || $this->filterProgram !== ''
+            || $this->filterDependency !== ''
+            || $this->filterAffiliation !== ''
+            || $this->filterEmail !== ''
+            || $this->filterUnclassified;
+    }
+
+    /**
+     * Número de filtros activos (para el badge del botón "Filtros").
+     */
+    public function getActiveFilterCountProperty(): int
+    {
+        $count = collect([
+            $this->filterType,
+            $this->filterProgram,
+            $this->filterDependency,
+            $this->filterAffiliation,
+            $this->filterEmail,
+        ])->filter(fn ($v) => $v !== '')->count();
+
+        return $count + ($this->filterUnclassified ? 1 : 0);
+    }
+
+    /**
+     * Limpia todos los filtros y la búsqueda.
+     */
+    public function resetFilters(): void
+    {
+        $this->reset(['filterType', 'filterProgram', 'filterDependency', 'filterAffiliation', 'filterEmail', 'search']);
+        $this->filterUnclassified = false;
         $this->resetPage();
     }
 
@@ -519,6 +615,28 @@ class ParticipantsList extends Component
                         ->orWhere('email', 'like', $term);
                 });
             });
+
+        // ── Filtros estructurados sobre roles activos (AND dentro del mismo rol) ──
+        $hasRoleFilter = $this->filterType !== ''
+            || $this->filterProgram !== ''
+            || $this->filterDependency !== ''
+            || $this->filterAffiliation !== '';
+
+        if ($hasRoleFilter) {
+            $query->whereHas('activeRoles', function ($r) {
+                $r->when($this->filterType !== '', fn ($x) => $x->where('participant_type_id', $this->filterType))
+                  ->when($this->filterProgram !== '', fn ($x) => $x->where('program_id', $this->filterProgram))
+                  ->when($this->filterDependency !== '', fn ($x) => $x->where('dependency_id', $this->filterDependency))
+                  ->when($this->filterAffiliation !== '', fn ($x) => $x->where('affiliation_id', $this->filterAffiliation));
+            });
+        }
+
+        // ── Filtro con/sin correo ────────────────────────────────────────
+        if ($this->filterEmail === 'con') {
+            $query->whereNotNull('email')->where('email', '!=', '');
+        } elseif ($this->filterEmail === 'sin') {
+            $query->where(fn ($q) => $q->whereNull('email')->orWhere('email', '=', ''));
+        }
 
         // Filtro "Sin clasificar": participantes con al menos una asistencia
         // cuyo rol no tiene programa, dependencia ni organización asignados
