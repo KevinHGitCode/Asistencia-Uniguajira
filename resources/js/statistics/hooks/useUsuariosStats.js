@@ -1,10 +1,8 @@
 import { useState, useCallback, useRef } from 'react';
+import { buildStatisticsQuery } from '../utils/query.js';
 
 function buildQS(filters) {
-  const p = new URLSearchParams();
-  if (filters.dateFrom) p.append('dateFrom', filters.dateFrom);
-  if (filters.dateTo)   p.append('dateTo',   filters.dateTo);
-  return p.toString();
+  return buildStatisticsQuery(filters);
 }
 
 const EMPTY = {

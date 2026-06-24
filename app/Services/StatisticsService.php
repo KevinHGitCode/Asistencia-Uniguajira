@@ -383,28 +383,7 @@ class StatisticsService
     /** Query base sobre la tabla events con todos los filtros aplicados. */
     private function eventsBase(): Builder
     {
-        $q = DB::table('events');
-
-        if (! empty($this->filters['campusId'])) {
-            $q->where('events.campus_id', $this->filters['campusId']);
-        }
-        if (! empty($this->filters['dateFrom'])) {
-            $q->where('events.date', '>=', $this->filters['dateFrom']);
-        }
-        if (! empty($this->filters['dateTo'])) {
-            $q->where('events.date', '<=', $this->filters['dateTo']);
-        }
-        if (! empty($this->filters['eventIds'])) {
-            $q->whereIn('events.id', $this->filters['eventIds']);
-        }
-        if (! empty($this->filters['userIds'])) {
-            $q->whereIn('events.user_id', $this->filters['userIds']);
-        }
-        if (! empty($this->filters['dependencyIds'])) {
-            $q->whereIn('events.dependency_id', $this->filters['dependencyIds']);
-        }
-
-        return $q;
+        return $this->applyEventFilters(DB::table('events'));
     }
 
     /** attendances JOIN events con filtros. Base para conteos y top-listas. */
@@ -432,11 +411,12 @@ class StatisticsService
         return $this->applyEventFilters($q);
     }
 
-    /** Aplica los filtros de sede, fecha, eventIds, userIds y dependencyIds a queries con JOIN events. */
+    /** Aplica los filtros combinables a queries sobre events o con JOIN events. */
     private function applyEventFilters(Builder $q): Builder
     {
-        if (! empty($this->filters['campusId'])) {
-            $q->where('events.campus_id', $this->filters['campusId']);
+        $campusIds = $this->filters['campusIds'] ?? ($this->filters['campusId'] ? [(int) $this->filters['campusId']] : []);
+        if ($campusIds !== []) {
+            $q->whereIn('events.campus_id', $campusIds);
         }
         if (! empty($this->filters['dateFrom'])) {
             $q->where('events.date', '>=', $this->filters['dateFrom']);
@@ -449,6 +429,9 @@ class StatisticsService
         }
         if (! empty($this->filters['userIds'])) {
             $q->whereIn('events.user_id', $this->filters['userIds']);
+        }
+        if (! empty($this->filters['onlyOwnEvents']) && ! empty($this->filters['actorUserId'])) {
+            $q->where('events.user_id', $this->filters['actorUserId']);
         }
         if (! empty($this->filters['dependencyIds'])) {
             $q->whereIn('events.dependency_id', $this->filters['dependencyIds']);

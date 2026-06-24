@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { useCampusRefresh } from './useCampusRefresh.js';
+import { buildStatisticsQuery } from '../utils/query.js';
 
 /**
  * Hook para seleccionar eventos específicos dentro del período de fechas.
@@ -44,10 +45,7 @@ export function useEventFilter(filters) {
     setEvLoading(true);
 
     try {
-      const p = new URLSearchParams();
-      if (f.dateFrom) p.append('dateFrom', f.dateFrom);
-      if (f.dateTo)   p.append('dateTo',   f.dateTo);
-      const qs = p.toString();
+      const qs = buildStatisticsQuery(f);
 
       const data = await fetch(
         `/api/statistics/compare/events${qs ? '?' + qs : ''}`,
@@ -69,7 +67,7 @@ export function useEventFilter(filters) {
   useEffect(() => {
     fetchEvents(filters);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters.dateFrom, filters.dateTo, fetchEvents]);
+  }, [filters, fetchEvents]);
 
   useCampusRefresh(useCallback(() => {
     fetchEvents(filters);

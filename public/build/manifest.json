@@ -10,8 +10,12 @@
     "file": "assets/index-BwNU8OnE.js",
     "name": "index"
   },
+  "_text-filter-BFKzOpYq.js": {
+    "file": "assets/text-filter-BFKzOpYq.js",
+    "name": "text-filter"
+  },
   "resources/css/app.css": {
-    "file": "assets/app-DIVivd9N.css",
+    "file": "assets/app-DCCs4pPY.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "names": [
@@ -28,10 +32,13 @@
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-DmU4VOQA.js",
+    "file": "assets/app-Bpv6vZPV.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
+    "imports": [
+      "_text-filter-BFKzOpYq.js"
+    ],
     "dynamicImports": [
       "resources/js/calendar/paint.js",
       "resources/js/calendar/observers.js",
@@ -91,12 +98,13 @@
     "isEntry": true
   },
   "resources/js/statistics/index.jsx": {
-    "file": "assets/index-Dg08jpls.js",
+    "file": "assets/index-CYB040k-.js",
     "name": "index",
     "src": "resources/js/statistics/index.jsx",
     "isEntry": true,
     "imports": [
       "_index-BwNU8OnE.js",
+      "_text-filter-BFKzOpYq.js",
       "_ProgramParticipantsPie-DlmX1T2O.js"
     ]
   },

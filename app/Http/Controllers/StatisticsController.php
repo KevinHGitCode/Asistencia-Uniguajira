@@ -3,9 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Campus;
-use App\Models\Event;
-use App\Models\User;
 use App\Services\CampusScopeService;
+use App\Services\StatisticsFilterResolver;
 use App\Services\StatisticsService;
 use App\Traits\AppliesStatisticsFilters;
 use Illuminate\Http\JsonResponse;
@@ -16,7 +15,10 @@ class StatisticsController extends Controller
 {
     use AppliesStatisticsFilters;
 
-    public function __construct(private readonly CampusScopeService $campusScope) {}
+    public function __construct(
+        private readonly CampusScopeService $campusScope,
+        private readonly StatisticsFilterResolver $statisticsFilters,
+    ) {}
 
     // ── Endpoints de resumen (1 request = todos los datos del módulo) ────────
 
@@ -25,24 +27,7 @@ class StatisticsController extends Controller
      */
     public function asistenciasSummary(Request $request): JsonResponse
     {
-        $filters = $this->scopeToUser($this->getFilters($request), Auth::user());
-
-        if ($filters === null) {
-            return response()->json([
-                'counters' => ['events' => 0, 'attendances' => 0, 'participants' => 0],
-                'charts' => [
-                    'attendancesByProgram' => [],
-                    'attendancesByDependency' => [],
-                    'attendancesByOrganization' => [],
-                    'attendancesUnclassified' => 0,
-                    'topEvents' => [],
-                    'topParticipants' => [],
-                    'byRole' => [],
-                    'bySex' => [],
-                    'byGroup' => [],
-                ],
-            ]);
-        }
+        $filters = $this->statisticsFilters->resolve($this->getFilters($request), Auth::user());
 
         $s = new StatisticsService($filters);
 
@@ -71,22 +56,7 @@ class StatisticsController extends Controller
      */
     public function participantesSummary(Request $request): JsonResponse
     {
-        $filters = $this->scopeToUser($this->getFilters($request), Auth::user());
-
-        if ($filters === null) {
-            return response()->json([
-                'counters' => ['events' => 0, 'participants' => 0],
-                'charts' => [
-                    'participantsByProgram' => [],
-                    'participantsByDependency' => [],
-                    'participantsByOrganization' => [],
-                    'participantsUnclassified' => 0,
-                    'byRole' => [],
-                    'bySex' => [],
-                    'byGroup' => [],
-                ],
-            ]);
-        }
+        $filters = $this->statisticsFilters->resolve($this->getFilters($request), Auth::user());
 
         $s = new StatisticsService($filters);
 
@@ -219,6 +189,16 @@ class StatisticsController extends Controller
         return response()->json($this->svc($request)->participantsByOrganization());
     }
 
+    public function filterOptions(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        abort_unless($user, 401);
+
+        return response()->json(
+            $this->statisticsFilters->options($this->getFilters($request), $user)
+        );
+    }
+
     public function updateCampus(Request $request)
     {
         abort_unless($request->user()?->isSuperadmin(), 403);
@@ -246,64 +226,9 @@ class StatisticsController extends Controller
 
     private function svc(Request $request): StatisticsService
     {
-        $filters = $this->getFilters($request);
-
         return new StatisticsService(
-            $this->scopeToUser($filters, Auth::user()) ?? $this->emptyFilters($filters)
+            $this->statisticsFilters->resolve($this->getFilters($request), Auth::user())
         );
-    }
-
-    /**
-     * Si el usuario no es admin, restringe los filtros a sus propios eventos.
-     * Retorna null si el usuario no tiene ningún evento (resultado = ceros).
-     */
-    private function scopeToUser(array $filters, ?User $user): ?array
-    {
-        if (! $user) {
-            return null;
-        }
-
-        $campusId = $this->campusScope->activeCampusId($user);
-
-        if ($campusId !== null) {
-            $filters['campusId'] = $campusId;
-        }
-
-        if ($user->hasAdminAccess()) {
-            return $filters;
-        }
-
-        $user->loadMissing('dependencies');
-        $dependencyIds = $user->dependencies->pluck('id')->all();
-
-        $userEventIdsQuery = Event::query()->select('id');
-        $this->campusScope->applyToQuery($userEventIdsQuery, $user);
-        $userEventIdsQuery->where(function ($query) use ($user, $dependencyIds) {
-            $query->where('user_id', $user->id);
-
-            if ($dependencyIds !== []) {
-                $query->orWhereIn('dependency_id', $dependencyIds);
-            }
-        });
-
-        $userEventIds = $userEventIdsQuery->pluck('id')->all();
-
-        if (empty($userEventIds)) {
-            return null;
-        }
-
-        if (! empty($filters['eventIds'])) {
-            $intersection = array_values(array_intersect($filters['eventIds'], $userEventIds));
-
-            return empty($intersection) ? null : array_merge($filters, ['eventIds' => $intersection]);
-        }
-
-        return array_merge($filters, ['eventIds' => $userEventIds]);
-    }
-
-    private function emptyFilters(array $filters): array
-    {
-        return array_merge($filters, ['eventIds' => [-1]]);
     }
 
     public static function campusOptions(): array

@@ -23,8 +23,6 @@
             </div>
         </div>
 
-        @include('statistics.partials.campus-filter')
-
         {{-- Punto de montaje React --}}
         <div id="statistics-react-root" data-module="asistencias"></div>
 

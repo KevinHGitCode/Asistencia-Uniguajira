@@ -15,8 +15,6 @@
             </p>
         </div>
 
-        @include('statistics.partials.campus-filter')
-
         {{-- Grid de tarjetas de módulos --}}
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
 

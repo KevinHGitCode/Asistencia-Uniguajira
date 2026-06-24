@@ -1,13 +1,11 @@
 import { useState, useCallback, useRef } from 'react';
+import { buildStatisticsQuery } from '../utils/query.js';
 
 /**
  * Convierte los filtros en una query string para la API.
  */
 function buildQS(filters) {
-  const p = new URLSearchParams();
-  if (filters.dateFrom) p.append('dateFrom', filters.dateFrom);
-  if (filters.dateTo)   p.append('dateTo',   filters.dateTo);
-  return p.toString();
+  return buildStatisticsQuery(filters);
 }
 
 /** Estado vacío inicial. */
@@ -61,11 +59,11 @@ export function useStatistics() {
       ] = await Promise.all([
         fetch(url('/total-events'),            { signal }).then(r => r.json()),
         fetch(url('/total-attendances'),        { signal }).then(r => r.json()),
-        fetch('/api/statistics/total-participants', { signal }).then(r => r.json()),
+        fetch(url('/total-participants'), { signal }).then(r => r.json()),
         fetch(url('/attendances-by-program'),   { signal }).then(r => r.json()),
-        fetch('/api/statistics/participants-by-program', { signal }).then(r => r.json()),
+        fetch(url('/participants-by-program'), { signal }).then(r => r.json()),
         fetch(url('/top-events'),               { signal }).then(r => r.json()),
-        fetch('/api/statistics/top-participants', { signal }).then(r => r.json()),
+        fetch(url('/top-participants'), { signal }).then(r => r.json()),
         fetch(url('/top-users'),                { signal }).then(r => r.json()),
         fetch(url('/events-by-role'),           { signal }).then(r => r.json()),
         fetch(url('/events-by-user'),           { signal }).then(r => r.json()),

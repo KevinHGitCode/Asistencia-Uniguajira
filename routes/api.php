@@ -6,6 +6,7 @@ use App\Http\Controllers\StatisticsController;
 use App\Models\Event;
 use App\Models\User;
 use App\Services\CampusScopeService;
+use App\Services\StatisticsFilterResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -232,8 +233,9 @@ Route::middleware(['web', 'auth'])->get('/statistics/event/{event}/organizations
  */
 
 // Lista de eventos disponibles para comparar (admin ve todos; usuario ve solo los suyos)
-Route::middleware(['web', 'auth', 'throttle:api-stats'])->get('/statistics/compare/events', function (Request $request, CampusScopeService $campusScope) use ($applyStatisticsEventVisibility) {
+Route::middleware(['web', 'auth', 'throttle:api-stats'])->get('/statistics/compare/events', function (Request $request, StatisticsFilterResolver $statisticsFilters) {
     $user = Auth::user();
+    $filters = $statisticsFilters->resolve(StatisticsFilterResolver::filtersFromRequest($request), $user);
 
     $query = DB::table('events')
         ->leftJoin('attendances', 'events.id', '=', 'attendances.event_id')
@@ -246,33 +248,24 @@ Route::middleware(['web', 'auth', 'throttle:api-stats'])->get('/statistics/compa
         ->groupBy('events.id', 'events.title', 'events.date')
         ->orderByDesc('events.date');
 
-    $applyStatisticsEventVisibility($query, $user, $campusScope);
-
-    $dateFrom = $request->get('dateFrom');
-    $dateTo = $request->get('dateTo');
-    if ($dateFrom) {
-        $query->where('events.date', '>=', $dateFrom);
-    }
-    if ($dateTo) {
-        $query->where('events.date', '<=', $dateTo);
-    }
+    $statisticsFilters->applyToEventsQuery($query, $filters);
 
     return $query->get();
 });
 
 // Datos comparativos para los eventos seleccionados (asistencias + demografía)
-Route::middleware(['web', 'auth', 'throttle:api-stats'])->get('/statistics/compare/data', function (Request $request, CampusScopeService $campusScope) use ($applyStatisticsEventVisibility) {
+Route::middleware(['web', 'auth', 'throttle:api-stats'])->get('/statistics/compare/data', function (Request $request, StatisticsFilterResolver $statisticsFilters) {
     $eventIds = array_values(array_filter(array_map('intval', (array) $request->get('eventIds', []))));
 
     if (empty($eventIds)) {
         return ['attendances' => [], 'byRole' => [], 'bySex' => [], 'byGroup' => []];
     }
 
-    $allowedEventsQuery = DB::table('events')
-        ->whereIn('events.id', $eventIds)
-        ->select('events.id');
-
-    $applyStatisticsEventVisibility($allowedEventsQuery, Auth::user(), $campusScope);
+    $filters = StatisticsFilterResolver::filtersFromRequest($request);
+    $filters['eventIds'] = $eventIds;
+    $filters = $statisticsFilters->resolve($filters, Auth::user());
+    $allowedEventsQuery = DB::table('events')->select('events.id');
+    $statisticsFilters->applyToEventsQuery($allowedEventsQuery, $filters);
 
     $eventIds = $allowedEventsQuery->pluck('events.id')->all();
 
@@ -346,6 +339,7 @@ Route::middleware(['web', 'auth', 'role:admin,superadmin', 'throttle:api-stats']
 
 // ── Endpoints de resumen: requieren sesión para filtrar por rol de usuario ──
 Route::middleware(['web', 'auth', 'throttle:api-stats'])->prefix('statistics')->controller(StatisticsController::class)->group(function () {
+    Route::get('/filter-options', 'filterOptions');
     Route::get('/asistencias-summary', 'asistenciasSummary');
     Route::get('/participantes-summary', 'participantesSummary');
 });

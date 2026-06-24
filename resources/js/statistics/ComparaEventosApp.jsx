@@ -9,6 +9,7 @@ import { ChartCard }    from './components/ChartCard.jsx';
 import { ProgramAttendancesBar } from './charts/ProgramAttendancesBar.jsx';
 import { StackedCompareBar }     from './charts/StackedCompareBar.jsx';
 import { ProgramParticipantsPie } from './charts/ProgramParticipantsPie.jsx';
+import { buildStatisticsQuery } from './utils/query.js';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -168,7 +169,7 @@ function useCompareData() {
   const [loading, setLoading] = useState(false);
   const abortRef              = useRef(null);
 
-  const fetch_ = useCallback(async (eventIds) => {
+  const fetch_ = useCallback(async (eventIds, filters) => {
     if (abortRef.current) abortRef.current.abort();
     if (eventIds.length === 0) { setData(null); return; }
 
@@ -177,7 +178,7 @@ function useCompareData() {
     setLoading(true);
 
     try {
-      const qs  = eventIds.map(id => `eventIds[]=${id}`).join('&');
+      const qs = buildStatisticsQuery(filters, eventIds);
       const res = await fetch(`/api/statistics/compare/data?${qs}`, { signal });
       setData(await res.json());
     } catch (err) {
@@ -204,10 +205,8 @@ function useEventsList() {
     setLoading(true);
 
     try {
-      const p = new URLSearchParams();
-      if (filters.dateFrom) p.append('dateFrom', filters.dateFrom);
-      if (filters.dateTo)   p.append('dateTo',   filters.dateTo);
-      const res = await fetch(`/api/statistics/compare/events?${p}`, { signal });
+      const qs = buildStatisticsQuery(filters);
+      const res = await fetch(`/api/statistics/compare/events${qs ? `?${qs}` : ''}`, { signal });
       setEvents(await res.json());
     } catch (err) {
       if (err.name !== 'AbortError') setEvents([]);
@@ -251,8 +250,8 @@ export default function ComparaEventosApp() {
 
   // ── Cargar datos de comparación cuando cambia la selección ─────────────────
   useEffect(() => {
-    fetchCompare([...selectedIds]);
-  }, [selectedIds, fetchCompare]);
+    fetchCompare([...selectedIds], filters);
+  }, [selectedIds, filters, fetchCompare]);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
   const toggle    = id => setSelectedIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
