@@ -53,8 +53,15 @@
     </div>
 
     {{-- ── Tarjeta principal ────────────────────────────────────────────────── --}}
-    <div class="rounded-2xl border border-zinc-200 dark:border-zinc-700/60 bg-zinc-50 dark:bg-zinc-900 shadow-xl overflow-hidden">
-        <div class="p-5">
+    <div @class([
+        'rounded-2xl border border-zinc-200 dark:border-zinc-700/60 bg-zinc-50 dark:bg-zinc-900 shadow-xl',
+        'overflow-visible' => $step === 2,
+        'overflow-hidden' => $step !== 2,
+    ])>
+        <div @class([
+            'p-5',
+            'relative z-20 overflow-visible' => $step === 2,
+        ])>
 
             {{-- ══ PASO 1: Identidad ══════════════════════════════════════════════ --}}
             @if($step === 1)
@@ -102,7 +109,7 @@
 
             {{-- ══ PASO 2: Organización ═══════════════════════════════════════════ --}}
             @if($step === 2)
-                <div wire:key="step-2" wire:transition class="flex flex-col gap-4">
+                <div wire:key="step-2" wire:transition class="relative z-20 flex flex-col gap-4 overflow-visible">
 
                     <div>
                         <h2 class="text-lg font-semibold text-zinc-900 dark:text-white">¿Dónde y quién organiza?</h2>
@@ -122,7 +129,7 @@
 
                     {{-- Sede --}}
                     @if($isSuperadmin)
-                        <div>
+                        <div class="relative z-30">
                             <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                                 Sede
                                 <span class="text-red-400 ml-0.5">*</span>
@@ -143,7 +150,7 @@
                     {{-- Dependencia --}}
                     @if($showDependencySelect)
                         @php($dependenciaBloqueada = $isSuperadmin && !$campus_id)
-                        <div wire:key="dependencies-field-{{ $campus_id ?: 'sin-sede' }}">
+                        <div class="relative z-20" wire:key="dependencies-field-{{ $campus_id ?: 'sin-sede' }}">
                             <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                                 Dependencia
                                 <span class="text-red-400 ml-0.5">*</span>
