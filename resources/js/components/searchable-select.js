@@ -195,7 +195,6 @@ window.multiSearchableSelect = function (config) {
         add(opt) {
             if (!opt || this.has(opt.value)) return; // valida no duplicados
             this.commit([...this.values, opt.value]);
-            this.search = '';
             this.highlighted = 0;
             this.$nextTick(() => this.$refs.search && this.$refs.search.focus());
         },

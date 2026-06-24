@@ -132,7 +132,6 @@ export function SearchableMultiSelect({
   const addOption = option => {
     if (!option || selectedValues.has(option.value)) return;
     onChange([...(value ?? []).map(Number), Number(option.value)]);
-    setSearch('');
     setHighlighted(0);
     setOpen(true);
   };
