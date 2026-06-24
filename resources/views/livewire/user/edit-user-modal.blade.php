@@ -52,6 +52,7 @@
                             Rol del usuario
                         </label>
                         <x-ui.searchable-select
+                            wire:key="edit-user-role-{{ $userId ?? 'none' }}-{{ $role ?: 'none' }}"
                             wire:model.live="role"
                             :options="$roles"
                             placeholder="Selecciona un rol"
