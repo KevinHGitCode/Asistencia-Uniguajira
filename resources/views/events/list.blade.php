@@ -23,7 +23,7 @@
         <div class="mb-4 rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
             <form method="GET" action="{{ route('events.list') }}" class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div class="flex items-start gap-3">
-                    <div class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#cc5e50]/10 text-[#cc5e50]">
+                    <div class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-300">
                         <flux:icon.map-pin class="size-5" />
                     </div>
                     <div>
@@ -40,7 +40,7 @@
                     <select
                         id="events-list-campus-id"
                         name="campus_id"
-                        class="w-full rounded-xl border border-neutral-200 bg-zinc-50 px-3 py-2 text-sm font-medium text-gray-800 shadow-sm transition focus:border-[#cc5e50] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#cc5e50]/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:focus:bg-zinc-900 sm:w-60">
+                        class="w-full rounded-xl border border-neutral-200 bg-zinc-50 px-3 py-2 text-sm font-medium text-gray-800 shadow-sm transition focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:focus:bg-zinc-900 sm:w-60">
                         <option value="">Todas mis sedes</option>
                         @foreach(($campuses ?? []) as $campusId => $campusName)
                             <option value="{{ $campusId }}" @selected((int) ($selectedCampusId ?? 0) === (int) $campusId)>
@@ -51,7 +51,7 @@
 
                     <button
                         type="submit"
-                        class="inline-flex items-center justify-center gap-2 rounded-xl bg-[#cc5e50] px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:opacity-90">
+                        class="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-50 px-4 py-2 text-sm font-medium text-blue-600 shadow-sm transition hover:bg-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-900/50 hover:cursor-pointer">
                         <flux:icon.funnel class="size-4" />
                         Filtrar
                     </button>
