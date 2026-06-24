@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AdminEventosController;
+use App\Http\Controllers\Api\ParticipantsController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\StatisticsController;
 use App\Models\Event;
@@ -329,6 +330,16 @@ Route::middleware(['web', 'auth', 'throttle:api-stats'])->get('/statistics/compa
 Route::middleware(['web', 'auth', 'role:admin,superadmin', 'throttle:api-stats'])->group(function () {
     Route::get('/statistics/admin-eventos', [AdminEventosController::class, 'index']);
     Route::get('/statistics/admin-eventos/filter-options', [AdminEventosController::class, 'filterOptions']);
+});
+
+/**
+ * =============================================
+ * LISTADO DE PARTICIPANTES — isla React (ADR-0008)
+ * =============================================
+ */
+Route::middleware(['web', 'auth', 'role:admin,superadmin'])->group(function () {
+    Route::get('/participants/filter-options', [ParticipantsController::class, 'filterOptions']);
+    Route::get('/participants', [ParticipantsController::class, 'index']);
 });
 
 /**

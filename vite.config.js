@@ -13,6 +13,7 @@ export default defineConfig({
                 'resources/css/app.css',
                 'resources/js/app.js',
                 'resources/js/statistics/index.jsx',
+                'resources/js/participants/index.jsx',
                 'resources/js/events/index.jsx',
                 'resources/js/events/show.js',
                 'resources/js/users/users-create.js',

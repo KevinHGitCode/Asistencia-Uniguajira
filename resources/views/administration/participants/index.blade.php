@@ -583,11 +583,17 @@
             </div>
 
             <div class="px-4 sm:px-6 py-4">
+                {{-- Listado de participantes: isla React (ADR-0008) --}}
+                <div id="participants-react-root"></div>
+
+                {{-- Modales de editar / eliminar (Livewire), disparados desde React --}}
                 @livewire('admin.participants-list')
             </div>
         </div>
     </div>
 
 </div>
+
+@vite(['resources/js/participants/index.jsx'])
 
 </x-layouts.app>

@@ -15,7 +15,7 @@
     "name": "text-filter"
   },
   "resources/css/app.css": {
-    "file": "assets/app-BKf_lQZo.css",
+    "file": "assets/app-CphlNXpU.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "names": [
@@ -32,7 +32,7 @@
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-Bpv6vZPV.js",
+    "file": "assets/app-Pws5fUnQ.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
@@ -97,8 +97,17 @@
     "src": "resources/js/events/show.js",
     "isEntry": true
   },
+  "resources/js/participants/index.jsx": {
+    "file": "assets/index-Bgp_k98Z.js",
+    "name": "index",
+    "src": "resources/js/participants/index.jsx",
+    "isEntry": true,
+    "imports": [
+      "_index-BwNU8OnE.js"
+    ]
+  },
   "resources/js/statistics/index.jsx": {
-    "file": "assets/index-hfVQgjU4.js",
+    "file": "assets/index-C47TEdPo.js",
     "name": "index",
     "src": "resources/js/statistics/index.jsx",
     "isEntry": true,

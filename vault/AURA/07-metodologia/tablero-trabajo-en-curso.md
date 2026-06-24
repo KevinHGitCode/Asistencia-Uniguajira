@@ -39,6 +39,7 @@ que dos personas/IAs choquen, sobre todo en cambios 🔴 que tocan el esquema.
 | Componente select buscable + uso en formatos | `feat/componente-select` | 2026-06-24 |
 | Retirar flujo legacy de asistencia (ADR-0003) | `refactor/retirar-asistencia-legacy` | 2026-06-24 |
 | Filtros estructurados en participantes (ADR-0011) | `feat/participantes-filtros` | 2026-06-24 |
+| Listado de participantes en React + API (ADR-0008) | `feat/participantes-listado-react` | 2026-06-24 |
 
 ## ⚠️ Avisos de serialización (🔴 activos)
 > Lista aquí los cambios de **esquema/rutas públicas** en vuelo para que nadie los solape.

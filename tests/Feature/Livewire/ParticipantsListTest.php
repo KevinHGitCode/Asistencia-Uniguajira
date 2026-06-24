@@ -3,41 +3,20 @@
 namespace Tests\Feature\Livewire;
 
 use App\Livewire\Admin\ParticipantsList;
-use App\Models\Affiliation;
 use App\Models\Campus;
 use App\Models\Dependency;
 use App\Models\Participant;
-use App\Models\ParticipantRole;
-use App\Models\ParticipantType;
-use App\Models\Program;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
 
+/**
+ * El listado vive ahora en la isla React (ADR-0008); este componente Livewire
+ * solo hospeda los modales de editar/eliminar, abiertos vía eventos del puente.
+ */
 class ParticipantsListTest extends TestCase
 {
     use RefreshDatabase;
-
-    /**
-     * Crea un participante con exactamente un rol activo (sin usar el factory,
-     * cuyo afterCreating añade roles aleatorios que romperían el determinismo).
-     */
-    private function participantWithRole(array $participant, array $role = []): Participant
-    {
-        $p = Participant::create(array_merge([
-            'document'   => fake()->unique()->numerify('##########'),
-            'first_name' => 'Test',
-            'last_name'  => 'User',
-            'email'      => null,
-        ], $participant));
-
-        ParticipantRole::create(array_merge([
-            'participant_id' => $p->id,
-            'is_active'      => true,
-        ], $role));
-
-        return $p;
-    }
 
     public function test_el_selector_de_dependencias_muestra_la_sede_al_editar_un_participante(): void
     {
@@ -55,84 +34,37 @@ class ParticipantsListTest extends TestCase
             ]);
     }
 
-    public function test_filtra_por_estamento(): void
+    public function test_el_evento_open_edit_participant_abre_el_modal_de_edicion(): void
     {
-        $estudiante = ParticipantType::create(['name' => 'Estudiante']);
-        $docente    = ParticipantType::create(['name' => 'Docente']);
-
-        $this->participantWithRole(['document' => 'EST-001'], ['participant_type_id' => $estudiante->id]);
-        $this->participantWithRole(['document' => 'DOC-002'], ['participant_type_id' => $docente->id]);
+        $participant = Participant::factory()->create();
 
         Livewire::test(ParticipantsList::class)
-            ->set('filterType', (string) $estudiante->id)
-            ->assertSee('EST-001')
-            ->assertDontSee('DOC-002');
+            ->assertSet('showEditModal', false)
+            ->dispatch('open-edit-participant', id: $participant->id)
+            ->assertSet('showEditModal', true)
+            ->assertSet('editingId', $participant->id);
     }
 
-    public function test_filtra_por_programa(): void
+    public function test_el_evento_open_delete_participant_abre_el_modal_de_eliminacion(): void
     {
-        $type     = ParticipantType::create(['name' => 'Estudiante']);
-        $programA = Program::factory()->create(['name' => 'Ingeniería de Sistemas']);
-        $programB = Program::factory()->create(['name' => 'Derecho']);
-
-        $this->participantWithRole(['document' => 'PROG-AAA'], ['participant_type_id' => $type->id, 'program_id' => $programA->id]);
-        $this->participantWithRole(['document' => 'PROG-BBB'], ['participant_type_id' => $type->id, 'program_id' => $programB->id]);
+        $participant = Participant::factory()->create();
+        $name = $participant->first_name.' '.$participant->last_name;
 
         Livewire::test(ParticipantsList::class)
-            ->set('filterProgram', (string) $programA->id)
-            ->assertSee('PROG-AAA')
-            ->assertDontSee('PROG-BBB');
+            ->assertSet('showDeleteModal', false)
+            ->dispatch('open-delete-participant', id: $participant->id, name: $name)
+            ->assertSet('showDeleteModal', true)
+            ->assertSet('deletingId', $participant->id)
+            ->assertSet('deletingName', $name);
     }
 
-    public function test_filtra_con_y_sin_correo(): void
+    public function test_al_eliminar_emite_evento_para_refrescar_react(): void
     {
-        $type = ParticipantType::create(['name' => 'Estudiante']);
-
-        $this->participantWithRole(['document' => 'MAIL-SI', 'email' => 'con@correo.test'], ['participant_type_id' => $type->id]);
-        $this->participantWithRole(['document' => 'MAIL-NO', 'email' => null], ['participant_type_id' => $type->id]);
+        $participant = Participant::factory()->create();
 
         Livewire::test(ParticipantsList::class)
-            ->set('filterEmail', 'con')
-            ->assertSee('MAIL-SI')
-            ->assertDontSee('MAIL-NO')
-            ->set('filterEmail', 'sin')
-            ->assertSee('MAIL-NO')
-            ->assertDontSee('MAIL-SI');
-    }
-
-    public function test_los_filtros_de_rol_se_combinan_con_and(): void
-    {
-        $estudiante = ParticipantType::create(['name' => 'Estudiante']);
-        $programA   = Program::factory()->create(['name' => 'Ingeniería de Sistemas']);
-        $programB   = Program::factory()->create(['name' => 'Derecho']);
-
-        // Mismo estamento, distinto programa.
-        $this->participantWithRole(['document' => 'COMBO-OK'], ['participant_type_id' => $estudiante->id, 'program_id' => $programA->id]);
-        $this->participantWithRole(['document' => 'COMBO-NO'], ['participant_type_id' => $estudiante->id, 'program_id' => $programB->id]);
-
-        Livewire::test(ParticipantsList::class)
-            ->set('filterType', (string) $estudiante->id)
-            ->set('filterProgram', (string) $programA->id)
-            ->assertSee('COMBO-OK')
-            ->assertDontSee('COMBO-NO');
-    }
-
-    public function test_reset_filtros_limpia_todo(): void
-    {
-        $type        = ParticipantType::create(['name' => 'Estudiante']);
-        $affiliation = Affiliation::create(['name' => 'Planta']);
-
-        Livewire::test(ParticipantsList::class)
-            ->set('search', 'algo')
-            ->set('filterType', (string) $type->id)
-            ->set('filterAffiliation', (string) $affiliation->id)
-            ->set('filterEmail', 'con')
-            ->set('filterUnclassified', true)
-            ->call('resetFilters')
-            ->assertSet('search', '')
-            ->assertSet('filterType', '')
-            ->assertSet('filterAffiliation', '')
-            ->assertSet('filterEmail', '')
-            ->assertSet('filterUnclassified', false);
+            ->call('openDelete', $participant->id, 'X')
+            ->call('deleteParticipant')
+            ->assertDispatched('participants-refresh');
     }
 }
