@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Campus;
 use App\Models\Dependency;
 use App\Models\Event;
 use App\Models\User;
@@ -26,7 +27,7 @@ class AdminEventosController extends Controller
         $query = Event::query()
             ->with(['user:id,name', 'dependency:id,name', 'area:id,name']);
 
-        $campusScope->applyToQuery($query, $request->user());
+        $selectedCampusId = $this->applyModuleCampusScope($query, $request, $campusScope);
 
         // ── Filtro de fecha ──
         if ($request->filled('from')) {
@@ -75,6 +76,7 @@ class AdminEventosController extends Controller
         return response()->json([
             'events' => $mapped->values(),
             'total' => $mapped->count(),
+            'selected_campus_id' => $selectedCampusId,
         ]);
     }
 
@@ -86,13 +88,22 @@ class AdminEventosController extends Controller
      */
     public function filterOptions(Request $request, CampusScopeService $campusScope)
     {
+        $user = $request->user();
+        $selectedCampusId = $this->selectedCampusId($request);
+
         // Solo dependencias que tienen al menos un evento (JOIN es más rápido que whereHas)
         $dependencies = Dependency::select('dependencies.id', 'dependencies.name')
             ->join('events', 'dependencies.id', '=', 'events.dependency_id')
             ->distinct()
             ->orderBy('dependencies.name');
 
-        $campusScope->applyToQuery($dependencies, $request->user(), 'events.campus_id');
+        if ($user?->isSuperadmin()) {
+            if ($selectedCampusId !== null) {
+                $dependencies->where('events.campus_id', $selectedCampusId);
+            }
+        } else {
+            $campusScope->applyToQuery($dependencies, $user, 'events.campus_id');
+        }
 
         $dependencies = $dependencies->get();
 
@@ -102,13 +113,55 @@ class AdminEventosController extends Controller
             ->distinct()
             ->orderBy('users.name');
 
-        $campusScope->applyToQuery($users, $request->user(), 'events.campus_id');
+        if ($user?->isSuperadmin()) {
+            if ($selectedCampusId !== null) {
+                $users->where('events.campus_id', $selectedCampusId);
+            }
+        } else {
+            $campusScope->applyToQuery($users, $user, 'events.campus_id');
+        }
 
         $users = $users->get();
 
         return response()->json([
+            'show_campuses' => (bool) $user?->isSuperadmin(),
+            'selected_campus_id' => $selectedCampusId,
+            'campuses' => $user?->isSuperadmin()
+                ? Campus::orderBy('name')->get(['id', 'name'])
+                : [],
             'dependencies' => $dependencies,
             'users' => $users,
         ]);
+    }
+
+    private function selectedCampusId(Request $request): ?int
+    {
+        if (! $request->user()?->isSuperadmin() || ! $request->query->has('campus_id')) {
+            return null;
+        }
+
+        $validated = $request->validate([
+            'campus_id' => ['nullable', 'integer', 'exists:campuses,id'],
+        ]);
+
+        return empty($validated['campus_id']) ? null : (int) $validated['campus_id'];
+    }
+
+    private function applyModuleCampusScope($query, Request $request, CampusScopeService $campusScope): ?int
+    {
+        $user = $request->user();
+        $selectedCampusId = $this->selectedCampusId($request);
+
+        if ($user?->isSuperadmin()) {
+            if ($selectedCampusId !== null) {
+                $query->where('campus_id', $selectedCampusId);
+            }
+
+            return $selectedCampusId;
+        }
+
+        $campusScope->applyToQuery($query, $user);
+
+        return null;
     }
 }

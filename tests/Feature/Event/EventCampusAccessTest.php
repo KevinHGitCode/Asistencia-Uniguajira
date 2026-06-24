@@ -138,7 +138,74 @@ class EventCampusAccessTest extends TestCase
             ->assertOk();
     }
 
-    public function test_superadmin_con_sede_activa_solo_lista_eventos_de_esa_sede(): void
+    public function test_superadmin_lista_solo_sus_eventos_sin_heredar_sede_activa(): void
+    {
+        [$maicao, $riohacha] = $this->campuses();
+        $superadmin = User::factory()->create([
+            'role' => User::ROLE_SUPERADMIN,
+            'campus_id' => null,
+        ]);
+        $otherUser = User::factory()->create([
+            'role' => User::ROLE_ADMIN,
+            'campus_id' => $maicao->id,
+        ]);
+
+        Event::factory()->create([
+            'title' => 'Evento propio Maicao',
+            'user_id' => $superadmin->id,
+            'campus_id' => $maicao->id,
+        ]);
+        Event::factory()->create([
+            'title' => 'Evento propio Riohacha',
+            'user_id' => $superadmin->id,
+            'campus_id' => $riohacha->id,
+        ]);
+        Event::factory()->create([
+            'title' => 'Evento de otro usuario',
+            'user_id' => $otherUser->id,
+            'campus_id' => $maicao->id,
+        ]);
+
+        $this->withSession([CampusScopeService::SESSION_KEY => $riohacha->id])
+            ->actingAs($superadmin)
+            ->get(route('events.list'))
+            ->assertOk()
+            ->assertSee('Filtrar tus eventos por sede')
+            ->assertSee('Todas mis sedes')
+            ->assertSee('Evento propio Maicao')
+            ->assertSee('Evento propio Riohacha')
+            ->assertDontSee('Evento de otro usuario');
+    }
+
+    public function test_superadmin_filtra_sus_eventos_por_sede_en_listado(): void
+    {
+        [$maicao, $riohacha] = $this->campuses();
+        $superadmin = User::factory()->create([
+            'role' => User::ROLE_SUPERADMIN,
+            'campus_id' => null,
+        ]);
+
+        Event::factory()->create([
+            'title' => 'Evento propio Maicao',
+            'user_id' => $superadmin->id,
+            'campus_id' => $maicao->id,
+        ]);
+        Event::factory()->create([
+            'title' => 'Evento propio Riohacha',
+            'user_id' => $superadmin->id,
+            'campus_id' => $riohacha->id,
+        ]);
+
+        $this->withSession([CampusScopeService::SESSION_KEY => $riohacha->id])
+            ->actingAs($superadmin)
+            ->get(route('events.list', ['campus_id' => $maicao->id]))
+            ->assertOk()
+            ->assertSee('Evento propio Maicao')
+            ->assertDontSee('Evento propio Riohacha')
+            ->assertSee('value="'.$maicao->id.'" selected', false);
+    }
+
+    public function test_superadmin_admin_eventos_no_hereda_sede_activa(): void
     {
         [$maicao, $riohacha] = $this->campuses();
         $superadmin = User::factory()->create([
@@ -155,12 +222,81 @@ class EventCampusAccessTest extends TestCase
             'campus_id' => $riohacha->id,
         ]);
 
-        $this->withSession([CampusScopeService::SESSION_KEY => $riohacha->id])
+        $response = $this->withSession([CampusScopeService::SESSION_KEY => $riohacha->id])
             ->actingAs($superadmin)
-            ->get(route('events.list'))
-            ->assertOk()
-            ->assertDontSee('Evento Maicao')
-            ->assertSee('Evento Riohacha');
+            ->getJson('/api/statistics/admin-eventos');
+
+        $titles = collect($response->json('events'))->pluck('title')->all();
+
+        $response->assertOk()->assertJsonPath('selected_campus_id', null);
+        $this->assertContains('Evento Maicao', $titles);
+        $this->assertContains('Evento Riohacha', $titles);
+    }
+
+    public function test_superadmin_admin_eventos_filtra_por_sede_del_modulo(): void
+    {
+        [$maicao, $riohacha] = $this->campuses();
+        $superadmin = User::factory()->create([
+            'role' => User::ROLE_SUPERADMIN,
+            'campus_id' => null,
+        ]);
+
+        Event::factory()->create([
+            'title' => 'Evento Maicao',
+            'campus_id' => $maicao->id,
+        ]);
+        Event::factory()->create([
+            'title' => 'Evento Riohacha',
+            'campus_id' => $riohacha->id,
+        ]);
+
+        $response = $this->withSession([CampusScopeService::SESSION_KEY => $riohacha->id])
+            ->actingAs($superadmin)
+            ->getJson('/api/statistics/admin-eventos?campus_id='.$maicao->id);
+
+        $titles = collect($response->json('events'))->pluck('title')->all();
+
+        $response->assertOk()->assertJsonPath('selected_campus_id', $maicao->id);
+        $this->assertContains('Evento Maicao', $titles);
+        $this->assertNotContains('Evento Riohacha', $titles);
+    }
+
+    public function test_superadmin_admin_eventos_opciones_filtran_por_sede_del_modulo(): void
+    {
+        [$maicao, $riohacha] = $this->campuses();
+        $superadmin = User::factory()->create([
+            'role' => User::ROLE_SUPERADMIN,
+            'campus_id' => null,
+        ]);
+        $maicaoDependency = Dependency::factory()->create([
+            'name' => 'Dependencia Maicao',
+            'campus_id' => $maicao->id,
+        ]);
+        $riohachaDependency = Dependency::factory()->create([
+            'name' => 'Dependencia Riohacha',
+            'campus_id' => $riohacha->id,
+        ]);
+
+        Event::factory()->create([
+            'dependency_id' => $maicaoDependency->id,
+            'campus_id' => $maicao->id,
+        ]);
+        Event::factory()->create([
+            'dependency_id' => $riohachaDependency->id,
+            'campus_id' => $riohacha->id,
+        ]);
+
+        $response = $this->withSession([CampusScopeService::SESSION_KEY => $riohacha->id])
+            ->actingAs($superadmin)
+            ->getJson('/api/statistics/admin-eventos/filter-options?campus_id='.$maicao->id);
+
+        $dependencies = collect($response->json('dependencies'))->pluck('name')->all();
+
+        $response->assertOk()
+            ->assertJsonPath('show_campuses', true)
+            ->assertJsonPath('selected_campus_id', $maicao->id);
+        $this->assertContains('Dependencia Maicao', $dependencies);
+        $this->assertNotContains('Dependencia Riohacha', $dependencies);
     }
 
     public function test_superadmin_con_sede_activa_no_accede_a_otra_sede(): void

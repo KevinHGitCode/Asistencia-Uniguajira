@@ -1,7 +1,17 @@
 import React from 'react';
 import { XIcon } from './AdminEventosIcons.jsx';
 
-export default function ActiveFilters({ filters, depOptions, userOptions, onRemoveDep, onRemoveUser, onClearDates, onClearSearch }) {
+export default function ActiveFilters({
+    filters,
+    depOptions,
+    userOptions,
+    campusOptions = [],
+    onRemoveDep,
+    onRemoveUser,
+    onClearDates,
+    onClearSearch,
+    onClearCampus,
+}) {
     const badges = [];
 
     if (filters.from || filters.to) {
@@ -19,6 +29,16 @@ export default function ActiveFilters({ filters, depOptions, userOptions, onRemo
             <span key="search" className="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200">
                 "{filters.search}"
                 <button onClick={onClearSearch} className="ml-0.5 hover:text-red-500"><XIcon /></button>
+            </span>,
+        );
+    }
+
+    if (filters.campusId) {
+        const campus = campusOptions.find((option) => String(option.id) === String(filters.campusId));
+        badges.push(
+            <span key="campus" className="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200">
+                {campus?.name ?? `Sede #${filters.campusId}`}
+                <button onClick={onClearCampus} className="ml-0.5 hover:text-red-500"><XIcon /></button>
             </span>,
         );
     }
