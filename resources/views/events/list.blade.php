@@ -40,6 +40,7 @@
                     <select
                         id="events-list-campus-id"
                         name="campus_id"
+                        onchange="this.form.requestSubmit()"
                         class="w-full rounded-xl border border-neutral-200 bg-zinc-50 px-3 py-2 text-sm font-medium text-gray-800 shadow-sm transition focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:focus:bg-zinc-900 sm:w-60">
                         <option value="">Todas mis sedes</option>
                         @foreach(($campuses ?? []) as $campusId => $campusName)
@@ -48,13 +49,6 @@
                             </option>
                         @endforeach
                     </select>
-
-                    <button
-                        type="submit"
-                        class="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-50 px-4 py-2 text-sm font-medium text-blue-600 shadow-sm transition hover:bg-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-900/50 hover:cursor-pointer">
-                        <flux:icon.funnel class="size-4" />
-                        Filtrar
-                    </button>
 
                     @if(($selectedCampusId ?? null) !== null)
                         <a href="{{ route('events.list') }}"
