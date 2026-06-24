@@ -37,7 +37,7 @@
     @endif
 
     {{-- Filtros --}}
-    <div class="border border-neutral-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm overflow-hidden">
+    <div class="relative z-20 border border-neutral-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm overflow-visible">
         <div class="px-4 sm:px-6 py-4 border-b border-neutral-200 dark:border-neutral-700 bg-zinc-50 dark:bg-zinc-900 flex items-center justify-between gap-4">
             <h2 class="text-base font-semibold text-gray-900 dark:text-white">Filtros</h2>
             <button @click="showFilters = !showFilters" class="sm:hidden text-sm text-[#cc5e50] font-medium cursor-pointer">
@@ -46,7 +46,7 @@
         </div>
 
         <form method="GET" action="{{ route('activity-logs.index') }}"
-              class="px-4 sm:px-6 py-4" :class="{ 'hidden sm:block': !showFilters }">
+              class="relative px-4 sm:px-6 py-4" :class="{ 'hidden sm:block': !showFilters }">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
                 {{-- Search --}}
                 <div>

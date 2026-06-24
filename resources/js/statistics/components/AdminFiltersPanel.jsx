@@ -7,10 +7,13 @@ export default function AdminFiltersPanel({
     from, onFromChange,
     to, onToChange,
     filterOptions,
+    campusId, onCampusChange,
     selectedDeps, onDepsChange,
     selectedUsers, onUsersChange,
     hasAnyFilter, onClearAll,
 }) {
+    const showCampuses = Boolean(filterOptions.show_campuses);
+
     return (
         <div className="mb-6 p-4 rounded-2xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-zinc-900">
             <div className="flex items-center justify-between mb-4">
@@ -22,7 +25,7 @@ export default function AdminFiltersPanel({
                 )}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+            <div className={`grid grid-cols-1 sm:grid-cols-2 gap-3 ${showCampuses ? 'lg:grid-cols-6' : 'lg:grid-cols-5'}`}>
                 {/* Búsqueda por nombre */}
                 <div className="relative lg:col-span-1 h-fit">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -36,6 +39,25 @@ export default function AdminFiltersPanel({
                         className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-zinc-800 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#e2a542]/50 focus:border-[#e2a542] transition"
                     />
                 </div>
+
+                {showCampuses && (
+                    <div>
+                        <select
+                            value={campusId}
+                            onChange={(e) => onCampusChange(e.target.value)}
+                            className="w-full px-3 py-2.5 text-sm rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#e2a542]/50 focus:border-[#e2a542] transition"
+                            title="Sede"
+                        >
+                            <option value="">Todas las sedes</option>
+                            {(filterOptions.campuses ?? []).map((campus) => (
+                                <option key={campus.id} value={campus.id}>
+                                    {campus.name}
+                                </option>
+                            ))}
+                        </select>
+                        <span className="text-[10px] text-gray-400 ml-1">Sede</span>
+                    </div>
+                )}
 
                 {/* Fecha desde */}
                 <div>

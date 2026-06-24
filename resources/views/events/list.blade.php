@@ -19,6 +19,54 @@
         </div>
     </div>
 
+    @if(Auth::user()->isSuperadmin())
+        <div class="mb-4 rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+            <form method="GET" action="{{ route('events.list') }}" class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <div class="flex items-start gap-3">
+                    <div class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-300">
+                        <flux:icon.map-pin class="size-5" />
+                    </div>
+                    <div>
+                        <label for="events-list-campus-id" class="text-sm font-semibold text-gray-900 dark:text-white">
+                            Filtrar tus eventos por sede
+                        </label>
+                        <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                            Este filtro solo afecta el módulo Tus eventos y no cambia la sede activa del dashboard.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+                    <select
+                        id="events-list-campus-id"
+                        name="campus_id"
+                        class="w-full rounded-xl border border-neutral-200 bg-zinc-50 px-3 py-2 text-sm font-medium text-gray-800 shadow-sm transition focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:focus:bg-zinc-900 sm:w-60">
+                        <option value="">Todas mis sedes</option>
+                        @foreach(($campuses ?? []) as $campusId => $campusName)
+                            <option value="{{ $campusId }}" @selected((int) ($selectedCampusId ?? 0) === (int) $campusId)>
+                                {{ $campusName }}
+                            </option>
+                        @endforeach
+                    </select>
+
+                    <button
+                        type="submit"
+                        class="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-50 px-4 py-2 text-sm font-medium text-blue-600 shadow-sm transition hover:bg-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-900/50 hover:cursor-pointer">
+                        <flux:icon.funnel class="size-4" />
+                        Filtrar
+                    </button>
+
+                    @if(($selectedCampusId ?? null) !== null)
+                        <a href="{{ route('events.list') }}"
+                           class="text-sm font-medium text-gray-500 transition hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                            Limpiar
+                        </a>
+                    @endif
+                </div>
+            </form>
+        </div>
+    @endif
+
     @php
         $now = now();
         $eventDateTime = function ($event, ?string $time) {

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Attendance;
+use App\Models\Campus;
 use App\Models\Dependency;
 use App\Models\Event;
 use App\Models\User;
@@ -17,10 +18,34 @@ use Illuminate\Validation\ValidationException;
 
 class EventController extends Controller
 {
-    public function index(CampusScopeService $campusScope)
+    public function index(Request $request, CampusScopeService $campusScope)
     {
         /** @var User $user */
         $user = Auth::user();
+
+        if ($user->isSuperadmin()) {
+            $validated = $request->validate([
+                'campus_id' => ['nullable', 'integer', 'exists:campuses,id'],
+            ]);
+
+            $selectedCampusId = empty($validated['campus_id']) ? null : (int) $validated['campus_id'];
+            $campuses = Campus::orderBy('name')->pluck('name', 'id')->toArray();
+
+            $myEvents = Event::with(['dependency:id,name', 'area:id,name', 'user:id,name'])
+                ->where('user_id', $user->id)
+                ->when($selectedCampusId, fn ($query) => $query->where('campus_id', $selectedCampusId))
+                ->orderBy('date', 'desc')
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            return view('events.list', [
+                'myEvents' => $myEvents,
+                'dependencyEvents' => collect(),
+                'dependenciesNames' => '',
+                'campuses' => $campuses,
+                'selectedCampusId' => $selectedCampusId,
+            ]);
+        }
 
         if ($user->hasAdminAccess()) {
             $myEvents = $campusScope->applyToQuery(
