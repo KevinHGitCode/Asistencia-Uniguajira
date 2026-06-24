@@ -1,7 +1,7 @@
 <div>
     <flux:modal
         name="edit-user-modal"
-        class="w-full max-w-2xl bg-zinc-50 dark:bg-zinc-900 [&::backdrop]:bg-black/40 [&::backdrop]:backdrop-blur-[2px]"
+        class="w-full max-w-2xl overflow-visible bg-zinc-50 dark:bg-zinc-900 [&>div]:overflow-visible [&::backdrop]:bg-black/40 [&::backdrop]:backdrop-blur-[2px]"
         x-data
         x-init="
         $nextTick(() => {
