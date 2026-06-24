@@ -20,6 +20,10 @@
         </div>
     </div>
 
+    <x-administration.info-note color="#64748b">
+        Los <strong>registros de actividad</strong> conservan el historial de acciones relevantes realizadas en el sistema. Usa los filtros para consultar quién realizó cada acción, en qué módulo y cuándo ocurrió.
+    </x-administration.info-note>
+
     {{-- Flash: success --}}
     @if(session('success'))
         <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)"

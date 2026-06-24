@@ -25,6 +25,10 @@
         </button>
     </div>
 
+    <x-administration.info-note color="#2563eb">
+        Los <strong>programas académicos</strong> son las ofertas disponibles en cada sede. Un mismo programa puede existir en varias sedes; el sufijo <code class="rounded px-1 font-mono">- Sede</code> permite identificar la oferta correcta durante las importaciones de participantes.
+    </x-administration.info-note>
+
     {{-- Flash: success --}}
     @if(session('success'))
         <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3500)"

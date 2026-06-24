@@ -25,6 +25,10 @@
         </button>
     </div>
 
+    <x-administration.info-note color="#8b5cf6">
+        Las <strong>organizaciones</strong> permiten registrar instituciones externas vinculadas a participantes de comunidad, como alcaldías, colegios o empresas. Puedes reutilizarlas al crear o editar participantes para mantener la información consistente.
+    </x-administration.info-note>
+
     {{-- Flash: success --}}
     @if(session('success'))
         <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3500)"

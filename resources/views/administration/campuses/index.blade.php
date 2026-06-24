@@ -10,6 +10,10 @@
         <button @click="openCreate()" class="inline-flex items-center gap-2 self-start rounded-lg bg-[#0f766e] px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#115e59] sm:self-auto"><flux:icon.plus class="size-4" />Nueva Sede</button>
     </div>
 
+    <x-administration.info-note color="#0f766e">
+        Las <strong>sedes</strong> organizan la información institucional por ubicación. Al crear dependencias y programas, la sede define dónde quedarán disponibles; su nombre también se usa para reconocer el sufijo <code class="rounded px-1 font-mono">- Sede</code> durante las importaciones.
+    </x-administration.info-note>
+
     @if(session('success'))<div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3500)" class="flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400"><flux:icon.check-circle class="size-5 shrink-0" />{{ session('success') }}</div>@endif
     @if(session('error') || $errors->any())<div class="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400"><flux:icon.x-circle class="size-5 shrink-0" />{{ session('error') ?: $errors->first() }}</div>@endif
 

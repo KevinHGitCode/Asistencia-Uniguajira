@@ -24,6 +24,10 @@
         </button>
     </div>
 
+    <x-administration.info-note color="#e2a542">
+        Los <strong>formatos</strong> son las plantillas PDF usadas para descargar listados de asistencia. Puedes asignar cada formato a una o más dependencias para que esté disponible al exportar los eventos correspondientes.
+    </x-administration.info-note>
+
     {{-- Alertas --}}
     @if(session('success'))
         <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)"

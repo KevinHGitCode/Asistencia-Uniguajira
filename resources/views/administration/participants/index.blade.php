@@ -61,6 +61,10 @@
         </div>
     </div>
 
+    <x-administration.info-note color="#3b82f6">
+        Los <strong>participantes</strong> conforman un registro global del sistema y pueden tener varios estamentos o roles. En la importación masiva, el archivo se revisa antes de aplicarse para que puedas validar los registros detectados.
+    </x-administration.info-note>
+
     {{-- Alertas globales --}}
     @if(session('success'))
         <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4000)"

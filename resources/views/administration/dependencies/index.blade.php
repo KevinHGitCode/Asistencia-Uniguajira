@@ -25,6 +25,10 @@
         </button>
     </div>
 
+    <x-administration.info-note color="#cc5e50">
+        Las <strong>dependencias</strong> representan las unidades organizativas de la Universidad. Cada una pertenece a una sede y puede asociarse a eventos y participantes administrativos; al crearla manualmente, se guarda con el formato <code class="rounded px-1 font-mono">Nombre - Sede</code>.
+    </x-administration.info-note>
+
     {{-- Flash: success --}}
     @if(session('success'))
         <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)"

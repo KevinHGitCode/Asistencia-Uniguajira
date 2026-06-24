@@ -25,6 +25,10 @@
         </button>
     </div>
 
+    <x-administration.info-note color="#62a9b6">
+        Las <strong>áreas</strong> permiten organizar las dependencias en unidades más específicas. Úsalas cuando necesites clasificar participantes o actividades dentro de una misma dependencia.
+    </x-administration.info-note>
+
     {{-- Flash: success --}}
     @if(session('success'))
         <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)"

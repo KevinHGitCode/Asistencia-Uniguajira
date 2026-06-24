@@ -25,6 +25,10 @@
         </button>
     </div>
 
+    <x-administration.info-note color="#7c6fcd">
+        Las <strong>afiliaciones</strong> clasifican el tipo de vinculación institucional de los participantes, por ejemplo Planta, Catedrático u Ocasional. Se seleccionan al registrar o importar participantes para completar la información de sus roles.
+    </x-administration.info-note>
+
     {{-- Flash: success --}}
     @if(session('success'))
         <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3500)"
