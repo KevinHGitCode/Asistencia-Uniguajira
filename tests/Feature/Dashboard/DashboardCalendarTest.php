@@ -172,6 +172,43 @@ class DashboardCalendarTest extends TestCase
         $this->assertNotContains('Evento Riohacha', $titles);
     }
 
+    public function test_usuario_de_sede_ve_en_el_calendario_los_eventos_creados_por_otros_usuarios_de_su_sede(): void
+    {
+        [$maicao, $riohacha] = $this->createCampuses();
+        $user = User::factory()->create([
+            'role' => User::ROLE_USER,
+            'campus_id' => $maicao->id,
+        ]);
+        $admin = User::factory()->create([
+            'role' => User::ROLE_ADMIN,
+            'campus_id' => $maicao->id,
+        ]);
+        $event = Event::factory()->create([
+            'title' => 'Evento de Maicao',
+            'user_id' => $admin->id,
+            'campus_id' => $maicao->id,
+            'date' => '2026-03-15',
+        ]);
+        Event::factory()->create([
+            'title' => 'Evento de Riohacha',
+            'user_id' => $admin->id,
+            'campus_id' => $riohacha->id,
+            'date' => '2026-03-15',
+        ]);
+
+        $this->actingAs($user)
+            ->getJson('/api/eventos-json')
+            ->assertOk()
+            ->assertJsonFragment(['date' => '2026-03-15', 'count' => 1]);
+
+        $this->actingAs($user)
+            ->getJson('/api/events/2026-03-15')
+            ->assertOk()
+            ->assertJsonPath('0.id', $event->id)
+            ->assertJsonPath('0.can_view', false)
+            ->assertJsonPath('0.show_url', null);
+    }
+
     public function test_superadmin_sin_sede_ve_todos_los_eventos_del_calendario(): void
     {
         [$maicao, $riohacha] = $this->createCampuses();

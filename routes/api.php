@@ -23,7 +23,10 @@ Route::get('/user', function (Request $request) {
 $applyCalendarVisibility = function ($query, User $user, CampusScopeService $campusScope): void {
     $campusScope->applyToQuery($query, $user);
 
-    if ($user->hasAdminAccess()) {
+    // Todo usuario con sede puede consultar el calendario completo de ella.
+    // Los usuarios sin sede conservan el alcance histórico: eventos propios o
+    // vinculados a sus dependencias.
+    if ($user->hasAdminAccess() || $campusScope->activeCampusId($user) !== null) {
         return;
     }
 

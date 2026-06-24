@@ -285,7 +285,7 @@ class EventController extends Controller
             });
         }
 
-        if (! $user->hasAdminAccess()) {
+        if (! $user->hasAdminAccess() && $activeCampusId === null) {
             $query->where(function ($eventQuery) use ($user, $dependencyIds) {
                 $eventQuery->where('user_id', $user->id);
 
@@ -315,6 +315,9 @@ class EventController extends Controller
                     $user,
                     $dependencyCampusId !== null ? (int) $dependencyCampusId : null
                 ));
+                // Un evento de la misma sede es visible en el calendario, pero
+                // solo se puede abrir si el usuario lo creó o está ligado a la
+                // dependencia del evento.
                 $canView = ($user->hasAdminAccess() || (int) $event->user_id === (int) $user->id)
                     ? $canAccessCampus
                     : $isDependencyEvent;
