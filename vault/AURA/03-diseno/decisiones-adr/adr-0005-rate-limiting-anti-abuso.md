@@ -62,12 +62,18 @@ Devolver `429 Too Many Requests` con cabeceras `Retry-After`.
 
 | Limitador | Defecto | Clave | Rutas |
 |---|---|---|---|
-| `attendance` | 30/min | IP + slug | `POST attendance.store` (registro QR) |
-| `public` | 60/min | IP | `events.access`, `attendance.confirmation` |
+| `attendance` | 30/min | IP + slug | ⚠️ **huérfano** — su única ruta (`attendance.store`) se retiró en [[adr-0003-retirar-flujo-legacy-de-asistencia]] |
+| `public` | 60/min | IP | `events.access` (`attendance.confirmation` también se retiró en ADR-0003) |
 | `api-stats` | 300/min | usuario (o IP) | grupos `/api/statistics/*` (resumen, generales, admin-eventos, compare) |
 | `pdf` | 10/min | usuario (o IP) | `events.download` (PDF de asistencia) |
 
 Devuelven `429 Too Many Requests` con `Retry-After` (cabeceras nativas del middleware `throttle`).
+
+> ⚠️ **Pendiente (deuda introducida por ADR-0003, 2026-06-24):** el registro de asistencia real
+> corre por el componente Livewire `AttendanceRegistration` (endpoint `/livewire/update`), que **no**
+> pasa por `throttle:attendance`. Hoy ese registro **no tiene rate limiting**. Decidir entre:
+> (a) aplicar un limitador al endpoint Livewire / a una acción del componente, o
+> (b) retirar `throttle:attendance` y su config `throttle.attendance` si se asume el riesgo.
 
 ### Notas
 - **`auth` (login):** ya estaba cubierto por el starter kit — `App\Livewire\Auth\Login` limita a

@@ -25,7 +25,7 @@ compromiso de fechas; es orden de prioridad sugerido.
 
 ## 🔧 Deuda / saneamiento recomendado primero
 - Completar migracion multi-sede modulo por modulo -> [[migracion-multi-sede]].
-- Retirar el flujo legacy de asistencia -> [[adr-0003-retirar-flujo-legacy-de-asistencia]].
+- ~~Retirar el flujo legacy de asistencia~~ ✅ hecho 2026-06-24 -> [[adr-0003-retirar-flujo-legacy-de-asistencia]].
 - Decidir auth y filtro por sede de endpoints `/api/statistics/*`.
 - Actualizar `README.md` y `CLAUDE.md`.
 - Activar/ordenar seeders de demo.
@@ -42,7 +42,7 @@ Iniciativas formalizadas como ADR o seguimiento vivo. Ramas sugeridas en
 - **Paleta de comandos para administradores** -> [[adr-0007-paleta-de-comandos-admin]].
 - **Listado de participantes en React** -> [[adr-0008-listado-participantes-en-react]].
 - **Mejoras al modulo de usuarios** (diseno + activos en vivo + estadisticas) -> [[adr-0010-mejoras-modulo-usuarios]].
-- **Mejores filtros en participantes** -> [[adr-0011-mejores-filtros-en-participantes]].
+- ~~**Mejores filtros en participantes**~~ ✅ hecho 2026-06-24 -> [[adr-0011-mejores-filtros-en-participantes]].
 - **Busqueda y filtros en eventos** -> [[adr-0012-busqueda-y-filtros-en-eventos]].
 - **Breadcrumbs correctos en detalle de evento** -> [[adr-0013-breadcrumbs-detalle-evento]].
 - **Proteger/retirar rutas API de prueba sin auth** -> [[adr-0014-proteger-rutas-api-de-prueba-sin-auth]].

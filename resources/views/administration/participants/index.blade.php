@@ -1,6 +1,6 @@
 <x-layouts.app :title="__('Participantes')">
 
-<div class="flex min-h-full w-full flex-1 flex-col gap-6 p-1 pb-8 sm:p-4 sm:pb-10 md:p-6 md:pb-12"
+<div class="flex min-h-full w-full flex-1 flex-col gap-4 p-1 pb-8 sm:p-4 sm:pb-10 md:p-6 md:pb-12"
      x-data="{
          activeTab: new URLSearchParams(window.location.search).get('filtro') === 'sin_clasificar'
              ? 'list'
@@ -46,7 +46,7 @@
             ['label' => 'Participantes'],
         ]" />
         <h1 class="flex items-center gap-2 text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-            <flux:icon name="users" class="size-16 text-[#3b82f6]" />
+            <flux:icon name="users" class="size-8 text-[#3b82f6]" />
             <span>Gestión de Participantes</span>
         </h1>
         <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -60,10 +60,6 @@
             </span>
         </div>
     </div>
-
-    <x-administration.info-note color="#3b82f6">
-        Los <strong>participantes</strong> conforman un registro global del sistema y pueden tener varios estamentos o roles. En la importación masiva, el archivo se revisa antes de aplicarse para que puedas validar los registros detectados.
-    </x-administration.info-note>
 
     {{-- Alertas globales --}}
     @if(session('success'))
@@ -557,14 +553,36 @@
     <div x-show="activeTab === 'list'" x-transition>
         <div class="border border-neutral-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm overflow-hidden">
 
-            <div class="px-4 sm:px-6 py-4 border-b border-neutral-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900">
-                <h2 class="text-base font-semibold text-gray-900 dark:text-white">Lista de participantes</h2>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                    Todos los participantes registrados en el sistema con sus estamentos, programas y vinculación.
-                </p>
+            <div class="px-4 sm:px-6 py-3 border-b border-neutral-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 flex items-start justify-between gap-3"
+                 x-data="{ infoOpen: false }">
+                <div>
+                    <h2 class="text-base font-semibold text-gray-900 dark:text-white">Lista de participantes</h2>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        Todos los participantes registrados en el sistema con sus estamentos, programas y vinculación.
+                    </p>
+                </div>
+
+                {{-- Información (dropdown) --}}
+                <div class="relative shrink-0" @click.outside="infoOpen = false" @keydown.escape="infoOpen = false">
+                    <button type="button" @click="infoOpen = !infoOpen"
+                        :class="infoOpen ? 'text-[#3b82f6] bg-blue-50 dark:bg-blue-900/30' : 'text-gray-400 hover:text-[#3b82f6] hover:bg-blue-50 dark:hover:bg-blue-900/30'"
+                        class="p-1.5 rounded-lg transition-colors cursor-pointer"
+                        aria-label="Más información sobre los participantes">
+                        <flux:icon.information-circle class="size-5" />
+                    </button>
+                    <div x-show="infoOpen" x-cloak
+                         x-transition:enter="transition ease-out duration-150"
+                         x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
+                         x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                         class="absolute right-0 top-full mt-2 w-72 sm:w-80 z-30 rounded-xl border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-4 shadow-lg">
+                        <p class="text-xs leading-relaxed text-gray-600 dark:text-gray-300">
+                            Los <strong class="font-semibold text-gray-800 dark:text-gray-100">participantes</strong> conforman un registro global del sistema y pueden tener varios estamentos o roles. En la importación masiva, el archivo se revisa antes de aplicarse para que puedas validar los registros detectados.
+                        </p>
+                    </div>
+                </div>
             </div>
 
-            <div class="px-4 sm:px-6 py-6">
+            <div class="px-4 sm:px-6 py-4">
                 @livewire('admin.participants-list')
             </div>
         </div>

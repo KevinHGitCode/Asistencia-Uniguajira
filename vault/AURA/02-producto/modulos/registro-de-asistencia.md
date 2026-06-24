@@ -44,8 +44,10 @@ Estados especiales: `duplicate`, `closed`, `event_ended`.
 Ver [[modelo-de-datos]].
 
 ## Gotchas / deuda
-- Existe un **flujo legacy** equivalente y más pobre (`AttendanceController`) que ya no se usa
-  → [[brechas-conocidas]] #1 y [[adr-0003-retirar-flujo-legacy-de-asistencia]].
+- El **flujo legacy** (`AttendanceController` + vista `events/confirmation` + rutas
+  `attendance.store`/`attendance.confirmation`) fue **retirado** el 2026-06-24
+  → [[adr-0003-retirar-flujo-legacy-de-asistencia]]. Única fuente de registro: el componente
+  Livewire `AttendanceRegistration`.
 
 ## Relacionado
 - Historia: [[hu-0001-registro-asistencia-qr]] · Personas: [[personas-y-roles]]

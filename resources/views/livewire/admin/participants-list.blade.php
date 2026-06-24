@@ -35,48 +35,220 @@
         </div>
     @endif
 
-    {{-- Buscador + Filtro --}}
-    <div class="mb-4 flex flex-col sm:flex-row gap-3">
-        <div class="relative flex-1">
-            <svg class="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400 pointer-events-none"
-                 fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                      d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"/>
-            </svg>
-            <input
-                wire:model.live.debounce.300ms="search"
-                type="text"
-                placeholder="Buscar por nombre, documento o correo…"
-                class="w-full pl-9 pr-4 py-2 rounded-lg border border-neutral-200 dark:border-zinc-700
-                       bg-white dark:bg-zinc-800 text-sm text-gray-900 dark:text-gray-100
-                       placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-            />
+    {{-- Barra de herramientas: búsqueda + filtros colapsables --}}
+    <div x-data="{ filtersOpen: @js($this->hasActiveFilters) }" class="mb-3">
+        <div class="flex flex-col sm:flex-row gap-2">
+            {{-- Buscador --}}
+            <div class="relative flex-1">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400 pointer-events-none"
+                     fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"/>
+                </svg>
+                <input
+                    wire:model.live.debounce.300ms="search"
+                    type="text"
+                    placeholder="Buscar por nombre, documento o correo…"
+                    class="w-full pl-9 pr-4 py-2 rounded-lg border border-neutral-200 dark:border-zinc-700
+                           bg-white dark:bg-zinc-800 text-sm text-gray-900 dark:text-gray-100
+                           placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                />
+            </div>
+
+            {{-- Botón mostrar/ocultar filtros --}}
+            <button type="button" @click="filtersOpen = !filtersOpen"
+                :class="filtersOpen
+                    ? 'border-blue-400 bg-blue-50 text-blue-700 dark:border-blue-600 dark:bg-blue-900/30 dark:text-blue-300'
+                    : 'border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-700'"
+                class="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors cursor-pointer shrink-0">
+                <flux:icon.funnel class="size-4" />
+                Filtros
+                @if($this->activeFilterCount > 0)
+                    <span class="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 rounded-full bg-blue-600 text-white text-[11px] font-semibold leading-none">
+                        {{ $this->activeFilterCount }}
+                    </span>
+                @endif
+                <flux:icon.chevron-down class="size-4 transition-transform" x-bind:class="filtersOpen ? 'rotate-180' : ''" />
+            </button>
         </div>
-        <button
-            wire:click="toggleUnclassifiedFilter"
-            class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors cursor-pointer shrink-0
-                {{ $filterUnclassified
-                    ? 'border-amber-400 bg-amber-50 text-amber-700 dark:border-amber-600 dark:bg-amber-900/30 dark:text-amber-300'
-                    : 'border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-700' }}">
-            <flux:icon.funnel class="size-4" />
-            Sin clasificar
-            @if($filterUnclassified)
-                <flux:icon.x-mark class="size-3.5" />
-            @endif
-        </button>
+
+        {{-- Panel de filtros (colapsable) --}}
+        <div x-show="filtersOpen" x-cloak
+             x-transition:enter="transition ease-out duration-150"
+             x-transition:enter-start="opacity-0 -translate-y-1"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             class="mt-2 rounded-xl border border-neutral-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/40 p-3">
+
+            <div class="flex items-center justify-end mb-2.5">
+                @if($this->hasActiveFilters || $search !== '')
+                    <button wire:click="resetFilters"
+                        class="inline-flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-red-600 dark:text-zinc-400 dark:hover:text-red-400 transition-colors cursor-pointer">
+                        <flux:icon.x-mark class="size-3.5" />
+                        Limpiar filtros
+                    </button>
+                @endif
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {{-- Estamento --}}
+            <div class="flex flex-col gap-1.5">
+                <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Estamento</label>
+                <x-ui.searchable-select
+                    wire:model.live="filterType"
+                    :options="$typeOptions"
+                    placeholder="Todos"
+                    empty-label="Todos los estamentos"
+                    search-placeholder="Buscar estamento…" />
+            </div>
+
+            {{-- Programa --}}
+            <div class="flex flex-col gap-1.5">
+                <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Programa</label>
+                <x-ui.searchable-select
+                    wire:model.live="filterProgram"
+                    :options="$programOptions"
+                    placeholder="Todos"
+                    empty-label="Todos los programas"
+                    search-placeholder="Buscar programa…" />
+            </div>
+
+            {{-- Dependencia --}}
+            <div class="flex flex-col gap-1.5">
+                <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Dependencia</label>
+                <x-ui.searchable-select
+                    wire:model.live="filterDependency"
+                    :options="$dependencyOptions"
+                    placeholder="Todas"
+                    empty-label="Todas las dependencias"
+                    search-placeholder="Buscar dependencia…" />
+            </div>
+
+            {{-- Vinculación --}}
+            <div class="flex flex-col gap-1.5">
+                <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Vinculación</label>
+                <x-ui.searchable-select
+                    wire:model.live="filterAffiliation"
+                    :options="$affiliationOptions"
+                    placeholder="Todas"
+                    empty-label="Todas las vinculaciones"
+                    search-placeholder="Buscar vinculación…" />
+            </div>
+
+            {{-- Correo --}}
+            <div class="flex flex-col gap-1.5">
+                <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Correo</label>
+                <x-ui.searchable-select
+                    wire:model.live="filterEmail"
+                    :options="[['id' => 'con', 'name' => 'Con correo'], ['id' => 'sin', 'name' => 'Sin correo']]"
+                    placeholder="Con o sin correo"
+                    empty-label="Con o sin correo" />
+            </div>
+
+            {{-- Sin clasificar --}}
+            <div class="flex flex-col gap-1.5">
+                <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Clasificación</label>
+                <button
+                    wire:click="toggleUnclassifiedFilter"
+                    class="inline-flex items-center justify-between gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors cursor-pointer
+                        {{ $filterUnclassified
+                            ? 'border-amber-400 bg-amber-50 text-amber-700 dark:border-amber-600 dark:bg-amber-900/30 dark:text-amber-300'
+                            : 'border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-700' }}">
+                    <span class="inline-flex items-center gap-2">
+                        <flux:icon.funnel class="size-4" />
+                        Solo sin clasificar
+                    </span>
+                    @if($filterUnclassified)
+                        <flux:icon.x-mark class="size-3.5" />
+                    @endif
+                </button>
+            </div>
+        </div>
     </div>
 
-    {{-- Banner de filtro activo --}}
-    @if($filterUnclassified)
-        <div class="mb-4 flex items-center gap-3 px-4 py-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 text-sm">
-            <flux:icon.funnel class="size-5 shrink-0" />
-            <span>Mostrando solo participantes con al menos una asistencia sin programa, dependencia ni organización asignados.</span>
+    {{-- Resumen + paginación (arriba) --}}
+    @if($participants->total() > 0)
+        <div class="mt-5 mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            {{-- Rango de resultados --}}
+            <p class="text-xs text-gray-500 dark:text-zinc-400 shrink-0">
+                Mostrando
+                <span class="font-medium text-gray-700 dark:text-zinc-200">{{ number_format($participants->firstItem() ?? 0) }}</span>
+                a
+                <span class="font-medium text-gray-700 dark:text-zinc-200">{{ number_format($participants->lastItem() ?? 0) }}</span>
+                de
+                <span class="font-medium text-gray-700 dark:text-zinc-200">{{ number_format($participants->total()) }}</span>
+                {{ $participants->total() === 1 ? 'participante' : 'participantes' }}
+                @if($filterUnclassified)
+                    · solo sin clasificar
+                @endif
+            </p>
+
+            {{-- Paginación sutil --}}
+            @if($participants->hasPages())
+                @php
+                    $current = $participants->currentPage();
+                    $last    = $participants->lastPage();
+                    $window  = [];
+                    $prev    = 0;
+                    foreach (range(1, $last) as $p) {
+                        if ($p == 1 || $p == $last || abs($p - $current) <= 1) {
+                            if ($prev && $p - $prev > 1) {
+                                $window[] = '...';
+                            }
+                            $window[] = $p;
+                            $prev = $p;
+                        }
+                    }
+                @endphp
+                <nav class="flex items-center gap-0.5" role="navigation" aria-label="Paginación">
+                    <button wire:click="previousPage" @disabled($participants->onFirstPage())
+                        class="inline-flex items-center justify-center size-7 rounded-md text-gray-400 dark:text-zinc-500 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300 disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+                        aria-label="Página anterior">
+                        <flux:icon.chevron-left class="size-4" />
+                    </button>
+
+                    @foreach($window as $page)
+                        @if($page === '...')
+                            <span class="px-1 text-xs text-gray-400 dark:text-zinc-600 select-none">…</span>
+                        @else
+                            <button wire:click="gotoPage({{ $page }})"
+                                @class([
+                                    'inline-flex items-center justify-center min-w-7 h-7 px-1.5 rounded-md text-xs transition-colors cursor-pointer',
+                                    'font-semibold text-blue-600 bg-blue-50 dark:text-blue-300 dark:bg-blue-900/30' => $page == $current,
+                                    'font-medium text-gray-500 dark:text-zinc-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200' => $page != $current,
+                                ])
+                                @if($page == $current) aria-current="page" @endif>
+                                {{ $page }}
+                            </button>
+                        @endif
+                    @endforeach
+
+                    <button wire:click="nextPage" @disabled(! $participants->hasMorePages())
+                        class="inline-flex items-center justify-center size-7 rounded-md text-gray-400 dark:text-zinc-500 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300 disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+                        aria-label="Página siguiente">
+                        <flux:icon.chevron-right class="size-4" />
+                    </button>
+                </nav>
+            @endif
         </div>
     @endif
 
     {{-- Tabla --}}
-    <div class="overflow-x-auto rounded-xl border border-neutral-200 dark:border-zinc-700">
-        <table class="min-w-[1000px] w-full divide-y divide-neutral-200 dark:divide-zinc-700 text-sm">
+    <div class="relative">
+        {{-- Indicador de carga al filtrar / buscar / paginar --}}
+        <div wire:loading.flex
+             wire:target="search,filterType,filterProgram,filterDependency,filterAffiliation,filterEmail,toggleUnclassifiedFilter,resetFilters,previousPage,nextPage,gotoPage"
+             class="absolute inset-0 z-10 hidden items-center justify-center rounded-xl bg-white/70 dark:bg-zinc-900/70 backdrop-blur-[1px]">
+            <span class="inline-flex items-center gap-2 rounded-full border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-zinc-300 shadow-sm">
+                <svg class="size-4 animate-spin text-[#3b82f6]" viewBox="0 0 24 24" fill="none">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4z"></path>
+                </svg>
+                Filtrando…
+            </span>
+        </div>
+
+        <div class="overflow-x-auto rounded-xl border border-neutral-200 dark:border-zinc-700">
+            <table class="min-w-[1000px] w-full divide-y divide-neutral-200 dark:divide-zinc-700 text-sm">
             <thead class="bg-zinc-50 dark:bg-zinc-800/60">
                 <tr>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider">Documento</th>
@@ -294,8 +466,12 @@
                 @empty
                     <tr>
                         <td colspan="8" class="px-4 py-10 text-center text-sm text-gray-400 dark:text-zinc-500">
-                            @if($search !== '')
+                            @if($search !== '' && $this->hasActiveFilters)
+                                No se encontraron participantes con "<strong>{{ $search }}</strong>" y los filtros aplicados.
+                            @elseif($search !== '')
                                 No se encontraron participantes con "<strong>{{ $search }}</strong>".
+                            @elseif($this->hasActiveFilters)
+                                No hay participantes que cumplan los filtros aplicados.
                             @else
                                 Aún no hay participantes registrados.
                             @endif
@@ -304,19 +480,8 @@
                 @endforelse
             </tbody>
         </table>
-    </div>
-
-    {{-- Paginación --}}
-    @if($participants->hasPages())
-        <div class="mt-4">
-            {{ $participants->links() }}
         </div>
-    @endif
-
-    {{-- Contador --}}
-    <p class="mt-2 text-xs text-gray-400 dark:text-zinc-500 text-right">
-        {{ $participants->total() }} participante(s) en total
-    </p>
+    </div>
 
     {{-- ======================== MODAL: EDITAR ======================== --}}
     @if($showEditModal)

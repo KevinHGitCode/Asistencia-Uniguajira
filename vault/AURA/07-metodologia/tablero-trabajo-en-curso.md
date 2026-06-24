@@ -1,7 +1,7 @@
 ---
 tipo: metodologia
 descripcion: Tablero para reservar tareas antes de tocar código y evitar choques
-actualizado: 2026-06-20
+actualizado: 2026-06-24
 ---
 
 # Tablero de trabajo en curso
@@ -18,12 +18,8 @@ que dos personas/IAs choquen, sobre todo en cambios 🔴 que tocan el esquema.
 ## 🟦 En curso
 | Tarea | Responsable | Rama | Tipo | Desde |
 |---|---|---|---|---|
-| _(ejemplo)_ Crear el vault AURA | equipo | `docs/crear-vault-aura` | 🟢 | 2026-06-20 |
-| Rate limiting anti-abuso (ADR-0005) | equipo | `feat/rate-limiting-rutas` | 🔴 | 2026-06-21 |
-| Paleta de comandos admin · MVP (ADR-0007) | equipo | `feat/paleta-comandos-admin` | 🟢 | 2026-06-21 |
-| Formularios de usuario a modal centrado (ADR-0006) | equipo | `refactor/formularios-modal-centrado` | 🟢 | 2026-06-21 |
-| Retirar rutas API de prueba sin auth (ADR-0014) | equipo | `fix/retirar-rutas-api-de-prueba` | 🔴 | 2026-06-21 |
-| Contenedor de eventos con búsqueda (ADR-0012) | equipo | `feat/eventos-busqueda-filtros` | 🟢 | 2026-06-21 |
+| Mejoras módulo usuarios · diseño/UX (ADR-0010) | equipo | `feat/modulo-usuarios-mejoras` | 🟢 | 2026-06-24 |
+| Migración multi-sede progresiva (ADR-0009) | equipo | `feat/multi-sede-*` | 🔴 | 2026-06-21 |
 
 ## 🟨 En revisión (PR abierto)
 | Tarea | Responsable | Rama | PR |
@@ -33,7 +29,16 @@ que dos personas/IAs choquen, sobre todo en cambios 🔴 que tocan el esquema.
 ## 🟩 Hecho recientemente
 | Tarea | Rama | Mergeado |
 |---|---|---|
-| | | |
+| Crear el vault AURA | `docs/crear-vault-aura` | 2026-06-20 |
+| Rate limiting anti-abuso (ADR-0005) | `feat/rate-limiting-rutas` | 2026-06-21 |
+| Paleta de comandos admin · MVP (ADR-0007) | `feat/paleta-comandos-admin` | 2026-06-22 |
+| Formularios de usuario a modal centrado (ADR-0006) | `refactor/formularios-modal-centrado` | 2026-06-22 |
+| Retirar rutas API de prueba sin auth (ADR-0014) | `fix/retirar-rutas-api-de-prueba` | 2026-06-22 |
+| Contenedor de eventos con búsqueda · MVP (ADR-0012) | `feat/eventos-busqueda-filtros` | 2026-06-23 |
+| Breadcrumbs detalle de evento (ADR-0013) | `feat/breadcrumbs-evento` | 2026-06-23 |
+| Componente select buscable + uso en formatos | `feat/componente-select` | 2026-06-24 |
+| Retirar flujo legacy de asistencia (ADR-0003) | `refactor/retirar-asistencia-legacy` | 2026-06-24 |
+| Filtros estructurados en participantes (ADR-0011) | `feat/participantes-filtros` | 2026-06-24 |
 
 ## ⚠️ Avisos de serialización (🔴 activos)
 > Lista aquí los cambios de **esquema/rutas públicas** en vuelo para que nadie los solape.
@@ -47,6 +52,10 @@ que dos personas/IAs choquen, sobre todo en cambios 🔴 que tocan el esquema.
 - Retiro de rutas API de prueba (`fix/retirar-rutas-api-de-prueba`, ADR-0014): se **eliminaron** 12
   endpoints publicos sin auth de `routes/api.php` (`/api/events`, `/api/participants`, `/api/users`,
   `/api/programs`, `/api/dependencies`, etc.). Si los necesitabas, recrealos bajo `['web','auth']`.
+- Retiro de asistencia legacy (ADR-0003, 2026-06-24): se **eliminaron** las rutas publicas
+  `attendance.store` (POST) y `attendance.confirmation` (GET), el `AttendanceController` y la vista
+  `events/confirmation`. El registro publico unico es `events.access` + Livewire. Efecto colateral:
+  `throttle:attendance` quedo huerfano y el registro real no tiene rate limiting (ver ADR-0005).
 
 ---
 > Cambios de esquema = migraciones nuevas/alteradas. Mira el orden cronológico en

@@ -9,12 +9,15 @@ actualizado: 2026-06-20
 Diferencias reales entre lo documentado/prometido y lo que el backend hace hoy. Cada brecha
 es candidata a ticket, idea ([[ideas]]) o decision ([[plantilla-adr]]).
 
-## 1. Doble flujo de registro de asistencia (codigo legacy vivo) 🧟
+## 1. Doble flujo de registro de asistencia ✅ RESUELTO (2026-06-24)
 - El flujo real es el componente Livewire `AttendanceRegistration`, montado por
   `events/access.blade.php` (`<livewire:event.attendance-registration>`).
-- Siguen vivos pero sin uso: `AttendanceController::store` + `confirmation`,
-  la vista `events/confirmation`, y las rutas `attendance.store` / `attendance.confirmation`.
-- Riesgo: ruta publica POST activa que duplica logica y puede confundir.
+- El flujo legacy (`AttendanceController::store`/`confirmation`, vista `events/confirmation`,
+  rutas `attendance.store`/`attendance.confirmation`) fue **eliminado**
+  → [[adr-0003-retirar-flujo-legacy-de-asistencia]].
+- ⚠️ Brecha derivada nueva: el limitador `throttle:attendance` solo cubría la ruta legacy; el
+  registro real (Livewire) **quedó sin rate limiting**. Ver ADR-0003 y
+  [[adr-0005-rate-limiting-anti-abuso]].
 
 ## 2. README desactualizado 📄
 - Dice "MySQL" y "Blade, Tailwind" como unico stack; omite Livewire, React, Alpine.
