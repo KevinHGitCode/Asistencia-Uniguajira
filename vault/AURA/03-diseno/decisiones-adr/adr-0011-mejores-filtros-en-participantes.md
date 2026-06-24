@@ -6,8 +6,9 @@ actualizado: 2026-06-20
 
 # ADR-0011 · Mejores filtros en Participantes
 
-- **Estado:** 🟡 Propuesta
-- **Fecha:** 2026-06-20
+- **Estado:** 🟡 Propuesta (sin iniciar; ya existe el componente `select` buscable reutilizable —
+  commits `8fa8623`/`e076e35` — que reduce el costo de la UI de filtros)
+- **Fecha:** 2026-06-20 (actualizado 2026-06-24)
 - **Contexto del repo:** `app/Livewire/Admin/ParticipantsList.php` +
   `resources/views/livewire/admin/participants-list.blade.php`. Hoy tiene **búsqueda** (nombre /
   documento / correo) y un filtro **"sin clasificar"**, con paginación de 25.

@@ -1,13 +1,13 @@
 ---
 tipo: adr
-descripcion: ADR-0010 (propuesta) — Mejoras al módulo de usuarios: diseño, usuarios activos en vivo y estadísticas de uso
-actualizado: 2026-06-20
+descripcion: ADR-0010 (en curso) — Mejoras al módulo de usuarios: diseño, usuarios activos en vivo y estadísticas de uso
+actualizado: 2026-06-24
 ---
 
 # ADR-0010 · Mejoras al módulo de usuarios
 
-- **Estado:** 🟡 Propuesta
-- **Fecha:** 2026-06-20
+- **Estado:** 🟠 En curso (frente 1 — diseño/UX — parcial; frentes 2 y 3 pendientes)
+- **Fecha:** 2026-06-20 (actualizado 2026-06-24)
 - **Contexto del repo:** `UserController` (`index/show/information/create/edit`),
   `app/Livewire/User/*` (`Card`, `Avatar`, `CreateUserModal`, `EditUserModal`),
   vistas `resources/views/users/*`. Sesiones en BD (`SESSION_DRIVER=database`) y acciones
@@ -46,6 +46,17 @@ Tres frentes, coordinados:
 - **Broadcasting/websockets** para presencia instantánea: mejor UX pero infra extra (no encaja en
   hosting compartido de Hostinger ahora).
 - **No medir**: se pierde visibilidad operativa que el admin pidió.
+
+## Progreso (2026-06-24)
+**Frente 1 — diseño/UX:**
+- [x] Modal de edición de usuario con los **datos actuales** precargados (commit `5b0afcb`).
+- [x] Mejora visual al editar usuario (commit `a515c53`).
+- [x] Las dependencias ya no concatenan su sede en el selector (ya viene en el nombre) (`5b0afcb`).
+- [ ] Alinear por completo `users/index` y el detalle con el resto de la administración (tabla con
+  buscador en vivo, badges de rol/sede).
+
+**Frente 2 — usuarios activos en vivo:** pendiente (no iniciado).
+**Frente 3 — estadísticas de uso por usuario:** pendiente (no iniciado).
 
 ## Pendiente para aceptar
 - [ ] Definir umbral de "activo" (min) e intervalo de poll.
