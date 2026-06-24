@@ -3,11 +3,13 @@
 namespace Tests\Feature\Administration;
 
 use App\Livewire\Administration\AffiliationTable;
+use App\Livewire\Administration\CampusTable;
 use App\Livewire\Administration\OrganizationTable;
 use App\Livewire\Administration\ParticipantTypeTable;
 use App\Livewire\Administration\ProgramTable;
 use App\Models\ActivityLog;
 use App\Models\Affiliation;
+use App\Models\Campus;
 use App\Models\Organization;
 use App\Models\ParticipantType;
 use App\Models\Program;
@@ -164,6 +166,28 @@ class AdminTablesPaginationTest extends TestCase
             ->assertSee('programas', false)
             ->assertSee('crear', false)
             ->assertSee((string) $this->admin->id, false);
+    }
+
+    public function test_tabla_de_sedes_muestra_programas_ligados(): void
+    {
+        $campus = Campus::create(['name' => 'Fonseca']);
+
+        Program::create([
+            'name' => 'Programa Fonseca 1',
+            'program_type' => 'Pregrado',
+            'campus_id' => $campus->id,
+        ]);
+
+        Program::create([
+            'name' => 'Programa Fonseca 2',
+            'program_type' => 'Pregrado',
+            'campus_id' => $campus->id,
+        ]);
+
+        Livewire::actingAs($this->admin)
+            ->test(CampusTable::class)
+            ->assertSee('Programas')
+            ->assertViewHas('campuses', fn ($campuses) => $campuses->firstWhere('id', $campus->id)?->programs_count === 2);
     }
 
     private function seedRecords(string $modelClass, int $count): void
