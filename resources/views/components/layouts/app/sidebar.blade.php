@@ -291,9 +291,11 @@
                                 {{ __('Programas') }}
                             </flux:navlist.item>
 
-                            <flux:navlist.item :href="route('formats.index')" :current="request()->routeIs('formats.*')" wire:navigate>
-                                {{ __('Formatos') }}
-                            </flux:navlist.item>
+                            @if(auth()->user()->isSuperadmin())
+                                <flux:navlist.item :href="route('formats.index')" :current="request()->routeIs('formats.*')" wire:navigate>
+                                    {{ __('Formatos') }}
+                                </flux:navlist.item>
+                            @endif
 
                             <flux:navlist.item :href="route('participant-types.index')" :current="request()->routeIs('participant-types.*')" wire:navigate>
                                 {{ __('Estamentos') }}
@@ -311,9 +313,11 @@
                                 {{ __('Participantes') }}
                             </flux:navlist.item>
 
-                            <flux:navlist.item :href="route('activity-logs.index')" :current="request()->routeIs('activity-logs.*')" wire:navigate>
-                                {{ __('Registros') }}
-                            </flux:navlist.item>
+                            @if(auth()->user()->isSuperadmin())
+                                <flux:navlist.item :href="route('activity-logs.index')" :current="request()->routeIs('activity-logs.*')" wire:navigate>
+                                    {{ __('Registros') }}
+                                </flux:navlist.item>
+                            @endif
                         </div>
                     </div>
                 @endif

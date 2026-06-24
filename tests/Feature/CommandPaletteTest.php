@@ -28,7 +28,8 @@ class CommandPaletteTest extends TestCase
         $response->assertSee('open-command-palette', false);
         // Comandos representativos.
         $response->assertSee(route('users.index'), false);
-        $response->assertSee(route('activity-logs.index'), false);
+        $response->assertDontSee(route('formats.index'), false);
+        $response->assertDontSee(route('activity-logs.index'), false);
     }
 
     public function test_usuario_regular_no_ve_la_paleta_de_comandos(): void
@@ -47,12 +48,16 @@ class CommandPaletteTest extends TestCase
         $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
         $superadmin = User::factory()->create(['role' => User::ROLE_SUPERADMIN]);
 
-        // Admin normal: sin comando "Sedes".
+        // Admin normal: sin comandos exclusivos de superadmin.
         $this->actingAs($admin)->get('/dashboard')
-            ->assertDontSee(route('campuses.index'), false);
+            ->assertDontSee(route('campuses.index'), false)
+            ->assertDontSee(route('formats.index'), false)
+            ->assertDontSee(route('activity-logs.index'), false);
 
-        // Superadmin: con comando "Sedes".
+        // Superadmin: con comandos exclusivos.
         $this->actingAs($superadmin)->get('/dashboard')
-            ->assertSee(route('campuses.index'), false);
+            ->assertSee(route('campuses.index'), false)
+            ->assertSee(route('formats.index'), false)
+            ->assertSee(route('activity-logs.index'), false);
     }
 }

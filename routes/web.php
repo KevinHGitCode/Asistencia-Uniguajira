@@ -178,15 +178,17 @@ Route::middleware(['auth', 'verified', 'role:admin,superadmin'])
         Route::post('/areas/edit/{area}', [AreaController::class, 'update'])->name('areas.update');
         Route::post('/areas/delete/{area}', [AreaController::class, 'destroy'])->name('areas.delete');
 
-        // Rutas específicas de formatos
-        Route::get('/formats', [FormatController::class, 'index'])->name('formats.index');
-        // Route::get('/formats/create', [FormatController::class, 'create'])->name('formats.create');  // TODO: Esta ruta no se usa
-        Route::post('/formats', [FormatController::class, 'store'])->name('formats.store');
-        Route::post('/formats/edit/{format}', [FormatController::class, 'update'])->name('formats.update');
-        Route::post('/formats/delete/{format}', [FormatController::class, 'destroy'])->name('formats.destroy');
+        Route::middleware('role:superadmin')->group(function () {
+            // Rutas específicas de formatos
+            Route::get('/formats', [FormatController::class, 'index'])->name('formats.index');
+            // Route::get('/formats/create', [FormatController::class, 'create'])->name('formats.create');  // TODO: Esta ruta no se usa
+            Route::post('/formats', [FormatController::class, 'store'])->name('formats.store');
+            Route::post('/formats/edit/{format}', [FormatController::class, 'update'])->name('formats.update');
+            Route::post('/formats/delete/{format}', [FormatController::class, 'destroy'])->name('formats.destroy');
 
-        Route::get('/formats/{format}/mapper', [FormatController::class, 'mapper'])->name('formats.mapper');
-        Route::post('/formats/{format}/mapping', [FormatController::class, 'saveMapping'])->name('formats.save-mapping');
+            Route::get('/formats/{format}/mapper', [FormatController::class, 'mapper'])->name('formats.mapper');
+            Route::post('/formats/{format}/mapping', [FormatController::class, 'saveMapping'])->name('formats.save-mapping');
+        });
 
         // Rutas de afiliaciones
         Route::get('/affiliations', [AffiliationController::class, 'index'])->name('affiliations.index');
@@ -242,9 +244,11 @@ Route::middleware(['auth', 'verified', 'role:admin,superadmin'])
         Route::post('/participants/imports/{batch}/approve', [ParticipantImportController::class, 'approve'])->name('participants-import.approve');
         Route::post('/participants/imports/{batch}/reject', [ParticipantImportController::class, 'reject'])->name('participants-import.reject');
 
-        // Rutas de registros de actividad
-        Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
-        Route::post('/activity-logs/clear', [ActivityLogController::class, 'clear'])->name('activity-logs.clear');
+        Route::middleware('role:superadmin')->group(function () {
+            // Rutas de registros de actividad
+            Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
+            Route::post('/activity-logs/clear', [ActivityLogController::class, 'clear'])->name('activity-logs.clear');
+        });
 
     });
 

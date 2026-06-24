@@ -28,7 +28,7 @@ class AdminTablesPaginationTest extends TestCase
         parent::setUp();
 
         $this->admin = User::factory()->create([
-            'role' => 'admin',
+            'role' => User::ROLE_SUPERADMIN,
             'email_verified_at' => now(),
         ]);
     }

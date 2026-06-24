@@ -35,12 +35,16 @@
                 : null,
             ['label' => 'Dependencias', 'group' => 'Administración', 'url' => route('dependencies.index'), 'search' => ''],
             ['label' => 'Programas', 'group' => 'Administración', 'url' => route('programs.index'), 'search' => 'academicos'],
-            ['label' => 'Formatos', 'group' => 'Administración', 'url' => route('formats.index'), 'search' => 'pdf plantillas'],
+            $isSuperadmin
+                ? ['label' => 'Formatos', 'group' => 'Administración', 'url' => route('formats.index'), 'search' => 'pdf plantillas']
+                : null,
             ['label' => 'Estamentos', 'group' => 'Administración', 'url' => route('participant-types.index'), 'search' => 'tipos de participante'],
             ['label' => 'Afiliaciones', 'group' => 'Administración', 'url' => route('affiliations.index'), 'search' => ''],
             ['label' => 'Organizaciones', 'group' => 'Administración', 'url' => route('organizations.index'), 'search' => ''],
             ['label' => 'Participantes', 'group' => 'Administración', 'url' => route('participants-import.index'), 'search' => 'importar cargar'],
-            ['label' => 'Registros de actividad', 'group' => 'Administración', 'url' => route('activity-logs.index'), 'search' => 'auditoria logs historial'],
+            $isSuperadmin
+                ? ['label' => 'Registros de actividad', 'group' => 'Administración', 'url' => route('activity-logs.index'), 'search' => 'auditoria logs historial']
+                : null,
         ]));
 
         // El filtro busca en 'search'; incluye la etiqueta para que también cuente.

@@ -105,6 +105,7 @@
                 <div class="absolute bottom-0 left-0 w-0 h-0.5 rounded-b-xl bg-[#2563eb] group-hover:w-full transition-all duration-300"></div>
             </a>
 
+            @if(auth()->user()->isSuperadmin())
             {{-- Card: Formatos --}}
             <a href="{{ route('formats.index') }}"
             class="group relative flex flex-col gap-4 p-5 sm:p-6 rounded-2xl border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 overflow-hidden">
@@ -127,6 +128,7 @@
 
                 <div class="absolute bottom-0 left-0 w-0 h-0.5 rounded-b-xl bg-[#e2a542] group-hover:w-full transition-all duration-300"></div>
             </a>
+            @endif
 
             {{-- Card: Estamentos --}}
             <a href="{{ route('participant-types.index') }}"
@@ -220,6 +222,7 @@
                 <div class="absolute bottom-0 left-0 w-0 h-0.5 rounded-b-xl bg-[#3b82f6] group-hover:w-full transition-all duration-300"></div>
             </a>
 
+            @if(auth()->user()->isSuperadmin())
             {{-- Card: Registros de Actividad --}}
             <a href="{{ route('activity-logs.index') }}"
                class="group relative flex flex-col gap-4 p-5 sm:p-6 rounded-2xl border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 overflow-hidden">
@@ -242,6 +245,7 @@
 
                 <div class="absolute bottom-0 left-0 w-0 h-0.5 rounded-b-xl bg-[#64748b] group-hover:w-full transition-all duration-300"></div>
             </a>
+            @endif
 
         </div>
 
