@@ -37,6 +37,7 @@ window.searchableSelect = function (config) {
 
         init() {
             this.value = this.leerValor();
+            this.$nextTick(() => this.syncHiddenInput());
         },
 
         leerValor() {
@@ -75,9 +76,16 @@ window.searchableSelect = function (config) {
         },
 
         commit(val) {
-            this.value = val;
+            this.value = val == null ? '' : String(val);
+            this.syncHiddenInput();
             if (this.hasWire && this.model) {
                 this.$wire.set(this.model, val, this.live); // diferido salvo wire:model.live
+            }
+        },
+
+        syncHiddenInput() {
+            if (this.$refs.hiddenInput) {
+                this.$refs.hiddenInput.value = this.value || '';
             }
         },
 

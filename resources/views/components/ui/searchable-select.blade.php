@@ -32,7 +32,7 @@
 @php
     $wireDirective = $attributes->wire('model');
     $wireModel = $wireDirective->value();
-    $hasWire = filled($wireModel);
+    $hasWire = is_string($wireModel) && $wireModel !== '';
     $isLive = $hasWire && $wireDirective->hasModifier('live');
 
     $normalized = \App\Support\SelectOptions::normalize($options, $valueKey, $labelKey);
@@ -59,7 +59,7 @@
 >
     {{-- Input oculto para formularios sin Livewire --}}
     @if($name && !$hasWire)
-        <input type="hidden" name="{{ $name }}" :value="value">
+        <input x-ref="hiddenInput" type="hidden" name="{{ $name }}" :value="value">
     @endif
 
     {{-- Disparador --}}

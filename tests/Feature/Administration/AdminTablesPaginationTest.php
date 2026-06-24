@@ -123,8 +123,47 @@ class AdminTablesPaginationTest extends TestCase
             ->get(route('activity-logs.index'))
             ->assertOk()
             ->assertSee('Listado de Registros')
+            ->assertSee('name="module"', false)
+            ->assertSee('name="action"', false)
+            ->assertSee('name="user_id"', false)
             ->assertSee('Mostrando')
             ->assertSee('Siguiente');
+    }
+
+    public function test_registros_de_actividad_filtra_por_modulo_accion_y_usuario(): void
+    {
+        $otherUser = User::factory()->create(['name' => 'Otro usuario']);
+
+        ActivityLog::create([
+            'user_id' => $this->admin->id,
+            'action' => 'crear',
+            'module' => 'programas',
+            'description' => 'Registro filtrable esperado',
+            'ip_address' => '127.0.0.1',
+            'created_at' => now(),
+        ]);
+
+        ActivityLog::create([
+            'user_id' => $otherUser->id,
+            'action' => 'eliminar',
+            'module' => 'dependencias',
+            'description' => 'Registro que no debe aparecer',
+            'ip_address' => '127.0.0.1',
+            'created_at' => now()->subMinute(),
+        ]);
+
+        $this->actingAs($this->admin)
+            ->get(route('activity-logs.index', [
+                'module' => 'programas',
+                'action' => 'crear',
+                'user_id' => $this->admin->id,
+            ]))
+            ->assertOk()
+            ->assertSee('Registro filtrable esperado')
+            ->assertDontSee('Registro que no debe aparecer')
+            ->assertSee('programas', false)
+            ->assertSee('crear', false)
+            ->assertSee((string) $this->admin->id, false);
     }
 
     private function seedRecords(string $modelClass, int $count): void
