@@ -25,7 +25,7 @@ class CampusScopedConfigurationTest extends TestCase
             ->assertRedirect(route('dependencies.index'));
 
         $this->assertDatabaseHas('dependencies', [
-            'name' => 'Bienestar maicao',
+            'name' => 'Bienestar maicao - Maicao',
             'campus_id' => $campus->id,
         ]);
     }
@@ -51,12 +51,31 @@ class CampusScopedConfigurationTest extends TestCase
             ->assertRedirect(route('dependencies.index'));
 
         $this->assertDatabaseHas('dependencies', [
-            'name' => 'Aseguramiento de la calidad',
+            'name' => 'Aseguramiento de la calidad - Maicao',
             'campus_id' => $maicao->id,
         ]);
         $this->assertDatabaseHas('dependencies', [
-            'name' => 'Aseguramiento de la calidad',
+            'name' => 'Aseguramiento de la calidad - Riohacha',
             'campus_id' => $riohacha->id,
+        ]);
+    }
+
+    public function test_superadmin_reemplaza_un_sufijo_de_sede_escrito_por_la_sede_seleccionada(): void
+    {
+        $fonseca = Campus::create(['name' => 'Fonseca']);
+        $maicao = Campus::create(['name' => 'Maicao']);
+        $superadmin = User::factory()->create(['role' => User::ROLE_SUPERADMIN, 'campus_id' => null]);
+
+        $this->actingAs($superadmin)
+            ->post(route('dependencies.store'), [
+                'name' => 'Prueba - Maicao',
+                'campus_id' => $fonseca->id,
+            ])
+            ->assertRedirect(route('dependencies.index'));
+
+        $this->assertDatabaseHas('dependencies', [
+            'name' => 'Prueba - Fonseca',
+            'campus_id' => $fonseca->id,
         ]);
     }
 

@@ -50,9 +50,20 @@ class DependencyController extends Controller
     public function store(Request $request, CampusScopeService $campusScope)
     {
         $campusId = $this->campusIdForWrite($request, $campusScope);
-        $normalizedName = self::normalizeName(
-            self::normalizeExcelText($request->name)
-        );
+        $campuses = Campus::orderBy('name')->get(['id', 'name']);
+        $campus = $campuses->firstWhere('id', $campusId);
+        $campusResolver = app(CampusNameResolver::class);
+        $rawName = self::normalizeExcelText($request->name);
+
+        // La sede forma parte del nombre visible. Si el usuario escribió un
+        // sufijo de sede, se reemplaza por la sede efectiva de la creación.
+        $baseName = $campusResolver->resolve($rawName, $campuses)
+            ? $campusResolver->withoutSuffix($rawName)
+            : $rawName;
+        $normalizedName = self::normalizeName($baseName);
+        if ($normalizedName !== '') {
+            $normalizedName .= ' - '.$campus->name;
+        }
         $request->merge(['name' => $normalizedName]);
 
         $request->validate([
