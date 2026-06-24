@@ -90,6 +90,7 @@
                 <div class="absolute bottom-0 left-0 w-0 h-0.5 rounded-b-xl bg-amber-500 group-hover:w-full transition-all duration-300"></div>
             </a>
 
+            @if(auth()->user()->hasAdminAccess())
             {{-- Card: Por Usuarios --}}
             <a href="{{ route('statistics.usuarios') }}"
                class="group relative flex flex-col gap-4 p-5 sm:p-6 rounded-2xl border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 overflow-hidden"
@@ -113,6 +114,7 @@
 
                 <div class="absolute bottom-0 left-0 w-0 h-0.5 rounded-b-xl bg-violet-500 group-hover:w-full transition-all duration-300"></div>
             </a>
+            @endif
 
         </div>
 
@@ -133,10 +135,12 @@
                         <flux:icon.users class="size-5 text-emerald-500 mt-0.5 shrink-0" />
                         <span>Usa <strong class="text-gray-800 dark:text-gray-200">Por Participantes</strong> para contar personas únicas, sin duplicar a quienes asistieron varias veces.</span>
                     </div>
+                    @if(auth()->user()->hasAdminAccess())
                     <div class="flex items-start gap-3">
                         <flux:icon.user class="size-5 text-violet-500 mt-0.5 shrink-0" />
                         <span>Usa <strong class="text-gray-800 dark:text-gray-200">Por Usuarios</strong> para analizar cuántos eventos ha creado cada usuario y su distribución por rol.</span>
                     </div>
+                    @endif
                     <div class="flex items-start gap-3">
                         <flux:icon.arrows-right-left class="size-5 text-amber-400 mt-0.5 shrink-0" />
                         <span>Usa <strong class="text-gray-800 dark:text-gray-200">Compara Eventos</strong> para contrastar eventos específicos en cuanto a asistencias y perfil demográfico.</span>
