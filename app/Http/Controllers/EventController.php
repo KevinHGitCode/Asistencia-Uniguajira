@@ -49,7 +49,8 @@ class EventController extends Controller
 
         if ($user->hasAdminAccess()) {
             $myEvents = $campusScope->applyToQuery(
-                Event::with(['dependency:id,name', 'area:id,name', 'user:id,name']),
+                Event::with(['dependency:id,name', 'area:id,name', 'user:id,name'])
+                    ->where('user_id', $user->id),
                 $user
             )
                 ->orderBy('date', 'desc')

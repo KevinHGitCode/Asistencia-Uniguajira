@@ -18,6 +18,7 @@ class EventsGroupComponentTest extends TestCase
     {
         $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
         Event::factory()->create([
+            'user_id' => $admin->id,
             'title' => 'Conferencia de Prueba',
             'date' => now()->addDays(3)->toDateString(),
         ]);
@@ -34,6 +35,7 @@ class EventsGroupComponentTest extends TestCase
     {
         $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
         Event::factory()->create([
+            'user_id' => $admin->id,
             'title' => 'Evento Filtrable',
             'date' => now()->addDays(3)->toDateString(),
         ]);

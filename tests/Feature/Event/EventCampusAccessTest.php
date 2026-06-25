@@ -32,28 +32,40 @@ class EventCampusAccessTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_admin_solo_ve_eventos_de_su_sede_en_listado(): void
+    public function test_admin_solo_ve_sus_eventos_en_listado(): void
     {
         [$maicao, $riohacha] = $this->campuses();
         $admin = User::factory()->create([
             'role' => User::ROLE_ADMIN,
             'campus_id' => $maicao->id,
         ]);
+        $otherAdmin = User::factory()->create([
+            'role' => User::ROLE_ADMIN,
+            'campus_id' => $maicao->id,
+        ]);
 
         Event::factory()->create([
-            'title' => 'Evento Maicao',
+            'title' => 'Evento propio Maicao',
+            'user_id' => $admin->id,
             'campus_id' => $maicao->id,
         ]);
         Event::factory()->create([
-            'title' => 'Evento Riohacha',
+            'title' => 'Evento ajeno Maicao',
+            'user_id' => $otherAdmin->id,
+            'campus_id' => $maicao->id,
+        ]);
+        Event::factory()->create([
+            'title' => 'Evento propio Riohacha',
+            'user_id' => $admin->id,
             'campus_id' => $riohacha->id,
         ]);
 
         $this->actingAs($admin)
             ->get(route('events.list'))
             ->assertOk()
-            ->assertSee('Evento Maicao')
-            ->assertDontSee('Evento Riohacha');
+            ->assertSee('Evento propio Maicao')
+            ->assertDontSee('Evento ajeno Maicao')
+            ->assertDontSee('Evento propio Riohacha');
     }
 
     public function test_admin_no_puede_eliminar_evento_de_otra_sede(): void
