@@ -43,7 +43,7 @@ Iniciativas formalizadas como ADR o seguimiento vivo. Ramas sugeridas en
 - ~~**Listado de participantes en React**~~ ✅ hecho 2026-06-24 (Opción A) -> [[adr-0008-listado-participantes-en-react]].
 - ~~**Mejoras al modulo de usuarios**~~ ✅ frentes 2 y 3 hechos 2026-06-24 (activos en vivo + estadisticas de uso) -> [[adr-0010-mejoras-modulo-usuarios]].
 - ~~**Mejores filtros en participantes**~~ ✅ hecho 2026-06-24 -> [[adr-0011-mejores-filtros-en-participantes]].
-- **Busqueda y filtros en eventos** -> [[adr-0012-busqueda-y-filtros-en-eventos]].
+- ~~**Busqueda y filtros en eventos**~~ ✅ hecho 2026-06-24 (búsqueda + filtros estructurados) -> [[adr-0012-busqueda-y-filtros-en-eventos]].
 - **Breadcrumbs correctos en detalle de evento** -> [[adr-0013-breadcrumbs-detalle-evento]].
 - **Proteger/retirar rutas API de prueba sin auth** -> [[adr-0014-proteger-rutas-api-de-prueba-sin-auth]].
 

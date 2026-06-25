@@ -41,6 +41,7 @@ que dos personas/IAs choquen, sobre todo en cambios 🔴 que tocan el esquema.
 | Filtros estructurados en participantes (ADR-0011) | `feat/participantes-filtros` | 2026-06-24 |
 | Listado de participantes en React + API (ADR-0008) | `feat/participantes-listado-react` | 2026-06-24 |
 | Usuarios: activos en vivo + estadísticas de uso (ADR-0010) | `feat/modulo-usuarios-mejoras` | 2026-06-24 |
+| Filtros estructurados en eventos (ADR-0012) | `feat/eventos-busqueda-filtros` | 2026-06-24 |
 
 ## ⚠️ Avisos de serialización (🔴 activos)
 > Lista aquí los cambios de **esquema/rutas públicas** en vuelo para que nadie los solape.

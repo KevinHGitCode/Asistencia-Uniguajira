@@ -38,11 +38,22 @@
         $event->dependency?->name,
         $showCreator ? $event->user?->name : null,
     ])->filter()->implode(' '));
+
+    // Datos para los filtros estructurados de cliente (ADR-0012).
+    $cardDate = \Carbon\Carbon::parse($event->date)->format('Y-m-d');
+    $cardStatus = $event->hasNotStarted()
+        ? 'proximo'
+        : ($event->isOpenForAttendance() ? 'abierto' : 'finalizado');
 @endphp
 
 <a href="{{ route('events.show', $params) }}"
    data-event-card
    data-search="{{ $searchText }}"
+   data-date="{{ $cardDate }}"
+   data-status="{{ $cardStatus }}"
+   data-dependency="{{ $event->dependency?->name }}"
+   data-area="{{ $event->area?->name }}"
+   data-creator="{{ $event->user?->name }}"
    class="block p-4 rounded-2xl border border-neutral-200 dark:border-neutral-600 hover:border-[#e2a542] hover:shadow-lg transition-all duration-200 bg-white dark:bg-zinc-800">
 
     <div class="flex items-start justify-between mb-2 gap-2">
