@@ -1,7 +1,7 @@
 <div>
     <flux:modal
         name="create-user-modal"
-        class="w-full max-w-2xl bg-zinc-50 dark:bg-zinc-900 [&::backdrop]:bg-black/40 [&::backdrop]:backdrop-blur-[2px]"
+        class="w-full max-w-2xl overflow-visible bg-zinc-50 dark:bg-zinc-900 [&::backdrop]:bg-black/40 [&::backdrop]:backdrop-blur-[2px]"
         x-data
         x-init="
         $nextTick(() => {
@@ -13,7 +13,7 @@
             }
         });
     ">
-        <div class="space-y-6">
+        <div class="relative z-20 space-y-6 overflow-visible">
             {{-- Header --}}
             <div class="border-b border-zinc-200 dark:border-zinc-700 pb-4">
                 <div class="flex items-center gap-2 mb-1">
@@ -26,9 +26,9 @@
             </div>
 
             {{-- Formulario --}}
-            <form wire:submit="save" class="space-y-5">
+            <form wire:submit="save" class="relative z-20 space-y-5 overflow-visible">
 
-                <div class="grid grid-cols-1 gap-x-4 gap-y-5 sm:grid-cols-2">
+                <div class="relative z-20 grid grid-cols-1 gap-x-4 gap-y-5 overflow-visible sm:grid-cols-2">
 
                     <flux:input
                         wire:model="name"
@@ -47,7 +47,7 @@
                     />
 
                     {{-- ROL --}}
-                    <div class="flex flex-col gap-1">
+                    <div class="relative z-30 flex flex-col gap-1">
                         <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                             Rol del usuario
                         </label>
@@ -64,7 +64,7 @@
 
                     {{-- SEDE --}}
                     @if($role !== 'superadmin')
-                        <div class="flex flex-col gap-1">
+                        <div class="relative z-20 flex flex-col gap-1">
                             <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                                 Sede
                             </label>
@@ -82,7 +82,7 @@
 
                     {{-- DEPENDENCIAS (solo visible si el rol es user) --}}
                     @if($role === 'user')
-                        <div class="flex flex-col gap-2 sm:col-span-2">
+                        <div class="relative z-10 flex flex-col gap-2 sm:col-span-2">
                             <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                                 Dependencias
                             </label>
