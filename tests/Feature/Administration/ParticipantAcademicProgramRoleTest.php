@@ -114,8 +114,8 @@ class ParticipantAcademicProgramRoleTest extends TestCase
         ]);
 
         $csv = implode("\n", [
-            'Documento,Nombres,Apellidos,Tipo de Estamento,Correo,Programa o Dependencia,Tipo_progama,Vinculacion,Sede',
-            '9001,Ana,Perez,Estudiante,,Ingenieria de sistemas,Pregrado,,Riohacha',
+            'Documento,Nombres,Apellidos,Tipo de Estamento,Correo,Programa o Dependencia,Tipo_progama,Vinculacion',
+            '9001,Ana,Perez,Estudiante,,Ingenieria de sistemas - Riohacha,Pregrado,',
         ]);
 
         $this->actingAs($superadmin)
