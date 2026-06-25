@@ -351,6 +351,32 @@
                         </button>
                     </div>
                 </form>
+
+                <div class="mt-6 border-t border-neutral-200 pt-6 dark:border-zinc-700"
+                     x-data="{ downloading: false }">
+                    <div class="flex flex-col gap-4 rounded-xl border border-neutral-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/40 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Exportar datos actuales</h3>
+                            <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                                Descarga los participantes activos en el mismo formato Excel que se usa para la importación.
+                            </p>
+                        </div>
+                        <a href="{{ route('participants-import.download-export') }}"
+                           @click="if (downloading) { $event.preventDefault(); return; } downloading = true; setTimeout(() => downloading = false, 4000)"
+                           :aria-disabled="downloading"
+                           :class="downloading
+                               ? 'pointer-events-none cursor-not-allowed opacity-60'
+                               : 'hover:bg-zinc-50 dark:hover:bg-zinc-700'"
+                           class="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border border-neutral-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-colors dark:border-zinc-700 dark:bg-zinc-800 dark:text-gray-300">
+                            <svg x-show="downloading" x-cloak class="size-4 animate-spin text-[#3b82f6]" viewBox="0 0 24 24" fill="none">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4z"></path>
+                            </svg>
+                            <span x-show="!downloading"><flux:icon.arrow-down-tray class="size-4 text-[#3b82f6]" /></span>
+                            <span x-text="downloading ? 'Preparando descarga...' : 'Descargar Excel'"></span>
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

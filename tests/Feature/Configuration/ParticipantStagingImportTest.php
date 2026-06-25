@@ -2,15 +2,18 @@
 
 namespace Tests\Feature\Configuration;
 
+use App\Models\Affiliation;
 use App\Models\Campus;
 use App\Models\Dependency;
 use App\Models\ImportBatch;
 use App\Models\Participant;
+use App\Models\ParticipantRole;
 use App\Models\ParticipantType;
 use App\Models\Program;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Maatwebsite\Excel\Facades\Excel;
 use Tests\TestCase;
 
 class ParticipantStagingImportTest extends TestCase
@@ -48,6 +51,76 @@ class ParticipantStagingImportTest extends TestCase
         $this->assertNotContains('Sede', $export->headings());
         $this->assertCount(8, $export->headings());
         $this->assertCount(8, $export->array()[0]);
+    }
+
+    public function test_exporta_participantes_activos_en_formato_de_importacion(): void
+    {
+        $type = ParticipantType::create(['name' => 'Estudiante']);
+        $affiliation = Affiliation::create(['name' => 'Planta']);
+        $program = Program::create([
+            'name' => 'Ingenieria de sistemas - Riohacha',
+            'program_type' => 'Pregrado',
+        ]);
+        $laterParticipant = Participant::create([
+            'document' => '2001',
+            'first_name' => 'Zoraida',
+            'last_name' => 'Lopez',
+            'email' => 'zoraida@u.co',
+        ]);
+        $participant = Participant::create([
+            'document' => '1001',
+            'first_name' => 'Ana',
+            'last_name' => 'Perez',
+            'email' => 'ana@u.co',
+        ]);
+        ParticipantRole::create([
+            'participant_id' => $laterParticipant->id,
+            'participant_type_id' => $type->id,
+            'program_id' => $program->id,
+            'affiliation_id' => $affiliation->id,
+            'is_active' => true,
+        ]);
+        $role = ParticipantRole::create([
+            'participant_id' => $participant->id,
+            'participant_type_id' => $type->id,
+            'program_id' => $program->id,
+            'affiliation_id' => $affiliation->id,
+            'is_active' => true,
+        ])->load(['participant', 'type', 'program', 'dependency', 'affiliation']);
+
+        $export = new \App\Exports\ParticipantExport;
+
+        $this->assertSame((new \App\Exports\ParticipantTemplateExport)->headings(), $export->headings());
+        $this->assertSame(['Ana', 'Zoraida'], $export->query()->get()->pluck('participant.first_name')->all());
+        $this->assertSame([
+            '1001',
+            'Ana',
+            'Perez',
+            'Estudiante',
+            'ana@u.co',
+            'Ingenieria de sistemas - Riohacha',
+            'Pregrado',
+            'Planta',
+        ], $export->map($role));
+    }
+
+    public function test_admin_puede_descargar_exportacion_actual_de_participantes(): void
+    {
+        Excel::fake();
+        \Illuminate\Support\Carbon::setTestNow('2026-06-25 12:00:00');
+
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($admin)
+            ->get(route('participants-import.download-export'))
+            ->assertOk();
+
+        Excel::assertDownloaded(
+            'participantes_actuales_20260625_120000.xlsx',
+            fn ($export) => $export instanceof \App\Exports\ParticipantExport,
+        );
+
+        \Illuminate\Support\Carbon::setTestNow();
     }
 
     public function test_la_importacion_guarda_en_staging_sin_tocar_la_tabla_principal(): void
