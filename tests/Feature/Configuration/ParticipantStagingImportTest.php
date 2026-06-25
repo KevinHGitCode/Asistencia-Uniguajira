@@ -104,14 +104,14 @@ class ParticipantStagingImportTest extends TestCase
         ], $export->map($role));
     }
 
-    public function test_admin_puede_descargar_exportacion_actual_de_participantes(): void
+    public function test_superadmin_puede_descargar_exportacion_actual_de_participantes(): void
     {
         Excel::fake();
         \Illuminate\Support\Carbon::setTestNow('2026-06-25 12:00:00');
 
-        $admin = User::factory()->create(['role' => 'admin']);
+        $superadmin = User::factory()->create(['role' => 'superadmin']);
 
-        $this->actingAs($admin)
+        $this->actingAs($superadmin)
             ->get(route('participants-import.download-export'))
             ->assertOk();
 
@@ -121,6 +121,33 @@ class ParticipantStagingImportTest extends TestCase
         );
 
         \Illuminate\Support\Carbon::setTestNow();
+    }
+
+    public function test_admin_no_puede_descargar_exportacion_actual_de_participantes(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($admin)
+            ->get(route('participants-import.download-export'))
+            ->assertForbidden();
+    }
+
+    public function test_opcion_de_exportar_participantes_solo_aparece_para_superadmin(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $superadmin = User::factory()->create(['role' => 'superadmin']);
+
+        $this->actingAs($admin)
+            ->get(route('participants-import.index'))
+            ->assertOk()
+            ->assertDontSee('Exportar datos actuales')
+            ->assertDontSee(route('participants-import.download-export'));
+
+        $this->actingAs($superadmin)
+            ->get(route('participants-import.index'))
+            ->assertOk()
+            ->assertSee('Exportar datos actuales')
+            ->assertSee(route('participants-import.download-export'));
     }
 
     public function test_la_importacion_guarda_en_staging_sin_tocar_la_tabla_principal(): void
