@@ -99,6 +99,20 @@
                         </div>
                     @endif
 
+                    {{-- ESTADO (activar/desactivar según jerarquía; se aplica al guardar) --}}
+                    @if($canToggleActive)
+                        <div class="flex flex-col gap-1">
+                            <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Estado</label>
+                            <x-ui.searchable-select
+                                wire:key="edit-user-status-{{ $userId ?? 'none' }}"
+                                wire:model="activeState"
+                                :options="[['id' => '1', 'name' => 'Activo'], ['id' => '0', 'name' => 'Inactivo']]"
+                                :allow-empty="false"
+                                placeholder="Selecciona un estado" />
+                            <p class="text-xs text-gray-500">Se aplicará al guardar los cambios.</p>
+                        </div>
+                    @endif
+
                     {{-- PASSWORD --}}
                     <div class="sm:col-span-2">
                         <flux:input
@@ -129,7 +143,7 @@
                         <span wire:loading.remove wire:target="save">Guardar cambios</span>
                         <span wire:loading wire:target="save">Guardando...</span>
                     </flux:button>
-                    <flux:button 
+                    <flux:button
                         variant="ghost"
                         class="cursor-pointer"
                         x-on:click="$dispatch('modal-close', { name: 'edit-user-modal' })">

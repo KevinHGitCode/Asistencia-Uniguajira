@@ -7,6 +7,7 @@ use App\Models\Dependency;
 use App\Models\Event;
 use App\Models\User;
 use App\Services\ActivityLogService;
+use App\Services\UserActivityService;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,7 +16,7 @@ use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, UserActivityService $activity)
     {
         $authUser = $request->user();
         $search = trim((string) $request->query('q', ''));
@@ -37,8 +38,9 @@ class UserController extends Controller
         $dependencies = $this->dependenciesFor($authUser);
         $campuses = $this->campusesFor($authUser);
         $roles = $this->rolesFor($authUser);
+        $onlineUserIds = $activity->onlineUserIds();
 
-        return view('users.index', compact('users', 'dependencies', 'campuses', 'roles', 'search'));
+        return view('users.index', compact('users', 'dependencies', 'campuses', 'roles', 'search', 'onlineUserIds'));
     }
 
     public function create(Request $request)
@@ -109,10 +111,11 @@ class UserController extends Controller
         return view('users.show', compact('user'));
     }
 
-    public function information(string $id)
+    public function information(string $id, UserActivityService $activity)
     {
         $authUser = request()->user();
         $user = $this->findManageableUser($authUser, $id)->load(['dependencies']);
+        $usage = $activity->usageFor($user);
 
         // Colecciones completas (no paginadas) para que el buscador del contenedor
         // <x-events.group> filtre sobre todo el conjunto, no solo una página (ADR-0012).
@@ -147,7 +150,8 @@ class UserController extends Controller
             'dependencyEvents',
             'eventsCount',
             'upcomingEvents',
-            'pastEvents'
+            'pastEvents',
+            'usage'
         ));
     }
 

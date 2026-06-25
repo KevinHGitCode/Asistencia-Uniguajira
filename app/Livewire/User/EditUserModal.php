@@ -34,6 +34,12 @@ class EditUserModal extends Component
 
     public string $password = '';
 
+    /** '1' = activo · '0' = inactivo (solo se aplica al guardar si canToggleActive). */
+    public string $activeState = '1';
+
+    /** Si el usuario autenticado puede activar/desactivar al usuario en edición (jerarquía). */
+    public bool $canToggleActive = false;
+
     protected function rules()
     {
         $authUser = auth()->user();
@@ -59,6 +65,7 @@ class EditUserModal extends Component
                 },
             ],
             'password' => 'nullable|string|min:8',
+            'activeState' => ['nullable', Rule::in(['0', '1'])],
         ];
     }
 
@@ -91,9 +98,35 @@ class EditUserModal extends Component
         $this->campus_id = $user->campus_id ? (string) $user->campus_id : null;
         $this->dependency_ids = $user->dependencies->pluck('id')->map(fn ($id) => (string) $id)->toArray();
         $this->password = '';
+        $this->activeState = $user->is_active ? '1' : '0';
+        $this->canToggleActive = $this->canToggle($authUser, $user);
         $this->resetValidation();
 
         Flux::modal('edit-user-modal')->show();
+    }
+
+    /**
+     * Jerarquía para activar/desactivar usuarios:
+     * - Superadmin: puede gestionar a cualquiera (usuarios, administradores y otros superadmin).
+     * - Admin: solo a usuarios normales de su propia sede.
+     * - Nadie puede cambiar su propio estado.
+     */
+    private function canToggle(?User $authUser, User $target): bool
+    {
+        if (! $authUser || $authUser->id === $target->id) {
+            return false;
+        }
+
+        if ($authUser->isSuperadmin()) {
+            return true;
+        }
+
+        if ($authUser->isAdmin()) {
+            return $target->role === User::ROLE_USER
+                && (int) $target->campus_id === (int) $authUser->campus_id;
+        }
+
+        return false;
     }
 
     public function updatedRole(): void
@@ -150,14 +183,18 @@ class EditUserModal extends Component
         $user = $query->findOrFail($this->userId);
 
         $original = $user->only(['name', 'email', 'role', 'campus_id']);
+        $originalActive = (bool) $user->is_active;
         $originalDeps = $user->dependencies->pluck('id')->sort()->values()->toArray();
 
-        $user->update([
+        // El estado solo cambia si la jerarquía lo permite (defensa del lado servidor).
+        $canToggle = $this->canToggle($authUser, $user);
+
+        $user->update(array_merge([
             'name' => $this->name,
             'email' => $this->email,
             'role' => $this->role,
             'campus_id' => $this->role === User::ROLE_SUPERADMIN ? null : (int) $this->campus_id,
-        ]);
+        ], $canToggle ? ['is_active' => $this->activeState === '1'] : []));
 
         if ($this->password) {
             $user->update(['password' => Hash::make($this->password)]);
@@ -182,6 +219,13 @@ class EditUserModal extends Component
         $newDeps = collect($this->role === User::ROLE_USER ? $this->dependency_ids : [])->map(fn ($id) => (int) $id)->sort()->values()->toArray();
         if ($originalDeps !== $newDeps) {
             $changes['dependencias'] = ['old' => implode(', ', $originalDeps), 'new' => implode(', ', $newDeps)];
+        }
+
+        if ($canToggle && $originalActive !== ($this->activeState === '1')) {
+            $changes['estado'] = [
+                'old' => $originalActive ? 'activo' : 'inactivo',
+                'new' => $this->activeState === '1' ? 'activo' : 'inactivo',
+            ];
         }
 
         ActivityLogService::log('editar', 'usuarios', "Edito el usuario '{$user->name}'", $user, $changes);

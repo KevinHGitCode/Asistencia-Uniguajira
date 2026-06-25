@@ -6,10 +6,10 @@
     ]" />
 
     @if(session('success'))
-        <div
-            id="users-success-alert"
-            class="rounded-lg bg-green-100 border border-green-400 text-green-700 px-4 py-3 text-sm transition-opacity duration-500">
-            {{ session('success') }}
+        <div id="users-success-alert"
+            class="flex items-center gap-3 px-4 py-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 text-sm transition-opacity duration-500">
+            <flux:icon.check-circle class="size-5 shrink-0" />
+            <span>{{ session('success') }}</span>
         </div>
     @endif
 
@@ -44,9 +44,9 @@
                         <span class="font-bold text-base">{{ $pastEvents }}</span>
                     </li>
                     <li class="py-2 flex justify-between items-center text-sm text-gray-500 dark:text-gray-400">
-                        <span>Último acceso:</span> 
+                        <span>Último acceso:</span>
                         <span class="font-medium">
-                            {{ $user->updated_at ? $user->updated_at->format('d/m/Y H:i') : 'N/A' }}
+                            {{ $usage['last_seen'] ? $usage['last_seen']->format('d/m/Y H:i') : 'Sin registro' }}
                         </span>
                     </li>
                 </ul>
@@ -94,20 +94,84 @@
                         </li>
                     @endif
                     <li class="py-2 flex justify-between items-center">
-                        <span class="text-sm">Estado:</span> 
+                        <span class="text-sm">Estado:</span>
                         @if($user->is_active)
-                            <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 rounded">
-                                Activo
-                            </span>
+                            <span class="text-sm font-semibold text-green-600 dark:text-green-400">Activo</span>
                         @else
-                            <span class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300 rounded">
-                                Inactivo
-                            </span>
+                            <span class="text-sm font-semibold text-red-600 dark:text-red-400">Inactivo</span>
                         @endif
                     </li>
                 </ul>
             </div>
         </div>
+    </div>
+
+    {{-- Actividad y uso (ADR-0010, frente 3) --}}
+    @php
+        $secs = $usage['usage_seconds'] ?? 0;
+        $h = intdiv($secs, 3600);
+        $m = intdiv($secs % 3600, 60);
+        $usageLabel = $secs > 0 ? ($h > 0 ? $h.' h '.$m.' min' : $m.' min') : '—';
+    @endphp
+    <div class="mt-6 flex w-full flex-col gap-4 p-6 rounded-2xl border border-neutral-200 dark:border-neutral-700 bg-zinc-50 dark:bg-zinc-900">
+        <div class="flex items-center justify-between gap-3">
+            <flux:heading class="text-lg font-semibold text-gray-700 dark:text-gray-200">
+                Actividad y uso
+            </flux:heading>
+            @if($usage['is_online'])
+                <span class="inline-flex items-center gap-2 rounded-full border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                    <span class="size-2 rounded-full bg-emerald-500 animate-pulse"></span> En línea ahora
+                </span>
+            @else
+                <span class="inline-flex items-center gap-2 rounded-full border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-1 text-xs font-medium text-gray-500 dark:text-zinc-400">
+                    <span class="size-2 rounded-full bg-gray-400"></span> Desconectado
+                </span>
+            @endif
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div class="rounded-xl border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-3">
+                <p class="text-xs text-gray-500 dark:text-zinc-400">Última actividad</p>
+                <p class="mt-1 text-sm font-semibold text-gray-900 dark:text-white">
+                    {{ $usage['last_seen'] ? $usage['last_seen']->diffForHumans() : 'Sin registro' }}
+                </p>
+            </div>
+            <div class="rounded-xl border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-3">
+                <p class="text-xs text-gray-500 dark:text-zinc-400">Inicios de sesión</p>
+                <p class="mt-1 text-sm font-semibold text-[#e2a542]">{{ $usage['login_count'] }}</p>
+            </div>
+            <div class="rounded-xl border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-3">
+                <p class="text-xs text-gray-500 dark:text-zinc-400">Tiempo aprox. en la app</p>
+                <p class="mt-1 text-sm font-semibold text-[#62a9b6]">{{ $usageLabel }}</p>
+            </div>
+            <div class="rounded-xl border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-3">
+                <p class="text-xs text-gray-500 dark:text-zinc-400">Último inicio de sesión</p>
+                <p class="mt-1 text-sm font-semibold text-gray-900 dark:text-white">
+                    {{ $usage['last_login'] ? $usage['last_login']->format('d/m/Y H:i') : '—' }}
+                </p>
+            </div>
+        </div>
+
+        @if(!empty($usage['actions_by_module']))
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-zinc-400 mb-2">
+                    Acciones por módulo
+                </p>
+                <div class="flex flex-wrap gap-2">
+                    @foreach($usage['actions_by_module'] as $row)
+                        <span class="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 border border-neutral-200 dark:border-zinc-700 px-3 py-1 text-xs text-gray-700 dark:text-zinc-300">
+                            {{ ucfirst($row['module']) }}
+                            <span class="font-semibold text-[#cc5e50]">{{ $row['count'] }}</span>
+                        </span>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
+        <p class="text-xs text-gray-400 dark:text-zinc-500">
+            El tiempo en la app es aproximado (suma de pares inicio/cierre de sesión; los cierres sin
+            “cerrar sesión” no se contabilizan).
+        </p>
     </div>
 
     {{-- Eventos propios del usuario --}}
@@ -146,6 +210,4 @@
         </div>
     @endforeach
 
-    {{-- Quita todo el div de los botones y modales, solo deja esto --}}
-    <livewire:admin.toggle-user-active :user="$user" />
 </x-layouts.app>
