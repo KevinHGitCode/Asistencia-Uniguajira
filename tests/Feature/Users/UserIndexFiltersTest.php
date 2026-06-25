@@ -99,4 +99,24 @@ class UserIndexFiltersTest extends TestCase
             ->assertSee('Usuario Maicao')
             ->assertDontSee('Usuario Riohacha');
     }
+
+    public function test_listado_parcial_de_usuarios_devuelve_solo_la_tabla_filtrada(): void
+    {
+        $admin = User::factory()->create([
+            'name' => 'Admin Principal',
+            'role' => User::ROLE_ADMIN,
+            'email_verified_at' => now(),
+        ]);
+
+        User::factory()->create(['name' => 'Ana Parcial']);
+        User::factory()->create(['name' => 'Bruno Completo']);
+
+        $this->actingAs($admin)
+            ->withHeader('X-Requested-With', 'XMLHttpRequest')
+            ->get(route('users.index', ['q' => 'Ana']))
+            ->assertOk()
+            ->assertSee('Ana Parcial')
+            ->assertDontSee('Bruno Completo')
+            ->assertDontSee('Users list');
+    }
 }

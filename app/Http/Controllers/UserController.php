@@ -89,6 +89,10 @@ class UserController extends Controller
         $onlineUserIds = $activity->onlineUserIds();
         $activeFilterCount = collect($filters)->filter(fn ($value) => $value !== '')->count();
 
+        if ($request->ajax() || $request->boolean('partial')) {
+            return view('users.partials.table', compact('users', 'onlineUserIds'));
+        }
+
         return view('users.index', compact(
             'users',
             'dependencies',

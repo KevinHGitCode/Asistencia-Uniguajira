@@ -39,10 +39,15 @@
                 </div>
             @endif
 
-            <div x-data="{ filtersOpen: @js($activeFilterCount > 0) }" class="flex w-full flex-col gap-3">
-                <form method="GET" action="{{ route('users.index') }}" class="flex w-full flex-col gap-3">
-                    <div class="flex w-full flex-col gap-3 sm:flex-row sm:items-center">
-                        <div class="relative w-full sm:w-80">
+            <div
+                x-data="usersIndexFilters({
+                    initialFiltersOpen: @js($activeFilterCount > 0),
+                    baseUrl: @js(route('users.index')),
+                })"
+                class="flex w-full flex-col gap-3">
+                <form x-ref="form" method="GET" action="{{ route('users.index') }}" class="flex w-full flex-col gap-3" x-on:submit.prevent="applyFilters()">
+                    <div class="flex w-full flex-col gap-3 rounded-2xl border border-neutral-200 bg-zinc-50 p-3 shadow-sm dark:border-zinc-700 dark:bg-zinc-900 sm:flex-row sm:items-center">
+                        <div class="relative min-w-0 flex-1">
                             <svg class="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-gray-400"
                                  fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.3-4.3M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z" />
@@ -53,47 +58,48 @@
                                 name="q"
                                 value="{{ $search }}"
                                 placeholder="Buscar usuario…"
-                                x-on:input.debounce.600ms="$el.closest('form').submit()"
-                                x-on:keydown.enter.prevent="$el.closest('form').submit()"
-                                class="w-full rounded-lg border border-neutral-200 bg-white py-1.5 pl-9 pr-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white" />
+                                x-on:input.debounce.600ms="applyFilters()"
+                                x-on:keydown.enter.prevent="applyFilters()"
+                                class="h-10 w-full rounded-lg border border-neutral-200 bg-white py-2 pl-9 pr-3 text-sm text-gray-900 placeholder-gray-400 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white" />
                         </div>
 
                         <button type="button" @click="filtersOpen = !filtersOpen"
-                            :class="filtersOpen ? 'border-blue-400 bg-blue-50 text-blue-700 dark:border-blue-600 dark:bg-blue-900/30 dark:text-blue-300' : 'border-neutral-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-gray-400 dark:hover:bg-zinc-700'"
-                            class="inline-flex items-center justify-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors">
+                            :class="filtersOpen ? 'border-blue-400 bg-blue-50 text-blue-700 dark:border-blue-600 dark:bg-blue-950/50 dark:text-blue-300' : 'border-neutral-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-gray-400 dark:hover:bg-zinc-700'"
+                            class="inline-flex h-10 items-center justify-center gap-2 rounded-lg border px-3 text-sm font-medium shadow-sm transition-colors">
                             <flux:icon.funnel class="size-4" />
                             Filtros
-                            @if($activeFilterCount > 0)
-                                <span class="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1 text-[11px] font-semibold leading-none text-white">
-                                    {{ $activeFilterCount }}
-                                </span>
-                            @endif
+                            <span x-show="activeFilterCount() > 0" x-cloak x-text="activeFilterCount()"
+                                class="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1 text-[11px] font-semibold leading-none text-white"></span>
                         </button>
 
-                        @if($activeFilterCount > 0 || $search !== '')
-                            <a href="{{ route('users.index') }}"
-                                class="inline-flex items-center justify-center gap-2 rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:border-red-200 hover:text-red-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-gray-400 dark:hover:border-red-900 dark:hover:text-red-400">
-                                <flux:icon.x-mark class="size-4" />
-                                Limpiar
-                            </a>
-                        @endif
+                        <a href="{{ route('users.index') }}"
+                            x-show="hasActiveCriteria()"
+                            x-cloak
+                            x-on:click.prevent="clearFilters()"
+                            class="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-neutral-200 bg-white px-3 text-sm font-medium text-gray-600 shadow-sm transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-gray-400 dark:hover:border-red-900 dark:hover:bg-red-950/30 dark:hover:text-red-400">
+                            <flux:icon.x-mark class="size-4" />
+                            Limpiar
+                        </a>
 
                         <div class="sm:ml-auto">
                             <flux:modal.trigger name="create-user-modal">
                                 <flux:button icon="user-plus" square
-                                    class="cursor-pointer !bg-[#3b82f6] hover:!bg-blue-700 !text-white !border-transparent"
+                                    class="cursor-pointer !h-10 !w-10 !bg-[#3b82f6] hover:!bg-blue-700 !text-white !border-transparent !shadow-sm"
                                     :aria-label="__('Add User')" :title="__('Add User')" />
                             </flux:modal.trigger>
                         </div>
                     </div>
 
                     <div x-show="filtersOpen" x-cloak
-                         class="rounded-xl border border-neutral-200 bg-white/70 p-3 dark:border-zinc-700 dark:bg-zinc-800/40">
+                         x-transition:enter="transition ease-out duration-150"
+                         x-transition:enter-start="opacity-0 -translate-y-1"
+                         x-transition:enter-end="opacity-100 translate-y-0"
+                         class="rounded-2xl border border-neutral-200 bg-zinc-50 p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
                         <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                             <div class="flex flex-col gap-1.5">
-                                <label for="users-campus-filter" class="text-xs font-medium text-gray-600 dark:text-gray-400">Sede</label>
-                                <select id="users-campus-filter" name="campus_id" x-on:change="$el.closest('form').submit()"
-                                    class="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white">
+                                <label for="users-campus-filter" class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">Sede</label>
+                                <select id="users-campus-filter" name="campus_id" x-on:change="applyFilters()"
+                                    class="h-10 rounded-lg border border-neutral-200 bg-white px-3 text-sm text-gray-900 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white">
                                     <option value="">Todas</option>
                                     @if(auth()->user()->isSuperadmin())
                                         <option value="global" @selected($filters['campus_id'] === 'global')>Global</option>
@@ -105,9 +111,9 @@
                             </div>
 
                             <div class="flex flex-col gap-1.5">
-                                <label for="users-dependency-filter" class="text-xs font-medium text-gray-600 dark:text-gray-400">Dependencia</label>
-                                <select id="users-dependency-filter" name="dependency_id" x-on:change="$el.closest('form').submit()"
-                                    class="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white">
+                                <label for="users-dependency-filter" class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">Dependencia</label>
+                                <select id="users-dependency-filter" name="dependency_id" x-on:change="applyFilters()"
+                                    class="h-10 rounded-lg border border-neutral-200 bg-white px-3 text-sm text-gray-900 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white">
                                     <option value="">Todas</option>
                                     @foreach($filterDependencies as $value => $label)
                                         <option value="{{ $value }}" @selected((string) $filters['dependency_id'] === (string) $value)>{{ $label }}</option>
@@ -116,9 +122,9 @@
                             </div>
 
                             <div class="flex flex-col gap-1.5">
-                                <label for="users-role-filter" class="text-xs font-medium text-gray-600 dark:text-gray-400">Rol</label>
-                                <select id="users-role-filter" name="role" x-on:change="$el.closest('form').submit()"
-                                    class="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white">
+                                <label for="users-role-filter" class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">Rol</label>
+                                <select id="users-role-filter" name="role" x-on:change="applyFilters()"
+                                    class="h-10 rounded-lg border border-neutral-200 bg-white px-3 text-sm text-gray-900 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white">
                                     <option value="">Todos</option>
                                     @foreach($roles as $value => $label)
                                         <option value="{{ $value }}" @selected($filters['role'] === $value)>{{ $label }}</option>
@@ -127,9 +133,9 @@
                             </div>
 
                             <div class="flex flex-col gap-1.5">
-                                <label for="users-status-filter" class="text-xs font-medium text-gray-600 dark:text-gray-400">Estado</label>
-                                <select id="users-status-filter" name="status" x-on:change="$el.closest('form').submit()"
-                                    class="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white">
+                                <label for="users-status-filter" class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">Estado</label>
+                                <select id="users-status-filter" name="status" x-on:change="applyFilters()"
+                                    class="h-10 rounded-lg border border-neutral-200 bg-white px-3 text-sm text-gray-900 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white">
                                     <option value="">Todos</option>
                                     @foreach($statusOptions as $value => $label)
                                         <option value="{{ $value }}" @selected($filters['status'] === $value)>{{ $label }}</option>
@@ -139,7 +145,25 @@
                         </div>
                     </div>
                 </form>
+
+                <div class="relative" x-on:click="handleTableClick($event)">
+                    <div x-show="loading" x-cloak class="absolute inset-0 z-20 flex items-start justify-center rounded-2xl bg-white/70 pt-16 backdrop-blur-[1px] dark:bg-zinc-900/70">
+                        <span class="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 shadow-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                            <svg class="size-4 animate-spin text-[#3b82f6]" viewBox="0 0 24 24" fill="none">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4z"></path>
+                            </svg>
+                            Actualizando usuarios...
+                        </span>
+                    </div>
+                    <div x-ref="tableRegion" id="users-table-region">
+                        @include('users.partials.table')
+                    </div>
+                </div>
             </div>
+
+            {{-- Legacy fallback table kept disabled for no-JS safety during migration. --}}
+            @if(false)
             <div class="relative h-full flex-1 rounded-2xl border bg-zinc-50 dark:bg-zinc-900 border-neutral-200 dark:border-neutral-700"
                  x-data="{ onlineIds: @js($onlineUserIds) }"
                  x-on:online-users-updated.window="onlineIds = $event.detail.ids">
@@ -424,8 +448,127 @@
                 @endif
 
             </div>
+            @endif
         </div>
     </div>
+
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('usersIndexFilters', ({ initialFiltersOpen, baseUrl }) => ({
+                filtersOpen: initialFiltersOpen,
+                loading: false,
+                criteriaVersion: 0,
+                requestController: null,
+
+                formUrl({ resetPage = true } = {}) {
+                    const formData = new FormData(this.$refs.form);
+                    const params = new URLSearchParams();
+
+                    for (const [key, value] of formData.entries()) {
+                        if (value !== '') params.set(key, value);
+                    }
+
+                    if (resetPage) params.delete('page');
+
+                    const query = params.toString();
+                    return query ? `${baseUrl}?${query}` : baseUrl;
+                },
+
+                partialUrl(url) {
+                    const next = new URL(url, window.location.origin);
+                    next.searchParams.set('partial', '1');
+                    return next.toString();
+                },
+
+                activeFilterCount() {
+                    this.criteriaVersion;
+                    const formData = new FormData(this.$refs.form);
+                    return ['campus_id', 'dependency_id', 'role', 'status']
+                        .filter((key) => (formData.get(key) || '') !== '')
+                        .length;
+                },
+
+                hasActiveCriteria() {
+                    this.criteriaVersion;
+                    const formData = new FormData(this.$refs.form);
+                    return (formData.get('q') || '') !== '' || this.activeFilterCount() > 0;
+                },
+
+                applyFilters() {
+                    this.criteriaVersion++;
+                    this.loadTable(this.formUrl({ resetPage: true }), 'replace');
+                },
+
+                clearFilters() {
+                    this.$refs.form.reset();
+                    for (const field of this.$refs.form.elements) {
+                        if (field.name) field.value = '';
+                    }
+                    this.criteriaVersion++;
+                    this.loadTable(baseUrl, 'replace');
+                },
+
+                handleTableClick(event) {
+                    const link = event.target.closest('a[href]');
+                    if (!link || !this.$refs.tableRegion.contains(link)) return;
+
+                    const url = new URL(link.href, window.location.origin);
+                    if (url.pathname !== new URL(baseUrl, window.location.origin).pathname) return;
+
+                    event.preventDefault();
+                    this.loadTable(url.toString(), 'push');
+                },
+
+                syncFormFromUrl(url) {
+                    const params = new URL(url, window.location.origin).searchParams;
+                    for (const field of this.$refs.form.elements) {
+                        if (field.name) field.value = params.get(field.name) || '';
+                    }
+                    this.criteriaVersion++;
+                },
+
+                async loadTable(url, historyMode = false) {
+                    this.requestController?.abort();
+                    this.requestController = new AbortController();
+                    this.loading = true;
+
+                    try {
+                        const response = await fetch(this.partialUrl(url), {
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'text/html',
+                            },
+                            signal: this.requestController.signal,
+                        });
+
+                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+                        this.$refs.tableRegion.innerHTML = await response.text();
+                        window.Alpine?.initTree(this.$refs.tableRegion);
+
+                        if (historyMode === 'push') {
+                            window.history.pushState({}, '', url);
+                        } else if (historyMode === 'replace') {
+                            window.history.replaceState({}, '', url);
+                        }
+                    } catch (error) {
+                        if (error.name !== 'AbortError') {
+                            window.location.href = url;
+                        }
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                init() {
+                    window.addEventListener('popstate', () => {
+                        this.syncFormFromUrl(window.location.href);
+                        this.loadTable(window.location.href, false);
+                    });
+                },
+            }));
+        });
+    </script>
 
     @livewire('user.create-user-modal', ['dependencies' => $dependencies, 'campuses' => $campuses, 'roles' => $roles])
     @livewire('user.edit-user-modal', ['dependencies' => $dependencies, 'campuses' => $campuses, 'roles' => $roles])
