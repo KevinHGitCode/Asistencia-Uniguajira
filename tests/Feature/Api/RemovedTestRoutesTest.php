@@ -21,7 +21,6 @@ class RemovedTestRoutesTest extends TestCase
             ['/api/events'],
             ['/api/events-with-user'],
             ['/api/events/user/1'],
-            ['/api/participants'],
             ['/api/participants/program/1'],
             ['/api/participants/count-by-program'],
             ['/api/roles'],
@@ -43,5 +42,11 @@ class RemovedTestRoutesTest extends TestCase
     {
         // /api/events/{date} (getByDate) NO es una ruta de prueba: existe y exige auth.
         $this->getJson('/api/events/2026-03-15')->assertUnauthorized();
+    }
+
+    public function test_ruta_legitima_de_participantes_sigue_existiendo(): void
+    {
+        // /api/participants alimenta la isla React de participantes y exige auth/admin.
+        $this->getJson('/api/participants')->assertUnauthorized();
     }
 }

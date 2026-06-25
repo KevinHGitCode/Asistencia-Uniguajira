@@ -84,6 +84,8 @@ class EditUserModal extends Component
         $query = User::query()->with('dependencies');
         $authUser = auth()->user();
 
+        abort_unless($authUser?->hasAdminAccess(), 403);
+
         if ($authUser?->isAdmin()) {
             $query->where('campus_id', $authUser->campus_id);
         }
@@ -159,12 +161,15 @@ class EditUserModal extends Component
         }
 
         return Dependency::query()
+            ->with('campus:id,name')
             ->where('campus_id', $this->campus_id)
             ->orderBy('name')
-            ->get(['id', 'name'])
+            ->get(['id', 'name', 'campus_id'])
             ->map(fn (Dependency $dependency) => [
                 'id' => $dependency->id,
-                'name' => $dependency->name,
+                'name' => $dependency->campus
+                    ? "{$dependency->name} - {$dependency->campus->name}"
+                    : $dependency->name,
             ])
             ->all();
     }
@@ -175,6 +180,8 @@ class EditUserModal extends Component
 
         $query = User::query();
         $authUser = auth()->user();
+
+        abort_unless($authUser?->hasAdminAccess(), 403);
 
         if ($authUser?->isAdmin()) {
             $query->where('campus_id', $authUser->campus_id);

@@ -46,6 +46,27 @@ class UserEditModalToggleTest extends TestCase
         $this->assertFalse((bool) $admin->fresh()->is_active);
     }
 
+    public function test_superadmin_puede_desactivar_a_un_usuario_al_guardar(): void
+    {
+        $campus = Campus::create(['name' => 'Maicao']);
+        $dependency = Dependency::factory()->create(['campus_id' => $campus->id]);
+        $superadmin = User::factory()->create(['role' => User::ROLE_SUPERADMIN, 'campus_id' => null]);
+        $user = User::factory()->create(['role' => User::ROLE_USER, 'campus_id' => $campus->id, 'is_active' => true]);
+        $user->dependencies()->attach($dependency->id);
+
+        $this->actingAs($superadmin);
+
+        $this->editModal()
+            ->call('loadUser', $user->id)
+            ->assertSet('canToggleActive', true)
+            ->set('activeState', '0')
+            ->call('save')
+            ->assertHasNoErrors()
+            ->assertRedirect(route('users.index'));
+
+        $this->assertFalse((bool) $user->fresh()->is_active);
+    }
+
     public function test_admin_no_puede_cambiar_el_estado_de_otro_administrador(): void
     {
         $campus = Campus::create(['name' => 'Maicao']);
@@ -96,5 +117,17 @@ class UserEditModalToggleTest extends TestCase
         $this->editModal()
             ->call('loadUser', $superadmin->id)
             ->assertSet('canToggleActive', false);
+    }
+
+    public function test_usuario_regular_no_puede_usar_el_modal_de_edicion(): void
+    {
+        $actor = User::factory()->create(['role' => User::ROLE_USER]);
+        $target = User::factory()->create(['role' => User::ROLE_USER]);
+
+        $this->actingAs($actor);
+
+        $this->editModal()
+            ->call('loadUser', $target->id)
+            ->assertForbidden();
     }
 }

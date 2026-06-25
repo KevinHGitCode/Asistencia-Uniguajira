@@ -127,7 +127,7 @@ class UserDeleteTest extends TestCase
             ->assertNotFound();
     }
 
-    public function test_vista_information_muestra_accion_visual_de_desactivar(): void
+    public function test_vista_information_no_muestra_accion_visual_de_desactivar(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
         $user  = User::factory()->create();
@@ -135,7 +135,7 @@ class UserDeleteTest extends TestCase
         $this->actingAs($admin)
             ->get(route('users.information', $user->id))
             ->assertOk()
-            ->assertSee('Desactivar usuario')
-            ->assertSee('Confirmar desactivación');
+            ->assertDontSee('Desactivar usuario')
+            ->assertDontSee('Confirmar desactivación');
     }
 }

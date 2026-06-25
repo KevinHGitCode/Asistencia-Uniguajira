@@ -105,12 +105,15 @@ class CreateUserModal extends Component
         }
 
         return Dependency::query()
+            ->with('campus:id,name')
             ->where('campus_id', $this->campus_id)
             ->orderBy('name')
-            ->get(['id', 'name'])
+            ->get(['id', 'name', 'campus_id'])
             ->map(fn (Dependency $dependency) => [
                 'id' => $dependency->id,
-                'name' => $dependency->name,
+                'name' => $dependency->campus
+                    ? "{$dependency->name} - {$dependency->campus->name}"
+                    : $dependency->name,
             ])
             ->all();
     }
