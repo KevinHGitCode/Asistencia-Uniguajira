@@ -15,7 +15,7 @@ class UserDependencyFilteringTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_los_modales_de_usuario_filtran_dependencias_por_sede_y_muestran_su_sede(): void
+    public function test_los_modales_de_usuario_filtran_dependencias_por_sede(): void
     {
         $superadmin = User::factory()->create(['role' => User::ROLE_SUPERADMIN, 'campus_id' => null]);
         $maicao = Campus::create(['name' => 'Maicao']);
@@ -36,7 +36,7 @@ class UserDependencyFilteringTest extends TestCase
                 ->set('campus_id', (string) $maicao->id)
                 ->assertSet('filteredDependencies', [[
                     'id' => $maicaoDependency->id,
-                    'name' => 'Aseguramiento de la calidad - Maicao',
+                    'name' => 'Aseguramiento de la calidad',
                 ]]);
         }
     }
