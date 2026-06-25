@@ -71,6 +71,16 @@ class ParticipantImportController extends Controller
         );
     }
 
+    public function downloadExport()
+    {
+        ActivityLogService::log('exportar', 'participantes', 'Descargó el listado actual de participantes en formato de importación');
+
+        return Excel::download(
+            new \App\Exports\ParticipantExport,
+            'participantes_actuales_'.now()->format('Ymd_His').'.xlsx'
+        );
+    }
+
     public function import(Request $request, CampusScopeService $campusScope)
     {
         $startedAt = microtime(true);
