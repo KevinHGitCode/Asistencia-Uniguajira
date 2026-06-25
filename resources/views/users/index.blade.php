@@ -39,31 +39,107 @@
                 </div>
             @endif
 
-            <div class="flex w-full flex-col sm:flex-row sm:items-center gap-3">
-                <form class="relative w-full sm:w-72" method="GET" action="{{ route('users.index') }}" x-data>
-                    <svg class="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-gray-400"
-                         fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.3-4.3M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z" />
-                    </svg>
-                    <input
-                        id="users-search-input"
-                        type="search"
-                        name="q"
-                        value="{{ $search }}"
-                        placeholder="Buscar usuario…"
-                        x-on:input.debounce.600ms="$el.closest('form').submit()"
-                        x-on:keydown.enter.prevent="$el.closest('form').submit()"
-                        class="w-full rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 py-1.5 pl-9 pr-3 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                </form>
-                <div class="sm:ml-auto">
-                    <flux:modal.trigger name="create-user-modal">
-                        <flux:button icon="user-plus" square
-                            class="cursor-pointer !bg-[#3b82f6] hover:!bg-blue-700 !text-white !border-transparent"
-                            :aria-label="__('Add User')" :title="__('Add User')" />
-                    </flux:modal.trigger>
-                </div>
-            </div>
+            <div x-data="{ filtersOpen: @js($activeFilterCount > 0) }" class="flex w-full flex-col gap-3">
+                <form method="GET" action="{{ route('users.index') }}" class="flex w-full flex-col gap-3">
+                    <div class="flex w-full flex-col gap-3 sm:flex-row sm:items-center">
+                        <div class="relative w-full sm:w-80">
+                            <svg class="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-gray-400"
+                                 fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.3-4.3M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z" />
+                            </svg>
+                            <input
+                                id="users-search-input"
+                                type="search"
+                                name="q"
+                                value="{{ $search }}"
+                                placeholder="Buscar usuario..."
+                                x-on:input.debounce.600ms="$el.closest('form').submit()"
+                                x-on:keydown.enter.prevent="$el.closest('form').submit()"
+                                class="w-full rounded-lg border border-neutral-200 bg-white py-1.5 pl-9 pr-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white" />
+                        </div>
 
+                        <button type="button" @click="filtersOpen = !filtersOpen"
+                            :class="filtersOpen ? 'border-blue-400 bg-blue-50 text-blue-700 dark:border-blue-600 dark:bg-blue-900/30 dark:text-blue-300' : 'border-neutral-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-gray-400 dark:hover:bg-zinc-700'"
+                            class="inline-flex items-center justify-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors">
+                            <flux:icon.funnel class="size-4" />
+                            Filtros
+                            @if($activeFilterCount > 0)
+                                <span class="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1 text-[11px] font-semibold leading-none text-white">
+                                    {{ $activeFilterCount }}
+                                </span>
+                            @endif
+                        </button>
+
+                        @if($activeFilterCount > 0 || $search !== '')
+                            <a href="{{ route('users.index') }}"
+                                class="inline-flex items-center justify-center gap-2 rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:border-red-200 hover:text-red-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-gray-400 dark:hover:border-red-900 dark:hover:text-red-400">
+                                <flux:icon.x-mark class="size-4" />
+                                Limpiar
+                            </a>
+                        @endif
+
+                        <div class="sm:ml-auto">
+                            <flux:modal.trigger name="create-user-modal">
+                                <flux:button icon="user-plus" square
+                                    class="cursor-pointer !bg-[#3b82f6] hover:!bg-blue-700 !text-white !border-transparent"
+                                    :aria-label="__('Add User')" :title="__('Add User')" />
+                            </flux:modal.trigger>
+                        </div>
+                    </div>
+
+                    <div x-show="filtersOpen" x-cloak
+                         class="rounded-xl border border-neutral-200 bg-white/70 p-3 dark:border-zinc-700 dark:bg-zinc-800/40">
+                        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                            <div class="flex flex-col gap-1.5">
+                                <label for="users-campus-filter" class="text-xs font-medium text-gray-600 dark:text-gray-400">Sede</label>
+                                <select id="users-campus-filter" name="campus_id" x-on:change="$el.closest('form').submit()"
+                                    class="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white">
+                                    <option value="">Todas</option>
+                                    @if(auth()->user()->isSuperadmin())
+                                        <option value="global" @selected($filters['campus_id'] === 'global')>Global</option>
+                                    @endif
+                                    @foreach($campuses as $value => $label)
+                                        <option value="{{ $value }}" @selected((string) $filters['campus_id'] === (string) $value)>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="flex flex-col gap-1.5">
+                                <label for="users-dependency-filter" class="text-xs font-medium text-gray-600 dark:text-gray-400">Dependencia</label>
+                                <select id="users-dependency-filter" name="dependency_id" x-on:change="$el.closest('form').submit()"
+                                    class="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white">
+                                    <option value="">Todas</option>
+                                    @foreach($filterDependencies as $value => $label)
+                                        <option value="{{ $value }}" @selected((string) $filters['dependency_id'] === (string) $value)>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="flex flex-col gap-1.5">
+                                <label for="users-role-filter" class="text-xs font-medium text-gray-600 dark:text-gray-400">Rol</label>
+                                <select id="users-role-filter" name="role" x-on:change="$el.closest('form').submit()"
+                                    class="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white">
+                                    <option value="">Todos</option>
+                                    @foreach($roles as $value => $label)
+                                        <option value="{{ $value }}" @selected($filters['role'] === $value)>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="flex flex-col gap-1.5">
+                                <label for="users-status-filter" class="text-xs font-medium text-gray-600 dark:text-gray-400">Estado</label>
+                                <select id="users-status-filter" name="status" x-on:change="$el.closest('form').submit()"
+                                    class="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white">
+                                    <option value="">Todos</option>
+                                    @foreach($statusOptions as $value => $label)
+                                        <option value="{{ $value }}" @selected($filters['status'] === $value)>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
             <div class="relative h-full flex-1 rounded-2xl border bg-zinc-50 dark:bg-zinc-900 border-neutral-200 dark:border-neutral-700"
                  x-data="{ onlineIds: @js($onlineUserIds) }"
                  x-on:online-users-updated.window="onlineIds = $event.detail.ids">

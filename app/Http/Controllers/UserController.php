@@ -20,27 +20,87 @@ class UserController extends Controller
     {
         $authUser = $request->user();
         $search = trim((string) $request->query('q', ''));
+        $campuses = $this->campusesFor($authUser);
+        $roles = $this->rolesFor($authUser);
+        $filterDependencies = $this->filterDependenciesFor($authUser);
+        $statusOptions = [
+            'active' => 'Activo',
+            'inactive' => 'Inactivo',
+        ];
+
+        $filters = [
+            'campus_id' => trim((string) $request->query('campus_id', '')),
+            'dependency_id' => trim((string) $request->query('dependency_id', '')),
+            'role' => trim((string) $request->query('role', '')),
+            'status' => trim((string) $request->query('status', '')),
+        ];
+
+        if ($filters['campus_id'] !== 'global' && ($filters['campus_id'] === '' || ! array_key_exists((int) $filters['campus_id'], $campuses))) {
+            $filters['campus_id'] = '';
+        }
+
+        if ($authUser->isAdmin() && $filters['campus_id'] === 'global') {
+            $filters['campus_id'] = '';
+        }
+
+        if ($filters['dependency_id'] === '' || ! array_key_exists((int) $filters['dependency_id'], $filterDependencies)) {
+            $filters['dependency_id'] = '';
+        }
+
+        if ($filters['role'] === '' || ! array_key_exists($filters['role'], $roles)) {
+            $filters['role'] = '';
+        }
+
+        if ($filters['status'] === '' || ! array_key_exists($filters['status'], $statusOptions)) {
+            $filters['status'] = '';
+        }
 
         $users = User::select(['id', 'name', 'email', 'role', 'avatar', 'is_active', 'campus_id'])
             ->with(['campus:id,name', 'dependencies:id,name'])
             ->withCount(['dependencies', 'events'])
             ->when($authUser->isAdmin(), fn ($query) => $query->where('campus_id', $authUser->campus_id))
+            ->when($filters['campus_id'] !== '', function ($query) use ($filters) {
+                if ($filters['campus_id'] === 'global') {
+                    $query->whereNull('campus_id');
+
+                    return;
+                }
+
+                $query->where('campus_id', (int) $filters['campus_id']);
+            })
+            ->when($filters['dependency_id'] !== '', function ($query) use ($filters) {
+                $query->whereHas('dependencies', fn ($dependencyQuery) => $dependencyQuery->whereKey((int) $filters['dependency_id']));
+            })
+            ->when($filters['role'] !== '', fn ($query) => $query->where('role', $filters['role']))
+            ->when($filters['status'] !== '', fn ($query) => $query->where('is_active', $filters['status'] === 'active'))
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
                         ->orWhere('email', 'like', "%{$search}%")
-                        ->orWhere('role', 'like', "%{$search}%");
+                        ->orWhere('role', 'like', "%{$search}%")
+                        ->orWhereHas('campus', fn ($campusQuery) => $campusQuery->where('name', 'like', "%{$search}%"))
+                        ->orWhereHas('dependencies', fn ($dependencyQuery) => $dependencyQuery->where('name', 'like', "%{$search}%"));
                 });
             })
             ->paginate(20)
             ->withQueryString();
 
         $dependencies = $this->dependenciesFor($authUser);
-        $campuses = $this->campusesFor($authUser);
-        $roles = $this->rolesFor($authUser);
         $onlineUserIds = $activity->onlineUserIds();
+        $activeFilterCount = collect($filters)->filter(fn ($value) => $value !== '')->count();
 
-        return view('users.index', compact('users', 'dependencies', 'campuses', 'roles', 'search', 'onlineUserIds'));
+        return view('users.index', compact(
+            'users',
+            'dependencies',
+            'filterDependencies',
+            'campuses',
+            'roles',
+            'statusOptions',
+            'search',
+            'filters',
+            'activeFilterCount',
+            'onlineUserIds'
+        ));
     }
 
     public function create(Request $request)
@@ -274,6 +334,19 @@ class UserController extends Controller
             ->when($authUser->isAdmin(), fn ($query) => $query->where('campus_id', $authUser->campus_id))
             ->orderBy('name')
             ->pluck('name', 'id')
+            ->toArray();
+    }
+
+    private function filterDependenciesFor(User $authUser): array
+    {
+        return Dependency::query()
+            ->with('campus:id,name')
+            ->when($authUser->isAdmin(), fn ($query) => $query->where('campus_id', $authUser->campus_id))
+            ->orderBy('name')
+            ->get(['id', 'name', 'campus_id'])
+            ->mapWithKeys(fn (Dependency $dependency) => [
+                $dependency->id => $dependency->name.($dependency->campus?->name ? ' - '.$dependency->campus->name : ''),
+            ])
             ->toArray();
     }
 
