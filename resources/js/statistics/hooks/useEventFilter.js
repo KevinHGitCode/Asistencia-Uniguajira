@@ -1,5 +1,4 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
-import { useCampusRefresh } from './useCampusRefresh.js';
 import { buildStatisticsQuery } from '../utils/query.js';
 
 /**
@@ -68,10 +67,6 @@ export function useEventFilter(filters) {
     fetchEvents(filters);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters, fetchEvents]);
-
-  useCampusRefresh(useCallback(() => {
-    fetchEvents(filters);
-  }, [filters, fetchEvents]));
 
   // ── Acciones de selección ───────────────────────────────────────────────────
 

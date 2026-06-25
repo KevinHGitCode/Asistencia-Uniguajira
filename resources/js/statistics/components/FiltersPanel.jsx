@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { SearchableMultiSelect } from './SearchableMultiSelect.jsx';
 import { buildStatisticsQuery } from '../utils/query.js';
 
@@ -69,7 +69,6 @@ export function FiltersPanel({ filters, onUpdate, onClear, loading, actions = nu
   const [options, setOptions] = useState({ showCampuses: false, campuses: {}, dependencies: {} });
   const [optionsLoading, setOptionsLoading] = useState(true);
   const [optionsError, setOptionsError] = useState(false);
-  const initializedCampus = useRef(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -86,12 +85,6 @@ export function FiltersPanel({ filters, onUpdate, onClear, loading, actions = nu
 
         if (!controller.signal.aborted) {
           setOptions(data);
-          if (!initializedCampus.current && data.showCampuses && data.campusIds.length > 0) {
-            initializedCampus.current = true;
-            onUpdate('campusIds', data.campusIds);
-          } else {
-            initializedCampus.current = true;
-          }
         }
       } catch (error) {
         if (error.name !== 'AbortError') {

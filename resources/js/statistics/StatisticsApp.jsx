@@ -1,9 +1,8 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect } from 'react';
 
 import { useTheme }      from './hooks/useTheme.js';
 import { useStatistics } from './hooks/useStatistics.js';
 import { useFilters } from './hooks/useFilters.js';
-import { useCampusRefresh } from './hooks/useCampusRefresh.js';
 
 import { FiltersPanel }  from './components/FiltersPanel.jsx';
 import { StatCounters }  from './components/StatCounters.jsx';
@@ -56,10 +55,6 @@ export default function StatisticsApp() {
   useEffect(() => {
     fetchAll(filters);
   }, [filters, fetchAll]);
-
-  useCampusRefresh(useCallback(() => {
-    fetchAll(filters);
-  }, [filters, fetchAll]));
 
   const { counters, charts, loading } = state;
 

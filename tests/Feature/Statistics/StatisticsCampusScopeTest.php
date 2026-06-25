@@ -50,7 +50,7 @@ class StatisticsCampusScopeTest extends TestCase
         $this->assertSame(2, $response->json());
     }
 
-    public function test_superadmin_con_sede_activa_ve_solo_esa_sede(): void
+    public function test_superadmin_con_sede_activa_del_dashboard_no_filtra_estadisticas_sin_filtro_propio(): void
     {
         [$maicao, $riohacha] = $this->campuses();
         $superadmin = User::factory()->create([
@@ -66,7 +66,31 @@ class StatisticsCampusScopeTest extends TestCase
             ->getJson('/api/statistics/total-events')
             ->assertOk();
 
+        $this->assertSame(2, $response->json());
+    }
+
+    public function test_superadmin_filtra_estadisticas_solo_con_campus_ids_del_modulo(): void
+    {
+        [$maicao, $riohacha] = $this->campuses();
+        $superadmin = User::factory()->create([
+            'role' => User::ROLE_SUPERADMIN,
+            'campus_id' => null,
+        ]);
+
+        Event::factory()->create(['campus_id' => $maicao->id]);
+        Event::factory()->create(['campus_id' => $riohacha->id]);
+
+        $response = $this->withSession([CampusScopeService::SESSION_KEY => $riohacha->id])
+            ->actingAs($superadmin)
+            ->getJson('/api/statistics/total-events?campusIds[]='.$maicao->id)
+            ->assertOk();
+
         $this->assertSame(1, $response->json());
+
+        $this->actingAs($superadmin)
+            ->getJson('/api/statistics/filter-options')
+            ->assertOk()
+            ->assertJsonPath('campusIds', []);
     }
 
     public function test_asistencias_se_filtran_por_sede_del_evento(): void

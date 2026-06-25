@@ -185,9 +185,7 @@ class StatisticsFilterResolver
         }
 
         if ($requested === []) {
-            $activeCampusId = $this->campusScope->activeCampusId($user);
-
-            return $activeCampusId ? [$activeCampusId] : [];
+            return [];
         }
 
         return Campus::whereIn('id', $requested)->pluck('id')->map(fn ($id) => (int) $id)->all();

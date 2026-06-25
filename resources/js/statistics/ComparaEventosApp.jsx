@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 
 import { useTheme }   from './hooks/useTheme.js';
 import { useFilters }  from './hooks/useFilters.js';
-import { useCampusRefresh } from './hooks/useCampusRefresh.js';
 import { FiltersPanel } from './components/FiltersPanel.jsx';
 import { ChartCard }    from './components/ChartCard.jsx';
 
@@ -233,11 +232,6 @@ export default function ComparaEventosApp() {
   useEffect(() => {
     fetchEvents(filters);
   }, [filters, fetchEvents]);
-
-  useCampusRefresh(useCallback(() => {
-    setSelectedIds(new Set());
-    fetchEvents(filters);
-  }, [filters, fetchEvents]));
 
   // Al cambiar la lista: quitar IDs que ya no existen
   useEffect(() => {
