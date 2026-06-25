@@ -8,6 +8,7 @@ use App\Models\Dependency;
 use App\Services\CampusScopeService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -77,7 +78,12 @@ class DependencyTable extends Component
         return Dependency::query()
             ->select(['id', 'name', 'campus_id', 'created_at'])
             ->with('campus:id,name')
-            ->withCount(['areas', 'events', 'participants'])
+            ->withCount('events')
+            ->withCount([
+                'participantRoles as participants_count' => fn (Builder $query) => $query
+                    ->where('is_active', true)
+                    ->select(DB::raw('count(distinct participant_id)')),
+            ])
             ->tap(fn (Builder $query) => app(CampusScopeService::class)->applyToQuery($query, auth()->user()))
             ->when($search !== '', fn (Builder $query) => $query->where('name', 'like', "%{$search}%"))
             ->orderBy('name');

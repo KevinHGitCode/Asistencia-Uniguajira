@@ -62,14 +62,11 @@
                 <tr class="border-b border-neutral-100 dark:border-zinc-800 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                     <th class="px-4 sm:px-6 py-3 text-left font-medium">#</th>
                     <th class="px-4 sm:px-6 py-3 text-left font-medium">Nombre</th>
-                    @if(auth()->user()?->isSuperadmin())
-                        <th class="px-4 sm:px-6 py-3 text-left font-medium hidden md:table-cell">Sede</th>
-                    @endif
-                    <th class="px-4 sm:px-6 py-3 text-center font-medium hidden sm:table-cell">Áreas</th>
-                    <th class="px-4 sm:px-6 py-3 text-center font-medium hidden sm:table-cell">Eventos</th>
-                    <th class="px-4 sm:px-6 py-3 text-center font-medium">Participantes</th>
-                    <th class="px-4 sm:px-6 py-3 text-center font-medium">Creada</th>
-                    <th class="px-4 sm:px-6 py-3 text-right font-medium">Acciones</th>
+                    <th class="px-4 sm:px-6 py-3 text-left font-medium">SEDE</th>
+                    <th class="px-4 sm:px-6 py-3 text-center font-medium">EVENTOS</th>
+                    <th class="px-4 sm:px-6 py-3 text-center font-medium">PARTICIPANTES</th>
+                    <th class="px-4 sm:px-6 py-3 text-center font-medium">CREADA</th>
+                    <th class="px-4 sm:px-6 py-3 text-right font-medium">ACCIONES</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-neutral-100 dark:divide-zinc-800">
@@ -86,12 +83,10 @@
                                 <span class="font-medium text-gray-900 dark:text-white">{{ $dependency->name }}</span>
                             </div>
                         </td>
-                        @if(auth()->user()?->isSuperadmin())
-                            <td class="px-4 sm:px-6 py-4 text-gray-500 dark:text-gray-400 hidden md:table-cell">
-                                {{ $dependency->campus?->name ?? 'Sin sede' }}
-                            </td>
-                        @endif
-                        <td class="px-4 sm:px-6 py-4 text-center hidden sm:table-cell">
+                        <td class="px-4 sm:px-6 py-4 text-gray-500 dark:text-gray-400">
+                            {{ $dependency->campus?->name ?? 'Sin sede' }}
+                        </td>
+                        <td class="px-4 sm:px-6 py-4 text-center">
                             <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-white bg-[#e2a542]">
                                 {{ $dependency->events_count ?? 0 }}
                             </span>

@@ -4,6 +4,10 @@ namespace Tests\Feature\Administration;
 
 use App\Livewire\Administration\DependencyTable;
 use App\Models\Dependency;
+use App\Models\Event;
+use App\Models\Participant;
+use App\Models\ParticipantRole;
+use App\Models\ParticipantType;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -21,8 +25,8 @@ class DependencyTableTest extends TestCase
         parent::setUp();
 
         $this->admin = User::factory()->create([
-            'role'               => 'admin',
-            'email_verified_at'  => now(),
+            'role' => 'admin',
+            'email_verified_at' => now(),
         ]);
     }
 
@@ -81,7 +85,7 @@ class DependencyTableTest extends TestCase
             ->assertViewHas('dependencies', fn ($deps) => $deps->currentPage() === 1);
     }
 
-    public function test_nextPage_avanza_a_la_segunda_pagina(): void
+    public function test_next_page_avanza_a_la_segunda_pagina(): void
     {
         Dependency::factory()->count(30)->create();
 
@@ -91,7 +95,7 @@ class DependencyTableTest extends TestCase
             ->assertViewHas('dependencies', fn ($deps) => $deps->currentPage() === 2);
     }
 
-    public function test_previousPage_retrocede_desde_la_segunda_pagina(): void
+    public function test_previous_page_retrocede_desde_la_segunda_pagina(): void
     {
         Dependency::factory()->count(30)->create();
 
@@ -102,7 +106,7 @@ class DependencyTableTest extends TestCase
             ->assertViewHas('dependencies', fn ($deps) => $deps->currentPage() === 1);
     }
 
-    public function test_gotoPage_navega_a_pagina_especifica(): void
+    public function test_goto_page_navega_a_pagina_especifica(): void
     {
         Dependency::factory()->count(80)->create();
 
@@ -243,12 +247,12 @@ class DependencyTableTest extends TestCase
         $this->assertEquals(
             $queriesWith25,
             $queriesWith50,
-            "Se ejecutaron {$queriesWith50} queries con 50 registros vs {$queriesWith25} con 25. " .
+            "Se ejecutaron {$queriesWith50} queries con 50 registros vs {$queriesWith25} con 25. ".
             'El número de queries no debe crecer con más registros (posible N+1).'
         );
     }
 
-    public function test_usa_withCount_para_evitar_queries_extra_por_relaciones(): void
+    public function test_usa_with_count_para_evitar_queries_extra_por_relaciones(): void
     {
         Dependency::factory()->count(10)->create();
 
@@ -259,7 +263,7 @@ class DependencyTableTest extends TestCase
         $this->assertLessThanOrEqual(
             4,
             count($queries),
-            'Se esperaban máx. 4 queries. Encontradas: ' . count($queries) .
+            'Se esperaban máx. 4 queries. Encontradas: '.count($queries).
             '. Posible N+1 o carga innecesaria de relaciones.'
         );
     }
@@ -313,6 +317,58 @@ class DependencyTableTest extends TestCase
             ->test(DependencyTable::class)
             ->assertSee('Rectoría general')
             ->assertSee('Vicerrectoría académica');
+    }
+
+    public function test_tabla_muestra_columnas_alineadas_y_conteos_correctos(): void
+    {
+        $dependency = Dependency::factory()->create(['name' => 'Bienestar Universitario']);
+        Event::factory()->count(2)->create(['dependency_id' => $dependency->id]);
+
+        $student = ParticipantType::create(['name' => 'Estudiante']);
+        $teacher = ParticipantType::create(['name' => 'Docente']);
+        $participant = Participant::create([
+            'document' => '1001',
+            'first_name' => 'Ana',
+            'last_name' => 'Perez',
+            'email' => 'ana@example.com',
+        ]);
+        $otherParticipant = Participant::create([
+            'document' => '1002',
+            'first_name' => 'Luis',
+            'last_name' => 'Gomez',
+            'email' => 'luis@example.com',
+        ]);
+
+        ParticipantRole::create([
+            'participant_id' => $participant->id,
+            'participant_type_id' => $student->id,
+            'dependency_id' => $dependency->id,
+            'is_active' => true,
+        ]);
+        ParticipantRole::create([
+            'participant_id' => $participant->id,
+            'participant_type_id' => $teacher->id,
+            'dependency_id' => $dependency->id,
+            'is_active' => true,
+        ]);
+        ParticipantRole::create([
+            'participant_id' => $otherParticipant->id,
+            'participant_type_id' => $student->id,
+            'dependency_id' => $dependency->id,
+            'is_active' => false,
+        ]);
+
+        Livewire::actingAs($this->admin)
+            ->test(DependencyTable::class)
+            ->assertSeeInOrder(['SEDE', 'EVENTOS', 'PARTICIPANTES', 'CREADA', 'ACCIONES'])
+            ->assertDontSee('Áreas')
+            ->assertViewHas('dependencies', function ($dependencies) use ($dependency) {
+                $row = $dependencies->firstWhere('id', $dependency->id);
+
+                return $row
+                    && $row->events_count === 2
+                    && $row->participants_count === 1;
+            });
     }
 
     public function test_la_numeracion_de_filas_continua_entre_paginas(): void
