@@ -52,13 +52,27 @@
         </template>
     @endif
 
-    {{-- Chips de seleccionados --}}
-    <div x-show="selectedOptions.length" class="flex flex-wrap gap-1.5 mb-2">
+    {{-- Encabezado de seleccionados: contador + quitar todas --}}
+    <div x-show="values.length" x-cloak class="flex items-center justify-between mb-1.5">
+        <span class="text-xs text-gray-500 dark:text-zinc-400">
+            <span class="font-semibold text-gray-700 dark:text-zinc-200" x-text="values.length"></span>
+            seleccionada(s)
+        </span>
+        <button type="button" x-on:click="clearAll()"
+            class="text-xs font-medium text-gray-500 hover:text-red-600 dark:text-zinc-400 dark:hover:text-red-400 transition-colors cursor-pointer">
+            Quitar todas
+        </button>
+    </div>
+
+    {{-- Chips de seleccionados: rejilla de columnas que llenan el ancho disponible,
+         en caja delimitada con scroll vertical (altura del modal constante). --}}
+    <div x-show="selectedOptions.length" x-cloak
+         class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 mb-2 max-h-28 overflow-y-auto rounded-lg border border-neutral-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/40 p-2">
         <template x-for="opt in selectedOptions" :key="opt.value">
-            <span class="inline-flex items-center gap-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 pl-2.5 pr-1 py-0.5 text-xs font-medium">
-                <span class="truncate max-w-[12rem]" x-text="opt.label"></span>
+            <span class="flex w-full items-center justify-between gap-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 pl-2.5 pr-1 py-0.5 text-xs font-medium">
+                <span class="min-w-0 flex-1 truncate" x-text="opt.label"></span>
                 <button type="button" x-on:click="remove(opt.value)"
-                    class="inline-flex items-center justify-center rounded-full p-0.5 hover:bg-blue-200 dark:hover:bg-blue-800/60 transition-colors cursor-pointer"
+                    class="inline-flex shrink-0 items-center justify-center rounded-full p-0.5 hover:bg-blue-200 dark:hover:bg-blue-800/60 transition-colors cursor-pointer"
                     :aria-label="'Quitar ' + opt.label">
                     <svg class="size-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
@@ -97,6 +111,14 @@
                 x-on:keydown.arrow-down.prevent="move(1)"
                 x-on:keydown.arrow-up.prevent="move(-1)"
                 class="w-full px-2.5 py-1.5 rounded-md border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+
+        {{-- Acción masiva: agregar todas las disponibles (o las filtradas) --}}
+        <div x-show="available.length > 1" class="flex items-center justify-between gap-2 px-3 py-1.5 border-b border-neutral-100 dark:border-zinc-700">
+            <span class="text-xs text-gray-400 dark:text-zinc-500" x-text="available.length + ' disponible(s)'"></span>
+            <button type="button" x-on:click="addAllAvailable()"
+                class="text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+                x-text="search ? 'Agregar filtradas' : 'Agregar todas'"></button>
         </div>
 
         <ul x-ref="list" class="max-h-52 overflow-y-auto py-1 text-sm">

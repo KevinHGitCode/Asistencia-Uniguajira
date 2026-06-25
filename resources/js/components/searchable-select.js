@@ -211,6 +211,21 @@ window.multiSearchableSelect = function (config) {
             this.commit(this.values.filter((v) => String(v) !== String(val)));
         },
 
+        // Agrega de una sola vez todas las opciones disponibles según el filtro
+        // actual (todas si no hay búsqueda; solo las coincidentes si hay texto).
+        addAllAvailable() {
+            const nuevos = this.available.map((o) => o.value);
+            if (nuevos.length === 0) return;
+            this.commit([...this.values, ...nuevos]);
+            this.highlighted = 0;
+        },
+
+        // Quita todas las seleccionadas.
+        clearAll() {
+            if (this.values.length === 0) return;
+            this.commit([]);
+        },
+
         openPanel() {
             this.open = true;
             this.search = '';

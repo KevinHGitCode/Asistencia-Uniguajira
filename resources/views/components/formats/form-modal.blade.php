@@ -19,7 +19,7 @@
          x-transition:leave="transition ease-in duration-150"
          x-transition:leave-start="opacity-100 scale-100"
          x-transition:leave-end="opacity-0 scale-95"
-         class="relative z-10 w-full max-w-lg overflow-visible rounded-2xl border border-neutral-200 bg-white shadow-xl dark:border-zinc-700 dark:bg-zinc-900">
+         class="relative z-10 w-full max-w-2xl overflow-visible rounded-2xl border border-neutral-200 bg-white shadow-xl dark:border-zinc-700 dark:bg-zinc-900">
 
         <div class="flex items-center justify-between px-6 py-4 border-b border-neutral-200 dark:border-zinc-700">
             <h3 class="text-base font-semibold text-gray-900 dark:text-white"
@@ -36,7 +36,7 @@
                 : '{{ route('formats.store') }}'"
             method="POST"
             enctype="multipart/form-data"
-            class="px-6 py-5 flex flex-col gap-4">
+            class="px-6 py-4 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
             @csrf
 
             <div class="flex flex-col gap-1.5">
@@ -63,11 +63,10 @@
                     required
                     placeholder="Ej: bienestar"
                     class="px-3 py-2 rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white placeholder-gray-400 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 transition" />
-                <p class="text-xs text-gray-400">Debe coincidir con la clave en el archivo de configuración.</p>
             </div>
 
             {{-- Archivo PDF --}}
-            <div class="flex flex-col gap-1.5">
+            <div class="flex flex-col gap-1.5 sm:col-span-2">
                 <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Plantilla PDF
                 </label>
@@ -104,7 +103,7 @@
             </div>
 
             {{-- Dependencias --}}
-            <div class="flex flex-col gap-1.5">
+            <div class="flex flex-col gap-1.5 sm:col-span-2">
                 <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Dependencias asignadas
                 </label>
@@ -117,7 +116,7 @@
                 <p class="text-xs text-gray-400">Selecciona las dependencias que pueden usar este formato.</p>
             </div>
 
-            <div class="flex items-center justify-end gap-3 pt-2">
+            <div class="flex items-center justify-end gap-3 pt-2 sm:col-span-2">
                 <button type="button" @click="closeForm()"
                     class="px-4 py-2 text-sm rounded-lg border border-neutral-200 dark:border-zinc-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer">
                     Cancelar
