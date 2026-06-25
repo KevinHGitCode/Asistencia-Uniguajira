@@ -126,13 +126,10 @@ class ParticipantsController extends Controller
             'types'        => ParticipantType::orderBy('name')->get(['id', 'name']),
             'programs'     => Program::orderBy('name')->get(['id', 'name']),
             'affiliations' => Affiliation::orderBy('name')->get(['id', 'name']),
-            'dependencies' => Dependency::with('campus:id,name')
+            'dependencies' => Dependency::query()
                 ->orderBy('name')
-                ->get(['id', 'name', 'campus_id'])
-                ->map(fn (Dependency $d) => [
-                    'id'   => $d->id,
-                    'name' => $d->name.($d->campus?->name ? ' - '.$d->campus->name : ''),
-                ])
+                ->orderBy('id')
+                ->get(['id', 'name'])
                 ->values(),
         ]);
     }

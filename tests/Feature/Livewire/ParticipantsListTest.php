@@ -18,7 +18,7 @@ class ParticipantsListTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_el_selector_de_dependencias_muestra_la_sede_al_editar_un_participante(): void
+    public function test_el_selector_de_dependencias_muestra_solo_el_nombre_guardado_al_editar_un_participante(): void
     {
         $maicao = Campus::create(['name' => 'Maicao']);
         $villanueva = Campus::create(['name' => 'Villanueva']);
@@ -29,8 +29,8 @@ class ParticipantsListTest extends TestCase
         Livewire::test(ParticipantsList::class)
             ->call('openEdit', $participant->id)
             ->assertSet('catalogDependencies', [
-                ['id' => $maicaoDependency->id, 'name' => 'Aseguramiento de la calidad - Maicao'],
-                ['id' => $villanuevaDependency->id, 'name' => 'Aseguramiento de la calidad - Villanueva'],
+                ['id' => $maicaoDependency->id, 'name' => 'Aseguramiento de la calidad'],
+                ['id' => $villanuevaDependency->id, 'name' => 'Aseguramiento de la calidad'],
             ]);
     }
 
