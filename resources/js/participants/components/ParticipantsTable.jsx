@@ -4,7 +4,7 @@ import { PencilIcon, TrashIcon } from '../icons.jsx';
 
 const TH = 'px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider';
 
-function ExtraItemsBadge({ items, badgeClass = 'bg-blue-600', label = 'Elementos adicionales' }) {
+function ExtraItemsBadge({ count, items, badgeClass = 'bg-blue-600', label = 'Elementos adicionales' }) {
     const buttonRef = useRef(null);
     const popoverRef = useRef(null);
     const hideTimerRef = useRef(null);
@@ -45,21 +45,11 @@ function ExtraItemsBadge({ items, badgeClass = 'bg-blue-600', label = 'Elementos
         });
     };
 
-    const show = () => {
-        clearHideTimer();
-        updatePosition();
-        setOpen(true);
-    };
-
-    const scheduleHide = () => {
-        clearHideTimer();
-        hideTimerRef.current = setTimeout(() => setOpen(false), 140);
-    };
-
-    const toggle = () => {
+    const toggleFromClick = () => {
         clearHideTimer();
         if (open) {
             setOpen(false);
+            buttonRef.current?.blur();
             return;
         }
 
@@ -104,12 +94,10 @@ function ExtraItemsBadge({ items, badgeClass = 'bg-blue-600', label = 'Elementos
                 type="button"
                 aria-expanded={open}
                 aria-label={`Mostrar ${items.length} ${label.toLowerCase()}`}
-                onClick={toggle}
-                onMouseEnter={show}
-                onMouseLeave={scheduleHide}
-                className={`inline-flex items-center rounded-full ${badgeClass} px-2 py-0.5 text-xs font-semibold text-white shadow-sm transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-1 dark:focus:ring-offset-zinc-900`}
+                onClick={toggleFromClick}
+                className={`inline-flex cursor-pointer items-center rounded-full ${badgeClass} px-2 py-0.5 text-xs font-semibold text-white shadow-sm transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-1 dark:focus:ring-offset-zinc-900`}
             >
-                +{items.length}
+                +{count}
             </button>
 
             {open && createPortal(
@@ -117,7 +105,6 @@ function ExtraItemsBadge({ items, badgeClass = 'bg-blue-600', label = 'Elementos
                     ref={popoverRef}
                     role="tooltip"
                     onMouseEnter={clearHideTimer}
-                    onMouseLeave={scheduleHide}
                     className="fixed z-[9999] w-[17.5rem] rounded-lg border border-neutral-200 bg-white p-3 text-xs text-gray-700 shadow-xl dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
                     style={{
                         left: `${position.left}px`,
@@ -153,7 +140,7 @@ function MultiCell({ items, badgeClass = 'bg-blue-600', firstClass = 'text-gray-
         <div className="flex items-center gap-1.5">
             <span className={`text-xs truncate max-w-[12rem] ${firstClass}`} title={first}>{first}</span>
             {rest.length > 0 && (
-                <ExtraItemsBadge items={rest} badgeClass={badgeClass} label={label} />
+                <ExtraItemsBadge count={rest.length} items={items} badgeClass={badgeClass} label={label} />
             )}
         </div>
     );
