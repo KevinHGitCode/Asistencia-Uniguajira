@@ -22,7 +22,7 @@ export function EventCardSkeleton() {
 export default function EventCard({ event }) {
     return (
         <a
-            href={`/eventos/${event.id}`}
+            href={`/eventos/${event.id}?from=todos`}
             className="block p-4 rounded-2xl border border-neutral-200 dark:border-neutral-600 hover:border-[#e2a542] hover:shadow-lg transition-all duration-200 bg-white dark:bg-zinc-800"
         >
             <div className="flex items-start justify-between mb-2">

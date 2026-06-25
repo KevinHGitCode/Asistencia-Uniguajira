@@ -1,6 +1,6 @@
 <x-layouts.app :title="__('Registros de Actividad')">
 
-<div class="flex h-full w-full flex-1 flex-col gap-6 p-1 sm:p-4 md:p-6"
+<div class="flex min-h-full w-full flex-1 flex-col gap-6 p-1 pb-8 sm:p-4 sm:pb-10 md:p-6 md:pb-12"
      x-data="{ showFilters: false }">
 
     {{-- Header --}}
@@ -20,6 +20,10 @@
         </div>
     </div>
 
+    <x-administration.info-note color="#64748b">
+        Los <strong>registros de actividad</strong> conservan el historial de acciones relevantes realizadas en el sistema. Usa los filtros para consultar quién realizó cada acción, en qué módulo y cuándo ocurrió.
+    </x-administration.info-note>
+
     {{-- Flash: success --}}
     @if(session('success'))
         <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)"
@@ -33,7 +37,7 @@
     @endif
 
     {{-- Filtros --}}
-    <div class="border border-neutral-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm overflow-hidden">
+    <div class="relative z-20 border border-neutral-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm overflow-visible">
         <div class="px-4 sm:px-6 py-4 border-b border-neutral-200 dark:border-neutral-700 bg-zinc-50 dark:bg-zinc-900 flex items-center justify-between gap-4">
             <h2 class="text-base font-semibold text-gray-900 dark:text-white">Filtros</h2>
             <button @click="showFilters = !showFilters" class="sm:hidden text-sm text-[#cc5e50] font-medium cursor-pointer">
@@ -42,7 +46,7 @@
         </div>
 
         <form method="GET" action="{{ route('activity-logs.index') }}"
-              class="px-4 sm:px-6 py-4" :class="{ 'hidden sm:block': !showFilters }">
+              class="relative px-4 sm:px-6 py-4" :class="{ 'hidden sm:block': !showFilters }">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
                 {{-- Search --}}
                 <div>
@@ -54,37 +58,37 @@
                 {{-- Module --}}
                 <div>
                     <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Módulo</label>
-                    <select name="module"
-                        class="w-full px-3 py-2 text-sm rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
-                        <option value="">Todos los módulos</option>
-                        @foreach($modules as $mod)
-                            <option value="{{ $mod }}" {{ request('module') === $mod ? 'selected' : '' }}>{{ ucfirst($mod) }}</option>
-                        @endforeach
-                    </select>
+                    <x-ui.searchable-select
+                        name="module"
+                        :value="request('module')"
+                        :options="collect($modules)->map(fn($m) => ['value' => $m, 'label' => ucfirst($m)])->all()"
+                        placeholder="Todos los módulos"
+                        empty-label="Todos los módulos"
+                        search-placeholder="Buscar módulo…" />
                 </div>
 
                 {{-- Action --}}
                 <div>
                     <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Acción</label>
-                    <select name="action"
-                        class="w-full px-3 py-2 text-sm rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
-                        <option value="">Todas las acciones</option>
-                        @foreach($actions as $act)
-                            <option value="{{ $act }}" {{ request('action') === $act ? 'selected' : '' }}>{{ ucfirst(str_replace('_', ' ', $act)) }}</option>
-                        @endforeach
-                    </select>
+                    <x-ui.searchable-select
+                        name="action"
+                        :value="request('action')"
+                        :options="collect($actions)->map(fn($a) => ['value' => $a, 'label' => ucfirst(str_replace('_', ' ', $a))])->all()"
+                        placeholder="Todas las acciones"
+                        empty-label="Todas las acciones"
+                        search-placeholder="Buscar acción…" />
                 </div>
 
                 {{-- User --}}
                 <div>
                     <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Usuario</label>
-                    <select name="user_id"
-                        class="w-full px-3 py-2 text-sm rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
-                        <option value="">Todos los usuarios</option>
-                        @foreach($users as $u)
-                            <option value="{{ $u->id }}" {{ request('user_id') == $u->id ? 'selected' : '' }}>{{ $u->name }}</option>
-                        @endforeach
-                    </select>
+                    <x-ui.searchable-select
+                        name="user_id"
+                        :value="request('user_id')"
+                        :options="$users"
+                        placeholder="Todos los usuarios"
+                        empty-label="Todos los usuarios"
+                        search-placeholder="Buscar usuario…" />
                 </div>
 
                 {{-- Date from --}}

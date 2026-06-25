@@ -1,6 +1,6 @@
 <x-layouts.app :title="__('Estamentos')">
 
-<div class="flex h-full w-full flex-1 flex-col gap-6 p-1 sm:p-4 md:p-6"
+<div class="flex min-h-full w-full flex-1 flex-col gap-6 p-1 pb-8 sm:p-4 sm:pb-10 md:p-6 md:pb-12"
      x-data="{ ...participantTypesManager(), activeTab: new URLSearchParams(window.location.search).get('tab') || '{{ session('active_tab', 'list') }}', setTab(tab) { this.activeTab = tab; const url = new URL(window.location); url.searchParams.set('tab', tab); window.history.replaceState({}, '', url); } }">
 
     {{-- Header --}}
@@ -49,6 +49,14 @@
         </div>
     @endif
 
+    <x-administration.info-note color="#0d9488">
+        Los estamentos son los <strong>tipos de participante</strong> válidos en el sistema
+        (Estudiante, Docente, Administrativo, etc.). El Excel de importación usa la columna
+        <code class="rounded px-1 font-mono">Tipo de Estamento</code>
+        para clasificar cada fila — si el valor no coincide con un estamento registrado aquí,
+        la fila será omitida. Un participante puede pertenecer a varios estamentos.
+    </x-administration.info-note>
+
     {{-- Tabs --}}
     <div class="border-b border-neutral-200 dark:border-zinc-700">
         <nav class="flex gap-1">
@@ -76,18 +84,6 @@
     {{-- TAB: LISTADO --}}
     <div x-show="activeTab === 'list'" x-transition>
 
-        {{-- Info box --}}
-        <div class="flex items-start gap-3 px-4 py-3 rounded-lg bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-400 text-sm mb-4">
-            <flux:icon.information-circle class="size-5 shrink-0 mt-0.5" />
-            <span>
-                Los estamentos son los <strong>tipos de participante</strong> válidos en el sistema
-                (Estudiante, Docente, Administrativo, etc.). El Excel de importación usa la columna
-                <code class="font-mono bg-teal-100 dark:bg-teal-900 px-1 rounded">Tipo de Estamento</code>
-                para clasificar cada fila — si el valor no coincide con un estamento registrado aquí,
-                la fila será omitida. Un participante puede pertenecer a varios estamentos.
-            </span>
-        </div>
-
         <livewire:administration.participant-type-table />
     </div>
 
@@ -113,16 +109,13 @@
             <div class="px-4 sm:px-6 py-6 flex flex-col gap-6">
 
                 {{-- Info box sobre estamentos en el contexto de importación --}}
-                <div class="flex items-start gap-3 px-4 py-3 rounded-lg bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-400 text-sm">
-                    <flux:icon.information-circle class="size-5 shrink-0 mt-0.5" />
-                    <span>
+                <x-administration.info-note color="#0d9488">
                         Los estamentos son los <strong>tipos de participante</strong> válidos en el sistema.
                         El Excel de importación de participantes usa la columna
-                        <code class="font-mono bg-teal-100 dark:bg-teal-900 px-1 rounded">Tipo de Estamento</code>
+                        <code class="rounded px-1 font-mono">Tipo de Estamento</code>
                         para clasificar cada fila — si el valor no coincide con un estamento registrado aquí,
                         la fila será omitida.
-                    </span>
-                </div>
+                </x-administration.info-note>
 
                 {{-- Error de importación --}}
                 @error('excel_file')

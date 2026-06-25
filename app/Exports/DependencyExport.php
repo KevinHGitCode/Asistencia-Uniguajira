@@ -10,9 +10,15 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 class DependencyExport implements FromCollection, WithHeadings, WithStyles
 {
+    public function __construct(private readonly ?int $campusId = null) {}
+
     public function collection()
     {
-        return Dependency::orderBy('name')->get()->map(fn ($d) => ['Nombre' => $d->name]);
+        return Dependency::query()
+            ->when($this->campusId, fn ($query) => $query->where('campus_id', $this->campusId))
+            ->orderBy('name')
+            ->get()
+            ->map(fn ($d) => ['Nombre' => $d->name]);
     }
 
     public function headings(): array

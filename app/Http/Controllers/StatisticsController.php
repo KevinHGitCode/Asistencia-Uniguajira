@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Event;
-use App\Models\User;
+use App\Models\Campus;
+use App\Services\CampusScopeService;
+use App\Services\StatisticsFilterResolver;
 use App\Services\StatisticsService;
 use App\Traits\AppliesStatisticsFilters;
 use Illuminate\Http\JsonResponse;
@@ -14,6 +15,11 @@ class StatisticsController extends Controller
 {
     use AppliesStatisticsFilters;
 
+    public function __construct(
+        private readonly CampusScopeService $campusScope,
+        private readonly StatisticsFilterResolver $statisticsFilters,
+    ) {}
+
     // ── Endpoints de resumen (1 request = todos los datos del módulo) ────────
 
     /**
@@ -21,43 +27,26 @@ class StatisticsController extends Controller
      */
     public function asistenciasSummary(Request $request): JsonResponse
     {
-        $filters = $this->scopeToUser($this->getFilters($request), Auth::user());
-
-        if ($filters === null) {
-            return response()->json([
-                'counters' => ['events' => 0, 'attendances' => 0, 'participants' => 0],
-                'charts'   => [
-                    'attendancesByProgram'      => [],
-                    'attendancesByDependency'   => [],
-                    'attendancesByOrganization' => [],
-                    'attendancesUnclassified'   => 0,
-                    'topEvents'                => [],
-                    'topParticipants'          => [],
-                    'byRole'                   => [],
-                    'bySex'                    => [],
-                    'byGroup'                  => [],
-                ],
-            ]);
-        }
+        $filters = $this->statisticsFilters->resolve($this->getFilters($request), Auth::user());
 
         $s = new StatisticsService($filters);
 
         return response()->json([
             'counters' => [
-                'events'       => $s->totalEvents(),
-                'attendances'  => $s->totalAttendances(),
+                'events' => $s->totalEvents(),
+                'attendances' => $s->totalAttendances(),
                 'participants' => $s->totalParticipants(),
             ],
             'charts' => [
-                'attendancesByProgram'      => $s->attendancesByProgram(),
-                'attendancesByDependency'   => $s->attendancesByDependency(),
+                'attendancesByProgram' => $s->attendancesByProgram(),
+                'attendancesByDependency' => $s->attendancesByDependency(),
                 'attendancesByOrganization' => $s->attendancesByOrganization(),
-                'attendancesUnclassified'   => $s->attendancesUnclassified(),
-                'topEvents'                => $s->topEvents(),
-                'topParticipants'          => $s->topParticipants(),
-                'byRole'                   => $s->attendancesByType(),
-                'bySex'                    => $s->attendancesByDetailField('gender'),
-                'byGroup'                  => $s->attendancesByDetailField('priority_group'),
+                'attendancesUnclassified' => $s->attendancesUnclassified(),
+                'topEvents' => $s->topEvents(),
+                'topParticipants' => $s->topParticipants(),
+                'byRole' => $s->attendancesByType(),
+                'bySex' => $s->attendancesByDetailField('gender'),
+                'byGroup' => $s->attendancesByDetailField('priority_group'),
             ],
         ]);
     }
@@ -67,38 +56,23 @@ class StatisticsController extends Controller
      */
     public function participantesSummary(Request $request): JsonResponse
     {
-        $filters = $this->scopeToUser($this->getFilters($request), Auth::user());
-
-        if ($filters === null) {
-            return response()->json([
-                'counters' => ['events' => 0, 'participants' => 0],
-                'charts'   => [
-                    'participantsByProgram'      => [],
-                    'participantsByDependency'   => [],
-                    'participantsByOrganization' => [],
-                    'participantsUnclassified'   => 0,
-                    'byRole'                     => [],
-                    'bySex'                      => [],
-                    'byGroup'                    => [],
-                ],
-            ]);
-        }
+        $filters = $this->statisticsFilters->resolve($this->getFilters($request), Auth::user());
 
         $s = new StatisticsService($filters);
 
         return response()->json([
             'counters' => [
-                'events'       => $s->totalEvents(),
+                'events' => $s->totalEvents(),
                 'participants' => $s->totalParticipants(),
             ],
             'charts' => [
-                'participantsByProgram'      => $s->participantsByProgram(),
-                'participantsByDependency'   => $s->participantsByDependency(),
+                'participantsByProgram' => $s->participantsByProgram(),
+                'participantsByDependency' => $s->participantsByDependency(),
                 'participantsByOrganization' => $s->participantsByOrganization(),
-                'participantsUnclassified'   => $s->participantsUnclassified(),
-                'byRole'                    => $s->participantsByTypeDedup(),
-                'bySex'                     => $s->participantsByDetailField('gender'),
-                'byGroup'                   => $s->participantsByGroupDedup(),
+                'participantsUnclassified' => $s->participantsUnclassified(),
+                'byRole' => $s->participantsByTypeDedup(),
+                'bySex' => $s->participantsByDetailField('gender'),
+                'byGroup' => $s->participantsByGroupDedup(),
             ],
         ]);
     }
@@ -215,35 +189,50 @@ class StatisticsController extends Controller
         return response()->json($this->svc($request)->participantsByOrganization());
     }
 
+    public function filterOptions(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        abort_unless($user, 401);
+
+        return response()->json(
+            $this->statisticsFilters->options($this->getFilters($request), $user)
+        );
+    }
+
+    public function updateCampus(Request $request)
+    {
+        abort_unless($request->user()?->isSuperadmin(), 403);
+
+        $validated = $request->validate([
+            'campus_id' => ['nullable', 'integer', 'exists:campuses,id'],
+        ]);
+
+        $campusId = empty($validated['campus_id']) ? null : (int) $validated['campus_id'];
+
+        if ($campusId === null) {
+            $request->session()->forget(CampusScopeService::SESSION_KEY);
+        } else {
+            $request->session()->put(CampusScopeService::SESSION_KEY, $campusId);
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json(['campus_id' => $campusId]);
+        }
+
+        return redirect()->back();
+    }
+
     // ── Helpers privados ────────────────────────────────────────────────────
 
     private function svc(Request $request): StatisticsService
     {
-        return new StatisticsService($this->getFilters($request));
+        return new StatisticsService(
+            $this->statisticsFilters->resolve($this->getFilters($request), Auth::user())
+        );
     }
 
-    /**
-     * Si el usuario no es admin, restringe los filtros a sus propios eventos.
-     * Retorna null si el usuario no tiene ningún evento (resultado = ceros).
-     */
-    private function scopeToUser(array $filters, ?User $user): ?array
+    public static function campusOptions(): array
     {
-        if (! $user || $user->role === 'admin') {
-            return $filters;
-        }
-
-        $userEventIds = Event::where('user_id', $user->id)->pluck('id')->toArray();
-
-        if (empty($userEventIds)) {
-            return null;
-        }
-
-        if (! empty($filters['eventIds'])) {
-            $intersection = array_values(array_intersect($filters['eventIds'], $userEventIds));
-
-            return empty($intersection) ? null : array_merge($filters, ['eventIds' => $intersection]);
-        }
-
-        return array_merge($filters, ['eventIds' => $userEventIds]);
+        return Campus::orderBy('name')->pluck('name', 'id')->toArray();
     }
 }

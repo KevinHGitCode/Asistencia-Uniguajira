@@ -1,6 +1,6 @@
 <x-layouts.app :title="__('Dependencias')">
 
-<div class="flex h-full w-full flex-1 flex-col gap-6 p-1 sm:p-4 md:p-6"
+<div class="flex min-h-full w-full flex-1 flex-col gap-6 p-1 pb-8 sm:p-4 sm:pb-10 md:p-6 md:pb-12"
      x-data="{ ...dependenciesManager(), activeTab: new URLSearchParams(window.location.search).get('tab') || '{{ session('active_tab', 'list') }}', setTab(tab) { this.activeTab = tab; const url = new URL(window.location); url.searchParams.set('tab', tab); window.history.replaceState({}, '', url); } }">
 
     {{-- Header --}}
@@ -25,6 +25,10 @@
         </button>
     </div>
 
+    <x-administration.info-note color="#cc5e50">
+        Las <strong>dependencias</strong> representan las unidades organizativas de la Universidad. Cada una pertenece a una sede y puede asociarse a eventos y participantes administrativos; al crearla manualmente, se guarda con el formato <code class="rounded px-1 font-mono">Nombre - Sede</code>.
+    </x-administration.info-note>
+
     {{-- Flash: success --}}
     @if(session('success'))
         <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)"
@@ -37,15 +41,32 @@
         </div>
     @endif
 
+    @if((session('import_result.skipped') ?? 0) > 0)
+        <div class="flex items-center justify-between gap-3 px-4 py-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 text-sm">
+            <div class="flex items-center gap-3">
+                <flux:icon.exclamation-triangle class="size-5 shrink-0" />
+                <span>
+                    <strong>{{ session('import_result.skipped') }}</strong>
+                    {{ session('import_result.skipped') === 1 ? 'fila omitida' : 'filas omitidas' }} durante la importación.
+                </span>
+            </div>
+            <a href="{{ route('dependencies.download-skipped') }}"
+               class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium transition-colors shrink-0">
+                <flux:icon.arrow-down-tray class="size-3.5" />
+                Descargar omitidos
+            </a>
+        </div>
+    @endif
+
     {{-- Flash: error --}}
-    @if(session('error') || $errors->has('name') || $errors->has('excel_file'))
+    @if(session('error') || $errors->has('name') || $errors->has('campus_id') || $errors->has('excel_file'))
         <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)"
             x-transition:leave="transition ease-in duration-300"
             x-transition:leave-start="opacity-100"
             x-transition:leave-end="opacity-0"
             class="flex items-center gap-3 px-4 py-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">
             <flux:icon.x-circle class="size-5 shrink-0" />
-            {{ session('error') ?? $errors->first('name') ?? $errors->first('excel_file') }}
+            {{ session('error') ?: $errors->first() }}
         </div>
     @endif
 
@@ -110,6 +131,13 @@
                       class="flex flex-col gap-4">
                     @csrf
 
+                    @if($isSuperadmin)
+                        <div class="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800 dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-blue-300">
+                            <flux:icon.information-circle class="size-5 shrink-0" />
+                            <p>La sede se asigna automáticamente con el sufijo del nombre, por ejemplo: <strong>Biblioteca - Riohacha</strong>.</p>
+                        </div>
+                    @endif
+
                     <div
                         @dragover.prevent="dragging = true"
                         @dragleave.prevent="dragging = false"
@@ -160,7 +188,13 @@
 
 
     {{-- ======================== MODAL: CREAR / EDITAR ======================== --}}
-    <x-dependencies.form-modal />
+    <script>
+        window.administrationActiveCampusId = @js((string) ($activeCampusId ?? ''));
+        window.addEventListener('administration-campus-changed', (event) => {
+            window.administrationActiveCampusId = event.detail.campusId ?? '';
+        });
+    </script>
+    <x-dependencies.form-modal :campuses="$campuses" :active-campus-id="$activeCampusId" :is-superadmin="$isSuperadmin" />
 
 
     {{-- ======================== MODAL: ELIMINAR ======================== --}}

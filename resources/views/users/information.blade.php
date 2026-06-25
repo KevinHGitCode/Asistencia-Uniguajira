@@ -6,10 +6,10 @@
     ]" />
 
     @if(session('success'))
-        <div
-            id="users-success-alert"
-            class="rounded-lg bg-green-100 border border-green-400 text-green-700 px-4 py-3 text-sm transition-opacity duration-500">
-            {{ session('success') }}
+        <div id="users-success-alert"
+            class="flex items-center gap-3 px-4 py-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 text-sm transition-opacity duration-500">
+            <flux:icon.check-circle class="size-5 shrink-0" />
+            <span>{{ session('success') }}</span>
         </div>
     @endif
 
@@ -44,9 +44,9 @@
                         <span class="font-bold text-base">{{ $pastEvents }}</span>
                     </li>
                     <li class="py-2 flex justify-between items-center text-sm text-gray-500 dark:text-gray-400">
-                        <span>Último acceso:</span> 
+                        <span>Último acceso:</span>
                         <span class="font-medium">
-                            {{ $user->updated_at ? $user->updated_at->format('d/m/Y H:i') : 'N/A' }}
+                            {{ $usage['last_seen'] ? $usage['last_seen']->format('d/m/Y H:i') : 'Sin registro' }}
                         </span>
                     </li>
                 </ul>
@@ -94,15 +94,11 @@
                         </li>
                     @endif
                     <li class="py-2 flex justify-between items-center">
-                        <span class="text-sm">Estado:</span> 
+                        <span class="text-sm">Estado:</span>
                         @if($user->is_active)
-                            <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 rounded">
-                                Activo
-                            </span>
+                            <span class="text-sm font-semibold text-green-600 dark:text-green-400">Activo</span>
                         @else
-                            <span class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300 rounded">
-                                Inactivo
-                            </span>
+                            <span class="text-sm font-semibold text-red-600 dark:text-red-400">Inactivo</span>
                         @endif
                     </li>
                 </ul>
@@ -110,152 +106,108 @@
         </div>
     </div>
 
-    {{-- Contenedor de eventos propios --}}
-    <div class="mt-6 relative flex w-full flex-1 flex-col gap-4 p-6 rounded-2xl border border-neutral-200 dark:border-neutral-700 bg-zinc-50 dark:bg-zinc-900">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
-                <svg class="inline-block w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
-                </svg>
-                Eventos propios
-            </h2>
-            <span class="px-3 py-1 text-sm font-medium bg-[#e2a542] text-white rounded-2xl">
-                {{ $events->count() }} {{ $events->count() === 1 ? 'evento' : 'eventos' }}
-            </span>
+    {{-- Actividad y uso (ADR-0010, frente 3) --}}
+    @php
+        $secs = $usage['usage_seconds'] ?? 0;
+        $h = intdiv($secs, 3600);
+        $m = intdiv($secs % 3600, 60);
+        $usageLabel = $secs > 0 ? ($h > 0 ? $h.' h '.$m.' min' : $m.' min') : '—';
+    @endphp
+    <div class="mt-6 flex w-full flex-col gap-4 p-6 rounded-2xl border border-neutral-200 dark:border-neutral-700 bg-zinc-50 dark:bg-zinc-900">
+        <div class="flex items-center justify-between gap-3">
+            <flux:heading class="text-lg font-semibold text-gray-700 dark:text-gray-200">
+                Actividad y uso
+            </flux:heading>
+            @if($usage['is_online'])
+                <span class="inline-flex items-center gap-2 rounded-full border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                    <span class="size-2 rounded-full bg-emerald-500 animate-pulse"></span> En línea ahora
+                </span>
+            @else
+                <span class="inline-flex items-center gap-2 rounded-full border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-1 text-xs font-medium text-gray-500 dark:text-zinc-400">
+                    <span class="size-2 rounded-full bg-gray-400"></span> Desconectado
+                </span>
+            @endif
         </div>
 
-        @if ($events->total()==0)
-            <div class="text-center py-8 text-gray-500 dark:text-gray-400">
-                <svg class="mx-auto h-12 w-12 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                <p class="text-lg font-medium">No hay eventos creados</p>
-                <p class="text-sm mt-1">{{ $user->name }} aún no ha creado ningún evento.</p>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div class="rounded-xl border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-3">
+                <p class="text-xs text-gray-500 dark:text-zinc-400">Última actividad</p>
+                <p class="mt-1 text-sm font-semibold text-gray-900 dark:text-white">
+                    {{ $usage['last_seen'] ? $usage['last_seen']->diffForHumans() : 'Sin registro' }}
+                </p>
             </div>
-        @else
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                @foreach ($events as $event)
-                    <a href="{{ route('events.show', $event->id) }}" 
-                    class="block p-4 rounded-2xl border border-neutral-200 dark:border-neutral-600 hover:border-[#e2a542] hover:shadow-lg transition-all duration-200 bg-white dark:bg-zinc-800">
-                        <div class="flex items-start justify-between mb-2">
-                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white line-clamp-1">
-                                {{ $event->title }}
-                            </h3>
-                        </div>
-                        
-                        <div class="space-y-2 text-sm text-gray-600 dark:text-gray-300">
-                            <div class="flex items-center">
-                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                                <span>{{ \Carbon\Carbon::parse($event->date)->format('d/m/Y') }}</span>
-                            </div>
-                            
-                            @if($event->start_time)
-                                <div class="flex items-center">
-                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    <span>{{ \Carbon\Carbon::parse($event->start_time)->format('h:i A') }}</span>
-                                </div>
-                            @endif
-                            
-                            @if($event->location)
-                                <div class="flex items-center">
-                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    </svg>
-                                    <span class="line-clamp-1">{{ $event->location }}</span>
-                                </div>
-                            @endif
-                        </div>
-
-                        @if($event->dependency)
-                            <div class="flex items-center text-xs mt-2">
-                                <span class="px-2 py-1 bg-[#cc5e50] text-white rounded">
-                                    {{ $event->dependency->name }}
-                                </span>
-
-                                {{-- Área (deshabilitado temporalmente)
-                                @if($event->area)
-                                    <span class="ml-2 px-2 py-1 bg-[#62a9b6] text-white rounded">
-                                        {{ $event->area->name }}
-                                    </span>
-                                @endif
-                                --}}
-                            </div>
-                        @endif
-                        
-                        @if($event->description)
-                            <p class="mt-3 text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
-                                {{ $event->description }}
-                            </p>
-                        @endif
-                    </a>
-                @endforeach
+            <div class="rounded-xl border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-3">
+                <p class="text-xs text-gray-500 dark:text-zinc-400">Inicios de sesión</p>
+                <p class="mt-1 text-sm font-semibold text-[#e2a542]">{{ $usage['login_count'] }}</p>
             </div>
-            {{ $events->links() }}
-        @endif
-    </div>
-
-    {{-- Contenedor de eventos de la dependencia --}}
-    @foreach($dependencyEvents as $group)
-
-        <div class="mt-6 relative flex w-full flex-1 flex-col gap-4 p-6 rounded-2xl border border-neutral-200 dark:border-neutral-700 bg-zinc-50 dark:bg-zinc-900">
-            
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-2xl font-bold">
-                    Eventos de {{ $group['dependency']->name }}
-                </h2>
-
-                <span class="px-3 py-1 text-sm font-medium bg-[#e2a542] text-white rounded-2xl">
-                    {{ $group['events']->total() }}
-                    {{ $group['events']->total() === 1 ? 'evento' : 'eventos' }}
-                </span>
+            <div class="rounded-xl border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-3">
+                <p class="text-xs text-gray-500 dark:text-zinc-400">Tiempo aprox. en la app</p>
+                <p class="mt-1 text-sm font-semibold text-[#62a9b6]">{{ $usageLabel }}</p>
             </div>
+            <div class="rounded-xl border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-3">
+                <p class="text-xs text-gray-500 dark:text-zinc-400">Último inicio de sesión</p>
+                <p class="mt-1 text-sm font-semibold text-gray-900 dark:text-white">
+                    {{ $usage['last_login'] ? $usage['last_login']->format('d/m/Y H:i') : '—' }}
+                </p>
+            </div>
+        </div>
 
-            @if ($group['events']->total() === 0)
-
-                <div class="text-center py-8 text-gray-500 dark:text-gray-400">
-                    No hay eventos en esta dependencia.
-                </div>
-
-            @else
-
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    @foreach ($group['events'] as $event)
-
-                        <a href="{{ route('events.show', $event->id) }}"
-                        class="block p-4 rounded-2xl border border-neutral-200 dark:border-neutral-600 hover:border-[#e2a542] hover:shadow-lg transition-all duration-200 bg-white dark:bg-zinc-800">
-                            
-                            <h3 class="text-lg font-semibold mb-2">
-                                {{ $event->title }}
-                            </h3>
-
-                            <div class="text-sm text-gray-600 dark:text-gray-300">
-                                {{ \Carbon\Carbon::parse($event->date)->format('d/m/Y') }}
-                            </div>
-
-                            <div class="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                                Creado por: {{ $event->user->name }}
-                            </div>
-
-                        </a>
-
+        @if(!empty($usage['actions_by_module']))
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-zinc-400 mb-2">
+                    Acciones por módulo
+                </p>
+                <div class="flex flex-wrap gap-2">
+                    @foreach($usage['actions_by_module'] as $row)
+                        <span class="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 border border-neutral-200 dark:border-zinc-700 px-3 py-1 text-xs text-gray-700 dark:text-zinc-300">
+                            {{ ucfirst($row['module']) }}
+                            <span class="font-semibold text-[#cc5e50]">{{ $row['count'] }}</span>
+                        </span>
                     @endforeach
                 </div>
+            </div>
+        @endif
 
-                <div class="mt-4">
-                    {{ $group['events']->links() }}
-                </div>
+        <p class="text-xs text-gray-400 dark:text-zinc-500">
+            El tiempo en la app es aproximado (suma de pares inicio/cierre de sesión; los cierres sin
+            “cerrar sesión” no se contabilizan).
+        </p>
+    </div>
 
-            @endif
+    {{-- Eventos propios del usuario --}}
+    <div class="mt-6">
+        <x-events.group
+            :events="$events"
+            title="Eventos propios"
+            empty="No hay eventos creados"
+            :empty-hint="$user->name.' aún no ha creado ningún evento.'"
+            from="usuario"
+            :user-id="$user->id">
+            <x-slot:icon>
+                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                </svg>
+            </x-slot:icon>
+        </x-events.group>
+    </div>
 
+    {{-- Eventos de las dependencias del usuario --}}
+    @foreach($dependencyEvents as $group)
+        <div class="mt-6">
+            <x-events.group
+                :events="$group['events']"
+                :title="'Eventos de '.$group['dependency']->name"
+                empty="No hay eventos en esta dependencia."
+                from="usuario"
+                :user-id="$user->id"
+                :show-creator="true">
+                <x-slot:icon>
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                    </svg>
+                </x-slot:icon>
+            </x-events.group>
         </div>
-
     @endforeach
 
-    {{-- Quita todo el div de los botones y modales, solo deja esto --}}
-    <livewire:admin.toggle-user-active :user="$user" />
 </x-layouts.app>

@@ -1,3 +1,9 @@
+@props([
+    'campuses' => [],
+    'activeCampusId' => null,
+    'isSuperadmin' => false,
+])
+
 <div x-show="showForm"
          x-transition:enter="transition ease-out duration-200"
          x-transition:enter-start="opacity-0"
@@ -52,6 +58,25 @@
                         <p class="text-xs text-red-500">{{ $message }}</p>
                     @enderror
                 </div>
+
+                @if($isSuperadmin)
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Sede <span class="text-red-500">*</span>
+                        </label>
+                        <input type="hidden" name="campus_id" x-model="formCampusId">
+                        <x-ui.searchable-select
+                            x-model="formCampusId"
+                            :options="$campuses"
+                            :value="$activeCampusId"
+                            placeholder="Selecciona una sede"
+                            empty-label="Selecciona una sede"
+                            :allow-empty="true" />
+                        @error('campus_id')
+                            <p class="text-xs text-red-500">{{ $message }}</p>
+                        @enderror
+                    </div>
+                @endif
 
                 <div class="flex items-center justify-end gap-3 pt-2">
                     <button type="button" @click="closeForm()"

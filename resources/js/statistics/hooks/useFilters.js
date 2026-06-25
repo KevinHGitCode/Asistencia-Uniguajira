@@ -15,7 +15,16 @@ export function monthAgo() {
 }
 
 export function defaultFilters() {
-  return { dateFrom: monthAgo(), dateTo: today() };
+  return {
+    dateFrom: monthAgo(),
+    dateTo: today(),
+    campusIds: [],
+    dependencyIds: [],
+    userIds: [],
+    allCampuses: false,
+    onlyOwnEvents: false,
+    includeSuperadmins: false,
+  };
 }
 
 // ---------------------------------------------------------------------------

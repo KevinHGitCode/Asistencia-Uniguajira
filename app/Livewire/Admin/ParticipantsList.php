@@ -13,16 +13,19 @@ use App\Models\Program;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use App\Services\ActivityLogService;
+use Livewire\Attributes\On;
 use Livewire\Component;
-use Livewire\WithPagination;
 
+/**
+ * Modales de editar / eliminar participante (ADR-0008).
+ *
+ * El listado, búsqueda, filtros y paginación viven en la isla React
+ * (`resources/js/participants/`). Este componente solo hospeda los modales:
+ * React los abre vía `Livewire.dispatch('open-edit-participant' | 'open-delete-participant')`
+ * y, al guardar/eliminar, se emite `participants-refresh` para que React recargue.
+ */
 class ParticipantsList extends Component
 {
-    use WithPagination;
-
-    public string $search = '';
-    public bool $filterUnclassified = false;
-
     // ── Edición ──────────────────────────────────────────────────────────
     public bool $showEditModal = false;
     public ?int $editingId = null;
@@ -63,27 +66,16 @@ class ParticipantsList extends Component
     public ?int $deletingId = null;
     public string $deletingName = '';
 
-    public function mount(): void
+    #[On('open-edit-participant')]
+    public function openEditFromReact($id): void
     {
-        if (request()->query('filtro') === 'sin_clasificar') {
-            $this->filterUnclassified = true;
-        }
+        $this->openEdit((int) $id);
     }
 
-    public function updatingSearch(): void
+    #[On('open-delete-participant')]
+    public function openDeleteFromReact($id, $name): void
     {
-        $this->resetPage();
-    }
-
-    public function updatingFilterUnclassified(): void
-    {
-        $this->resetPage();
-    }
-
-    public function toggleUnclassifiedFilter(): void
-    {
-        $this->filterUnclassified = ! $this->filterUnclassified;
-        $this->resetPage();
+        $this->openDelete((int) $id, (string) $name);
     }
 
     // ── Editar ───────────────────────────────────────────────────────────
@@ -101,7 +93,15 @@ class ParticipantsList extends Component
         // Cargar catálogos
         $this->catalogTypes        = ParticipantType::orderBy('name')->get(['id', 'name'])->toArray();
         $this->catalogPrograms     = Program::orderBy('name')->get(['id', 'name'])->toArray();
-        $this->catalogDependencies = Dependency::orderBy('name')->get(['id', 'name'])->toArray();
+        $this->catalogDependencies = Dependency::query()
+            ->with('campus:id,name')
+            ->orderBy('name')
+            ->get(['id', 'name', 'campus_id'])
+            ->map(fn (Dependency $dependency) => [
+                'id' => $dependency->id,
+                'name' => $dependency->name.($dependency->campus?->name ? ' - '.$dependency->campus->name : ''),
+            ])
+            ->all();
         $this->catalogAffiliations = Affiliation::orderBy('name')->get(['id', 'name'])->toArray();
 
         // Cargar roles existentes
@@ -410,6 +410,9 @@ class ParticipantsList extends Component
         } else {
             session()->flash('participant-success', 'Participante actualizado exitosamente.');
         }
+
+        // Avisar a la isla React para que recargue el listado
+        $this->dispatch('participants-refresh');
     }
 
     /**
@@ -484,6 +487,9 @@ class ParticipantsList extends Component
         $this->deletingName    = '';
 
         session()->flash('participant-success', 'Participante eliminado exitosamente.');
+
+        // Avisar a la isla React para que recargue el listado
+        $this->dispatch('participants-refresh');
     }
 
     public function closeDelete(): void
@@ -495,50 +501,7 @@ class ParticipantsList extends Component
 
     public function render()
     {
-        $query = Participant::with([
-            'activeRoles.type',
-            'activeRoles.program',
-            'activeRoles.dependency',
-            'activeRoles.affiliation',
-            'activeRoles.organization',
-        ])
-            ->when($this->search !== '', function ($q) {
-                $term = '%' . $this->search . '%';
-                $q->where(function ($inner) use ($term) {
-                    $inner->where('document', 'like', $term)
-                        ->orWhere('first_name', 'like', $term)
-                        ->orWhere('last_name', 'like', $term)
-                        ->orWhere('email', 'like', $term);
-                });
-            });
-
-        // Filtro "Sin clasificar": participantes con al menos una asistencia
-        // cuyo rol no tiene programa, dependencia ni organización asignados
-        if ($this->filterUnclassified) {
-            $unclassifiedIds = DB::table('participants')
-                ->join('attendances', 'attendances.participant_id', '=', 'participants.id')
-                ->leftJoin('attendance_details', 'attendance_details.attendance_id', '=', 'attendances.id')
-                ->leftJoin('participant_roles', 'participant_roles.id', '=', 'attendance_details.participant_role_id')
-                ->where(function ($q) {
-                    $q->whereNull('attendance_details.id')
-                      ->orWhereNull('attendance_details.participant_role_id')
-                      ->orWhere(function ($q2) {
-                          $q2->whereNull('participant_roles.program_id')
-                             ->whereNull('participant_roles.dependency_id')
-                             ->whereNull('participant_roles.organization_id');
-                      });
-                })
-                ->distinct()
-                ->pluck('participants.id');
-
-            $query->whereIn('id', $unclassifiedIds);
-        }
-
-        $participants = $query
-            ->orderBy('last_name')
-            ->orderBy('first_name')
-            ->paginate(25);
-
-        return view('livewire.admin.participants-list', compact('participants'));
+        // El listado vive en la isla React; este componente solo renderiza los modales.
+        return view('livewire.admin.participants-list');
     }
 }

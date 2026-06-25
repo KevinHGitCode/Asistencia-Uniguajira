@@ -18,9 +18,11 @@ function getTodayAsDate() {
 let calInstance = null;
 let isCalendarInitialized = false;
 let isCalendarPainting = false;
+let pendingPaintTheme = null;
 
 export async function paintCalendar(forcedTheme = null) {
     if (isCalendarPainting) {
+        pendingPaintTheme = forcedTheme;
         console.log('📅 Calendar already painting, skipping...');
         return;
     }
@@ -184,6 +186,12 @@ export async function paintCalendar(forcedTheme = null) {
         isCalendarInitialized = false;
     } finally {
         isCalendarPainting = false;
+
+        if (pendingPaintTheme !== null) {
+            const nextTheme = pendingPaintTheme;
+            pendingPaintTheme = null;
+            setTimeout(() => paintCalendar(nextTheme), 0);
+        }
     }
 };
 

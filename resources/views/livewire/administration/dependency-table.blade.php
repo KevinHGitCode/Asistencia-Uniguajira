@@ -6,6 +6,16 @@
 
         <div class="flex items-center gap-3 ml-auto">
 
+            @if(auth()->user()?->isSuperadmin())
+                <select wire:model.live="campusId"
+                        class="rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-sm text-gray-700 shadow-sm focus:border-[#cc5e50] focus:ring-[#cc5e50] dark:border-zinc-700 dark:bg-zinc-800 dark:text-gray-200">
+                    <option value="">Todas las sedes</option>
+                    @foreach($campuses as $id => $name)
+                        <option value="{{ $id }}">{{ $name }}</option>
+                    @endforeach
+                </select>
+            @endif
+
             {{-- Paginación superior: < X/Y > --}}
             @if($dependencies->hasPages())
             <div class="flex items-center gap-0.5">
@@ -52,6 +62,10 @@
                 <tr class="border-b border-neutral-100 dark:border-zinc-800 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                     <th class="px-4 sm:px-6 py-3 text-left font-medium">#</th>
                     <th class="px-4 sm:px-6 py-3 text-left font-medium">Nombre</th>
+                    @if(auth()->user()?->isSuperadmin())
+                        <th class="px-4 sm:px-6 py-3 text-left font-medium hidden md:table-cell">Sede</th>
+                    @endif
+                    <th class="px-4 sm:px-6 py-3 text-center font-medium hidden sm:table-cell">Áreas</th>
                     <th class="px-4 sm:px-6 py-3 text-center font-medium hidden sm:table-cell">Eventos</th>
                     <th class="px-4 sm:px-6 py-3 text-center font-medium">Participantes</th>
                     <th class="px-4 sm:px-6 py-3 text-center font-medium">Creada</th>
@@ -72,6 +86,11 @@
                                 <span class="font-medium text-gray-900 dark:text-white">{{ $dependency->name }}</span>
                             </div>
                         </td>
+                        @if(auth()->user()?->isSuperadmin())
+                            <td class="px-4 sm:px-6 py-4 text-gray-500 dark:text-gray-400 hidden md:table-cell">
+                                {{ $dependency->campus?->name ?? 'Sin sede' }}
+                            </td>
+                        @endif
                         <td class="px-4 sm:px-6 py-4 text-center hidden sm:table-cell">
                             <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-white bg-[#e2a542]">
                                 {{ $dependency->events_count ?? 0 }}
@@ -88,7 +107,7 @@
                         <td class="px-4 sm:px-6 py-4">
                             <div class="flex items-center justify-end gap-2">
                                 <button
-                                    @click="openEdit({{ $dependency->id }}, {{ Js::from($dependency->name) }})"
+                                    @click="openEdit({{ $dependency->id }}, {{ Js::from($dependency->name) }}, {{ Js::from((string) $dependency->campus_id) }})"
                                     class="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 dark:hover:text-blue-400 transition-colors cursor-pointer"
                                     title="Editar">
                                     <flux:icon.pencil-square class="size-4" />

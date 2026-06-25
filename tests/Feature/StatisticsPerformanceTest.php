@@ -3,8 +3,11 @@
 namespace Tests\Feature;
 
 use App\Models\Attendance;
+use App\Models\AttendanceDetail;
 use App\Models\Event;
 use App\Models\Participant;
+use App\Models\ParticipantRole;
+use App\Models\ParticipantType;
 use App\Models\Program;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -38,6 +41,7 @@ class StatisticsPerformanceTest extends TestCase
 
         // Admin para los endpoints de resumen (que requieren auth)
         $this->admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($this->admin);
 
         // Dataset de prueba: 3 programas, 3 usuarios, 5 eventos, 30 participantes, ~90 asistencias
         $programs = Program::factory()->count(3)->create();
@@ -57,9 +61,29 @@ class StatisticsPerformanceTest extends TestCase
         foreach ($events as $event) {
             $sample = $participants->random(min(18, $participants->count()));
             foreach ($sample as $participant) {
-                Attendance::factory()->create([
+                $role = $participant->activeRoles()
+                    ->whereNotNull('program_id')
+                    ->first();
+
+                if (! $role) {
+                    $role = ParticipantRole::create([
+                        'participant_id'      => $participant->id,
+                        'participant_type_id' => ParticipantType::firstOrCreate(['name' => 'Estudiante'])->id,
+                        'program_id'          => $programs->random()->id,
+                        'is_active'           => true,
+                    ]);
+                }
+
+                $attendance = Attendance::factory()->create([
                     'event_id'       => $event->id,
                     'participant_id' => $participant->id,
+                ]);
+
+                AttendanceDetail::create([
+                    'attendance_id'        => $attendance->id,
+                    'participant_role_id'  => $role->id,
+                    'gender'               => fake()->randomElement(['Femenino', 'Masculino']),
+                    'priority_group'       => fake()->randomElement(['Ninguno', 'Víctima del conflicto']),
                 ]);
             }
         }
@@ -119,7 +143,7 @@ class StatisticsPerformanceTest extends TestCase
     {
         [$res, $ms] = $this->timedGet('/api/statistics/attendances-by-program');
 
-        $res->assertOk()->assertJsonStructure([['program', 'count']]);
+        $res->assertOk()->assertJsonStructure([['name', 'value']]);
         $this->assertLessThan(self::MAX_MS_INDIVIDUAL, $ms,
             "attendances-by-program tardó {$ms}ms");
     }
@@ -129,7 +153,7 @@ class StatisticsPerformanceTest extends TestCase
     {
         [$res, $ms] = $this->timedGet('/api/statistics/participants-by-program');
 
-        $res->assertOk()->assertJsonStructure([['program', 'count']]);
+        $res->assertOk()->assertJsonStructure([['name', 'value']]);
         $this->assertLessThan(self::MAX_MS_INDIVIDUAL, $ms,
             "participants-by-program tardó {$ms}ms");
     }
@@ -139,7 +163,7 @@ class StatisticsPerformanceTest extends TestCase
     {
         [$res, $ms] = $this->timedGet('/api/statistics/top-events');
 
-        $res->assertOk()->assertJsonStructure([['title', 'count']]);
+        $res->assertOk()->assertJsonStructure([['name', 'value']]);
         $this->assertLessThan(self::MAX_MS_INDIVIDUAL, $ms,
             "top-events tardó {$ms}ms");
     }
@@ -149,7 +173,7 @@ class StatisticsPerformanceTest extends TestCase
     {
         [$res, $ms] = $this->timedGet('/api/statistics/top-participants');
 
-        $res->assertOk()->assertJsonStructure([['name', 'count']]);
+        $res->assertOk()->assertJsonStructure([['name', 'value']]);
         $this->assertLessThan(self::MAX_MS_INDIVIDUAL, $ms,
             "top-participants tardó {$ms}ms");
     }
@@ -159,7 +183,7 @@ class StatisticsPerformanceTest extends TestCase
     {
         [$res, $ms] = $this->timedGet('/api/statistics/attendances-by-role');
 
-        $res->assertOk()->assertJsonStructure([['label', 'count']]);
+        $res->assertOk()->assertJsonStructure([['name', 'value']]);
         $this->assertLessThan(self::MAX_MS_INDIVIDUAL, $ms,
             "attendances-by-role tardó {$ms}ms");
     }
@@ -169,7 +193,7 @@ class StatisticsPerformanceTest extends TestCase
     {
         [$res, $ms] = $this->timedGet('/api/statistics/attendances-by-sex');
 
-        $res->assertOk()->assertJsonStructure([['label', 'count']]);
+        $res->assertOk()->assertJsonStructure([['name', 'value']]);
         $this->assertLessThan(self::MAX_MS_INDIVIDUAL, $ms,
             "attendances-by-sex tardó {$ms}ms");
     }
@@ -179,7 +203,7 @@ class StatisticsPerformanceTest extends TestCase
     {
         [$res, $ms] = $this->timedGet('/api/statistics/attendances-by-group');
 
-        $res->assertOk()->assertJsonStructure([['label', 'count']]);
+        $res->assertOk()->assertJsonStructure([['name', 'value']]);
         $this->assertLessThan(self::MAX_MS_INDIVIDUAL, $ms,
             "attendances-by-group tardó {$ms}ms");
     }
@@ -189,7 +213,7 @@ class StatisticsPerformanceTest extends TestCase
     {
         [$res, $ms] = $this->timedGet('/api/statistics/participants-by-role');
 
-        $res->assertOk()->assertJsonStructure([['label', 'count']]);
+        $res->assertOk()->assertJsonStructure([['name', 'value']]);
         $this->assertLessThan(self::MAX_MS_INDIVIDUAL, $ms,
             "participants-by-role tardó {$ms}ms");
     }
@@ -199,7 +223,7 @@ class StatisticsPerformanceTest extends TestCase
     {
         [$res, $ms] = $this->timedGet('/api/statistics/participants-by-sex');
 
-        $res->assertOk()->assertJsonStructure([['label', 'count']]);
+        $res->assertOk()->assertJsonStructure([['name', 'value']]);
         $this->assertLessThan(self::MAX_MS_INDIVIDUAL, $ms,
             "participants-by-sex tardó {$ms}ms");
     }
@@ -209,7 +233,7 @@ class StatisticsPerformanceTest extends TestCase
     {
         [$res, $ms] = $this->timedGet('/api/statistics/participants-by-group');
 
-        $res->assertOk()->assertJsonStructure([['label', 'count']]);
+        $res->assertOk()->assertJsonStructure([['name', 'value']]);
         $this->assertLessThan(self::MAX_MS_INDIVIDUAL, $ms,
             "participants-by-group tardó {$ms}ms");
     }

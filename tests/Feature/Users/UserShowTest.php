@@ -152,7 +152,6 @@ class UserShowTest extends TestCase
         $user  = User::factory()->create();
         Event::factory(3)->create([
             'user_id' => $user->id,
-            'link'    => 'https://example.com/event',
         ]);
 
         $response = $this->actingAs($admin)
@@ -170,13 +169,11 @@ class UserShowTest extends TestCase
         Event::factory(2)->create([
             'user_id' => $user->id,
             'date'    => now()->addDays(5)->toDateString(),
-            'link'    => 'https://example.com/futuro',
         ]);
         // 1 evento pasado
         Event::factory(1)->create([
             'user_id' => $user->id,
             'date'    => now()->subDays(5)->toDateString(),
-            'link'    => 'https://example.com/pasado',
         ]);
 
         $response = $this->actingAs($admin)
@@ -208,7 +205,6 @@ class UserShowTest extends TestCase
         Event::factory(2)->create([
             'user_id'       => $otherUser->id,
             'dependency_id' => $dependency->id,
-            'link'          => 'https://example.com/dependency',
         ]);
 
         $response = $this->actingAs($admin)

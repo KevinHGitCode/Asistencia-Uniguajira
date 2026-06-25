@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="dark">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="dark h-dvh overflow-hidden">
 
 <head>
     @include('partials.head')
@@ -37,8 +37,8 @@
     </style>
 </head>
 
-<body class="relative min-h-screen bg-white dark:bg-zinc-800">
-    <flux:sidebar stashable class="min-h-screen max-lg:h-dvh max-lg:overflow-y-auto border-e border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
+<body class="relative h-dvh overflow-hidden bg-white dark:bg-zinc-800">
+    <flux:sidebar sticky stashable class="min-h-0 max-lg:h-dvh max-lg:overflow-y-auto border-e border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
         <flux:sidebar.toggle class="lg:hidden" icon="x-mark" />
 
         {{-- Debounce wrapper: prevents rapid multi-clicks on wire:navigate links.
@@ -64,6 +64,23 @@
         <a href="{{ route('dashboard') }}" class="aura-sidebar-link group flex w-full items-center justify-center" wire:navigate>
             <x-app-logo />
         </a>
+
+        {{-- Disparador de la paleta de comandos (solo admins, solo escritorio) — abre con Cmd/Ctrl+K.
+             No se escribe aquí (abre un modal), así que es compacto: lupa + atajo. --}}
+        @if(auth()->user()->hasAdminAccess())
+            <button
+                type="button"
+                onclick="window.dispatchEvent(new CustomEvent('open-command-palette'))"
+                title="{{ __('Buscar (Ctrl/Cmd + K)') }}"
+                aria-label="{{ __('Buscar (Ctrl/Cmd + K)') }}"
+                class="mt-1 mb-1 hidden w-full items-center justify-between gap-2 rounded-lg border border-neutral-200 bg-white px-2.5 py-1 text-gray-400 transition-colors hover:border-blue-400 hover:text-gray-600 lg:flex dark:border-zinc-700 dark:bg-zinc-800 dark:hover:text-gray-200"
+            >
+                <svg class="size-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.3-4.3M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z" />
+                </svg>
+                <kbd class="rounded border border-neutral-200 px-1.5 py-0.5 text-[10px] font-medium dark:border-zinc-600">Ctrl K</kbd>
+            </button>
+        @endif
 
         <style>
             .aura-sidebar-link .aura-logo-sidebar {
@@ -100,7 +117,7 @@
         </style>
 
         <flux:navlist variant="outline">
-            <flux:navlist.group :heading="__('Platform')" class="grid">
+            <flux:navlist.group class="grid">
 
                 <flux:navlist.item icon="home" :href="route('dashboard')" class="hover:scale-103 transition-transform" :current="request()->routeIs('dashboard')"
                     wire:navigate>{{ __('Home') }}</flux:navlist.item>
@@ -111,7 +128,7 @@
                 <flux:navlist.item icon="calendar-check" :href="route('events.list')" class="hover:scale-103 transition-transform" :current="request()->routeIs('events.list')"
                     wire:navigate>{{ __('Your Events') }}</flux:navlist.item>
 
-                @if(auth()->user()->role === 'admin')
+                @if(auth()->user()->hasAdminAccess())
                     <flux:navlist.item icon="numbered-list" :href="route('admin.events.index')" class="hover:scale-103 transition-transform" :current="request()->routeIs('admin.events.index')"
                         wire:navigate>{{ __('All Events') }}</flux:navlist.item>
                 @endif
@@ -183,7 +200,7 @@
                         <flux:navlist.item :href="route('statistics.compara-eventos')" :current="request()->routeIs('statistics.compara-eventos')" wire:navigate data-debounce="1000">
                             {{ __('Compara Eventos') }}
                         </flux:navlist.item>
-                        @if(auth()->user()->role === 'admin')
+                        @if(auth()->user()->hasAdminAccess())
                             <flux:navlist.item :href="route('statistics.usuarios')" :current="request()->routeIs('statistics.usuarios')" wire:navigate data-debounce="1000">
                                 {{ __('Por Usuarios') }}
                             </flux:navlist.item>
@@ -195,18 +212,18 @@
                 {{-- <flux:navlist.item icon="chart-bar" :href="route('charts.types')" class="hover:scale-103 transition-transform" :current="request()->routeIs('charts.types')"
                     wire:navigate>{{ __('Chart Types') }}</flux:navlist.item> --}}
 
-                @if(auth()->user()->role === 'admin')
+                @if(auth()->user()->hasAdminAccess())
                     <flux:navlist.item icon="users" :href="route('users.index')" class="hover:scale-103 transition-transform" :current="request()->routeIs('users.index')"
                         wire:navigate>{{ __('Users') }}</flux:navlist.item>
                 @endif
 
-                @if(auth()->user()->role === 'admin')
+                @if(auth()->user()->hasAdminAccess())
                     {{-- AdministraciÃ³n: enlace al overview + lista colapsable de sub-mÃ³dulos --}}
                     <div x-data="{
                         open: false,
                         ready: false,
                         init() {
-                            if (@js(request()->routeIs('administracion.*', 'dependencies.*', 'areas.*', 'programs.*', 'formats.*', 'participant-types.*', 'affiliations.*', 'organizations.*', 'participants-import.*', 'activity-logs.*'))) {
+                            if (@js(request()->routeIs('administracion.*', 'campuses.*', 'dependencies.*', 'areas.*', 'programs.*', 'formats.*', 'participant-types.*', 'affiliations.*', 'organizations.*', 'participants-import.*', 'activity-logs.*'))) {
                                 this.open = true;
                             } else {
                                 this.open = localStorage.getItem('sidebar-admin-open') === 'true';
@@ -256,6 +273,12 @@
                             {{-- LÃ­nea vertical decorativa --}}
                             <div class="absolute inset-y-1 left-[11px] w-px rounded-full bg-zinc-200 dark:bg-white/20"></div>
 
+                            @if(auth()->user()->isSuperadmin())
+                                <flux:navlist.item :href="route('campuses.index')" :current="request()->routeIs('campuses.*')" wire:navigate>
+                                    {{ __('Sedes') }}
+                                </flux:navlist.item>
+                            @endif
+
                             <flux:navlist.item :href="route('dependencies.index')" :current="request()->routeIs('dependencies.*')" wire:navigate>
                                 {{ __('Dependencias') }}
                             </flux:navlist.item>
@@ -268,9 +291,11 @@
                                 {{ __('Programas') }}
                             </flux:navlist.item>
 
-                            <flux:navlist.item :href="route('formats.index')" :current="request()->routeIs('formats.*')" wire:navigate>
-                                {{ __('Formatos') }}
-                            </flux:navlist.item>
+                            @if(auth()->user()->isSuperadmin())
+                                <flux:navlist.item :href="route('formats.index')" :current="request()->routeIs('formats.*')" wire:navigate>
+                                    {{ __('Formatos') }}
+                                </flux:navlist.item>
+                            @endif
 
                             <flux:navlist.item :href="route('participant-types.index')" :current="request()->routeIs('participant-types.*')" wire:navigate>
                                 {{ __('Estamentos') }}
@@ -288,9 +313,11 @@
                                 {{ __('Participantes') }}
                             </flux:navlist.item>
 
-                            <flux:navlist.item :href="route('activity-logs.index')" :current="request()->routeIs('activity-logs.*')" wire:navigate>
-                                {{ __('Registros') }}
-                            </flux:navlist.item>
+                            @if(auth()->user()->isSuperadmin())
+                                <flux:navlist.item :href="route('activity-logs.index')" :current="request()->routeIs('activity-logs.*')" wire:navigate>
+                                    {{ __('Registros') }}
+                                </flux:navlist.item>
+                            @endif
                         </div>
                     </div>
                 @endif
@@ -421,6 +448,9 @@
     </flux:header>
 
     {{ $slot }}
+
+    {{-- Paleta de comandos para administradores (ADR-0007) — Cmd/Ctrl+K --}}
+    <x-command-palette />
 
     @fluxScripts
 </body>

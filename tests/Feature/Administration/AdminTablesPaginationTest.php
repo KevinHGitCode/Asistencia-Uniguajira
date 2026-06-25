@@ -3,11 +3,13 @@
 namespace Tests\Feature\Administration;
 
 use App\Livewire\Administration\AffiliationTable;
+use App\Livewire\Administration\CampusTable;
 use App\Livewire\Administration\OrganizationTable;
 use App\Livewire\Administration\ParticipantTypeTable;
 use App\Livewire\Administration\ProgramTable;
 use App\Models\ActivityLog;
 use App\Models\Affiliation;
+use App\Models\Campus;
 use App\Models\Organization;
 use App\Models\ParticipantType;
 use App\Models\Program;
@@ -28,7 +30,7 @@ class AdminTablesPaginationTest extends TestCase
         parent::setUp();
 
         $this->admin = User::factory()->create([
-            'role' => 'admin',
+            'role' => User::ROLE_SUPERADMIN,
             'email_verified_at' => now(),
         ]);
     }
@@ -123,8 +125,69 @@ class AdminTablesPaginationTest extends TestCase
             ->get(route('activity-logs.index'))
             ->assertOk()
             ->assertSee('Listado de Registros')
+            ->assertSee('name="module"', false)
+            ->assertSee('name="action"', false)
+            ->assertSee('name="user_id"', false)
             ->assertSee('Mostrando')
             ->assertSee('Siguiente');
+    }
+
+    public function test_registros_de_actividad_filtra_por_modulo_accion_y_usuario(): void
+    {
+        $otherUser = User::factory()->create(['name' => 'Otro usuario']);
+
+        ActivityLog::create([
+            'user_id' => $this->admin->id,
+            'action' => 'crear',
+            'module' => 'programas',
+            'description' => 'Registro filtrable esperado',
+            'ip_address' => '127.0.0.1',
+            'created_at' => now(),
+        ]);
+
+        ActivityLog::create([
+            'user_id' => $otherUser->id,
+            'action' => 'eliminar',
+            'module' => 'dependencias',
+            'description' => 'Registro que no debe aparecer',
+            'ip_address' => '127.0.0.1',
+            'created_at' => now()->subMinute(),
+        ]);
+
+        $this->actingAs($this->admin)
+            ->get(route('activity-logs.index', [
+                'module' => 'programas',
+                'action' => 'crear',
+                'user_id' => $this->admin->id,
+            ]))
+            ->assertOk()
+            ->assertSee('Registro filtrable esperado')
+            ->assertDontSee('Registro que no debe aparecer')
+            ->assertSee('programas', false)
+            ->assertSee('crear', false)
+            ->assertSee((string) $this->admin->id, false);
+    }
+
+    public function test_tabla_de_sedes_muestra_programas_ligados(): void
+    {
+        $campus = Campus::create(['name' => 'Fonseca']);
+
+        Program::create([
+            'name' => 'Programa Fonseca 1',
+            'program_type' => 'Pregrado',
+            'campus_id' => $campus->id,
+        ]);
+
+        Program::create([
+            'name' => 'Programa Fonseca 2',
+            'program_type' => 'Pregrado',
+            'campus_id' => $campus->id,
+        ]);
+
+        Livewire::actingAs($this->admin)
+            ->test(CampusTable::class)
+            ->assertSee('Programas')
+            ->assertViewHas('campuses', fn ($campuses) => $campuses->firstWhere('id', $campus->id)?->programs_count === 2);
     }
 
     private function seedRecords(string $modelClass, int $count): void

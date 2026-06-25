@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Users;
 
+use App\Models\Campus;
 use App\Models\Dependency;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -32,7 +33,7 @@ class UserCreateTest extends TestCase
 
     public function test_admin_puede_ver_formulario_de_creacion(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'superadmin', 'campus_id' => null]);
 
         $this->actingAs($admin)
             ->get(route('user.form'))
@@ -42,7 +43,8 @@ class UserCreateTest extends TestCase
 
     public function test_formulario_incluye_lista_de_dependencias(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'superadmin', 'campus_id' => null]);
+        $campus = Campus::create(['name' => 'Riohacha']);
         Dependency::factory(3)->create();
 
         $this->actingAs($admin)
@@ -54,19 +56,21 @@ class UserCreateTest extends TestCase
 
     public function test_formulario_incluye_roles_disponibles(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'superadmin', 'campus_id' => null]);
 
         $this->actingAs($admin)
             ->get(route('user.form'))
             ->assertViewHas('roles', function ($roles) {
                 return array_key_exists('admin', $roles)
+                    && array_key_exists('superadmin', $roles)
                     && array_key_exists('user', $roles);
             });
     }
 
     public function test_formulario_muestra_campos_y_boton_crear(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'superadmin', 'campus_id' => null]);
+        $campus = Campus::create(['name' => 'Riohacha']);
 
         $this->actingAs($admin)
             ->get(route('user.form'))
@@ -83,9 +87,10 @@ class UserCreateTest extends TestCase
     //  Guardar usuario (POST /usuarios)
     // ─────────────────────────────────────────────
 
-    public function test_admin_puede_crear_usuario_admin(): void
+    public function test_superadmin_puede_crear_usuario_admin(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'superadmin', 'campus_id' => null]);
+        $campus = Campus::create(['name' => 'Riohacha']);
 
         $this->actingAs($admin)
             ->post(route('users.store'), [
@@ -93,6 +98,8 @@ class UserCreateTest extends TestCase
                 'email'    => 'nuevo.admin@uniguajira.edu.co',
                 'password' => 'secreta123',
                 'role'     => 'admin',
+                'campus_id' => $campus->id,
+                'campus_id' => $campus->id,
             ])
             ->assertRedirect(route('users.index'));
 
@@ -104,8 +111,9 @@ class UserCreateTest extends TestCase
 
     public function test_admin_puede_crear_usuario_regular_con_dependencia(): void
     {
-        $admin      = User::factory()->create(['role' => 'admin']);
-        $dependency = Dependency::factory()->create();
+        $campus = Campus::create(['name' => 'Riohacha']);
+        $admin      = User::factory()->create(['role' => 'admin', 'campus_id' => $campus->id]);
+        $dependency = Dependency::factory()->create(['campus_id' => $campus->id]);
 
         $this->actingAs($admin)
             ->post(route('users.store'), [
@@ -113,6 +121,7 @@ class UserCreateTest extends TestCase
                 'email'         => 'usuario@uniguajira.edu.co',
                 'password'      => 'secreta123',
                 'role'          => 'user',
+                'campus_id'     => $campus->id,
                 'dependency_id' => $dependency->id,
             ])
             ->assertRedirect(route('users.index'));
@@ -125,7 +134,8 @@ class UserCreateTest extends TestCase
 
     public function test_store_redirige_con_mensaje_de_exito(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'superadmin', 'campus_id' => null]);
+        $campus = Campus::create(['name' => 'Riohacha']);
 
         $this->actingAs($admin)
             ->post(route('users.store'), [
@@ -133,6 +143,7 @@ class UserCreateTest extends TestCase
                 'email'    => 'test@example.com',
                 'password' => 'secreta123',
                 'role'     => 'admin',
+                'campus_id' => $campus->id,
             ])
             ->assertRedirect(route('users.index'))
             ->assertSessionHas('success');
@@ -270,7 +281,8 @@ class UserCreateTest extends TestCase
 
     public function test_admin_no_requiere_dependency_id(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'superadmin', 'campus_id' => null]);
+        $campus = Campus::create(['name' => 'Riohacha']);
 
         $this->actingAs($admin)
             ->post(route('users.store'), [
@@ -278,6 +290,7 @@ class UserCreateTest extends TestCase
                 'email'    => 'otro.admin@example.com',
                 'password' => 'secreta123',
                 'role'     => 'admin',
+                'campus_id' => $campus->id,
                 // sin dependency_id — válido para admin
             ])
             ->assertRedirect(route('users.index'));

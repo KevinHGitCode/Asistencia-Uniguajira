@@ -9,11 +9,16 @@ class Area extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'dependency_id'];
+    protected $fillable = ['name', 'dependency_id', 'campus_id'];
 
     public function dependency()
     {
         return $this->belongsTo(Dependency::class);
+    }
+
+    public function campus()
+    {
+        return $this->belongsTo(Campus::class);
     }
 
     public function events()

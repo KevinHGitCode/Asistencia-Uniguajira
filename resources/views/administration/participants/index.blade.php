@@ -1,10 +1,10 @@
 <x-layouts.app :title="__('Participantes')">
 
-<div class="flex h-full w-full flex-1 flex-col gap-6 p-1 sm:p-4 md:p-6"
+<div class="flex min-h-full w-full flex-1 flex-col gap-4 p-1 pb-8 sm:p-4 sm:pb-10 md:p-6 md:pb-12"
      x-data="{
          activeTab: new URLSearchParams(window.location.search).get('filtro') === 'sin_clasificar'
              ? 'list'
-             : (new URLSearchParams(window.location.search).get('tab') || '{{ session('active_tab', 'bulk') }}'),
+             : (new URLSearchParams(window.location.search).get('tab') || @js($errors->any() && ! $errors->has('excel_file') ? 'single' : session('active_tab', 'list'))),
          role: '{{ old('role', '') }}',
          showProgram()    { return ['Estudiante', 'Graduado', 'Docente'].includes(this.role); },
          showDependency() { return this.role === 'Administrativo'; },
@@ -46,12 +46,19 @@
             ['label' => 'Participantes'],
         ]" />
         <h1 class="flex items-center gap-2 text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-            <flux:icon name="users" class="size-16 text-[#3b82f6]" />
+            <flux:icon name="users" class="size-8 text-[#3b82f6]" />
             <span>Gestión de Participantes</span>
         </h1>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Importa participantes desde Excel o registra uno individualmente.
-        </p>
+        <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span class="inline-flex items-center gap-1.5 rounded-full bg-blue-50 dark:bg-blue-900/30 px-3 py-1 text-sm font-semibold text-blue-700 dark:text-blue-300">
+                <flux:icon.users class="size-4" />
+                {{ number_format($participantsCount) }}
+                {{ $participantsCount === 1 ? 'participante registrado' : 'participantes registrados' }}
+            </span>
+            <span class="text-sm text-gray-500 dark:text-gray-400">
+                Importa desde Excel o registra uno individualmente.
+            </span>
+        </div>
     </div>
 
     {{-- Alertas globales --}}
@@ -74,6 +81,16 @@
             class="flex items-center gap-3 px-4 py-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">
             <flux:icon.x-circle class="size-5 shrink-0" />
             {{ session('error') }}
+        </div>
+    @endif
+
+    @if($errors->any() && ! $errors->has('excel_file'))
+        <div class="flex items-start gap-3 px-4 py-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">
+            <flux:icon.x-circle class="size-5 shrink-0 mt-0.5" />
+            <div>
+                <p class="font-medium">No se pudo registrar el participante.</p>
+                <p class="mt-0.5">{{ $errors->first() }}</p>
+            </div>
         </div>
     @endif
 
@@ -100,11 +117,11 @@
                         @if(($result['roles_activated'] ?? 0) > 0)
                             · {{ $result['roles_activated'] }} {{ $result['roles_activated'] === 1 ? 'rol activado' : 'roles activados' }}
                         @endif
-                        @if(($result['roles_deactivated'] ?? 0) > 0)
-                            · {{ $result['roles_deactivated'] }} {{ $result['roles_deactivated'] === 1 ? 'rol desactivado' : 'roles desactivados' }}
-                        @endif
                         @if(($result['roles_created'] ?? 0) > 0)
                             · {{ $result['roles_created'] }} {{ $result['roles_created'] === 1 ? 'rol nuevo creado' : 'roles nuevos creados' }}
+                        @endif
+                        @if(($result['roles_skipped_conflict'] ?? 0) > 0)
+                            · {{ $result['roles_skipped_conflict'] }} {{ $result['roles_skipped_conflict'] === 1 ? 'rol omitido por conflicto de programa académico' : 'roles omitidos por conflicto de programa académico' }}
                         @endif
                     </span>
                 </div>
@@ -135,17 +152,42 @@
         </div>
     @endif
 
+    {{-- Lotes de importación pendientes de revisión (pasarela ADR-0004) --}}
+    @if(!empty($pendingBatches) && $pendingBatches->isNotEmpty())
+        <div class="flex flex-col gap-2 rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 p-4">
+            <div class="flex items-center gap-2 text-amber-800 dark:text-amber-300 text-sm font-semibold">
+                <flux:icon.clock class="size-4" />
+                Tienes lotes de importación pendientes de revisión
+            </div>
+            <ul class="flex flex-col divide-y divide-amber-200/60 dark:divide-amber-800/60">
+                @foreach($pendingBatches as $pb)
+                    <li class="flex flex-wrap items-center gap-x-3 gap-y-1 py-1.5 text-sm">
+                        <span class="font-medium text-gray-700 dark:text-gray-300">#{{ $pb->id }}</span>
+                        <span class="text-gray-600 dark:text-gray-400 truncate max-w-[16rem]">{{ $pb->original_filename }}</span>
+                        <span class="text-xs text-gray-500 dark:text-zinc-500">
+                            {{ $pb->new_count }} nuevos · {{ $pb->update_count }} actualizan · {{ $pb->skipped_count }} omitidos
+                        </span>
+                        <a href="{{ route('participants-import.review', $pb) }}"
+                           class="ml-auto inline-flex items-center gap-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white px-3 py-1 text-xs font-medium transition-colors">
+                            Revisar
+                        </a>
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     {{-- Tabs --}}
     <div class="border-b border-neutral-200 dark:border-zinc-700">
         <nav class="flex gap-1">
             <button
-                @click="setTab('bulk')"
-                :class="activeTab === 'bulk'
+                @click="setTab('list')"
+                :class="activeTab === 'list'
                     ? 'border-b-2 border-[#3b82f6] text-[#3b82f6] dark:text-blue-400'
                     : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
                 class="flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors cursor-pointer">
-                <flux:icon.document-arrow-up class="size-4" />
-                Carga masiva Excel
+                <flux:icon.users class="size-4" />
+                Lista de participantes
             </button>
             <button
                 @click="setTab('single')"
@@ -157,13 +199,13 @@
                 Registro individual
             </button>
             <button
-                @click="setTab('list')"
-                :class="activeTab === 'list'
+                @click="setTab('bulk')"
+                :class="activeTab === 'bulk'
                     ? 'border-b-2 border-[#3b82f6] text-[#3b82f6] dark:text-blue-400'
                     : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
                 class="flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors cursor-pointer">
-                <flux:icon.users class="size-4" />
-                Lista de participantes
+                <flux:icon.document-arrow-up class="size-4" />
+                Carga masiva Excel
             </button>
         </nav>
     </div>
@@ -180,11 +222,18 @@
                         quedan omitidas y las puedes descargar al final.
                     </p>
                 </div>
-                <a href="{{ route('participants-import.download-template') }}"
-                   class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 text-xs font-medium transition-colors shrink-0">
-                    <flux:icon.arrow-down-tray class="size-3.5 text-[#3b82f6]" />
-                    Descargar plantilla
-                </a>
+                <div class="flex items-center gap-2 shrink-0">
+                    <a href="{{ route('participants-import.batches') }}"
+                       class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 text-xs font-medium transition-colors">
+                        <flux:icon.rectangle-stack class="size-3.5 text-[#3b82f6]" />
+                        Historial
+                    </a>
+                    <a href="{{ route('participants-import.download-template') }}"
+                       class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 text-xs font-medium transition-colors">
+                        <flux:icon.arrow-down-tray class="size-3.5 text-[#3b82f6]" />
+                        Descargar plantilla
+                    </a>
+                </div>
             </div>
 
             <div class="px-4 sm:px-6 py-6">
@@ -219,7 +268,9 @@
                         </table>
                     </div>
                     <p class="text-xs text-blue-600 dark:text-blue-400 mt-2 opacity-80">
-                        * <code class="font-mono">Tipo_progama</code> es opcional.
+                        * <code class="font-mono">Tipo_progama</code> es opcional. Los participantes son globales y no tienen sede propia.
+                        Cuando un programa o dependencia exista en varias sedes, escribe el valor con sufijo, por ejemplo
+                        <code class="font-mono">IngenierÃ­a - Riohacha</code>.
                         El valor de <code class="font-mono">Tipo de Estamento</code> debe coincidir
                         exactamente con un estamento registrado en el sistema.
                         Si la columna no existe en el archivo, la importación falla con un error claro.
@@ -236,7 +287,16 @@
 
                 {{-- Formulario de carga --}}
                 <form action="{{ route('participants-import.import') }}" method="POST" enctype="multipart/form-data"
-                      x-data="{ fileName: '', dragging: false }"
+                      x-data="{ fileName: '', dragging: false, submitting: false, fileError: false }"
+                      @submit="
+                          if (submitting) { $event.preventDefault(); return; }
+                          if (!$refs.fileInput.files || $refs.fileInput.files.length === 0) {
+                              $event.preventDefault();
+                              fileError = true;
+                              return;
+                          }
+                          submitting = true;
+                      "
                       class="flex flex-col gap-4">
                     @csrf
 
@@ -247,7 +307,7 @@
                         @drop.prevent="
                             dragging = false;
                             const file = $event.dataTransfer.files[0];
-                            if (file) { fileName = file.name; $refs.fileInput.files = $event.dataTransfer.files; }
+                            if (file) { fileName = file.name; fileError = false; $refs.fileInput.files = $event.dataTransfer.files; }
                         "
                         :class="dragging ? 'border-[#3b82f6] bg-blue-50 dark:bg-blue-900/20' : 'border-neutral-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50'"
                         class="relative flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-8 transition-colors text-center cursor-pointer">
@@ -268,14 +328,26 @@
                             name="excel_file"
                             accept=".xlsx,.xls,.csv"
                             class="absolute inset-0 opacity-0 cursor-pointer"
-                            @change="fileName = $event.target.files[0]?.name ?? ''" />
+                            @change="fileName = $event.target.files[0]?.name ?? ''; fileError = false" />
                     </div>
 
-                    <div class="flex justify-end">
-                        <button type="submit"
-                            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#3b82f6] hover:bg-blue-700 text-white text-sm font-medium transition-colors shadow-sm cursor-pointer">
-                            <flux:icon.arrow-up-tray class="size-4" />
-                            Importar participantes
+                    <div class="flex flex-col items-end gap-2">
+                        <p x-show="fileError" x-cloak class="text-xs text-red-500">
+                            Selecciona un archivo Excel antes de importar.
+                        </p>
+                        <p x-show="submitting" x-cloak class="text-xs text-gray-500 dark:text-gray-400 text-right">
+                            Procesando el archivo… esto puede tardar con listas grandes.
+                            No cierres ni recargues la página.
+                        </p>
+                        <button type="submit" :disabled="submitting"
+                            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#3b82f6] hover:bg-blue-700 text-white text-sm font-medium transition-colors shadow-sm cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
+                            {{-- Spinner mientras procesa --}}
+                            <svg x-show="submitting" x-cloak class="size-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4z"></path>
+                            </svg>
+                            <span x-show="!submitting"><flux:icon.arrow-up-tray class="size-4" /></span>
+                            <span x-text="submitting ? 'Procesando…' : 'Importar participantes'"></span>
                         </button>
                     </div>
                 </form>
@@ -285,7 +357,7 @@
 
     {{-- ===================== TAB: REGISTRO INDIVIDUAL ===================== --}}
     <div x-show="activeTab === 'single'" x-transition>
-        <div class="border border-neutral-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm overflow-hidden">
+        <div class="border border-neutral-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm overflow-visible">
 
             <div class="px-4 sm:px-6 py-4 border-b border-neutral-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900">
                 <h2 class="text-base font-semibold text-gray-900 dark:text-white">Nuevo Participante</h2>
@@ -316,15 +388,16 @@
                     <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
                         Estamento <span class="text-red-500">*</span>
                     </label>
-                    <select name="role" x-model="role" required
-                        class="px-3 py-2 rounded-lg border @error('role') border-red-400 @else border-neutral-200 dark:border-zinc-700 @enderror bg-white dark:bg-zinc-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
-                        <option value="">Selecciona un estamento…</option>
-                        @foreach($estamentos as $estamento)
-                            <option value="{{ $estamento->name }}" {{ old('role') === $estamento->name ? 'selected' : '' }}>
-                                {{ $estamento->name }}
-                            </option>
-                        @endforeach
-                    </select>
+                    <x-ui.searchable-select
+                        name="role"
+                        x-model="role"
+                        :value="old('role')"
+                        :options="$estamentos"
+                        value-key="name"
+                        label-key="name"
+                        placeholder="Selecciona un estamento…"
+                        empty-label="Selecciona un estamento…"
+                        search-placeholder="Buscar estamento…" />
                     @error('role')
                         <p class="text-xs text-red-500">{{ $message }}</p>
                     @enderror
@@ -385,15 +458,13 @@
                 {{-- Programa (Estudiante / Graduado / Docente) --}}
                 <div class="flex flex-col gap-1.5 sm:col-span-2" x-show="showProgram()" x-transition>
                     <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Programa académico</label>
-                    <select name="program_id"
-                        class="px-3 py-2 rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
-                        <option value="">Sin programa</option>
-                        @foreach($programs as $program)
-                            <option value="{{ $program->id }}" {{ old('program_id') == $program->id ? 'selected' : '' }}>
-                                {{ $program->name }}
-                            </option>
-                        @endforeach
-                    </select>
+                    <x-ui.searchable-select
+                        name="program_id"
+                        :value="old('program_id')"
+                        :options="$programs"
+                        placeholder="Sin programa"
+                        empty-label="Sin programa"
+                        search-placeholder="Buscar programa…" />
                     @error('program_id')
                         <p class="text-xs text-red-500">{{ $message }}</p>
                     @enderror
@@ -402,15 +473,13 @@
                 {{-- Dependencia (Administrativo) --}}
                 <div class="flex flex-col gap-1.5 sm:col-span-2" x-show="showDependency()" x-transition>
                     <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Dependencia</label>
-                    <select name="dependency_id"
-                        class="px-3 py-2 rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
-                        <option value="">Sin dependencia</option>
-                        @foreach($dependencies as $dependency)
-                            <option value="{{ $dependency->id }}" {{ old('dependency_id') == $dependency->id ? 'selected' : '' }}>
-                                {{ $dependency->name }}
-                            </option>
-                        @endforeach
-                    </select>
+                    <x-ui.searchable-select
+                        name="dependency_id"
+                        :value="old('dependency_id')"
+                        :options="$dependencies"
+                        placeholder="Sin dependencia"
+                        empty-label="Sin dependencia"
+                        search-placeholder="Buscar dependencia…" />
                     @error('dependency_id')
                         <p class="text-xs text-red-500">{{ $message }}</p>
                     @enderror
@@ -444,15 +513,13 @@
                 {{-- Afiliación (todos los estamentos) --}}
                 <div class="flex flex-col gap-1.5 sm:col-span-2" x-show="role !== ''" x-transition>
                     <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Tipo de vinculación</label>
-                    <select name="affiliation_id"
-                        class="px-3 py-2 rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
-                        <option value="">Sin vinculación</option>
-                        @foreach($affiliations as $affiliation)
-                            <option value="{{ $affiliation->id }}" {{ old('affiliation_id') == $affiliation->id ? 'selected' : '' }}>
-                                {{ $affiliation->name }}
-                            </option>
-                        @endforeach
-                    </select>
+                    <x-ui.searchable-select
+                        name="affiliation_id"
+                        :value="old('affiliation_id')"
+                        :options="$affiliations"
+                        placeholder="Sin vinculación"
+                        empty-label="Sin vinculación"
+                        search-placeholder="Buscar vinculación…" />
                 </div>
 
                 {{-- Errores generales --}}
@@ -487,19 +554,47 @@
     <div x-show="activeTab === 'list'" x-transition>
         <div class="border border-neutral-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm overflow-hidden">
 
-            <div class="px-4 sm:px-6 py-4 border-b border-neutral-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900">
-                <h2 class="text-base font-semibold text-gray-900 dark:text-white">Lista de participantes</h2>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                    Todos los participantes registrados en el sistema con sus estamentos, programas y vinculación.
-                </p>
+            <div class="px-4 sm:px-6 py-3 border-b border-neutral-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 flex items-start justify-between gap-3"
+                 x-data="{ infoOpen: false }">
+                <div>
+                    <h2 class="text-base font-semibold text-gray-900 dark:text-white">Lista de participantes</h2>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        Todos los participantes registrados en el sistema con sus estamentos, programas y vinculación.
+                    </p>
+                </div>
+
+                {{-- Información (dropdown) --}}
+                <div class="relative shrink-0" @click.outside="infoOpen = false" @keydown.escape="infoOpen = false">
+                    <button type="button" @click="infoOpen = !infoOpen"
+                        :class="infoOpen ? 'text-[#3b82f6] bg-blue-50 dark:bg-blue-900/30' : 'text-gray-400 hover:text-[#3b82f6] hover:bg-blue-50 dark:hover:bg-blue-900/30'"
+                        class="p-1.5 rounded-lg transition-colors cursor-pointer"
+                        aria-label="Más información sobre los participantes">
+                        <flux:icon.information-circle class="size-5" />
+                    </button>
+                    <div x-show="infoOpen" x-cloak
+                         x-transition:enter="transition ease-out duration-150"
+                         x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
+                         x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                         class="absolute right-0 top-full mt-2 w-72 sm:w-80 z-30 rounded-xl border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-4 shadow-lg">
+                        <p class="text-xs leading-relaxed text-gray-600 dark:text-gray-300">
+                            Los <strong class="font-semibold text-gray-800 dark:text-gray-100">participantes</strong> conforman un registro global del sistema y pueden tener varios estamentos o roles. En la importación masiva, el archivo se revisa antes de aplicarse para que puedas validar los registros detectados.
+                        </p>
+                    </div>
+                </div>
             </div>
 
-            <div class="px-4 sm:px-6 py-6">
+            <div class="px-4 sm:px-6 py-4">
+                {{-- Listado de participantes: isla React (ADR-0008) --}}
+                <div id="participants-react-root"></div>
+
+                {{-- Modales de editar / eliminar (Livewire), disparados desde React --}}
                 @livewire('admin.participants-list')
             </div>
         </div>
     </div>
 
 </div>
+
+@vite(['resources/js/participants/index.jsx'])
 
 </x-layouts.app>

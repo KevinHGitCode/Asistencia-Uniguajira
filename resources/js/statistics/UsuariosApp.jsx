@@ -1,10 +1,11 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 
 import { useTheme }         from './hooks/useTheme.js';
 import { useUsuariosStats } from './hooks/useUsuariosStats.js';
 import { useFilters }       from './hooks/useFilters.js';
+import { useCampusRefresh } from './hooks/useCampusRefresh.js';
 
-import { FiltersPanel }     from './components/FiltersPanel.jsx';
+import { UsersFiltersPanel } from './components/UsersFiltersPanel.jsx';
 import { ChartCard }        from './components/ChartCard.jsx';
 
 import { TopHorizontalBar }  from './charts/TopHorizontalBar.jsx';
@@ -50,12 +51,16 @@ export default function UsuariosApp() {
     fetchAll(filters);
   }, [filters, fetchAll]);
 
+  useCampusRefresh(useCallback(() => {
+    fetchAll(filters);
+  }, [filters, fetchAll]));
+
   const { counters, charts, loading } = state;
 
   return (
     <div>
       {/* ── Filtros ── */}
-      <FiltersPanel
+      <UsersFiltersPanel
         filters={filters}
         onUpdate={updateFilter}
         onClear={clearFilter}

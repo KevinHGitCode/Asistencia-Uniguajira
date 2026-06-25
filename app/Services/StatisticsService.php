@@ -157,12 +157,12 @@ class StatisticsService
             ->leftJoin('participant_roles', 'attendance_details.participant_role_id', '=', 'participant_roles.id')
             ->where(function ($q) {
                 $q->whereNull('attendance_details.id')               // sin detalle
-                  ->orWhereNull('attendance_details.participant_role_id') // sin rol
-                  ->orWhere(function ($q2) {                         // rol sin clasificar
-                      $q2->whereNull('participant_roles.program_id')
-                         ->whereNull('participant_roles.dependency_id')
-                         ->whereNull('participant_roles.organization_id');
-                  });
+                    ->orWhereNull('attendance_details.participant_role_id') // sin rol
+                    ->orWhere(function ($q2) {                         // rol sin clasificar
+                        $q2->whereNull('participant_roles.program_id')
+                            ->whereNull('participant_roles.dependency_id')
+                            ->whereNull('participant_roles.organization_id');
+                    });
             })
             ->count();
     }
@@ -176,12 +176,12 @@ class StatisticsService
             ->leftJoin('participant_roles', 'attendance_details.participant_role_id', '=', 'participant_roles.id')
             ->where(function ($q) {
                 $q->whereNull('attendance_details.id')
-                  ->orWhereNull('attendance_details.participant_role_id')
-                  ->orWhere(function ($q2) {
-                      $q2->whereNull('participant_roles.program_id')
-                         ->whereNull('participant_roles.dependency_id')
-                         ->whereNull('participant_roles.organization_id');
-                  });
+                    ->orWhereNull('attendance_details.participant_role_id')
+                    ->orWhere(function ($q2) {
+                        $q2->whereNull('participant_roles.program_id')
+                            ->whereNull('participant_roles.dependency_id')
+                            ->whereNull('participant_roles.organization_id');
+                    });
             })
             ->distinct()
             ->count('attendances.participant_id');
@@ -233,7 +233,7 @@ class StatisticsService
     {
         if (! in_array($col, self::ALLOWED_DETAIL_COLUMNS, true)) {
             throw new \InvalidArgumentException(
-                "Columna '{$col}' no permitida. Permitidas: " . implode(', ', self::ALLOWED_DETAIL_COLUMNS)
+                "Columna '{$col}' no permitida. Permitidas: ".implode(', ', self::ALLOWED_DETAIL_COLUMNS)
             );
         }
 
@@ -273,7 +273,7 @@ class StatisticsService
         return DB::table(DB::raw("({$lastAtt->toSql()}) as latest"))
             ->mergeBindings($lastAtt)
             ->join('attendance_details', 'latest.attendance_id', '=', 'attendance_details.id')
-            ->selectRaw("COALESCE(attendance_details.priority_group, ?) as name", [$fallback])
+            ->selectRaw('COALESCE(attendance_details.priority_group, ?) as name', [$fallback])
             ->selectRaw('COUNT(*) as value')
             ->groupBy('attendance_details.priority_group')
             ->orderByDesc('value')
@@ -383,28 +383,7 @@ class StatisticsService
     /** Query base sobre la tabla events con todos los filtros aplicados. */
     private function eventsBase(): Builder
     {
-        $q = DB::table('events');
-
-        if (!empty($this->filters['dateFrom'])) {
-            $q->where('date', '>=', $this->filters['dateFrom']);
-        }
-        if (!empty($this->filters['dateTo'])) {
-            $q->where('date', '<=', $this->filters['dateTo']);
-        }
-        if (!empty($this->filters['eventIds'])) {
-            $q->whereIn('id', $this->filters['eventIds']);
-        }
-        if (!empty($this->filters['userIds'])) {
-            $q->whereIn('user_id', $this->filters['userIds']);
-        }
-        if (!empty($this->filters['dependencyIds'])) {
-            $depUserIds = DB::table('users')
-                ->whereIn('dependency_id', $this->filters['dependencyIds'])
-                ->pluck('id');
-            $q->whereIn('user_id', $depUserIds);
-        }
-
-        return $q;
+        return $this->applyEventFilters(DB::table('events'));
     }
 
     /** attendances JOIN events con filtros. Base para conteos y top-listas. */
@@ -432,26 +411,30 @@ class StatisticsService
         return $this->applyEventFilters($q);
     }
 
-    /** Aplica los filtros de fecha, eventIds, userIds y dependencyIds a queries con JOIN events. */
+    /** Aplica los filtros combinables a queries sobre events o con JOIN events. */
     private function applyEventFilters(Builder $q): Builder
     {
-        if (!empty($this->filters['dateFrom'])) {
+        $campusIds = $this->filters['campusIds'] ?? ($this->filters['campusId'] ? [(int) $this->filters['campusId']] : []);
+        if ($campusIds !== []) {
+            $q->whereIn('events.campus_id', $campusIds);
+        }
+        if (! empty($this->filters['dateFrom'])) {
             $q->where('events.date', '>=', $this->filters['dateFrom']);
         }
-        if (!empty($this->filters['dateTo'])) {
+        if (! empty($this->filters['dateTo'])) {
             $q->where('events.date', '<=', $this->filters['dateTo']);
         }
-        if (!empty($this->filters['eventIds'])) {
+        if (! empty($this->filters['eventIds'])) {
             $q->whereIn('events.id', $this->filters['eventIds']);
         }
-        if (!empty($this->filters['userIds'])) {
+        if (! empty($this->filters['userIds'])) {
             $q->whereIn('events.user_id', $this->filters['userIds']);
         }
-        if (!empty($this->filters['dependencyIds'])) {
-            $depUserIds = DB::table('users')
-                ->whereIn('dependency_id', $this->filters['dependencyIds'])
-                ->pluck('id');
-            $q->whereIn('events.user_id', $depUserIds);
+        if (! empty($this->filters['onlyOwnEvents']) && ! empty($this->filters['actorUserId'])) {
+            $q->where('events.user_id', $this->filters['actorUserId']);
+        }
+        if (! empty($this->filters['dependencyIds'])) {
+            $q->whereIn('events.dependency_id', $this->filters['dependencyIds']);
         }
 
         return $q;

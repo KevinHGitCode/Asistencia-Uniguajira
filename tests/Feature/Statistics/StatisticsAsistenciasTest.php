@@ -65,6 +65,8 @@ class StatisticsAsistenciasTest extends TestCase
     public function test_total_attendances_cero_sin_datos(): void
     {
         // No se crea ningún dato
+        $this->actingAs(User::factory()->create(['role' => 'admin']));
+
         $response = $this->getJson('/api/statistics/total-attendances');
         $response->assertOk();
         $this->assertSame(0, $response->json());
@@ -89,7 +91,7 @@ class StatisticsAsistenciasTest extends TestCase
 
         $this->getJson('/api/statistics/attendances-by-program?' . http_build_query($this->wideFilter()))
             ->assertOk()
-            ->assertJsonStructure([['program', 'count']]);
+            ->assertJsonStructure([['name', 'value']]);
     }
 
     public function test_attendances_by_program_cuenta_multiple_asistencias_de_la_misma_persona(): void
@@ -100,7 +102,7 @@ class StatisticsAsistenciasTest extends TestCase
         $response->assertOk();
 
         $data     = collect($response->json());
-        $ingCount = $data->firstWhere('program', 'Ingeniería de Sistemas')['count'] ?? 0;
+        $ingCount = $data->firstWhere('name', 'Ingenieria de Sistemas')['value'] ?? 0;
 
         // Alice (Ing) asistió 2 veces + Carol (Ing) 1 vez = 3
         $this->assertEquals(3, $ingCount);
@@ -113,7 +115,7 @@ class StatisticsAsistenciasTest extends TestCase
         $response = $this->getJson('/api/statistics/attendances-by-program?' . http_build_query($this->wideFilter()));
         $response->assertOk();
 
-        $suma = collect($response->json())->sum('count');
+        $suma = collect($response->json())->sum('value');
 
         $this->assertEquals(self::WIDE_ATTENDANCES, $suma);
     }
@@ -125,7 +127,7 @@ class StatisticsAsistenciasTest extends TestCase
         $response = $this->getJson('/api/statistics/attendances-by-program?' . http_build_query($this->wideFilter()));
         $response->assertOk();
 
-        $counts = collect($response->json())->pluck('count')->toArray();
+        $counts = collect($response->json())->pluck('value')->toArray();
         $sorted = collect($counts)->sortDesc()->values()->toArray();
 
         $this->assertEquals($sorted, $counts);
@@ -141,7 +143,7 @@ class StatisticsAsistenciasTest extends TestCase
 
         $this->getJson('/api/statistics/attendances-by-role?' . http_build_query($this->wideFilter()))
             ->assertOk()
-            ->assertJsonStructure([['label', 'count']]);
+            ->assertJsonStructure([['name', 'value']]);
     }
 
     public function test_attendances_by_role_cuenta_registros_no_personas(): void
@@ -152,8 +154,8 @@ class StatisticsAsistenciasTest extends TestCase
         $response->assertOk();
 
         $data         = collect($response->json());
-        $estudCount   = $data->firstWhere('label', 'Estudiante')['count'] ?? 0;
-        $docenteCount = $data->firstWhere('label', 'Docente')['count'] ?? 0;
+        $estudCount   = $data->firstWhere('name', 'Estudiante')['value'] ?? 0;
+        $docenteCount = $data->firstWhere('name', 'Docente')['value'] ?? 0;
 
         // Alice (Estudiante) ×2 + Carol (Estudiante) ×1 = 3
         $this->assertEquals(3, $estudCount);
@@ -167,7 +169,7 @@ class StatisticsAsistenciasTest extends TestCase
 
         $response = $this->getJson('/api/statistics/attendances-by-role?' . http_build_query($this->wideFilter()));
 
-        $suma = collect($response->json())->sum('count');
+        $suma = collect($response->json())->sum('value');
 
         $this->assertEquals(self::WIDE_ATTENDANCES, $suma);
     }
@@ -182,7 +184,7 @@ class StatisticsAsistenciasTest extends TestCase
 
         $this->getJson('/api/statistics/attendances-by-sex?' . http_build_query($this->wideFilter()))
             ->assertOk()
-            ->assertJsonStructure([['label', 'count']]);
+            ->assertJsonStructure([['name', 'value']]);
     }
 
     public function test_attendances_by_sex_cuenta_registros_no_personas(): void
@@ -193,8 +195,8 @@ class StatisticsAsistenciasTest extends TestCase
         $data     = collect($response->json());
 
         // F: Alice×2 + Carol×1 = 3; M: Bob×1 = 1
-        $this->assertEquals(3, $data->firstWhere('label', 'F')['count'] ?? 0);
-        $this->assertEquals(1, $data->firstWhere('label', 'M')['count'] ?? 0);
+        $this->assertEquals(3, $data->firstWhere('name', 'F')['value'] ?? 0);
+        $this->assertEquals(1, $data->firstWhere('name', 'M')['value'] ?? 0);
     }
 
     public function test_attendances_by_sex_usa_sin_datos_para_nulos(): void
@@ -202,14 +204,21 @@ class StatisticsAsistenciasTest extends TestCase
         $user  = User::factory()->create(['role' => 'admin']);
         $prog  = Program::factory()->create();
         $event = Event::factory()->create(['user_id' => $user->id, 'date' => '2026-02-01']);
+        $this->actingAs($user);
 
-        $sinSexo = Participant::factory()->create(['sexo' => null, 'program_id' => $prog->id]);
-        Attendance::create(['event_id' => $event->id, 'participant_id' => $sinSexo->id]);
+        $sinSexo = Participant::create([
+            'document' => 'STAT-NULL-SEX',
+            'first_name' => 'Sin',
+            'last_name' => 'Sexo',
+            'email' => 'sin.sexo.stats@example.com',
+        ]);
+        $role = $this->participantRole($sinSexo, 'Estudiante', $prog);
+        $this->attendanceWithDetails($event, $sinSexo, $role, null);
 
         $response = $this->getJson('/api/statistics/attendances-by-sex');
         $data     = collect($response->json());
 
-        $this->assertNotNull($data->firstWhere('label', 'Sin datos'));
+        $this->assertNotNull($data->firstWhere('name', 'Sin datos'));
     }
 
     // ─────────────────────────────────────────────
@@ -222,7 +231,7 @@ class StatisticsAsistenciasTest extends TestCase
 
         $this->getJson('/api/statistics/attendances-by-group?' . http_build_query($this->wideFilter()))
             ->assertOk()
-            ->assertJsonStructure([['label', 'count']]);
+            ->assertJsonStructure([['name', 'value']]);
     }
 
     public function test_attendances_by_group_usa_sin_datos_para_nulos(): void
@@ -233,9 +242,9 @@ class StatisticsAsistenciasTest extends TestCase
         $data     = collect($response->json());
 
         // Bob tiene grupo_priorizado null → debe aparecer como "Sin datos"
-        $sinDatos = $data->firstWhere('label', 'Sin datos');
+        $sinDatos = $data->firstWhere('name', 'Sin datos');
         $this->assertNotNull($sinDatos);
-        $this->assertEquals(1, $sinDatos['count']); // Bob asistió 1 vez en el periodo
+        $this->assertEquals(1, $sinDatos['value']); // Bob asistió 1 vez en el periodo
     }
 
     public function test_attendances_by_group_cuenta_multiples_asistencias(): void
@@ -246,9 +255,9 @@ class StatisticsAsistenciasTest extends TestCase
         $data     = collect($response->json());
 
         // Alice (Víctimas) asistió ×2 en el periodo
-        $victimas = $data->firstWhere('label', 'Víctimas');
+        $victimas = $data->firstWhere('name', 'Victimas');
         $this->assertNotNull($victimas);
-        $this->assertEquals(2, $victimas['count']);
+        $this->assertEquals(2, $victimas['value']);
     }
 
     // ─────────────────────────────────────────────
@@ -258,12 +267,12 @@ class StatisticsAsistenciasTest extends TestCase
     public function test_top_events_retorna_maximo_5_items(): void
     {
         $user  = User::factory()->create(['role' => 'admin']);
-        $prog  = Program::factory()->create();
+        $this->actingAs($user);
 
         // Crear 7 eventos con asistencias
         for ($i = 1; $i <= 7; $i++) {
             $event = Event::factory()->create(['user_id' => $user->id, 'date' => '2026-02-01']);
-            $part  = Participant::factory()->create(['program_id' => $prog->id]);
+            $part  = Participant::factory()->create();
             Attendance::create(['event_id' => $event->id, 'participant_id' => $part->id]);
         }
 
@@ -279,7 +288,7 @@ class StatisticsAsistenciasTest extends TestCase
 
         $this->getJson('/api/statistics/top-events')
             ->assertOk()
-            ->assertJsonStructure([['title', 'count']]);
+            ->assertJsonStructure([['name', 'value']]);
     }
 
     // ─────────────────────────────────────────────

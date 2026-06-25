@@ -1,7 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback } from 'react';
 
 import { useTheme }      from './hooks/useTheme.js';
 import { useStatistics } from './hooks/useStatistics.js';
+import { useFilters } from './hooks/useFilters.js';
+import { useCampusRefresh } from './hooks/useCampusRefresh.js';
 
 import { FiltersPanel }  from './components/FiltersPanel.jsx';
 import { StatCounters }  from './components/StatCounters.jsx';
@@ -38,20 +40,6 @@ const DESCRIPTIONS = {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function today() {
-  return new Date().toISOString().split('T')[0];
-}
-
-function monthAgo() {
-  const d = new Date();
-  d.setMonth(d.getMonth() - 1);
-  return d.toISOString().split('T')[0];
-}
-
-function defaultFilters() {
-  return { dateFrom: monthAgo(), dateTo: today() };
-}
-
 function colClass(key) {
   return CHART_GRID_COLS[key] === 'full' ? 'col-span-1 md:col-span-2' : 'col-span-1';
 }
@@ -63,23 +51,15 @@ function colClass(key) {
 export default function StatisticsApp() {
   const isDark = useTheme();
   const { state, fetchAll } = useStatistics();
-
-  const [applied, setApplied] = useState(defaultFilters);
-  const [pending, setPending] = useState(defaultFilters);
+  const { filters, updateFilter, clearFilter } = useFilters();
 
   useEffect(() => {
-    fetchAll(applied);
-  }, [applied, fetchAll]);
+    fetchAll(filters);
+  }, [filters, fetchAll]);
 
-  const handleApply = useCallback(() => {
-    setApplied({ ...pending });
-  }, [pending]);
-
-  const handleClear = useCallback(() => {
-    const def = defaultFilters();
-    setPending(def);
-    setApplied(def);
-  }, []);
+  useCampusRefresh(useCallback(() => {
+    fetchAll(filters);
+  }, [filters, fetchAll]));
 
   const { counters, charts, loading } = state;
 
@@ -87,10 +67,9 @@ export default function StatisticsApp() {
     <div>
       {/* ── Filtros ── */}
       <FiltersPanel
-        filters={pending}
-        onChange={setPending}
-        onApply={handleApply}
-        onClear={handleClear}
+        filters={filters}
+        onUpdate={updateFilter}
+        onClear={clearFilter}
         loading={loading}
       />
 

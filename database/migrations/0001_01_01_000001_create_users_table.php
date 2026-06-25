@@ -13,8 +13,8 @@ return new class extends Migration
             $table->string('name');
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
-            
-            $table->enum('role', ['admin', 'user'])->default('user');
+
+            $table->enum('role', ['user', 'admin', 'superadmin'])->default('user');
             $table->boolean('is_active')->default(true);
             $table->string('avatar')->nullable();
             $table->string('password');
@@ -46,5 +46,4 @@ return new class extends Migration
         Schema::dropIfExists('password_reset_tokens');
         Schema::dropIfExists('sessions');
     }
-
 };

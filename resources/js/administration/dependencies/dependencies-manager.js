@@ -3,6 +3,7 @@ window.dependenciesManager = function () {
         showForm: false,
         editingId: null,
         formName: '',
+        formCampusId: '',
         showDelete: false,
         deleteId: null,
         deleteName: '',
@@ -10,12 +11,14 @@ window.dependenciesManager = function () {
         openCreate() {
             this.editingId = null;
             this.formName = '';
+            this.formCampusId = window.administrationActiveCampusId ?? '';
             this.showForm = true;
         },
 
-        openEdit(id, name) {
+        openEdit(id, name, campusId = '') {
             this.editingId = id;
             this.formName = name;
+            this.formCampusId = campusId ?? '';
             this.showForm = true;
         },
 

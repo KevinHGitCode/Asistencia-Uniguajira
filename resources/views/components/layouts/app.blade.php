@@ -3,7 +3,7 @@
 @endphp
 
 <x-layouts.app.sidebar :title="$title ?? null">
-    <flux:main class="pattern-bg" style="--accent: {{ $accent }}">
+    <flux:main class="pattern-bg min-h-0 overflow-y-auto" style="--accent: {{ $accent }}">
         {{ $slot }}
     </flux:main>
 </x-layouts.app.sidebar>

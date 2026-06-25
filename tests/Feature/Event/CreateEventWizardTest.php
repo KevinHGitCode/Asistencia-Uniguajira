@@ -4,6 +4,7 @@ namespace Tests\Feature\Event;
 
 use App\Livewire\Event\CreateEventWizard;
 use App\Models\Area;
+use App\Models\Campus;
 use App\Models\Dependency;
 use App\Models\Event;
 use App\Models\User;
@@ -26,14 +27,24 @@ class CreateEventWizardTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private Dependency $dependency;
+
+    private Campus $campus;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->dependency = Dependency::factory()->create(['name' => 'Bienestar Universitario']);
-        $this->user = User::factory()->create(['role' => 'user']);
+        $this->campus = Campus::create(['name' => 'Maicao']);
+        $this->dependency = Dependency::factory()->create([
+            'name' => 'Bienestar Universitario',
+            'campus_id' => $this->campus->id,
+        ]);
+        $this->user = User::factory()->create([
+            'role' => 'user',
+            'campus_id' => $this->campus->id,
+        ]);
         $this->user->dependencies()->attach($this->dependency);
     }
 
@@ -113,7 +124,7 @@ class CreateEventWizardTest extends TestCase
     // ── Paso 2: Organización ─────────────────────────────────────────────────
 
     #[Test]
-    public function paso_dos_es_completamente_opcional(): void
+    public function paso_dos_avanza_con_dependencia_autoasignada_para_usuario_con_una_sola(): void
     {
         $this->actingAs($this->user);
 
@@ -156,11 +167,15 @@ class CreateEventWizardTest extends TestCase
     #[Test]
     public function seleccionar_dependencia_carga_sus_areas(): void
     {
-        $area = Area::factory()->create(['dependency_id' => $this->dependency->id, 'name' => 'Área de Salud']);
+        $area = Area::factory()->create([
+            'dependency_id' => $this->dependency->id,
+            'campus_id' => $this->campus->id,
+            'name' => 'Área de Salud',
+        ]);
         $this->actingAs($this->user);
 
         // Añadir segunda dependencia para que showDependencySelect sea true
-        $dep2 = Dependency::factory()->create();
+        $dep2 = Dependency::factory()->create(['campus_id' => $this->campus->id]);
         $this->user->dependencies()->attach($dep2);
 
         Livewire::test(CreateEventWizard::class)
@@ -173,10 +188,13 @@ class CreateEventWizardTest extends TestCase
     #[Test]
     public function cambiar_dependencia_limpia_el_area_seleccionada(): void
     {
-        $dep2 = Dependency::factory()->create();
+        $dep2 = Dependency::factory()->create(['campus_id' => $this->campus->id]);
         $this->user->dependencies()->attach($dep2);
 
-        $area1 = Area::factory()->create(['dependency_id' => $this->dependency->id]);
+        $area1 = Area::factory()->create([
+            'dependency_id' => $this->dependency->id,
+            'campus_id' => $this->campus->id,
+        ]);
         $this->actingAs($this->user);
 
         Livewire::test(CreateEventWizard::class)
@@ -223,12 +241,13 @@ class CreateEventWizardTest extends TestCase
     public function paso_tres_requiere_hora_inicio(): void
     {
         $this->actingAs($this->user);
+        $validDate = now()->addMonth()->toDateString();
 
         Livewire::test(CreateEventWizard::class)
             ->set('title', 'Mi evento')
             ->call('nextStep')
             ->call('nextStep')
-            ->set('date', '2026-06-15')
+            ->set('date', $validDate)
             ->set('start_time', '')
             ->call('save')
             ->assertHasErrors(['start_time' => 'required'])
@@ -239,12 +258,13 @@ class CreateEventWizardTest extends TestCase
     public function hora_fin_sin_hora_inicio_es_valida(): void
     {
         $this->actingAs($this->user);
+        $validDate = now()->addMonth()->toDateString();
 
         Livewire::test(CreateEventWizard::class)
             ->set('title', 'Mi evento')
             ->call('nextStep')
             ->call('nextStep')
-            ->set('date', '2026-06-15')
+            ->set('date', $validDate)
             ->set('start_time', '')
             ->set('end_time', '14:00')
             ->call('save')
@@ -255,12 +275,13 @@ class CreateEventWizardTest extends TestCase
     public function hora_fin_anterior_a_hora_inicio_es_invalida(): void
     {
         $this->actingAs($this->user);
+        $validDate = now()->addMonth()->toDateString();
 
         Livewire::test(CreateEventWizard::class)
             ->set('title', 'Mi evento')
             ->call('nextStep')
             ->call('nextStep')
-            ->set('date', '2026-06-15')
+            ->set('date', $validDate)
             ->set('start_time', '14:00')
             ->set('end_time', '09:00')
             ->call('save')
@@ -271,12 +292,13 @@ class CreateEventWizardTest extends TestCase
     public function hora_fin_igual_a_hora_inicio_es_valida(): void
     {
         $this->actingAs($this->user);
+        $validDate = now()->addMonth()->toDateString();
 
         Livewire::test(CreateEventWizard::class)
             ->set('title', 'Mi evento')
             ->call('nextStep')
             ->call('nextStep')
-            ->set('date', '2026-06-15')
+            ->set('date', $validDate)
             ->set('start_time', '09:00')
             ->set('end_time', '09:00')
             ->call('save')
@@ -330,6 +352,7 @@ class CreateEventWizardTest extends TestCase
     public function flujo_completo_crea_el_evento_y_redirige(): void
     {
         $this->actingAs($this->user);
+        $validDate = now()->addMonth()->toDateString();
 
         Livewire::test(CreateEventWizard::class)
             ->set('title', 'Día del amor y la amistad')
@@ -337,7 +360,7 @@ class CreateEventWizardTest extends TestCase
             ->call('nextStep')                          // → paso 2
             ->set('location', 'Auditorio principal')
             ->call('nextStep')                          // → paso 3
-            ->set('date', '2026-06-15')
+            ->set('date', $validDate)
             ->set('start_time', '09:00')
             ->set('end_time', '12:00')
             ->call('save')
@@ -345,10 +368,10 @@ class CreateEventWizardTest extends TestCase
             ->assertRedirect(route('events.list'));
 
         $this->assertDatabaseHas('events', [
-            'title'    => 'Día del amor y la amistad',
+            'title' => 'Día del amor y la amistad',
             'location' => 'Auditorio principal',
-            'date'     => '2026-06-15',
-            'user_id'  => $this->user->id,
+            'date' => $validDate,
+            'user_id' => $this->user->id,
         ]);
     }
 
@@ -369,8 +392,8 @@ class CreateEventWizardTest extends TestCase
             ->assertRedirect(route('events.list'));
 
         $this->assertDatabaseHas('events', [
-            'title'   => 'Evento mínimo',
-            'date'    => '2026-07-20',
+            'title' => 'Evento mínimo',
+            'date' => '2026-07-20',
             'user_id' => $this->user->id,
         ]);
     }
@@ -399,20 +422,24 @@ class CreateEventWizardTest extends TestCase
     #[Test]
     public function usuario_normal_no_puede_asignar_dependencia_ajena(): void
     {
-        $otraDependencia = Dependency::factory()->create(['name' => 'Rectoría']);
+        $otraDependencia = Dependency::factory()->create([
+            'name' => 'Rectoría',
+            'campus_id' => $this->campus->id,
+        ]);
         // $otraDependencia NO está asociada a $this->user
 
-        $dep2 = Dependency::factory()->create();
+        $dep2 = Dependency::factory()->create(['campus_id' => $this->campus->id]);
         $this->user->dependencies()->attach($dep2); // para que showDependencySelect sea true
 
         $this->actingAs($this->user);
+        $validDate = now()->addMonth()->toDateString();
 
         Livewire::test(CreateEventWizard::class)
             ->set('title', 'Evento malicioso')
             ->call('nextStep')
             ->set('dependency_id', (string) $otraDependencia->id)
             ->call('nextStep')
-            ->set('date', '2026-06-15')
+            ->set('date', $validDate)
             ->set('start_time', '10:00')
             ->set('end_time', '11:00')
             ->call('save')
@@ -424,13 +451,17 @@ class CreateEventWizardTest extends TestCase
     #[Test]
     public function area_de_otra_dependencia_es_rechazada_por_el_servicio(): void
     {
-        $otraDep  = Dependency::factory()->create();
-        $areaAjena = Area::factory()->create(['dependency_id' => $otraDep->id]);
+        $otraDep = Dependency::factory()->create(['campus_id' => $this->campus->id]);
+        $areaAjena = Area::factory()->create([
+            'dependency_id' => $otraDep->id,
+            'campus_id' => $this->campus->id,
+        ]);
 
-        $dep2 = Dependency::factory()->create();
+        $dep2 = Dependency::factory()->create(['campus_id' => $this->campus->id]);
         $this->user->dependencies()->attach($dep2);
 
         $this->actingAs($this->user);
+        $validDate = now()->addMonth()->toDateString();
 
         Livewire::test(CreateEventWizard::class)
             ->set('title', 'Evento con área ajena')
@@ -438,7 +469,7 @@ class CreateEventWizardTest extends TestCase
             ->set('dependency_id', (string) $this->dependency->id)
             ->set('area_id', (string) $areaAjena->id)
             ->call('nextStep')
-            ->set('date', '2026-06-15')
+            ->set('date', $validDate)
             ->set('start_time', '10:00')
             ->set('end_time', '11:00')
             ->call('save')
@@ -450,16 +481,19 @@ class CreateEventWizardTest extends TestCase
     // ── Admin ────────────────────────────────────────────────────────────────
 
     #[Test]
-    public function admin_puede_crear_evento_sin_dependencia(): void
+    public function admin_debe_crear_evento_con_dependencia_de_su_sede(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'campus_id' => $this->campus->id,
+        ]);
         $this->actingAs($admin);
 
         Livewire::test(CreateEventWizard::class)
             ->assertSet('isAdmin', true)
             ->set('title', 'Evento admin')
             ->call('nextStep')
-            ->set('dependency_id', '')  // sin dependencia
+            ->set('dependency_id', (string) $this->dependency->id)
             ->call('nextStep')
             ->set('date', '2026-09-01')
             ->set('start_time', '09:00')
@@ -469,8 +503,84 @@ class CreateEventWizardTest extends TestCase
             ->assertRedirect(route('events.list'));
 
         $this->assertDatabaseHas('events', [
-            'title'         => 'Evento admin',
-            'dependency_id' => null,
+            'title' => 'Evento admin',
+            'dependency_id' => $this->dependency->id,
+            'campus_id' => $this->campus->id,
+        ]);
+    }
+
+    #[Test]
+    public function admin_no_puede_crear_evento_sin_dependencia(): void
+    {
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'campus_id' => $this->campus->id,
+        ]);
+        $this->actingAs($admin);
+
+        Livewire::test(CreateEventWizard::class)
+            ->assertSet('isAdmin', true)
+            ->set('title', 'Evento admin sin dependencia')
+            ->call('nextStep')
+            ->set('dependency_id', '')
+            ->call('nextStep')
+            ->assertHasErrors(['dependency_id' => 'required']);
+    }
+
+    #[Test]
+    public function superadmin_selecciona_sede_y_solo_ve_dependencias_de_esa_sede(): void
+    {
+        $riohacha = Campus::create(['name' => 'Riohacha']);
+        $dependencyRiohacha = Dependency::factory()->create([
+            'name' => 'Bienestar Riohacha',
+            'campus_id' => $riohacha->id,
+        ]);
+        $superadmin = User::factory()->create([
+            'role' => User::ROLE_SUPERADMIN,
+            'campus_id' => null,
+        ]);
+        $this->actingAs($superadmin);
+
+        Livewire::test(CreateEventWizard::class)
+            ->assertSet('isSuperadmin', true)
+            ->assertSet('dependencies', [])
+            ->set('campus_id', (string) $riohacha->id)
+            ->assertSet('dependencies', [
+                $dependencyRiohacha->id => $dependencyRiohacha->name,
+            ]);
+    }
+
+    #[Test]
+    public function superadmin_crea_evento_con_sede_y_dependencia_seleccionadas(): void
+    {
+        $riohacha = Campus::create(['name' => 'Riohacha']);
+        $dependencyRiohacha = Dependency::factory()->create([
+            'name' => 'Bienestar Riohacha',
+            'campus_id' => $riohacha->id,
+        ]);
+        $superadmin = User::factory()->create([
+            'role' => User::ROLE_SUPERADMIN,
+            'campus_id' => null,
+        ]);
+        $this->actingAs($superadmin);
+
+        Livewire::test(CreateEventWizard::class)
+            ->set('title', 'Evento superadmin')
+            ->call('nextStep')
+            ->set('campus_id', (string) $riohacha->id)
+            ->set('dependency_id', (string) $dependencyRiohacha->id)
+            ->call('nextStep')
+            ->set('date', '2026-09-01')
+            ->set('start_time', '09:00')
+            ->set('end_time', '10:00')
+            ->call('save')
+            ->assertHasNoErrors()
+            ->assertRedirect(route('events.list'));
+
+        $this->assertDatabaseHas('events', [
+            'title' => 'Evento superadmin',
+            'dependency_id' => $dependencyRiohacha->id,
+            'campus_id' => $riohacha->id,
         ]);
     }
 
@@ -480,12 +590,13 @@ class CreateEventWizardTest extends TestCase
     public function paso_tres_requiere_hora_fin(): void
     {
         $this->actingAs($this->user);
+        $validDate = now()->addMonth()->toDateString();
 
         Livewire::test(CreateEventWizard::class)
             ->set('title', 'Mi evento')
             ->call('nextStep')
             ->call('nextStep')
-            ->set('date', '2026-06-15')
+            ->set('date', $validDate)
             ->set('start_time', '09:00')
             ->set('end_time', '')
             ->call('save')

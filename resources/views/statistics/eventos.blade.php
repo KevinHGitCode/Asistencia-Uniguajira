@@ -8,6 +8,8 @@
             ['label' => 'Compara Eventos'],
         ]" />
 
+        @include('statistics.partials.campus-filter')
+
         {{-- Contenido: Próximamente --}}
         <div class="flex flex-1 flex-col items-center justify-center gap-6 py-16">
 

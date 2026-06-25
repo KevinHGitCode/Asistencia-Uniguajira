@@ -58,16 +58,13 @@
                     <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
                         Dependencia <span class="text-red-500">*</span>
                     </label>
-                    <select
+                    <x-ui.searchable-select
                         name="dependency_id"
                         x-model="formDependencyId"
-                        required
-                        class="px-3 py-2 rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition">
-                        <option value="" disabled>Selecciona una dependencia</option>
-                        @foreach($dependencies as $dependency)
-                            <option value="{{ $dependency->id }}">{{ $dependency->name }}</option>
-                        @endforeach
-                    </select>
+                        :options="$dependencies"
+                        :allow-empty="false"
+                        placeholder="Selecciona una dependencia"
+                        search-placeholder="Buscar dependencia…" />
                     @error('dependency_id')
                         <p class="text-xs text-red-500">{{ $message }}</p>
                     @enderror

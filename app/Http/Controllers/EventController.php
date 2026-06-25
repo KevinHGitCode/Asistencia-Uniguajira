@@ -2,83 +2,121 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
-use App\Models\Area;
-use App\Models\Event;
+use App\Models\Attendance;
+use App\Models\Campus;
 use App\Models\Dependency;
+use App\Models\Event;
+use App\Models\User;
+use App\Services\ActivityLogService;
+use App\Services\AttendancePdfService;
+use App\Services\CampusScopeService;
+use App\Services\EventService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use App\Models\Attendance;
-use Carbon\Carbon;
-use setasign\Fpdi\Tfpdf\Fpdi;
-use App\Services\AttendancePdfService;
-use App\Services\EventService;
-use App\Services\ActivityLogService;
+use Illuminate\Validation\ValidationException;
 
 class EventController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(Request $request, CampusScopeService $campusScope)
     {
         /** @var User $user */
         $user = Auth::user();
 
-        // Una sola consulta de dependencias reutilizada en todo el método
-        $user->loadMissing('dependencies');
-        $dependencyIds = $user->dependencies->pluck('id');
+        if ($user->isSuperadmin()) {
+            $validated = $request->validate([
+                'campus_id' => ['nullable', 'integer', 'exists:campuses,id'],
+            ]);
 
-        // Eventos propios (con relaciones restringidas a columnas necesarias)
-        $myEvents = Event::with(['dependency:id,name', 'area:id,name', 'user:id,name'])
-            ->where('user_id', $user->id)
+            $selectedCampusId = empty($validated['campus_id']) ? null : (int) $validated['campus_id'];
+            $campuses = Campus::orderBy('name')->pluck('name', 'id')->toArray();
+
+            $myEvents = Event::with(['dependency:id,name', 'area:id,name', 'user:id,name'])
+                ->where('user_id', $user->id)
+                ->when($selectedCampusId, fn ($query) => $query->where('campus_id', $selectedCampusId))
+                ->orderBy('date', 'desc')
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            return view('events.list', [
+                'myEvents' => $myEvents,
+                'dependencyEvents' => collect(),
+                'dependenciesNames' => '',
+                'campuses' => $campuses,
+                'selectedCampusId' => $selectedCampusId,
+            ]);
+        }
+
+        if ($user->hasAdminAccess()) {
+            $myEvents = $campusScope->applyToQuery(
+                Event::with(['dependency:id,name', 'area:id,name', 'user:id,name']),
+                $user
+            )
+                ->orderBy('date', 'desc')
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            return view('events.list', [
+                'myEvents' => $myEvents,
+                'dependencyEvents' => collect(),
+                'dependenciesNames' => '',
+            ]);
+        }
+
+        $user->loadMissing('dependencies');
+        $dependencyIds = $user->dependencies
+            ->where('campus_id', $user->campus_id)
+            ->pluck('id');
+
+        $myEvents = $campusScope->applyToQuery(
+            Event::with(['dependency:id,name', 'area:id,name', 'user:id,name'])
+                ->where('user_id', $user->id),
+            $user
+        )
             ->orderBy('date', 'desc')
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // Eventos de las dependencias del usuario (excluyendo los propios)
         $dependencyEvents = collect();
 
         if ($dependencyIds->isNotEmpty()) {
-            $dependencyEvents = Event::with(['dependency:id,name', 'area:id,name', 'user:id,name'])
-                ->whereIn('dependency_id', $dependencyIds)
-                ->where('user_id', '!=', $user->id)
+            $dependencyEvents = $campusScope->applyToQuery(
+                Event::with(['dependency:id,name', 'area:id,name', 'user:id,name'])
+                    ->whereIn('dependency_id', $dependencyIds)
+                    ->where('user_id', '!=', $user->id),
+                $user
+            )
                 ->orderBy('date', 'desc')
                 ->orderBy('created_at', 'desc')
                 ->get();
         }
 
-        $dependenciesNames = $user->dependencies->pluck('name')->join(' - ');
+        $dependenciesNames = $user->dependencies
+            ->where('campus_id', $user->campus_id)
+            ->pluck('name')
+            ->join(' - ');
 
         return view('events.list', compact('myEvents', 'dependencyEvents', 'dependenciesNames'));
     }
 
-
-    /**
-     * Show the form for creating a new resource.
-     * Los datos (dependencias, áreas) los carga el propio componente Livewire.
-     */
     public function create()
     {
         return view('events.new');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request, EventService $eventService)
     {
         try {
             $validated = $request->validate([
-                'title'         => 'required|string|max:255',
-                'description'   => 'nullable|string',
-                'date'          => 'required|date',
-                'start_time'    => 'nullable|date_format:H:i',
-                'end_time'      => 'nullable|date_format:H:i|after_or_equal:start_time',
-                'location'      => 'required|string|max:255',
-                'dependency_id' => 'nullable|exists:dependencies,id',
-                'area_id'       => 'nullable|exists:areas,id',
+                'title' => 'required|string|max:255',
+                'description' => 'nullable|string',
+                'date' => 'required|date',
+                'start_time' => 'nullable|date_format:H:i',
+                'end_time' => 'nullable|date_format:H:i|after_or_equal:start_time',
+                'location' => 'required|string|max:255',
+                'campus_id' => 'nullable|exists:campuses,id',
+                'dependency_id' => 'required|exists:dependencies,id',
+                'area_id' => 'nullable|exists:areas,id',
             ]);
 
             $event = $eventService->create($validated, Auth::user());
@@ -87,65 +125,111 @@ class EventController extends Controller
                 ->route('events.new')
                 ->with('success', 'Evento creado exitosamente.')
                 ->with('event_link', route('events.access', ['slug' => $event->link]));
-
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
-            Log::error('Error creating event: ' . $e->getMessage());
+            Log::error('Error creating event: '.$e->getMessage());
+
             return back()->withInput()->withErrors(['error' => 'Hubo un error al crear el evento.']);
         }
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function show(string $id, Request $request, CampusScopeService $campusScope)
     {
         /** @var User $user */
         $user = Auth::user();
 
-        $event = Event::with(['dependency.formats', 'area', 'user'])
-            ->findOrFail($id);
-
+        $event = Event::with(['dependency.campus', 'dependency.formats', 'area', 'user'])->findOrFail($id);
         $asistenciasCount = Attendance::where('event_id', $event->id)->count();
+        $eventCampusId = $event->campus_id ?? $event->dependency?->campus_id;
 
         $perteneceDependencia = $user->dependencies()
             ->where('dependencies.id', $event->dependency_id)
             ->exists();
 
-        $tienePermiso =
-            $user->role === 'admin' ||
-            $event->user_id === $user->id ||
-            $perteneceDependencia;
+        $dependencyCampusId = $event->dependency?->campus_id;
+        $canAccessCampus = $campusScope->canAccessCampus($user, $eventCampusId !== null ? (int) $eventCampusId : null)
+            || ($perteneceDependencia && $campusScope->canAccessCampus(
+                $user,
+                $dependencyCampusId !== null ? (int) $dependencyCampusId : null
+            ));
 
-        if (!$tienePermiso) {
+        $tienePermiso = ($user->hasAdminAccess() || (int) $event->user_id === (int) $user->id)
+            ? $canAccessCampus
+            : $perteneceDependencia;
+
+        if (! $tienePermiso) {
             abort(403, 'No tienes permiso para ver este evento.');
         }
 
-        return view('events.show', compact('event', 'asistenciasCount'));
+        $breadcrumbItems = $this->resolveBreadcrumb($request, $user);
+
+        return view('events.show', compact('event', 'asistenciasCount', 'breadcrumbItems'));
     }
 
+    private function resolveBreadcrumb(Request $request, User $user): array
+    {
+        $from = $request->query('from', 'mis');
+        $allowedOrigins = ['mis', 'usuario', 'todos', 'calendario'];
 
+        if (! in_array($from, $allowedOrigins, true)) {
+            $from = 'mis';
+        }
 
-    public function access($slug){
-      $event = Event::where('link', $slug)->firstOrFail();
-       return view('events.access', compact('event'));
+        if ($from === 'calendario') {
+            return [
+                ['label' => 'Dashboard', 'route' => 'dashboard'],
+                ['label' => 'Información'],
+            ];
+        }
+
+        if ($from === 'usuario') {
+            $userId = $request->query('user_id');
+            $originUser = is_numeric($userId)
+                ? User::select('id', 'name')->find((int) $userId)
+                : null;
+
+            if ($originUser) {
+                return [
+                    ['label' => 'Usuarios', 'route' => 'users.index'],
+                    ['label' => $originUser->name, 'route' => 'users.information', 'params' => ['id' => $originUser->id]],
+                    ['label' => 'Información'],
+                ];
+            }
+        }
+
+        if ($from === 'todos' && $user->hasAdminAccess()) {
+            return [
+                ['label' => 'Dashboard', 'route' => 'dashboard'],
+                ['label' => 'Todos los eventos', 'route' => 'admin.events.index'],
+                ['label' => 'Información'],
+            ];
+        }
+
+        return [
+            ['label' => 'Eventos', 'route' => 'events.list'],
+            ['label' => 'Información'],
+        ];
     }
 
+    public function access($slug)
+    {
+        $event = Event::where('link', $slug)->firstOrFail();
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy($id)
+        return view('events.access', compact('event'));
+    }
+
+    public function destroy($id, CampusScopeService $campusScope)
     {
         $event = Event::findOrFail($id);
+        /** @var User $user */
         $user = Auth::user();
 
-        $isOwner = $event->user_id !== null && (int) $event->user_id === (int) $user->id;
-
-        if ($user->role !== 'admin' && !$isOwner) {
+        if (! $this->canManagePrivateEvent($user, $event, $campusScope)) {
             abort(403);
         }
 
-        if (!$event->is_deletable) {
+        if (! $event->is_deletable) {
             return back()->withErrors(['error' => 'No se puede eliminar un evento que ya pasó.']);
         }
 
@@ -158,19 +242,16 @@ class EventController extends Controller
             ->with('success', 'Evento eliminado exitosamente.');
     }
 
-    /**
-     * Terminar evento manualmente.
-     */
-    public function end(Event $event)
+    public function end(Event $event, CampusScopeService $campusScope)
     {
+        /** @var User $user */
         $user = Auth::user();
-        $isOwner = $event->user_id !== null && (int) $event->user_id === (int) $user->id;
 
-        if ($user->role !== 'admin' && !$isOwner) {
+        if (! $this->canManagePrivateEvent($user, $event, $campusScope)) {
             abort(403);
         }
 
-        if (!$event->isOpenForAttendance()) {
+        if (! $event->isOpenForAttendance()) {
             return back()->with('error', 'Este evento ya ha finalizado.');
         }
 
@@ -181,33 +262,111 @@ class EventController extends Controller
         return back()->with('success', 'El evento ha sido finalizado exitosamente.');
     }
 
-    public function areas(Dependency $dependency)
+    public function areas(Dependency $dependency, CampusScopeService $campusScope)
     {
+        /** @var User $user */
+        $user = Auth::user();
+
+        if (! $campusScope->canAccessResource($user, $dependency)) {
+            abort(403);
+        }
+
+        if (! $user->hasAdminAccess()
+            && ! $user->dependencies()->where('dependencies.id', $dependency->id)->exists()) {
+            abort(403);
+        }
+
         return $dependency->areas()
             ->select('id', 'name')
             ->orderBy('name')
             ->get();
     }
 
-
-    public function getByDate($date)
+    public function getByDate($date, CampusScopeService $campusScope)
     {
-        $events = Event::with(['dependency:id,name', 'area:id,name', 'user:id,name'])
-            ->whereDate('date', $date)
+        /** @var User $user */
+        $user = Auth::user();
+
+        $query = Event::with([
+            'campus:id,name',
+            'dependency:id,name,campus_id',
+            'dependency.campus:id,name',
+            'area:id,name',
+            'user:id,name',
+        ])
+            ->whereDate('date', $date);
+
+        $user->loadMissing('dependencies');
+        $dependencyIds = $user->dependencies->pluck('id')->all();
+        $activeCampusId = $campusScope->activeCampusId($user);
+        if ($activeCampusId !== null) {
+            $query->where(function ($campusQuery) use ($activeCampusId, $user, $dependencyIds) {
+                $campusQuery->where('events.campus_id', $activeCampusId)
+                    ->orWhereHas('dependency', fn ($dependencyQuery) => $dependencyQuery->where('campus_id', $activeCampusId));
+
+                if (! $user->hasAdminAccess() && $dependencyIds !== []) {
+                    $campusQuery->orWhereIn('events.dependency_id', $dependencyIds);
+                }
+            });
+        }
+
+        if (! $user->hasAdminAccess() && $activeCampusId === null) {
+            $query->where(function ($eventQuery) use ($user, $dependencyIds) {
+                $eventQuery->where('user_id', $user->id);
+
+                if ($dependencyIds !== []) {
+                    $eventQuery->orWhereIn('dependency_id', $dependencyIds);
+                }
+            });
+        }
+
+        $userDependencyIds = $user->dependencies
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        $events = $query
             ->get()
-            ->map(function ($e) {
-                $e->dependency_name = $e->dependency?->name;
-                $e->area_name       = $e->area?->name;
-                $e->creator_name    = $e->user?->name;
-                return $e;
+            ->map(function ($event) use ($campusScope, $user, $userDependencyIds) {
+                $eventCampusId = $event->campus_id ?? $event->dependency?->campus_id;
+                $isDependencyEvent = $event->dependency_id !== null
+                    && in_array((int) $event->dependency_id, $userDependencyIds, true)
+                    && (int) $event->user_id !== (int) $user->id;
+                $dependencyCampusId = $event->dependency?->campus_id;
+                $canAccessCampus = $campusScope->canAccessCampus(
+                    $user,
+                    $eventCampusId !== null ? (int) $eventCampusId : null
+                ) || ($isDependencyEvent && $campusScope->canAccessCampus(
+                    $user,
+                    $dependencyCampusId !== null ? (int) $dependencyCampusId : null
+                ));
+                // Un evento de la misma sede es visible en el calendario, pero
+                // solo se puede abrir si el usuario lo creó o está ligado a la
+                // dependencia del evento.
+                $canView = ($user->hasAdminAccess() || (int) $event->user_id === (int) $user->id)
+                    ? $canAccessCampus
+                    : $isDependencyEvent;
+
+                $event->dependency_name = $event->dependency?->name;
+                $event->area_name = $event->area?->name;
+                $event->creator_name = $event->user?->name;
+                $event->campus_name = $user->isSuperadmin()
+                    ? ($event->campus?->name ?? $event->dependency?->campus?->name)
+                    : null;
+                $event->can_view = $canView;
+                $event->is_dependency_event = $isDependencyEvent;
+                $event->show_url = $canView ? route('events.show', ['id' => $event->id, 'from' => 'calendario']) : null;
+
+                return $event;
             });
 
         return response()->json($events);
     }
 
-    public function descargarAsistencia(AttendancePdfService $pdfService, $id, $formatSlug = null)
+    public function descargarAsistencia(AttendancePdfService $pdfService, CampusScopeService $campusScope, $id, $formatSlug = null)
     {
         $evento = Event::with([
+            'campus',
             'asistencias.participant.activeRoles.type',
             'asistencias.participant.activeRoles.program',
             'asistencias.participant.activeRoles.dependency',
@@ -215,12 +374,12 @@ class EventController extends Controller
             'asistencias.detail.participantRole.type',
             'asistencias.detail.participantRole.program',
             'asistencias.detail.participantRole.organization',
+            'dependency.campus',
             'dependency.formats',
             'area',
             'user',
         ])->findOrFail($id);
 
-        // ── Autorización: admin, dueño o miembro de la dependencia ──
         /** @var User $user */
         $user = Auth::user();
 
@@ -229,26 +388,24 @@ class EventController extends Controller
                 ->where('dependencies.id', $evento->dependency_id)
                 ->exists();
 
-        if ($user->role !== 'admin'
-            && (int) $evento->user_id !== (int) $user->id
-            && ! $perteneceDependencia) {
+        if (! $this->canAccessEventPdf($user, $evento, $campusScope)
+            || (! $user->hasAdminAccess()
+                && (int) $evento->user_id !== (int) $user->id
+                && ! $perteneceDependencia)) {
             abort(403, 'No tienes permiso para descargar la asistencia de este evento.');
         }
 
         $formats = $evento->dependency->formats ?? collect();
 
-        // Si no tiene formatos asignados, usa general
         if ($formats->isEmpty()) {
             $formatSlug = 'general';
         }
 
-        // Si no se pasó slug, usa general
-        if (!$formatSlug) {
+        if (! $formatSlug) {
             $formatSlug = 'general';
         }
 
-        // Validar acceso solo si tiene formatos asignados
-        if ($formats->isNotEmpty() && !$formats->contains('slug', $formatSlug) && $formatSlug !== 'general') {
+        if ($formats->isNotEmpty() && ! $formats->contains('slug', $formatSlug) && $formatSlug !== 'general') {
             abort(403, 'Esta dependencia no tiene acceso a este formato.');
         }
 
@@ -256,18 +413,38 @@ class EventController extends Controller
             $pdfContent = $pdfService->generatePdf($evento, $formatSlug);
         } catch (\setasign\Fpdi\PdfParser\CrossReference\CrossReferenceException $e) {
             return back()->with('error',
-                'La plantilla PDF del formato "' . $formatSlug . '" usa una versión de PDF no soportada (1.5 o superior). '
-                . 'Debe re-subir la plantilla en versión PDF 1.4 o inferior desde la configuración de formatos. Comuniquese con el administrador.'
+                'La plantilla PDF del formato "'.$formatSlug.'" usa una versión de PDF no soportada (1.5 o superior). '
+                .'Debe re-subir la plantilla en versión PDF 1.4 o inferior desde la configuración de formatos. Comuniquese con el administrador.'
             );
         }
 
         ActivityLogService::log('exportar', 'eventos', "Descargó PDF de asistencias del evento '{$evento->title}'", $evento);
 
-        $nombreArchivo = "Asistencia_".str_replace(' ', '_', $evento->title)."_".\Carbon\Carbon::parse($evento->date)->format('Y-m-d').".pdf";
+        $nombreArchivo = 'Asistencia_'.str_replace(' ', '_', $evento->title).'_'.\Carbon\Carbon::parse($evento->date)->format('Y-m-d').'.pdf';
 
         return response($pdfContent, 200, [
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => "attachment; filename=\"{$nombreArchivo}\"",
         ]);
+    }
+
+    private function canAccessEventPdf(User $user, Event $event, CampusScopeService $campusScope): bool
+    {
+        $campusId = $event->campus_id ?? $event->dependency?->campus_id;
+
+        return $campusScope->canAccessCampus($user, $campusId !== null ? (int) $campusId : null);
+    }
+
+    private function canManagePrivateEvent(User $user, Event $event, CampusScopeService $campusScope): bool
+    {
+        if (! $campusScope->canAccessResource($user, $event)) {
+            return false;
+        }
+
+        if ($user->hasAdminAccess()) {
+            return true;
+        }
+
+        return $event->user_id !== null && (int) $event->user_id === (int) $user->id;
     }
 }

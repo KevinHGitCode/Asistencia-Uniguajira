@@ -53,8 +53,15 @@
     </div>
 
     {{-- ── Tarjeta principal ────────────────────────────────────────────────── --}}
-    <div class="rounded-2xl border border-zinc-200 dark:border-zinc-700/60 bg-zinc-50 dark:bg-zinc-900 shadow-xl overflow-hidden">
-        <div class="p-5">
+    <div @class([
+        'rounded-2xl border border-zinc-200 dark:border-zinc-700/60 bg-zinc-50 dark:bg-zinc-900 shadow-xl',
+        'overflow-visible' => $step === 2,
+        'overflow-hidden' => $step !== 2,
+    ])>
+        <div @class([
+            'p-5',
+            'relative z-20 overflow-visible' => $step === 2,
+        ])>
 
             {{-- ══ PASO 1: Identidad ══════════════════════════════════════════════ --}}
             @if($step === 1)
@@ -102,11 +109,11 @@
 
             {{-- ══ PASO 2: Organización ═══════════════════════════════════════════ --}}
             @if($step === 2)
-                <div wire:key="step-2" wire:transition class="flex flex-col gap-4">
+                <div wire:key="step-2" wire:transition class="relative z-20 flex flex-col gap-4 overflow-visible">
 
                     <div>
                         <h2 class="text-lg font-semibold text-zinc-900 dark:text-white">¿Dónde y quién organiza?</h2>
-                        <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">Todos los campos de este paso son opcionales.</p>
+                        <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">Selecciona la sede y dependencia que respaldan el evento.</p>
                     </div>
 
                     {{-- Ubicación --}}
@@ -120,25 +127,47 @@
                         />
                     </div>
 
+                    {{-- Sede --}}
+                    @if($isSuperadmin)
+                        <div class="relative z-30">
+                            <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                                Sede
+                                <span class="text-red-400 ml-0.5">*</span>
+                            </label>
+                            <x-ui.searchable-select
+                                wire:model.live="campus_id"
+                                :options="$campuses"
+                                placeholder="Selecciona una sede"
+                                empty-label="Selecciona una sede"
+                                search-placeholder="Buscar sede..." />
+                            @error('campus_id')
+                                <p class="text-xs text-red-400 mt-1">{{ $message }}</p>
+                            @enderror
+                            <p class="text-xs text-zinc-500 dark:text-zinc-500 mt-1">La dependencia se filtra según la sede seleccionada.</p>
+                        </div>
+                    @endif
+
                     {{-- Dependencia --}}
                     @if($showDependencySelect)
-                        <div>
-                            <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Dependencia</label>
-                            <select
+                        @php($dependenciaBloqueada = $isSuperadmin && !$campus_id)
+                        <div class="relative z-20" wire:key="dependencies-field-{{ $campus_id ?: 'sin-sede' }}">
+                            <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                                Dependencia
+                                <span class="text-red-400 ml-0.5">*</span>
+                            </label>
+                            <x-ui.searchable-select
                                 wire:model.live="dependency_id"
-                                class="{{ $inputNormal }} cursor-pointer"
-                            >
-                                <option value="">{{ $isAdmin ? '— Sin dependencia —' : 'Selecciona una dependencia' }}</option>
-                                @foreach($dependencies as $depId => $depName)
-                                    <option value="{{ $depId }}" @selected($dependency_id == $depId)>{{ $depName }}</option>
-                                @endforeach
-                            </select>
+                                :options="$dependencies"
+                                :disabled="$dependenciaBloqueada"
+                                :placeholder="$dependenciaBloqueada ? 'Primero selecciona una sede' : 'Selecciona una dependencia'"
+                                :empty-label="$dependenciaBloqueada ? 'Primero selecciona una sede' : 'Selecciona una dependencia'"
+                                search-placeholder="Buscar dependencia..." />
                             @error('dependency_id')
                                 <p class="text-xs text-red-400 mt-1">{{ $message }}</p>
                             @enderror
-                            @if($isAdmin)
-                                <p class="text-xs text-zinc-500 dark:text-zinc-500 mt-1">Sin dependencia seleccionada, el evento no estará asociado a ninguna.</p>
-                            @endif
+                            <p class="text-xs text-zinc-500 dark:text-zinc-500 mt-1">
+                                {{ $isSuperadmin ? 'El evento quedará ligado a la sede de esta dependencia.' : 'La sede del evento se toma de tu usuario.' }}
+                            </p>
                         </div>
                     @endif
 

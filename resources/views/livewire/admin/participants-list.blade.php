@@ -35,288 +35,6 @@
         </div>
     @endif
 
-    {{-- Buscador + Filtro --}}
-    <div class="mb-4 flex flex-col sm:flex-row gap-3">
-        <div class="relative flex-1">
-            <svg class="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400 pointer-events-none"
-                 fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                      d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"/>
-            </svg>
-            <input
-                wire:model.live.debounce.300ms="search"
-                type="text"
-                placeholder="Buscar por nombre, documento o correo…"
-                class="w-full pl-9 pr-4 py-2 rounded-lg border border-neutral-200 dark:border-zinc-700
-                       bg-white dark:bg-zinc-800 text-sm text-gray-900 dark:text-gray-100
-                       placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-            />
-        </div>
-        <button
-            wire:click="toggleUnclassifiedFilter"
-            class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors cursor-pointer shrink-0
-                {{ $filterUnclassified
-                    ? 'border-amber-400 bg-amber-50 text-amber-700 dark:border-amber-600 dark:bg-amber-900/30 dark:text-amber-300'
-                    : 'border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-700' }}">
-            <flux:icon.funnel class="size-4" />
-            Sin clasificar
-            @if($filterUnclassified)
-                <flux:icon.x-mark class="size-3.5" />
-            @endif
-        </button>
-    </div>
-
-    {{-- Banner de filtro activo --}}
-    @if($filterUnclassified)
-        <div class="mb-4 flex items-center gap-3 px-4 py-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 text-sm">
-            <flux:icon.funnel class="size-5 shrink-0" />
-            <span>Mostrando solo participantes con al menos una asistencia sin programa, dependencia ni organización asignados.</span>
-        </div>
-    @endif
-
-    {{-- Tabla --}}
-    <div class="overflow-x-auto rounded-xl border border-neutral-200 dark:border-zinc-700">
-        <table class="min-w-[1000px] w-full divide-y divide-neutral-200 dark:divide-zinc-700 text-sm">
-            <thead class="bg-zinc-50 dark:bg-zinc-800/60">
-                <tr>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider">Documento</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider">Nombre</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider">Estamento(s)</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider">Programa(s)</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider">Dependencia(s)</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider">Vinculación</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider">Correo</th>
-                    <th class="px-4 py-3 text-right text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider">Acciones</th>
-                </tr>
-            </thead>
-            <tbody class="bg-white dark:bg-zinc-900 divide-y divide-neutral-100 dark:divide-zinc-800">
-                @forelse ($participants as $participant)
-                    @php
-                        $typeNames              = $participant->activeRoles->pluck('type.name')->filter()->unique()->values();
-                        $primaryType            = $typeNames->first();
-                        $extraTypesCount        = max(0, $typeNames->count() - 1);
-
-                        $programNames           = $participant->activeRoles->pluck('program.name')->filter()->unique()->values();
-                        $primaryProgram         = $programNames->first();
-                        $extraProgramsCount     = max(0, $programNames->count() - 1);
-
-                        $dependencyNames        = $participant->activeRoles->pluck('dependency.name')->filter()->unique()->values();
-                        $primaryDependency      = $dependencyNames->first();
-                        $extraDependenciesCount = max(0, $dependencyNames->count() - 1);
-
-                        $affiliationNames       = $participant->activeRoles->pluck('affiliation.name')->filter()->unique()->values();
-                        $primaryAffiliation     = $affiliationNames->first();
-                        $extraAffiliationsCount = max(0, $affiliationNames->count() - 1);
-
-                        // Detectar si tiene algún rol sin clasificar
-                        $hasUnclassifiedRole = $participant->activeRoles->contains(fn ($role) =>
-                            is_null($role->program_id) && is_null($role->dependency_id) && is_null($role->organization_id)
-                        );
-                    @endphp
-                    <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors">
-                        <td class="px-4 py-3 font-mono text-xs text-gray-600 dark:text-zinc-400 whitespace-nowrap">
-                            {{ $participant->document }}
-                        </td>
-                        <td class="px-4 py-3">
-                            <div class="flex items-center gap-2">
-                                <p class="font-semibold text-gray-900 dark:text-gray-100">
-                                    {{ $participant->first_name }} {{ $participant->last_name }}
-                                </p>
-                                @if($hasUnclassifiedRole)
-                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 whitespace-nowrap">
-                                        Sin clasificar
-                                    </span>
-                                @endif
-                            </div>
-                            @if($participant->student_code)
-                                <p class="text-xs text-gray-400 dark:text-zinc-500">Cód. {{ $participant->student_code }}</p>
-                            @endif
-                        </td>
-
-                        {{-- Estamento(s) --}}
-                        <td class="px-4 py-3">
-                            @if($typeNames->isNotEmpty())
-                                <div class="flex items-center gap-1.5" x-data="floatingTooltip()">
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300 max-w-[10rem] truncate" title="{{ $primaryType }}">
-                                        {{ $primaryType }}
-                                    </span>
-                                    @if($extraTypesCount > 0)
-                                        <button type="button" x-ref="trigger"
-                                            @mouseenter="show($refs.trigger)"
-                                            @mouseleave="hide()"
-                                            class="inline-flex items-center rounded-full bg-teal-600 px-2 py-0.5 text-xs font-semibold text-white hover:brightness-110 focus:outline-none cursor-pointer">
-                                            +{{ $extraTypesCount }}
-                                        </button>
-                                        <template x-teleport="body">
-                                            <div x-show="open" x-transition.opacity.duration.150ms
-                                                 :style="`position:fixed;top:${y}px;left:${x}px;`"
-                                                 class="z-[9999] min-w-48 max-w-xs rounded-lg border border-neutral-200 bg-white p-3 text-xs text-zinc-700 shadow-lg dark:border-neutral-700 dark:bg-zinc-900 dark:text-zinc-200"
-                                                 @mouseenter="keep()" @mouseleave="hide()">
-                                                <p class="mb-2 font-semibold">Estamentos activos</p>
-                                                <ul class="space-y-1">
-                                                    @foreach ($typeNames as $typeName)
-                                                        <li>{{ $typeName }}</li>
-                                                    @endforeach
-                                                </ul>
-                                            </div>
-                                        </template>
-                                    @endif
-                                </div>
-                            @else
-                                <span class="text-xs text-gray-400 dark:text-zinc-500">—</span>
-                            @endif
-                        </td>
-
-                        {{-- Programa(s) --}}
-                        <td class="px-4 py-3">
-                            @if($programNames->isNotEmpty())
-                                <div class="flex items-center gap-1.5" x-data="floatingTooltip()">
-                                    <span class="text-xs text-gray-700 dark:text-zinc-300 truncate max-w-[12rem]" title="{{ $primaryProgram }}">
-                                        {{ $primaryProgram }}
-                                    </span>
-                                    @if($extraProgramsCount > 0)
-                                        <button type="button" x-ref="trigger"
-                                            @mouseenter="show($refs.trigger)"
-                                            @mouseleave="hide()"
-                                            class="inline-flex items-center rounded-full bg-blue-600 px-2 py-0.5 text-xs font-semibold text-white hover:brightness-110 focus:outline-none cursor-pointer">
-                                            +{{ $extraProgramsCount }}
-                                        </button>
-                                        <template x-teleport="body">
-                                            <div x-show="open" x-transition.opacity.duration.150ms
-                                                 :style="`position:fixed;top:${y}px;left:${x}px;`"
-                                                 class="z-[9999] min-w-56 max-w-xs rounded-lg border border-neutral-200 bg-white p-3 text-xs text-zinc-700 shadow-lg dark:border-neutral-700 dark:bg-zinc-900 dark:text-zinc-200"
-                                                 @mouseenter="keep()" @mouseleave="hide()">
-                                                <p class="mb-2 font-semibold">Programas activos</p>
-                                                <ul class="space-y-1">
-                                                    @foreach ($programNames as $name)
-                                                        <li>{{ $name }}</li>
-                                                    @endforeach
-                                                </ul>
-                                            </div>
-                                        </template>
-                                    @endif
-                                </div>
-                            @else
-                                <span class="text-xs text-gray-400 dark:text-zinc-500">—</span>
-                            @endif
-                        </td>
-
-                        {{-- Dependencia(s) --}}
-                        <td class="px-4 py-3">
-                            @if($dependencyNames->isNotEmpty())
-                                <div class="flex items-center gap-1.5" x-data="floatingTooltip()">
-                                    <span class="text-xs text-gray-700 dark:text-zinc-300 truncate max-w-[12rem]" title="{{ $primaryDependency }}">
-                                        {{ $primaryDependency }}
-                                    </span>
-                                    @if($extraDependenciesCount > 0)
-                                        <button type="button" x-ref="trigger"
-                                            @mouseenter="show($refs.trigger)"
-                                            @mouseleave="hide()"
-                                            class="inline-flex items-center rounded-full bg-indigo-600 px-2 py-0.5 text-xs font-semibold text-white hover:brightness-110 focus:outline-none cursor-pointer">
-                                            +{{ $extraDependenciesCount }}
-                                        </button>
-                                        <template x-teleport="body">
-                                            <div x-show="open" x-transition.opacity.duration.150ms
-                                                 :style="`position:fixed;top:${y}px;left:${x}px;`"
-                                                 class="z-[9999] min-w-56 max-w-xs rounded-lg border border-neutral-200 bg-white p-3 text-xs text-zinc-700 shadow-lg dark:border-neutral-700 dark:bg-zinc-900 dark:text-zinc-200"
-                                                 @mouseenter="keep()" @mouseleave="hide()">
-                                                <p class="mb-2 font-semibold">Dependencias activas</p>
-                                                <ul class="space-y-1">
-                                                    @foreach ($dependencyNames as $name)
-                                                        <li>{{ $name }}</li>
-                                                    @endforeach
-                                                </ul>
-                                            </div>
-                                        </template>
-                                    @endif
-                                </div>
-                            @else
-                                <span class="text-xs text-gray-400 dark:text-zinc-500">—</span>
-                            @endif
-                        </td>
-
-                        {{-- Vinculación --}}
-                        <td class="px-4 py-3">
-                            @if($affiliationNames->isNotEmpty())
-                                <div class="flex items-center gap-1.5" x-data="floatingTooltip()">
-                                    <span class="text-xs text-gray-600 dark:text-zinc-400 truncate max-w-[10rem]" title="{{ $primaryAffiliation }}">
-                                        {{ $primaryAffiliation }}
-                                    </span>
-                                    @if($extraAffiliationsCount > 0)
-                                        <button type="button" x-ref="trigger"
-                                            @mouseenter="show($refs.trigger)"
-                                            @mouseleave="hide()"
-                                            class="inline-flex items-center rounded-full bg-amber-600 px-2 py-0.5 text-xs font-semibold text-white hover:brightness-110 focus:outline-none cursor-pointer">
-                                            +{{ $extraAffiliationsCount }}
-                                        </button>
-                                        <template x-teleport="body">
-                                            <div x-show="open" x-transition.opacity.duration.150ms
-                                                 :style="`position:fixed;top:${y}px;left:${x}px;`"
-                                                 class="z-[9999] min-w-48 max-w-xs rounded-lg border border-neutral-200 bg-white p-3 text-xs text-zinc-700 shadow-lg dark:border-neutral-700 dark:bg-zinc-900 dark:text-zinc-200"
-                                                 @mouseenter="keep()" @mouseleave="hide()">
-                                                <p class="mb-2 font-semibold">Vinculaciones activas</p>
-                                                <ul class="space-y-1">
-                                                    @foreach ($affiliationNames as $affiliationName)
-                                                        <li>{{ $affiliationName }}</li>
-                                                    @endforeach
-                                                </ul>
-                                            </div>
-                                        </template>
-                                    @endif
-                                </div>
-                            @else
-                                <span class="text-xs text-gray-400 dark:text-zinc-500">—</span>
-                            @endif
-                        </td>
-
-                        <td class="px-4 py-3 text-xs text-gray-500 dark:text-zinc-400 whitespace-nowrap">
-                            {{ $participant->email ?? '—' }}
-                        </td>
-
-                        {{-- Acciones --}}
-                        <td class="px-4 py-3">
-                            <div class="flex items-center justify-end gap-2">
-                                <button
-                                    wire:click="openEdit({{ $participant->id }})"
-                                    class="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 dark:hover:text-blue-400 transition-colors cursor-pointer"
-                                    title="Editar">
-                                    <flux:icon.pencil-square class="size-4" />
-                                </button>
-                                <button
-                                    wire:click="openDelete({{ $participant->id }}, '{{ addslashes($participant->first_name . ' ' . $participant->last_name) }}')"
-                                    class="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 dark:hover:text-red-400 transition-colors cursor-pointer"
-                                    title="Eliminar">
-                                    <flux:icon.trash class="size-4" />
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="8" class="px-4 py-10 text-center text-sm text-gray-400 dark:text-zinc-500">
-                            @if($search !== '')
-                                No se encontraron participantes con "<strong>{{ $search }}</strong>".
-                            @else
-                                Aún no hay participantes registrados.
-                            @endif
-                        </td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
-
-    {{-- Paginación --}}
-    @if($participants->hasPages())
-        <div class="mt-4">
-            {{ $participants->links() }}
-        </div>
-    @endif
-
-    {{-- Contador --}}
-    <p class="mt-2 text-xs text-gray-400 dark:text-zinc-500 text-right">
-        {{ $participants->total() }} participante(s) en total
-    </p>
 
     {{-- ======================== MODAL: EDITAR ======================== --}}
     @if($showEditModal)
@@ -435,13 +153,13 @@
                                             <label class="text-xs font-medium text-gray-600 dark:text-gray-400">
                                                 Estamento <span class="text-red-500">*</span>
                                             </label>
-                                            <select wire:model.live="editRoles.{{ $index }}.participant_type_id"
-                                                class="px-3 py-2 rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
-                                                <option value="">Selecciona un estamento…</option>
-                                                @foreach($catalogTypes as $type)
-                                                    <option value="{{ $type['id'] }}">{{ $type['name'] }}</option>
-                                                @endforeach
-                                            </select>
+                                            <x-ui.searchable-select
+                                                wire:key="type-select-{{ $index }}"
+                                                wire:model.live="editRoles.{{ $index }}.participant_type_id"
+                                                :options="$catalogTypes"
+                                                placeholder="Selecciona un estamento…"
+                                                empty-label="Selecciona un estamento…"
+                                                search-placeholder="Buscar estamento…" />
                                             @error("editRoles.{$index}.participant_type_id")
                                                 <p class="text-xs text-red-500">{{ $message }}</p>
                                             @enderror
@@ -451,13 +169,13 @@
                                         @if($typeCategory === 'program')
                                             <div class="flex flex-col gap-1.5">
                                                 <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Programa</label>
-                                                <select wire:model="editRoles.{{ $index }}.program_id"
-                                                    class="px-3 py-2 rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
-                                                    <option value="">Sin programa</option>
-                                                    @foreach($catalogPrograms as $program)
-                                                        <option value="{{ $program['id'] }}">{{ $program['name'] }}</option>
-                                                    @endforeach
-                                                </select>
+                                                <x-ui.searchable-select
+                                                    wire:key="program-select-{{ $index }}"
+                                                    wire:model="editRoles.{{ $index }}.program_id"
+                                                    :options="$catalogPrograms"
+                                                    placeholder="Sin programa"
+                                                    empty-label="Sin programa"
+                                                    search-placeholder="Buscar programa…" />
                                             </div>
                                         @endif
 
@@ -465,13 +183,13 @@
                                         @if($typeCategory === 'dependency')
                                             <div class="flex flex-col gap-1.5">
                                                 <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Dependencia</label>
-                                                <select wire:model="editRoles.{{ $index }}.dependency_id"
-                                                    class="px-3 py-2 rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
-                                                    <option value="">Sin dependencia</option>
-                                                    @foreach($catalogDependencies as $dep)
-                                                        <option value="{{ $dep['id'] }}">{{ $dep['name'] }}</option>
-                                                    @endforeach
-                                                </select>
+                                                <x-ui.searchable-select
+                                                    wire:key="dependency-select-{{ $index }}"
+                                                    wire:model="editRoles.{{ $index }}.dependency_id"
+                                                    :options="$catalogDependencies"
+                                                    placeholder="Sin dependencia"
+                                                    empty-label="Sin dependencia"
+                                                    search-placeholder="Buscar dependencia…" />
                                             </div>
                                         @endif
 
@@ -516,13 +234,13 @@
                                         @if(in_array($typeCategory, ['program', 'dependency']))
                                             <div class="flex flex-col gap-1.5">
                                                 <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Vinculación</label>
-                                                <select wire:model="editRoles.{{ $index }}.affiliation_id"
-                                                    class="px-3 py-2 rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
-                                                    <option value="">Sin vinculación</option>
-                                                    @foreach($catalogAffiliations as $aff)
-                                                        <option value="{{ $aff['id'] }}">{{ $aff['name'] }}</option>
-                                                    @endforeach
-                                                </select>
+                                                <x-ui.searchable-select
+                                                    wire:key="affiliation-select-{{ $index }}"
+                                                    wire:model="editRoles.{{ $index }}.affiliation_id"
+                                                    :options="$catalogAffiliations"
+                                                    placeholder="Sin vinculación"
+                                                    empty-label="Sin vinculación"
+                                                    search-placeholder="Buscar vinculación…" />
                                             </div>
                                         @endif
                                     </div>
@@ -596,50 +314,3 @@
         </div>
     @endif
 </div>
-
-@script
-<script>
-    Alpine.data('floatingTooltip', () => ({
-        open: false,
-        x: 0,
-        y: 0,
-        _timer: null,
-
-        show(el) {
-            clearTimeout(this._timer);
-            const rect = el.getBoundingClientRect();
-            let x = rect.left;
-            let y = rect.bottom + 6;
-
-            // Si se sale por la derecha, alinear al borde derecho del botón
-            if (x + 240 > window.innerWidth) {
-                x = rect.right - 240;
-            }
-            // Si queda negativo, pegarlo al borde izquierdo
-            if (x < 8) {
-                x = 8;
-            }
-            // Si se sale por abajo, mostrar encima del botón
-            if (y + 150 > window.innerHeight) {
-                y = rect.top - 6;
-                // El tooltip se posicionará con transform para subir
-                this._above = true;
-            } else {
-                this._above = false;
-            }
-
-            this.x = x;
-            this.y = y;
-            this.open = true;
-        },
-
-        keep() {
-            clearTimeout(this._timer);
-        },
-
-        hide() {
-            this._timer = setTimeout(() => { this.open = false; }, 150);
-        },
-    }));
-</script>
-@endscript

@@ -1,8 +1,7 @@
 <div>
     <flux:modal
         name="edit-user-modal"
-        variant="flyout"
-        class="w-full max-w-lg bg-zinc-50 dark:bg-zinc-900 [&::backdrop]:bg-black/40 [&::backdrop]:backdrop-blur-[2px]"
+        class="w-full max-w-2xl overflow-visible bg-zinc-50 dark:bg-zinc-900 [&>div]:overflow-visible [&::backdrop]:bg-black/40 [&::backdrop]:backdrop-blur-[2px]"
         x-data
         x-init="
         $nextTick(() => {
@@ -14,7 +13,7 @@
             }
         });
     ">
-        <div class="space-y-6 bg-zinc-50 dark:bg-zinc-900 -m-6 p-6 min-h-full">
+        <div class="relative z-20 space-y-6 overflow-visible">
             {{-- Header --}}
             <div class="border-b border-zinc-200 dark:border-zinc-700 pb-4">
                 <div class="flex items-center gap-2 mb-1">
@@ -27,74 +26,105 @@
             </div>
 
             {{-- Formulario --}}
-            <form wire:submit="save" class="space-y-5">
+            <form wire:submit="save" class="relative z-20 space-y-5 overflow-visible">
 
-                <flux:input 
-                    wire:model="name" 
-                    :label="__('Nombre completo')" 
-                    type="text" 
-                    required 
-                    placeholder="Nombre completo" 
-                />
+                <div class="relative z-20 grid grid-cols-1 gap-x-4 gap-y-5 overflow-visible sm:grid-cols-2">
 
-                <flux:input 
-                    wire:model="email" 
-                    :label="__('Correo electrónico')" 
-                    type="email" 
-                    required 
-                    placeholder="ejemplo@correo.com" 
-                />
+                    <flux:input
+                        wire:model="name"
+                        :label="__('Nombre completo')"
+                        type="text"
+                        required
+                        placeholder="Nombre completo"
+                    />
 
-                {{-- ROL --}}
-                <div class="flex flex-col gap-1">
-                    <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                        Rol del usuario
-                    </label>
-                    <select wire:model.live="role"
-                        class="w-full rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="">Selecciona un rol</option>
-                        @foreach($roles as $value => $label)
-                            <option value="{{ $value }}">{{ $label }}</option>
-                        @endforeach
-                    </select>
-                    @error('role')
-                        <span class="text-red-500 text-xs">{{ $message }}</span>
-                    @enderror
-                </div>
+                    <flux:input
+                        wire:model="email"
+                        :label="__('Correo electrónico')"
+                        type="email"
+                        required
+                        placeholder="ejemplo@correo.com"
+                    />
 
-                {{-- DEPENDENCIAS --}}
-                @if($role === 'user')
-                    <div class="flex flex-col gap-2">
+                    {{-- ROL --}}
+                    <div class="relative z-40 flex flex-col gap-1">
                         <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                            Dependencias
+                            Rol del usuario
                         </label>
-                        <div class="max-h-48 overflow-y-auto rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 p-3 space-y-2">
-                            @foreach($dependencies as $value => $label)
-                                <label class="flex items-center gap-2 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-700 rounded p-1.5 transition-colors">
-                                    <input 
-                                        type="checkbox" 
-                                        wire:model="dependency_ids" 
-                                        value="{{ $value }}"
-                                        class="rounded border-zinc-300 dark:border-zinc-600 text-blue-600 focus:ring-blue-500"
-                                    >
-                                    <span class="text-sm text-zinc-700 dark:text-zinc-300">{{ $label }}</span>
-                                </label>
-                            @endforeach
-                        </div>
-                        @error('dependency_ids')
+                        <x-ui.searchable-select
+                            wire:key="edit-user-role-{{ $userId ?? 'none' }}-{{ $role ?: 'none' }}"
+                            wire:model.live="role"
+                            :options="$roles"
+                            placeholder="Selecciona un rol"
+                            empty-label="Selecciona un rol"
+                            search-placeholder="Buscar rol…" />
+                        @error('role')
                             <span class="text-red-500 text-xs">{{ $message }}</span>
                         @enderror
                     </div>
-                @endif
 
-                {{-- PASSWORD --}}
-                <flux:input 
-                    wire:model="password" 
-                    :label="__('Nueva contraseña')" 
-                    type="password" 
-                    placeholder="Dejar vacío para no cambiar" 
-                />
-                <p class="text-xs text-gray-500 -mt-3">Solo completa si deseas cambiar la contraseña.</p>
+                    {{-- SEDE --}}
+                    @if($role !== 'superadmin')
+                        <div class="relative z-30 flex flex-col gap-1">
+                            <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                                Sede
+                            </label>
+                            <x-ui.searchable-select
+                                wire:model.live="campus_id"
+                                :options="$campuses"
+                                placeholder="Selecciona una sede"
+                                empty-label="Selecciona una sede"
+                                search-placeholder="Buscar sede..." />
+                            @error('campus_id')
+                                <span class="text-red-500 text-xs">{{ $message }}</span>
+                            @enderror
+                        </div>
+                    @endif
+
+                    {{-- DEPENDENCIAS --}}
+                    @if($role === 'user')
+                        <div class="relative z-20 flex flex-col gap-2 sm:col-span-2">
+                            <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                                Dependencias
+                            </label>
+                            <x-ui.multi-searchable-select
+                                wire:key="edit-user-dependencies-{{ $campus_id ?? 'none' }}"
+                                wire:model="dependency_ids"
+                                :options="$this->filteredDependencies"
+                                placeholder="Agregar dependencias…"
+                                search-placeholder="Buscar dependencia…" />
+                            @error('dependency_ids')
+                                <span class="text-red-500 text-xs">{{ $message }}</span>
+                            @enderror
+                        </div>
+                    @endif
+
+                    {{-- ESTADO (activar/desactivar según jerarquía; se aplica al guardar) --}}
+                    @if($canToggleActive)
+                        <div class="relative z-10 flex flex-col gap-1">
+                            <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Estado</label>
+                            <x-ui.searchable-select
+                                wire:key="edit-user-status-{{ $userId ?? 'none' }}"
+                                wire:model="activeState"
+                                :options="[['id' => '1', 'name' => 'Activo'], ['id' => '0', 'name' => 'Inactivo']]"
+                                :allow-empty="false"
+                                placeholder="Selecciona un estado" />
+                            <p class="text-xs text-gray-500">Se aplicará al guardar los cambios.</p>
+                        </div>
+                    @endif
+
+                    {{-- PASSWORD --}}
+                    <div class="sm:col-span-2">
+                        <flux:input
+                            wire:model="password"
+                            :label="__('Nueva contraseña')"
+                            type="password"
+                            placeholder="Dejar vacío para no cambiar"
+                        />
+                        <p class="text-xs text-gray-500 mt-1">Solo completa si deseas cambiar la contraseña.</p>
+                    </div>
+
+                </div>
 
                 {{-- ERRORES --}}
                 @if ($errors->any())
@@ -113,7 +143,7 @@
                         <span wire:loading.remove wire:target="save">Guardar cambios</span>
                         <span wire:loading wire:target="save">Guardando...</span>
                     </flux:button>
-                    <flux:button 
+                    <flux:button
                         variant="ghost"
                         class="cursor-pointer"
                         x-on:click="$dispatch('modal-close', { name: 'edit-user-modal' })">

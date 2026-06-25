@@ -73,7 +73,7 @@ class StatisticsCoherenceTest extends TestCase
         $q = http_build_query($this->wideFilter());
 
         $total = $this->getJson("/api/statistics/total-attendances?$q")->json();
-        $suma  = collect($this->getJson("/api/statistics/attendances-by-program?$q")->json())->sum('count');
+        $suma  = collect($this->getJson("/api/statistics/attendances-by-program?$q")->json())->sum('value');
 
         $this->assertEquals($total, $suma);
     }
@@ -84,7 +84,7 @@ class StatisticsCoherenceTest extends TestCase
         $q = http_build_query($this->wideFilter());
 
         $total = $this->getJson("/api/statistics/total-participants?$q")->json();
-        $suma  = collect($this->getJson("/api/statistics/participants-by-program?$q")->json())->sum('count');
+        $suma  = collect($this->getJson("/api/statistics/participants-by-program?$q")->json())->sum('value');
 
         $this->assertEquals($total, $suma);
     }
@@ -95,7 +95,7 @@ class StatisticsCoherenceTest extends TestCase
         $q = http_build_query($this->wideFilter());
 
         $total = $this->getJson("/api/statistics/total-participants?$q")->json();
-        $suma  = collect($this->getJson("/api/statistics/participants-by-role?$q")->json())->sum('count');
+        $suma  = collect($this->getJson("/api/statistics/participants-by-role?$q")->json())->sum('value');
 
         $this->assertEquals($total, $suma);
     }
@@ -106,7 +106,7 @@ class StatisticsCoherenceTest extends TestCase
         $q = http_build_query($this->wideFilter());
 
         $total = $this->getJson("/api/statistics/total-participants?$q")->json();
-        $suma  = collect($this->getJson("/api/statistics/participants-by-sex?$q")->json())->sum('count');
+        $suma  = collect($this->getJson("/api/statistics/participants-by-sex?$q")->json())->sum('value');
 
         $this->assertEquals($total, $suma);
     }
@@ -117,7 +117,7 @@ class StatisticsCoherenceTest extends TestCase
         $q = http_build_query($this->wideFilter());
 
         $total = $this->getJson("/api/statistics/total-participants?$q")->json();
-        $suma  = collect($this->getJson("/api/statistics/participants-by-group?$q")->json())->sum('count');
+        $suma  = collect($this->getJson("/api/statistics/participants-by-group?$q")->json())->sum('value');
 
         $this->assertEquals($total, $suma);
     }
@@ -130,16 +130,20 @@ class StatisticsCoherenceTest extends TestCase
     {
         $user = User::factory()->create(['role' => 'admin']);
         $prog = Program::factory()->create(['name' => 'Programa Test']);
+        $this->actingAs($user);
 
-        $alice = Participant::factory()->create([
-            'role'       => 'Estudiante',
-            'program_id' => $prog->id,
+        $alice = Participant::create([
+            'document' => 'STAT-REPEAT-001',
+            'first_name' => 'Alice',
+            'last_name' => 'Repetida',
+            'email' => 'alice.repetida.stats@example.com',
         ]);
+        $role = $this->participantRole($alice, 'Estudiante', $prog);
 
         // Alice asiste a 4 eventos distintos dentro del periodo
         for ($i = 0; $i < 4; $i++) {
             $event = Event::factory()->create(['user_id' => $user->id, 'date' => '2026-02-01']);
-            Attendance::create(['event_id' => $event->id, 'participant_id' => $alice->id]);
+            $this->attendanceWithDetails($event, $alice, $role, 'F');
         }
 
         $q = http_build_query($this->wideFilter());
@@ -154,8 +158,8 @@ class StatisticsCoherenceTest extends TestCase
         $byProgAtt  = collect($this->getJson("/api/statistics/attendances-by-program?$q")->json());
         $byProgPart = collect($this->getJson("/api/statistics/participants-by-program?$q")->json());
 
-        $this->assertEquals(4, $byProgAtt->firstWhere('program', 'Programa Test')['count'] ?? 0);
-        $this->assertEquals(1, $byProgPart->firstWhere('program', 'Programa Test')['count'] ?? 0);
+        $this->assertEquals(4, $byProgAtt->firstWhere('name', 'Programa Test')['value'] ?? 0);
+        $this->assertEquals(1, $byProgPart->firstWhere('name', 'Programa Test')['value'] ?? 0);
     }
 
     // ─────────────────────────────────────────────
@@ -165,7 +169,15 @@ class StatisticsCoherenceTest extends TestCase
     public function test_participante_sin_asistencias_no_aparece_en_ningun_conteo(): void
     {
         $prog = Program::factory()->create(['name' => 'Programa X']);
-        Participant::factory()->create(['role' => 'Estudiante', 'program_id' => $prog->id]);
+        $this->actingAs(User::factory()->create(['role' => 'admin']));
+
+        $participant = Participant::create([
+            'document' => 'STAT-NO-ATT',
+            'first_name' => 'Sin',
+            'last_name' => 'Asistencia',
+            'email' => 'sin.asistencia.stats@example.com',
+        ]);
+        $this->participantRole($participant, 'Estudiante', $prog);
 
         $q = http_build_query($this->wideFilter());
 
@@ -174,10 +186,10 @@ class StatisticsCoherenceTest extends TestCase
 
         // by-program: no debe aparecer el programa
         $byProg = collect($this->getJson("/api/statistics/participants-by-program?$q")->json());
-        $this->assertNull($byProg->firstWhere('program', 'Programa X'));
+        $this->assertNull($byProg->firstWhere('name', 'Programa X'));
 
         // by-role: suma debe ser 0
-        $sumaRole = collect($this->getJson("/api/statistics/participants-by-role?$q")->json())->sum('count');
+        $sumaRole = collect($this->getJson("/api/statistics/participants-by-role?$q")->json())->sum('value');
         $this->assertEquals(0, $sumaRole);
     }
 
@@ -194,8 +206,8 @@ class StatisticsCoherenceTest extends TestCase
         $partByProg = collect($this->getJson("/api/statistics/participants-by-program?$q")->json());
 
         // En Ingeniería: 3 asistencias vs 2 participantes únicos
-        $ingAtt  = $attByProg->firstWhere('program', 'Ingeniería de Sistemas')['count'] ?? 0;
-        $ingPart = $partByProg->firstWhere('program', 'Ingeniería de Sistemas')['count'] ?? 0;
+        $ingAtt  = $attByProg->firstWhere('name', 'Ingenieria de Sistemas')['value'] ?? 0;
+        $ingPart = $partByProg->firstWhere('name', 'Ingenieria de Sistemas')['value'] ?? 0;
 
         $this->assertGreaterThan($ingPart, $ingAtt);
     }

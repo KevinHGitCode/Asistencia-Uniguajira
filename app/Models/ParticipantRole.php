@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 
 class ParticipantRole extends Model
 {
@@ -34,6 +35,18 @@ class ParticipantRole extends Model
     public function program(): BelongsTo
     {
         return $this->belongsTo(Program::class);
+    }
+
+    public function academicProgram(): HasOneThrough
+    {
+        return $this->hasOneThrough(
+            AcademicProgram::class,
+            Program::class,
+            'id',
+            'id',
+            'program_id',
+            'academic_program_id'
+        );
     }
 
     public function dependency(): BelongsTo

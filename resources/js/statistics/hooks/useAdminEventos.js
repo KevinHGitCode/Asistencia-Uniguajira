@@ -10,7 +10,7 @@ const initialState = {
   loading:       false,
   error:         null,
   // Opciones para los checklists
-  filterOptions: { dependencies: [], users: [] },
+  filterOptions: { show_campuses: false, campuses: [], dependencies: [], users: [] },
   optionsLoaded: false,
 };
 
@@ -42,9 +42,13 @@ export function useAdminEventos() {
   const [state, dispatch] = useReducer(reducer, initialState);
 
   // Cargar opciones de filtro una sola vez
-  const fetchFilterOptions = useCallback(async () => {
+  const fetchFilterOptions = useCallback(async (filters = {}) => {
     try {
-      const res  = await fetch('/api/statistics/admin-eventos/filter-options');
+      const params = new URLSearchParams();
+
+      if (filters.campusId) params.append('campus_id', filters.campusId);
+
+      const res  = await fetch(`/api/statistics/admin-eventos/filter-options?${params}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       dispatch({ type: 'OPTIONS_OK', payload: data });
@@ -67,6 +71,7 @@ export function useAdminEventos() {
       if (filters.from)   params.append('from',   filters.from);
       if (filters.to)     params.append('to',     filters.to);
       if (filters.search) params.append('search', filters.search);
+      if (filters.campusId) params.append('campus_id', filters.campusId);
 
       // Arrays: dependencies[]=1&dependencies[]=2
       if (filters.dependencies?.length) {
@@ -87,5 +92,5 @@ export function useAdminEventos() {
     }
   }, []);
 
-  return { state, fetchAll };
+  return { state, fetchAll, fetchFilterOptions };
 }

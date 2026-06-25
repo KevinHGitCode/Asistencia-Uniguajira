@@ -1,51 +1,148 @@
 <x-layouts.app :title="__('Users')">
-    <div class="mb-4">
+    <div class="p-1 pb-8 sm:p-4 sm:pb-10 md:p-6 md:pb-12">
         <div class="flex h-max w-full flex-1 flex-col gap-4 rounded-2xl">
 
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <flux:heading size="xl" level="1">
-                    {{ __('Users list') }}
-                </flux:heading>
+                <div class="flex items-center gap-2" x-data="{ infoOpen: false }">
+                    <flux:heading size="xl" level="1">
+                        {{ __('Users list') }}
+                    </flux:heading>
+                    {{-- Referencias de color (dropdown informativo) --}}
+                    <div class="relative" @click.outside="infoOpen = false" @keydown.escape="infoOpen = false">
+                        <button type="button" @click="infoOpen = !infoOpen"
+                            :class="infoOpen ? 'text-[#3b82f6] bg-blue-50 dark:bg-blue-900/30' : 'text-gray-400 hover:text-[#3b82f6] hover:bg-blue-50 dark:hover:bg-blue-900/30'"
+                            class="p-1 rounded-lg transition-colors cursor-pointer"
+                            aria-label="Referencias de color">
+                            <flux:icon.information-circle class="size-5" />
+                        </button>
+                        <div x-show="infoOpen" x-cloak
+                             x-transition:enter="transition ease-out duration-150"
+                             x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
+                             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                             class="absolute left-0 top-full mt-2 w-64 z-30 rounded-xl border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-4 shadow-lg">
+                            <p class="text-xs font-semibold text-gray-700 dark:text-gray-200 mb-2">Referencias de color</p>
+                            <ul class="space-y-1.5 text-xs text-gray-600 dark:text-gray-300">
+                                <li class="flex items-center gap-2"><span class="size-3 rounded-sm bg-[#e2a542]"></span> Rol del usuario</li>
+                                <li class="flex items-center gap-2"><span class="size-3 rounded-sm bg-[#cc5e50]"></span> Dependencias asignadas</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <livewire:user.online-count />
             </div>
 
             @if(session('success'))
-                <div
-                    id="users-success-alert"
-                    class="rounded-lg bg-green-100 border border-green-400 text-green-700 px-4 py-3 text-sm transition-opacity duration-500">
-                    {{ session('success') }}
+                <div id="users-success-alert"
+                    class="flex items-center gap-3 px-4 py-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 text-sm transition-opacity duration-500">
+                    <flux:icon.check-circle class="size-5 shrink-0" />
+                    <span>{{ session('success') }}</span>
                 </div>
             @endif
 
-            <div class="w-full">
-                <div class="flex w-full flex-col sm:flex-row gap-3">
-                    <form
-                        class="flex-1"
-                        method="GET"
-                        action="{{ route('users.index') }}"
-                        x-data>
-                        <flux:input
-                            id="users-search-input"
-                            type="search"
-                            name="q"
-                            :label="__('Search users')"
-                            :placeholder="__('Name, email, role or dependency')"
-                            :value="$search"
-                            x-on:input.debounce.600ms="$el.closest('form').submit()"
-                            x-on:keydown.enter.prevent="$el.closest('form').submit()" />
-                    </form>
-                    <div class="sm:pt-7">
-                        <flux:modal.trigger name="create-user-modal">
-                            <flux:button
-                                variant="primary"
-                                class="border hover:scale-105 transition-transform w-full sm:w-auto cursor-pointer">
-                                {{ __('Add User') }}
-                            </flux:button>
-                        </flux:modal.trigger>
-                    </div>
-                </div>
-            </div>
+            <div x-data="{ filtersOpen: @js($activeFilterCount > 0) }" class="flex w-full flex-col gap-3">
+                <form method="GET" action="{{ route('users.index') }}" class="flex w-full flex-col gap-3">
+                    <div class="flex w-full flex-col gap-3 sm:flex-row sm:items-center">
+                        <div class="relative w-full sm:w-80">
+                            <svg class="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-gray-400"
+                                 fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.3-4.3M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z" />
+                            </svg>
+                            <input
+                                id="users-search-input"
+                                type="search"
+                                name="q"
+                                value="{{ $search }}"
+                                placeholder="Buscar usuario..."
+                                x-on:input.debounce.600ms="$el.closest('form').submit()"
+                                x-on:keydown.enter.prevent="$el.closest('form').submit()"
+                                class="w-full rounded-lg border border-neutral-200 bg-white py-1.5 pl-9 pr-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white" />
+                        </div>
 
-            <div class="relative h-full flex-1 rounded-2xl border bg-zinc-50 dark:bg-zinc-900 border-neutral-200 dark:border-neutral-700">
+                        <button type="button" @click="filtersOpen = !filtersOpen"
+                            :class="filtersOpen ? 'border-blue-400 bg-blue-50 text-blue-700 dark:border-blue-600 dark:bg-blue-900/30 dark:text-blue-300' : 'border-neutral-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-gray-400 dark:hover:bg-zinc-700'"
+                            class="inline-flex items-center justify-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors">
+                            <flux:icon.funnel class="size-4" />
+                            Filtros
+                            @if($activeFilterCount > 0)
+                                <span class="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1 text-[11px] font-semibold leading-none text-white">
+                                    {{ $activeFilterCount }}
+                                </span>
+                            @endif
+                        </button>
+
+                        @if($activeFilterCount > 0 || $search !== '')
+                            <a href="{{ route('users.index') }}"
+                                class="inline-flex items-center justify-center gap-2 rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:border-red-200 hover:text-red-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-gray-400 dark:hover:border-red-900 dark:hover:text-red-400">
+                                <flux:icon.x-mark class="size-4" />
+                                Limpiar
+                            </a>
+                        @endif
+
+                        <div class="sm:ml-auto">
+                            <flux:modal.trigger name="create-user-modal">
+                                <flux:button icon="user-plus" square
+                                    class="cursor-pointer !bg-[#3b82f6] hover:!bg-blue-700 !text-white !border-transparent"
+                                    :aria-label="__('Add User')" :title="__('Add User')" />
+                            </flux:modal.trigger>
+                        </div>
+                    </div>
+
+                    <div x-show="filtersOpen" x-cloak
+                         class="rounded-xl border border-neutral-200 bg-white/70 p-3 dark:border-zinc-700 dark:bg-zinc-800/40">
+                        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                            <div class="flex flex-col gap-1.5">
+                                <label for="users-campus-filter" class="text-xs font-medium text-gray-600 dark:text-gray-400">Sede</label>
+                                <select id="users-campus-filter" name="campus_id" x-on:change="$el.closest('form').submit()"
+                                    class="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white">
+                                    <option value="">Todas</option>
+                                    @if(auth()->user()->isSuperadmin())
+                                        <option value="global" @selected($filters['campus_id'] === 'global')>Global</option>
+                                    @endif
+                                    @foreach($campuses as $value => $label)
+                                        <option value="{{ $value }}" @selected((string) $filters['campus_id'] === (string) $value)>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="flex flex-col gap-1.5">
+                                <label for="users-dependency-filter" class="text-xs font-medium text-gray-600 dark:text-gray-400">Dependencia</label>
+                                <select id="users-dependency-filter" name="dependency_id" x-on:change="$el.closest('form').submit()"
+                                    class="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white">
+                                    <option value="">Todas</option>
+                                    @foreach($filterDependencies as $value => $label)
+                                        <option value="{{ $value }}" @selected((string) $filters['dependency_id'] === (string) $value)>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="flex flex-col gap-1.5">
+                                <label for="users-role-filter" class="text-xs font-medium text-gray-600 dark:text-gray-400">Rol</label>
+                                <select id="users-role-filter" name="role" x-on:change="$el.closest('form').submit()"
+                                    class="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white">
+                                    <option value="">Todos</option>
+                                    @foreach($roles as $value => $label)
+                                        <option value="{{ $value }}" @selected($filters['role'] === $value)>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="flex flex-col gap-1.5">
+                                <label for="users-status-filter" class="text-xs font-medium text-gray-600 dark:text-gray-400">Estado</label>
+                                <select id="users-status-filter" name="status" x-on:change="$el.closest('form').submit()"
+                                    class="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white">
+                                    <option value="">Todos</option>
+                                    @foreach($statusOptions as $value => $label)
+                                        <option value="{{ $value }}" @selected($filters['status'] === $value)>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="relative h-full flex-1 rounded-2xl border bg-zinc-50 dark:bg-zinc-900 border-neutral-200 dark:border-neutral-700"
+                 x-data="{ onlineIds: @js($onlineUserIds) }"
+                 x-on:online-users-updated.window="onlineIds = $event.detail.ids">
 
                 {{-- Desktop table --}}
                 <div class="hidden md:block p-4">
@@ -55,6 +152,7 @@
                                 <tr class="text-left text-xs uppercase tracking-wide text-zinc-600 dark:text-zinc-300">
                                     <th class="px-4 py-3">{{ __('User') }}</th>
                                     <th class="px-4 py-3">{{ __('Role') }}</th>
+                                    <th class="px-4 py-3">Sede</th>
                                     <th class="px-4 py-3">{{ __('Dependencies') }}</th>
                                     <th class="px-4 py-3">{{ __('Status') }}</th>
                                     <th class="px-4 py-3 text-right">{{ __('Actions') }}</th>
@@ -70,18 +168,21 @@
                                     <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/70 transition-colors">
                                         <td class="px-4 py-3">
                                             <div class="flex items-center gap-3 min-w-[16rem]">
-                                                @if($user->avatar)
-                                                    <img
-                                                        src="{{ Storage::url($user->avatar) }}"
-                                                        alt="{{ $user->name }}"
-                                                        class="h-9 w-9 rounded-full object-cover border border-neutral-200 dark:border-neutral-600">
-                                                @else
-                                                    <div class="h-9 w-9 rounded-full bg-gray-200 dark:bg-gray-700 border border-neutral-200 dark:border-neutral-600 flex items-center justify-center">
-                                                        <span class="text-sm font-bold uppercase text-gray-800 dark:text-white">
-                                                            {{ substr($user->name, 0, 1) }}
-                                                        </span>
-                                                    </div>
-                                                @endif
+                                                <div class="relative shrink-0">
+                                                    @if($user->avatar)
+                                                        <img
+                                                            src="{{ Storage::url($user->avatar) }}"
+                                                            alt="{{ $user->name }}"
+                                                            class="h-9 w-9 rounded-full object-cover border border-neutral-200 dark:border-neutral-600">
+                                                    @else
+                                                        <div class="h-9 w-9 rounded-full bg-gray-200 dark:bg-gray-700 border border-neutral-200 dark:border-neutral-600 flex items-center justify-center">
+                                                            <span class="text-sm font-bold uppercase text-gray-800 dark:text-white">
+                                                                {{ substr($user->name, 0, 1) }}
+                                                            </span>
+                                                        </div>
+                                                    @endif
+                                                    <span x-show="onlineIds.includes({{ $user->id }})" x-cloak title="En línea" class="absolute -bottom-0.5 -right-0.5 size-3 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-zinc-900"></span>
+                                                </div>
                                                 <div class="min-w-0">
                                                     <p class="truncate font-semibold text-zinc-900 dark:text-zinc-100">{{ $user->name }}</p>
                                                     <p class="truncate text-sm text-zinc-600 dark:text-zinc-400">{{ $user->email }}</p>
@@ -101,6 +202,11 @@
                                                     {{ __(ucfirst($user->role)) }}
                                                 </flux:badge>
                                             @endif
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            <span class="text-sm text-zinc-700 dark:text-zinc-300">
+                                                {{ $user->campus?->name ?? 'Global' }}
+                                            </span>
                                         </td>
                                         <td class="px-4 py-3 max-w-sm">
                                             @if(isset($user->role) && $user->role === 'user')
@@ -142,15 +248,13 @@
                                             @endif
                                         </td>
                                         <td class="px-4 py-3">
-                                            @if($user->is_active)
-                                                <flux:badge class="!bg-green-600 !text-white" :color="null">
-                                                    Activo
-                                                </flux:badge>
-                                            @else
-                                                <flux:badge class="!bg-red-600 !text-white" :color="null">
-                                                    Inactivo
-                                                </flux:badge>
-                                            @endif
+                                            <div class="flex flex-col items-start gap-1">
+                                                @if($user->is_active)
+                                                    <span class="text-sm font-semibold text-green-600 dark:text-green-400">Activo</span>
+                                                @else
+                                                    <span class="text-sm font-semibold text-red-600 dark:text-red-400">Inactivo</span>
+                                                @endif
+                                            </div>
                                         </td>
                                         <td class="px-4 py-3">
                                             <div class="flex items-center justify-end gap-1">
@@ -186,7 +290,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="5" class="px-4 py-8 text-center text-sm text-zinc-600 dark:text-zinc-400">
+                                        <td colspan="6" class="px-4 py-8 text-center text-sm text-zinc-600 dark:text-zinc-400">
                                             {{ __('No users found') }}
                                         </td>
                                     </tr>
@@ -207,7 +311,7 @@
                         <div class="block p-5 rounded-2xl border border-neutral-200 dark:border-neutral-600 hover:border-[#e2a542] hover:shadow-lg transition-all duration-200 bg-white dark:bg-zinc-800">
                             <div class="flex items-center gap-5">
                                 {{-- Avatar --}}
-                                <div class="shrink-0">
+                                <div class="relative shrink-0">
                                     @if($user->avatar)
                                         <img src="{{ Storage::url($user->avatar) }}" alt="{{ $user->name }}"
                                              class="h-10 w-10 rounded-full object-cover border border-neutral-200 dark:border-neutral-600">
@@ -218,6 +322,7 @@
                                             </span>
                                         </div>
                                     @endif
+                                    <span x-show="onlineIds.includes({{ $user->id }})" x-cloak title="En línea" class="absolute -bottom-0.5 -right-0.5 size-3 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-zinc-800"></span>
                                 </div>
 
                                 {{-- Main info --}}
@@ -322,21 +427,7 @@
         </div>
     </div>
 
-    <!-- Leyenda -->
-    <div class="z-10 flex w-full flex-1 flex-col gap-4 p-6 mb-4 rounded-2xl border border-neutral-200 dark:border-neutral-700 bg-zinc-50 dark:bg-zinc-900">
-        <div class="flex items-center justify-center gap-4 sm:gap-8 flex-wrap">
-            <div class="flex items-center gap-2">
-                <div class="w-4 h-4 rounded-sm bg-[#e2a542]"></div>
-                <span class="text-xs sm:text-sm text-black dark:text-white">Rol</span>
-            </div>
-            <div class="flex items-center gap-2">
-                <div class="w-4 h-4 rounded-sm bg-[#cc5e50]"></div>
-                <span class="text-xs sm:text-sm text-black dark:text-white">Dependencias</span>
-            </div>
-        </div>
-    </div>
-
-    @livewire('user.create-user-modal', ['dependencies' => $dependencies, 'roles' => $roles])
-    @livewire('user.edit-user-modal', ['dependencies' => $dependencies, 'roles' => $roles])
+    @livewire('user.create-user-modal', ['dependencies' => $dependencies, 'campuses' => $campuses, 'roles' => $roles])
+    @livewire('user.edit-user-modal', ['dependencies' => $dependencies, 'campuses' => $campuses, 'roles' => $roles])
 
 </x-layouts.app>

@@ -9,12 +9,17 @@ class Dependency extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name'];
+    protected $fillable = ['name', 'campus_id'];
 
     public function users()
     {
         return $this->belongsToMany(User::class, 'dependency_user')
                     ->withTimestamps();
+    }
+
+    public function campus()
+    {
+        return $this->belongsTo(Campus::class);
     }
 
     public function events()

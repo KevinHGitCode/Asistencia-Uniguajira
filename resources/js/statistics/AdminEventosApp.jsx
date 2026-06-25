@@ -74,13 +74,14 @@ function classifyEvents(events) {
 
 export default function AdminEventosApp() {
     useTheme();
-    const { state, fetchAll } = useAdminEventos();
+    const { state, fetchAll, fetchFilterOptions } = useAdminEventos();
 
     // Filtros
     const [from, setFrom]               = useState("");
     const [to, setTo]                   = useState("");
     const [search, setSearch]           = useState("");
     const [searchInput, setSearchInput] = useState("");
+    const [campusId, setCampusId]       = useState("");
     const [selectedDeps, setSelectedDeps]     = useState([]);
     const [selectedUsers, setSelectedUsers]   = useState([]);
 
@@ -94,11 +95,17 @@ export default function AdminEventosApp() {
     }, []);
 
     const filters = useMemo(
-        () => ({ from, to, search, dependencies: selectedDeps, users: selectedUsers }),
-        [from, to, search, selectedDeps, selectedUsers],
+        () => ({ from, to, search, campusId, dependencies: selectedDeps, users: selectedUsers }),
+        [from, to, search, campusId, selectedDeps, selectedUsers],
     );
 
     useEffect(() => { fetchAll(filters); }, [filters, fetchAll]);
+
+    useEffect(() => {
+        setSelectedDeps([]);
+        setSelectedUsers([]);
+        fetchFilterOptions({ campusId });
+    }, [campusId, fetchFilterOptions]);
 
     const { events, total, loading, error, filterOptions } = state;
 
@@ -111,11 +118,12 @@ export default function AdminEventosApp() {
     // Handlers limpiar filtros
     const clearDates  = () => { setFrom(""); setTo(""); };
     const clearSearch = () => { setSearch(""); setSearchInput(""); };
+    const clearCampus = () => setCampusId("");
     const removeDep   = (id) => setSelectedDeps((p) => p.filter((d) => d !== id));
     const removeUser  = (id) => setSelectedUsers((p) => p.filter((u) => u !== id));
 
-    const hasAnyFilter = from || to || search || selectedDeps.length || selectedUsers.length;
-    const clearAll = () => { clearDates(); clearSearch(); setSelectedDeps([]); setSelectedUsers([]); };
+    const hasAnyFilter = from || to || search || campusId || selectedDeps.length || selectedUsers.length;
+    const clearAll = () => { clearDates(); clearSearch(); clearCampus(); setSelectedDeps([]); setSelectedUsers([]); };
 
     return (
         <div>
@@ -125,6 +133,7 @@ export default function AdminEventosApp() {
                 from={from} onFromChange={setFrom}
                 to={to}     onToChange={setTo}
                 filterOptions={filterOptions}
+                campusId={campusId} onCampusChange={setCampusId}
                 selectedDeps={selectedDeps}   onDepsChange={setSelectedDeps}
                 selectedUsers={selectedUsers} onUsersChange={setSelectedUsers}
                 hasAnyFilter={hasAnyFilter}   onClearAll={clearAll}
@@ -135,10 +144,12 @@ export default function AdminEventosApp() {
                 filters={filters}
                 depOptions={filterOptions.dependencies}
                 userOptions={filterOptions.users}
+                campusOptions={filterOptions.campuses}
                 onRemoveDep={removeDep}
                 onRemoveUser={removeUser}
                 onClearDates={clearDates}
                 onClearSearch={clearSearch}
+                onClearCampus={clearCampus}
             />
 
             {/* ── Contador ── */}

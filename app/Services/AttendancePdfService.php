@@ -3,8 +3,8 @@
 namespace App\Services;
 
 use App\Models\Event;
-use setasign\Fpdi\Tfpdf\Fpdi;
 use Carbon\Carbon;
+use setasign\Fpdi\Tfpdf\Fpdi;
 
 class AttendancePdfService
 {
@@ -19,6 +19,7 @@ class AttendancePdfService
             if ($format->file) {
                 $cfg['file'] = $format->file;
             }
+
             return $cfg;
         }
 
@@ -34,7 +35,7 @@ class AttendancePdfService
     private function truncateText(string $text, int $limit = 25): string
     {
         return mb_strlen($text) > $limit
-            ? mb_substr($text, 0, $limit - 3) . '...'
+            ? mb_substr($text, 0, $limit - 3).'...'
             : $text;
     }
 
@@ -62,12 +63,13 @@ class AttendancePdfService
                     $lower = preg_replace('/\pM/u', '', $decomposed);
                 }
             }
+
             return $lower ?? '';
         };
 
         $stripPlural = fn (string $v): string => preg_replace('/(es|s)$/u', '', $v) ?? $v;
 
-        $target         = $normalize($roleText);
+        $target = $normalize($roleText);
         $targetSingular = $stripPlural($target);
 
         if ($target === '') {
@@ -81,7 +83,7 @@ class AttendancePdfService
                 continue;
             }
 
-            $normKey         = $normalize((string) $key);
+            $normKey = $normalize((string) $key);
             $normKeySingular = $stripPlural($normKey);
 
             if ($target === $normKey
@@ -109,14 +111,14 @@ class AttendancePdfService
      */
     private function printAutoFitText(Fpdi $pdf, array $col, float $y, string $text, string $style = '', ?float $h = null): void
     {
-        $cw       = $col['w'] ?? 0;
-        $ch       = $h ?? ($col['h'] ?? 7.8);
+        $cw = $col['w'] ?? 0;
+        $ch = $h ?? ($col['h'] ?? 7.8);
         $baseSize = $col['fontSize'] ?? 12;
-        $minSize  = $col['minFontSize'] ?? 6;
-        $align    = $col['align'] ?? 'L';
-        $cx       = $col['x'];
+        $minSize = $col['minFontSize'] ?? 6;
+        $align = $col['align'] ?? 'L';
+        $cx = $col['x'];
 
-        $textIso   = $this->toIso((string) $text);
+        $textIso = $this->toIso((string) $text);
         $available = max(0, $cw - 0.6);
 
         // 1) Fuente base
@@ -127,6 +129,7 @@ class AttendancePdfService
             $pdf->SetXY($cx, $y);
             $pdf->Cell($cw, $ch, $textIso, 0, 0, $align);
             $pdf->SetFont('Arial', '', 12);
+
             return;
         }
 
@@ -149,9 +152,9 @@ class AttendancePdfService
         } else {
             // 3) Partir en varias líneas dentro de la altura de la celda.
             $textWidth = $pdf->GetStringWidth($textIso);
-            $lines     = max(2, (int) ceil($textWidth / max(0.1, $available)));
-            $lines     = min($lines, 4);
-            $lineH     = $ch / $lines;
+            $lines = max(2, (int) ceil($textWidth / max(0.1, $available)));
+            $lines = min($lines, 4);
+            $lineH = $ch / $lines;
 
             $pdf->SetXY($cx, $y);
             $pdf->MultiCell($cw, $lineH, $textIso, 0, $align);
@@ -165,10 +168,10 @@ class AttendancePdfService
 
         $cfg = $this->getConfig($formatSlug);
 
-        $pdf = new Fpdi();
+        $pdf = new Fpdi;
         $path = public_path("formats/{$cfg['file']}");
 
-        if (!file_exists($path)) {
+        if (! file_exists($path)) {
             throw new \Exception("File not found at $path");
         }
 
@@ -189,8 +192,23 @@ class AttendancePdfService
             }
 
             if (isset($header['area']) && $event->area) {
-                $text = ' - ' . mb_strtoupper($event->area->name, 'UTF-8');
+                $text = ' - '.mb_strtoupper($event->area->name, 'UTF-8');
                 $this->printAutoFitText($pdf, $header['area'], $header['area']['y'], $text, 'B', 8);
+            }
+
+            if (isset($header['campus'])) {
+                $campusName = $event->campus?->name ?? $event->dependency?->campus?->name ?? '';
+
+                if ($campusName !== '') {
+                    $this->printAutoFitText(
+                        $pdf,
+                        $header['campus'],
+                        $header['campus']['y'],
+                        mb_strtoupper($campusName, 'UTF-8'),
+                        'B',
+                        8
+                    );
+                }
             }
 
             if (isset($header['title'])) {
@@ -277,7 +295,7 @@ class AttendancePdfService
                     $pdf,
                     $cols['name'],
                     $y,
-                    trim(($p->first_name ?? '') . ' ' . ($p->last_name ?? ''))
+                    trim(($p->first_name ?? '').' '.($p->last_name ?? ''))
                 );
             }
 
@@ -290,7 +308,7 @@ class AttendancePdfService
                 // Si tiene 'x' y 'w', es texto
                 if (isset($cols['role']['x']) && isset($cols['role']['w'])) {
                     $this->printAutoFitText($pdf, $cols['role'], $y, $roleText);
-                // Si no, es tipo casilla
+                    // Si no, es tipo casilla
                 } else {
                     $pdf->SetFont('Arial', '', $cols['role']['fontSize'] ?? 12);
                     $matchedKey = $this->findRoleCheckboxKey($cols['role'], $roleText);
@@ -307,13 +325,13 @@ class AttendancePdfService
             if (isset($cols['program'])) {
                 // El mismo campo del formato se reutiliza para Programa,
                 // Dependencia u Organización según el estamento del participante.
-                $role         = $detail?->participantRole;
-                $roleTypeKey  = mb_strtolower(trim($role?->type?->name ?? ''), 'UTF-8');
+                $role = $detail?->participantRole;
+                $roleTypeKey = mb_strtolower(trim($role?->type?->name ?? ''), 'UTF-8');
 
-                $programName = match(true) {
-                    $roleTypeKey === 'administrativo'    => $role?->dependency?->name ?? $role?->program?->name ?? '',
+                $programName = match (true) {
+                    $roleTypeKey === 'administrativo' => $role?->dependency?->name ?? $role?->program?->name ?? '',
                     $roleTypeKey === 'comunidad externa' => $role?->organization?->name ?? '',
-                    default                              => $role?->program?->name ?? $role?->dependency?->name ?? '',
+                    default => $role?->program?->name ?? $role?->dependency?->name ?? '',
                 };
 
                 $this->printAutoFitText($pdf, $cols['program'], $y, $programName);

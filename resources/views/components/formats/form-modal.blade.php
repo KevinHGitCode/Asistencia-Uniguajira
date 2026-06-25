@@ -19,7 +19,7 @@
          x-transition:leave="transition ease-in duration-150"
          x-transition:leave-start="opacity-100 scale-100"
          x-transition:leave-end="opacity-0 scale-95"
-         class="relative w-full max-w-lg bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-neutral-200 dark:border-zinc-700 z-10 max-h-[90vh] overflow-y-auto">
+         class="relative z-10 w-full max-w-lg overflow-visible rounded-2xl border border-neutral-200 bg-white shadow-xl dark:border-zinc-700 dark:bg-zinc-900">
 
         <div class="flex items-center justify-between px-6 py-4 border-b border-neutral-200 dark:border-zinc-700">
             <h3 class="text-base font-semibold text-gray-900 dark:text-white"
@@ -108,20 +108,12 @@
                 <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Dependencias asignadas
                 </label>
-                <div class="max-h-40 overflow-y-auto rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-2 space-y-1">
-                    @foreach($dependencies as $dependency)
-                        <label class="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-zinc-700 cursor-pointer transition-colors">
-                            <input
-                                type="checkbox"
-                                name="dependencies[]"
-                                value="{{ $dependency->id }}"
-                                :checked="selectedDependencies.includes({{ $dependency->id }})"
-                                @change="toggleDependency({{ $dependency->id }})"
-                                class="rounded border-gray-300 text-[#e2a542] focus:ring-[#e2a542]" />
-                            <span class="text-sm text-gray-700 dark:text-gray-300">{{ $dependency->name }}</span>
-                        </label>
-                    @endforeach
-                </div>
+                <x-ui.multi-searchable-select
+                    :options="$dependencies"
+                    x-model="selectedDependencies"
+                    name="dependencies"
+                    placeholder="Agregar dependencias…"
+                    search-placeholder="Buscar dependencia…" />
                 <p class="text-xs text-gray-400">Selecciona las dependencias que pueden usar este formato.</p>
             </div>
 

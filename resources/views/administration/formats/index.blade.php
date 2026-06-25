@@ -1,6 +1,6 @@
 <x-layouts.app :title="__('Formatos')">
 
-<div class="flex h-full w-full flex-1 flex-col gap-6 p-1 sm:p-4 md:p-6" x-data="formatsManager()">
+<div class="flex min-h-full w-full flex-1 flex-col gap-6 p-1 pb-8 sm:p-4 sm:pb-10 md:p-6 md:pb-12" x-data="formatsManager()">
 
     {{-- Header --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -23,6 +23,10 @@
             Nuevo Formato
         </button>
     </div>
+
+    <x-administration.info-note color="#e2a542">
+        Los <strong>formatos</strong> son las plantillas PDF usadas para descargar listados de asistencia. Puedes asignar cada formato a una o más dependencias para que esté disponible al exportar los eventos correspondientes.
+    </x-administration.info-note>
 
     {{-- Alertas --}}
     @if(session('success'))

@@ -1,26 +1,27 @@
 <?php
 
-use App\Http\Controllers\DashboardController;
-use App\Livewire\Settings\About;
-use App\Livewire\Settings\Appearance;
-use App\Livewire\Settings\Password;
-use App\Livewire\Settings\Profile;
-use App\Livewire\Settings\Language;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\UserController;
-use \App\Http\Controllers\Lang\LanguageController;
-use App\Http\Controllers\EventController;
-use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\Configuration\ActivityLogController;
 use App\Http\Controllers\Configuration\AdministrationController;
 use App\Http\Controllers\Configuration\AffiliationController;
 use App\Http\Controllers\Configuration\AreaController;
+use App\Http\Controllers\Configuration\CampusController;
 use App\Http\Controllers\Configuration\DependencyController;
-use App\Http\Controllers\Configuration\ParticipantTypeController;
-use App\Http\Controllers\Configuration\ProgramController;
 use App\Http\Controllers\Configuration\FormatController;
 use App\Http\Controllers\Configuration\OrganizationController;
 use App\Http\Controllers\Configuration\ParticipantImportController;
-use App\Http\Controllers\Configuration\ActivityLogController;
+use App\Http\Controllers\Configuration\ParticipantTypeController;
+use App\Http\Controllers\Configuration\ProgramController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EventController;
+use App\Http\Controllers\Lang\LanguageController;
+use App\Http\Controllers\StatisticsController;
+use App\Http\Controllers\UserController;
+use App\Livewire\Settings\About;
+use App\Livewire\Settings\Appearance;
+use App\Livewire\Settings\Language;
+use App\Livewire\Settings\Password;
+use App\Livewire\Settings\Profile;
+use Illuminate\Support\Facades\Route;
 
 /**
  * ================================================================
@@ -35,6 +36,9 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
+Route::post('/dashboard/campus', [DashboardController::class, 'updateCampus'])
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard.campus');
 
 /**
  * ================================================================
@@ -49,6 +53,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('eventos/{id}', [EventController::class, 'destroy'])->name('events.destroy');
 
     Route::get('eventos/{id}/descargar-asistencia/{formatSlug?}', [EventController::class, 'descargarAsistencia'])
+        ->middleware('throttle:pdf')
         ->name('events.download');
 
     Route::post('eventos/{event}/terminar', [EventController::class, 'end'])
@@ -59,31 +64,25 @@ Route::middleware(['auth'])
     ->get('/dependencies/{dependency}/areas', [EventController::class, 'areas'])
     ->name('dependencies.areas');
 
-Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
+Route::middleware(['auth', 'verified', 'role:admin,superadmin'])->group(function () {
     Route::get('/admin/events', function () {
         return view('events.admin-events');
     })->name('admin.events.index');
 });
 
-
 /**
  * ================================================================
- *  RUTAS DE REGISTRO Y CONFIRMACIÓN DE ASISTENCIA
+ *  RUTA PÚBLICA DE ACCESO AL EVENTO (registro de asistencia por QR)
  * ================================================================
+ *  El registro lo gestiona el componente Livewire AttendanceRegistration
+ *  montado en events/access.blade.php. El flujo legacy del
+ *  AttendanceController se retiró (ADR-0003).
  */
-
-// Ruta pública para mostrar confirmación de asistencia
-Route::get('/events/acceso/{slug}/confirmacion/{attendanceId}', [AttendanceController::class, 'confirmation'])
-    ->name('attendance.confirmation');
 
 // Ruta pública para acceder al evento
 Route::get('/events/acceso/{slug}', [EventController::class, 'access'])
+    ->middleware('throttle:public')
     ->name('events.access');
-
-// Ruta pública para registrar asistencia
-Route::post('/events/acceso/{slug}', [AttendanceController::class, 'store'])
-    ->name('attendance.store');
-
 
 /**
  * ================================================================
@@ -91,27 +90,28 @@ Route::post('/events/acceso/{slug}', [AttendanceController::class, 'store'])
  * ================================================================
  */
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::view('estadisticas',                   'statistics.statistics')       ->name('statistics');
-    Route::view('estadisticas/asistencias',       'statistics.asistencias')      ->name('statistics.asistencias');
-    Route::view('estadisticas/participantes',     'statistics.participantes')    ->name('statistics.participantes');
-    Route::view('estadisticas/eventos',           'statistics.eventos')          ->name('statistics.eventos');
-    Route::view('estadisticas/compara-eventos',   'statistics.compara-eventos')  ->name('statistics.compara-eventos');
+    Route::view('estadisticas', 'statistics.statistics')->name('statistics');
+    Route::view('estadisticas/asistencias', 'statistics.asistencias')->name('statistics.asistencias');
+    Route::view('estadisticas/participantes', 'statistics.participantes')->name('statistics.participantes');
+    Route::view('estadisticas/eventos', 'statistics.eventos')->name('statistics.eventos');
+    Route::view('estadisticas/compara-eventos', 'statistics.compara-eventos')->name('statistics.compara-eventos');
+    Route::post('estadisticas/campus', [StatisticsController::class, 'updateCampus'])
+        ->name('statistics.campus');
 });
 
-Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
+Route::middleware(['auth', 'verified', 'role:admin,superadmin'])->group(function () {
     Route::view('estadisticas/usuarios', 'statistics.usuarios')->name('statistics.usuarios');
 });
-
 
 /**
  * ================================================================
  *  RUTAS DE ADMINISTRACIÓN DE USUARIOS
  * ================================================================
  */
-Route::middleware(['auth', 'verified', 'role:admin'])
+Route::middleware(['auth', 'verified', 'role:admin,superadmin'])
     ->prefix('usuarios')
     ->group(function () {
-        
+
         Route::get('/', [UserController::class, 'index'])->name('users.index');
         Route::get('/create', [UserController::class, 'create'])->name('user.form');
         Route::post('/', [UserController::class, 'store'])->name('users.store');
@@ -131,16 +131,27 @@ Route::middleware(['auth', 'verified', 'role:admin'])
  *  RUTAS DE ADMINISTRACIÓN DEL SISTEMA
  * ================================================================
  */
-Route::middleware(['auth', 'verified', 'role:admin'])
+Route::middleware(['auth', 'verified', 'role:admin,superadmin'])
     ->prefix('administracion')
     ->group(function () {
-        
+
         Route::get('/', [AdministrationController::class, 'index'])->name('administracion.index');
+
+        Route::middleware('role:superadmin')->group(function () {
+            Route::get('/campuses', [CampusController::class, 'index'])->name('campuses.index');
+            Route::post('/campuses', [CampusController::class, 'store'])->name('campuses.store');
+            Route::post('/campuses/import', [CampusController::class, 'importExcel'])->name('campuses.import');
+            Route::get('/campuses/download-template', [CampusController::class, 'downloadTemplate'])->name('campuses.download-template');
+            Route::get('/campuses/download-export', [CampusController::class, 'downloadExport'])->name('campuses.download-export');
+            Route::post('/campuses/edit/{campus}', [CampusController::class, 'update'])->name('campuses.update');
+            Route::delete('/campuses/{campus}', [CampusController::class, 'destroy'])->name('campuses.destroy');
+        });
 
         // Rutas específicas de dependencias
         Route::get('/dependencies', [DependencyController::class, 'index'])->name('dependencies.index');
         Route::get('/dependencies/create', [DependencyController::class, 'create'])->name('dependencies.create');
         Route::post('/dependencies/import', [DependencyController::class, 'importExcel'])->name('dependencies.import');
+        Route::get('/dependencies/download-skipped', [DependencyController::class, 'downloadSkipped'])->name('dependencies.download-skipped');
         Route::get('/dependencies/download-template', [DependencyController::class, 'downloadTemplate'])->name('dependencies.download-template');
         Route::get('/dependencies/download-export', [DependencyController::class, 'downloadExport'])->name('dependencies.download-export');
         Route::post('/dependencies', [DependencyController::class, 'store'])->name('dependencies.store');
@@ -159,16 +170,17 @@ Route::middleware(['auth', 'verified', 'role:admin'])
         Route::post('/areas/edit/{area}', [AreaController::class, 'update'])->name('areas.update');
         Route::post('/areas/delete/{area}', [AreaController::class, 'destroy'])->name('areas.delete');
 
+        Route::middleware('role:superadmin')->group(function () {
+            // Rutas específicas de formatos
+            Route::get('/formats', [FormatController::class, 'index'])->name('formats.index');
+            // Route::get('/formats/create', [FormatController::class, 'create'])->name('formats.create');  // TODO: Esta ruta no se usa
+            Route::post('/formats', [FormatController::class, 'store'])->name('formats.store');
+            Route::post('/formats/edit/{format}', [FormatController::class, 'update'])->name('formats.update');
+            Route::post('/formats/delete/{format}', [FormatController::class, 'destroy'])->name('formats.destroy');
 
-        // Rutas específicas de formatos
-        Route::get('/formats', [FormatController::class, 'index'])->name('formats.index');
-        // Route::get('/formats/create', [FormatController::class, 'create'])->name('formats.create');  // TODO: Esta ruta no se usa
-        Route::post('/formats', [FormatController::class, 'store'])->name('formats.store');
-        Route::post('/formats/edit/{format}', [FormatController::class, 'update'])->name('formats.update');
-        Route::post('/formats/delete/{format}', [FormatController::class, 'destroy'])->name('formats.destroy');
-
-        Route::get('/formats/{format}/mapper', [FormatController::class, 'mapper'])->name('formats.mapper');
-        Route::post('/formats/{format}/mapping', [FormatController::class, 'saveMapping'])->name('formats.save-mapping');
+            Route::get('/formats/{format}/mapper', [FormatController::class, 'mapper'])->name('formats.mapper');
+            Route::post('/formats/{format}/mapping', [FormatController::class, 'saveMapping'])->name('formats.save-mapping');
+        });
 
         // Rutas de afiliaciones
         Route::get('/affiliations', [AffiliationController::class, 'index'])->name('affiliations.index');
@@ -217,9 +229,18 @@ Route::middleware(['auth', 'verified', 'role:admin'])
         Route::get('/participants/download-template', [ParticipantImportController::class, 'downloadTemplate'])->name('participants-import.download-template');
         Route::post('/participants', [ParticipantImportController::class, 'store'])->name('participants-import.store');
 
-        // Rutas de registros de actividad
-        Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
-        Route::post('/activity-logs/clear', [ActivityLogController::class, 'clear'])->name('activity-logs.clear');
+        // Pasarela de revisión de importación (ADR-0004)
+        Route::get('/participants/imports', [ParticipantImportController::class, 'batches'])->name('participants-import.batches');
+        Route::get('/participants/imports/{batch}', [ParticipantImportController::class, 'review'])->name('participants-import.review');
+        Route::get('/participants/imports/{batch}/skipped', [ParticipantImportController::class, 'downloadBatchSkipped'])->name('participants-import.batch-skipped');
+        Route::post('/participants/imports/{batch}/approve', [ParticipantImportController::class, 'approve'])->name('participants-import.approve');
+        Route::post('/participants/imports/{batch}/reject', [ParticipantImportController::class, 'reject'])->name('participants-import.reject');
+
+        Route::middleware('role:superadmin')->group(function () {
+            // Rutas de registros de actividad
+            Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
+            Route::post('/activity-logs/clear', [ActivityLogController::class, 'clear'])->name('activity-logs.clear');
+        });
 
     });
 
@@ -241,6 +262,4 @@ Route::middleware(['auth'])->group(function () {
         ->name('settings.language.switch');
 });
 
-
-
-require __DIR__ . '/auth.php';
+require __DIR__.'/auth.php';

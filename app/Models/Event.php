@@ -23,6 +23,7 @@ class Event extends Model
         'user_id',
         'dependency_id',
         'area_id',
+        'campus_id',
     ];
 
     protected $casts = [
@@ -56,6 +57,11 @@ class Event extends Model
         return $this->belongsTo(Area::class);
     }
 
+    public function campus()
+    {
+        return $this->belongsTo(Campus::class);
+    }
+
     public function getIsEditableAttribute(): bool
     {
         return \Carbon\Carbon::parse($this->date)->greaterThanOrEqualTo(now()->startOfDay());
@@ -77,7 +83,7 @@ class Event extends Model
         }
 
         if ($this->end_time !== null) {
-            $endDateTime = \Carbon\Carbon::parse($this->date . ' ' . $this->end_time);
+            $endDateTime = $this->eventDateTime($this->end_time);
             if (now()->gt($endDateTime)) {
                 return false;
             }
@@ -100,8 +106,15 @@ class Event extends Model
             return false;
         }
 
-        $startDateTime = \Carbon\Carbon::parse($this->date . ' ' . $this->start_time);
+        $startDateTime = $this->eventDateTime($this->start_time);
 
         return now()->lt($startDateTime);
+    }
+
+    private function eventDateTime(?string $time): \Carbon\Carbon
+    {
+        $date = \Carbon\Carbon::parse($this->date)->toDateString();
+
+        return \Carbon\Carbon::parse($date.' '.($time ?: '00:00:00'));
     }
 }

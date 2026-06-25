@@ -61,8 +61,8 @@ class ParticipantTemplateExport implements FromArray, WithHeadings, WithStyles
             ],
             // Fila 2: ejemplo (gris suave)
             2 => [
-                'font'  => ['color' => ['argb' => 'FF6B7280'], 'italic' => true],
-                'fill'  => ['fillType' => 'solid', 'startColor' => ['argb' => 'FFF9FAFB']],
+                'font' => ['color' => ['argb' => 'FF6B7280'], 'italic' => true],
+                'fill' => ['fillType' => 'solid', 'startColor' => ['argb' => 'FFF9FAFB']],
             ],
         ];
     }

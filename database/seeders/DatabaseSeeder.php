@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\Dependency;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -13,12 +12,13 @@ class DatabaseSeeder extends Seeder
     {
         // Seeders base
         $this->call([
+            CampusSeeder::class,
             // DependenciesSeeder::class,
             ParticipantTypeSeeder::class,
         ]);
 
-        // Lista de administradores
-        $admins = [
+        // Lista de superadministradores
+        $superadmins = [
             ['name' => 'carlos', 'email' => 'carlos@uniguajira.edu.co'],
             ['name' => 'luis', 'email' => 'lfelipezapata@uniguajira.edu.co'],
             ['name' => 'kevin', 'email' => 'khafiddiaz@uniguajira.edu.co'],
@@ -26,12 +26,13 @@ class DatabaseSeeder extends Seeder
             ['name' => 'renzo', 'email' => 'rdamiansanchez@uniguajira.edu.co'],
         ];
 
-        foreach ($admins as $admin) {
+        foreach ($superadmins as $superadmin) {
             User::create([
-                'name' => $admin['name'],
-                'email' => $admin['email'],
+                'name' => $superadmin['name'],
+                'email' => $superadmin['email'],
                 'password' => Hash::make('12345678'),
-                'role' => 'admin',
+                'role' => User::ROLE_SUPERADMIN,
+                'campus_id' => null,
             ]);
         }
 

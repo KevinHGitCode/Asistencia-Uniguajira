@@ -156,7 +156,7 @@ Todas bajo `/administracion` con middleware `auth + verified + role:admin`:
 ## Notas importantes
 
 - La base de datos SQLite local está en `database/database.sqlite`
-- El despliegue en producción es via Render (`https://asistencia-uniguajira.onrender.com/`)
+- El despliegue en producción es via Hostinger (hosting compartido)
 - Los reportes PDF de asistencia incluyen: info del evento, dependencia y lista de participantes
 - Los participantes se registran públicamente vía QR (sin necesidad de cuenta)
 - El calendario utiliza animaciones CSS personalizadas para el indicador "Hoy"
