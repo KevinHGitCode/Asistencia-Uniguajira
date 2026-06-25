@@ -119,4 +119,26 @@ class UserIndexFiltersTest extends TestCase
             ->assertDontSee('Bruno Completo')
             ->assertDontSee('Users list');
     }
+
+    public function test_filtro_de_dependencias_muestra_solo_el_nombre_guardado(): void
+    {
+        $campus = Campus::factory()->create(['name' => 'Maicao']);
+        $admin = User::factory()->create([
+            'role' => User::ROLE_ADMIN,
+            'campus_id' => $campus->id,
+            'email_verified_at' => now(),
+        ]);
+        $dependency = Dependency::factory()->forCampus($campus)->create([
+            'name' => 'Bienestar - Maicao',
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('users.index'))
+            ->assertOk()
+            ->assertViewHas('filterDependencies', [
+                $dependency->id => 'Bienestar - Maicao',
+            ])
+            ->assertSee('Bienestar - Maicao', false)
+            ->assertDontSee('Bienestar - Maicao - Maicao', false);
+    }
 }

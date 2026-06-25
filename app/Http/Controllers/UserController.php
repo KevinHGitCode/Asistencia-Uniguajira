@@ -344,13 +344,9 @@ class UserController extends Controller
     private function filterDependenciesFor(User $authUser): array
     {
         return Dependency::query()
-            ->with('campus:id,name')
             ->when($authUser->isAdmin(), fn ($query) => $query->where('campus_id', $authUser->campus_id))
             ->orderBy('name')
-            ->get(['id', 'name', 'campus_id'])
-            ->mapWithKeys(fn (Dependency $dependency) => [
-                $dependency->id => $dependency->name.($dependency->campus?->name ? ' - '.$dependency->campus->name : ''),
-            ])
+            ->pluck('name', 'id')
             ->toArray();
     }
 
