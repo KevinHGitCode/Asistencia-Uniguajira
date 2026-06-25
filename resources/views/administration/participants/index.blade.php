@@ -268,8 +268,9 @@
                         </table>
                     </div>
                     <p class="text-xs text-blue-600 dark:text-blue-400 mt-2 opacity-80">
-                        * <code class="font-mono">Tipo_progama</code> y <code class="font-mono">Sede</code> son opcionales.
-                        Si no incluyes <code class="font-mono">Sede</code>, se usa la sede del admin o la sede activa del superadmin.
+                        * <code class="font-mono">Tipo_progama</code> es opcional. Los participantes son globales y no tienen sede propia.
+                        Cuando un programa o dependencia exista en varias sedes, escribe el valor con sufijo, por ejemplo
+                        <code class="font-mono">IngenierÃ­a - Riohacha</code>.
                         El valor de <code class="font-mono">Tipo de Estamento</code> debe coincidir
                         exactamente con un estamento registrado en el sistema.
                         Si la columna no existe en el archivo, la importación falla con un error claro.

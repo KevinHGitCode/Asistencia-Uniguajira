@@ -1,7 +1,7 @@
 ---
 tipo: adr
 descripcion: ADR-0004 (propuesta) — Pasarela de revisión (staging) para la importación masiva de participantes
-actualizado: 2026-06-20
+actualizado: 2026-06-24
 ---
 
 # ADR-0004 · Pasarela de revisión para importación de participantes
@@ -19,6 +19,17 @@ Hoy el Excel de participantes se importa **directo a las tablas principales**
 listas con datos desactualizados, filas duplicadas o mal clasificadas que entran en bloque.
 Además, una importación grande corre **dentro del request** (puede tardar/bloquear) y el botón
 de subir permite **doble envío**.
+
+## Restriccion multi-sede
+Los `participants` son **globales**: una persona puede asistir a eventos de cualquier sede y no debe
+pedirse ni guardarse una sede propia del participante. Por eso, la plantilla de importacion masiva
+no debe incluir columna `Sede`, los formularios/listados de participantes no deben pedir sede, y los
+filtros de participantes no deben filtrar directamente por sede.
+
+Cuando el importador necesite resolver catalogos que si pertenecen a una sede (`programs` o
+`dependencies`), la sede se deriva del contexto autorizado del usuario o del sufijo escrito dentro
+de `Programa o Dependencia` (por ejemplo, `Ingenieria de Sistemas - Riohacha`). Ese sufijo
+desambigua el programa/dependencia; no convierte al participante en un registro local de sede.
 
 ## Decisión propuesta
 Introducir una **pasarela de revisión** (staging) entre la carga y el commit:

@@ -2,9 +2,9 @@
 
 namespace Tests\Feature\Configuration;
 
-use App\Models\ImportBatch;
 use App\Models\Campus;
 use App\Models\Dependency;
+use App\Models\ImportBatch;
 use App\Models\Participant;
 use App\Models\ParticipantType;
 use App\Models\Program;
@@ -39,6 +39,15 @@ class ParticipantStagingImportTest extends TestCase
         ]);
 
         return $campus;
+    }
+
+    public function test_la_plantilla_no_solicita_sede_para_participantes(): void
+    {
+        $export = new \App\Exports\ParticipantTemplateExport;
+
+        $this->assertNotContains('Sede', $export->headings());
+        $this->assertCount(8, $export->headings());
+        $this->assertCount(8, $export->array()[0]);
     }
 
     public function test_la_importacion_guarda_en_staging_sin_tocar_la_tabla_principal(): void
@@ -119,7 +128,7 @@ class ParticipantStagingImportTest extends TestCase
         $this->assertSame($program->id, $batch->stagedParticipants()->firstOrFail()->roles[0]['program_id']);
     }
 
-    public function test_import_reconoce_programa_historico_sin_sufijo_cuando_el_excel_indica_la_sede(): void
+    public function test_import_reconoce_programa_historico_sin_sufijo_cuando_el_valor_trae_sufijo_de_sede(): void
     {
         $campus = Campus::create(['name' => 'Riohacha']);
         $admin = User::factory()->create(['role' => 'admin', 'campus_id' => $campus->id]);
@@ -197,7 +206,7 @@ class ParticipantStagingImportTest extends TestCase
         $this->assertSame($dependency->id, $batch->stagedParticipants()->firstOrFail()->roles[0]['dependency_id']);
     }
 
-    public function test_import_indica_cuando_una_dependencia_existente_requiere_sede(): void
+    public function test_import_indica_cuando_una_dependencia_existente_requiere_sufijo_de_sede(): void
     {
         $maicao = Campus::create(['name' => 'Maicao']);
         $riohacha = Campus::create(['name' => 'Riohacha']);
@@ -219,7 +228,7 @@ class ParticipantStagingImportTest extends TestCase
         $this->assertSame(0, $batch->new_count);
         $this->assertSame(1, $batch->skipped_count);
         $this->assertSame(
-            'No se ha indicado la sede en el Excel para la dependencia: "BIBLIOTECA". Debes poner al final "- Sede".',
+            'No se pudo determinar la sede de la dependencia "BIBLIOTECA". Agrega el sufijo "- Sede" en Programa o Dependencia.',
             $batch->stagedParticipants()->firstOrFail()->error,
         );
     }

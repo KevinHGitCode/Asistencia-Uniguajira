@@ -138,8 +138,7 @@ class ParticipantImportController extends Controller
             ]);
         }
 
-        $hasCampusColumn = isset($colIndex['Sede']);
-        $defaultCampusId = $this->defaultCampusIdForImport($request, $campusScope, ! $hasCampusColumn);
+        $defaultCampusId = $this->defaultCampusIdForImport($request, $campusScope);
 
         $get = function (array $raw, string $col) use ($colIndex) {
             return isset($colIndex[$col]) ? ($raw[$colIndex[$col]] ?? null) : null;
@@ -281,7 +280,6 @@ class ParticipantImportController extends Controller
             $programName = self::normalizeExcelText($get($rawValues, 'Programa o Dependencia'));
             $programTypeRaw = self::normalizeExcelText($get($rawValues, 'Tipo_progama'));
             $affiliationType = self::normalizeExcelText($get($rawValues, 'Vinculacion'));
-            $campusName = $hasCampusColumn ? self::normalizeExcelText($get($rawValues, 'Sede')) : '';
 
             $firstName = $firstNameRaw === ''
                 ? ''
@@ -301,31 +299,9 @@ class ParticipantImportController extends Controller
 
             $rowCampusId = $this->resolveImportCampusId(
                 $request,
-                $campusName,
                 $defaultCampusId,
-                $campusByNameHash,
+                $this->campusIdFromNameSuffix($programName, $campusByNameHash),
             );
-
-            if ($campusName !== '' && ! $rowCampusId) {
-                $skipped[] = $this->skippedRow(
-                    $rawValues,
-                    $headers,
-                    "Sede no válida o no autorizada: \"{$campusName}\""
-                );
-
-                continue;
-            }
-
-            if (! $rowCampusId && ! $request->user()?->isSuperadmin()) {
-                $skipped[] = $this->skippedRow(
-                    $rawValues,
-                    $headers,
-                    'No se pudo determinar la sede de la fila.'
-                );
-
-                continue;
-            }
-
             // ── Validar tipo de estamento ─────────────────────────────────
             $roleKey = ProgramController::comparisonKey($roleName);
             $typeData = $typeHash[$roleKey] ?? null;
@@ -380,7 +356,7 @@ class ParticipantImportController extends Controller
 
                 if (! $dependencyId) {
                     $reason = ! $rowCampusId && isset($dependencyIdsByNameHash[$nameKey])
-                        ? "No se ha indicado la sede en el Excel para la dependencia: \"{$programName}\". Debes poner al final \"- Sede\"."
+                        ? "No se pudo determinar la sede de la dependencia \"{$programName}\". Agrega el sufijo \"- Sede\" en Programa o Dependencia."
                         : "Dependencia no encontrada: \"{$programName}\"";
 
                     $skipped[] = $this->skippedRow(
@@ -419,7 +395,7 @@ class ParticipantImportController extends Controller
                         $hasProgramCandidate = collect($programKeys)
                             ->contains(fn (string $key) => isset($programIdsByNameHash[$key]));
                         $reason = ! $rowCampusId && $hasProgramCandidate
-                            ? "No se ha indicado la sede en el Excel para el programa: \"{$rawProgramName}\". Debes poner al final \"- Sede\"."
+                            ? "No se pudo determinar la sede del programa \"{$rawProgramName}\". Agrega el sufijo \"- Sede\" en Programa o Dependencia."
                             : "Programa no encontrado: \"{$rawProgramName}\"";
 
                         $skipped[] = $this->skippedRow(
@@ -1074,12 +1050,17 @@ class ParticipantImportController extends Controller
         return count($ids) === 1 ? (int) $ids[0] : null;
     }
 
-    private function defaultCampusIdForImport(Request $request, CampusScopeService $campusScope, bool $required): ?int
+    private function defaultCampusIdForImport(Request $request, CampusScopeService $campusScope): ?int
     {
         $user = $request->user();
+
+        if ($user?->isSuperadmin()) {
+            return null;
+        }
+
         $campusId = $campusScope->activeCampusId($user);
 
-        if ($required && ! $campusId && ! $user?->isSuperadmin()) {
+        if (! $campusId) {
             $message = 'Tu usuario no tiene una sede asignada para importar participantes.';
 
             throw \Illuminate\Validation\ValidationException::withMessages(['excel_file' => $message]);
@@ -1088,11 +1069,9 @@ class ParticipantImportController extends Controller
         return $campusId ? (int) $campusId : null;
     }
 
-    private function resolveImportCampusId(Request $request, string $campusName, ?int $defaultCampusId, array $campusByNameHash): ?int
+    private function resolveImportCampusId(Request $request, ?int $defaultCampusId, ?int $suffixCampusId): ?int
     {
-        $campusId = $campusName === ''
-            ? $defaultCampusId
-            : ($campusByNameHash[ProgramController::comparisonKey($campusName)] ?? null);
+        $campusId = $defaultCampusId ?? $suffixCampusId;
 
         if (! $campusId) {
             return null;
