@@ -1,7 +1,7 @@
 ---
 tipo: producto
 descripcion: Direccion del producto - hecho, en curso y candidatos, derivados del estado real
-actualizado: 2026-06-20
+actualizado: 2026-06-25
 ---
 
 # Roadmap
@@ -46,6 +46,8 @@ Iniciativas formalizadas como ADR o seguimiento vivo. Ramas sugeridas en
 - ~~**Busqueda y filtros en eventos**~~ ✅ hecho 2026-06-24 (búsqueda + filtros estructurados) -> [[adr-0012-busqueda-y-filtros-en-eventos]].
 - **Breadcrumbs correctos en detalle de evento** -> [[adr-0013-breadcrumbs-detalle-evento]].
 - **Proteger/retirar rutas API de prueba sin auth** -> [[adr-0014-proteger-rutas-api-de-prueba-sin-auth]].
+- **Centro de notificaciones in-app (campana)** -> [[adr-0018-centro-de-notificaciones-in-app]]
+  (promovido desde el candidato "Notificaciones reales"; primer consumidor: ADR-0004).
 
 ### Módulo de formatos (propuestas 2026-06-24)
 - **Mapeo de formatos como única fuente de verdad en BD + sincronía al cambiar el PDF** ->
@@ -54,7 +56,7 @@ Iniciativas formalizadas como ADR o seguimiento vivo. Ramas sugeridas en
 - **Guardar los PDF de formato en la BD** -> [[adr-0017-pdf-de-formato-en-bd]].
 
 ## 🚀 Candidatos de producto
-- Notificaciones reales.
+- ~~Notificaciones reales.~~ → promovido a ADR ([[adr-0018-centro-de-notificaciones-in-app]]).
 - Auto-registro de participantes internos.
 - Exportacion de estadisticas (PDF/Excel) desde el dashboard.
 - Roles mas finos por dependencia.

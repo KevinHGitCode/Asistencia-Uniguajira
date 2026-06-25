@@ -1,7 +1,7 @@
 ---
 tipo: adr
 descripcion: ADR-0004 (propuesta) — Pasarela de revisión (staging) para la importación masiva de participantes
-actualizado: 2026-06-24
+actualizado: 2026-06-25
 ---
 
 # ADR-0004 · Pasarela de revisión para importación de participantes
@@ -116,6 +116,13 @@ Introducir una **pasarela de revisión** (staging) entre la carga y el commit:
   vía cron + `queue:work --stop-when-empty`. El progreso pasaría a poll del estado del lote.
 - [ ] Lectura por *chunks* para `.xlsx` muy grandes (o recomendar exportar a CSV, que ya es ~19× más rápido).
 - [ ] Política de retención/limpieza de lotes y prueba en navegador con un Excel real.
+
+> **Aviso de "lote listo" → ADR-0018.** Cuando el parseo se encole, el usuario no debería tener que
+> quedarse en la pantalla esperando. La notificación de que **el lote ya está en revisión** es el
+> primer consumidor del centro de notificaciones in-app
+> ([[adr-0018-centro-de-notificaciones-in-app]]): ambos comparten el **mismo cron de Hostinger**
+> (`schedule:run` dispara `queue:work --stop-when-empty` + el escaneo) y la misma política de
+> retención/housekeeping.
 
 ## Pendiente para aceptar
 - [ ] Si se encola el parseo: definir el mecanismo en **Hostinger** (cron + `queue:work --stop-when-empty`,
