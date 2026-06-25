@@ -1,0 +1,1 @@
+function t(r){return(r??"").toString().normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().trim()}function l(r,e,i="label"){const n=t(e);return n?r.filter(a=>t(a[i]).includes(n)):r}export{l as f,t as n};
