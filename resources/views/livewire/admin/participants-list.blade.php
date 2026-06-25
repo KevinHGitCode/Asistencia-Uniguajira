@@ -38,12 +38,12 @@
 
     {{-- ======================== MODAL: EDITAR ======================== --}}
     @if($showEditModal)
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4"
+        <div class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4"
              x-data x-trap.noscroll="true">
 
-            <div class="absolute inset-0 bg-black/50 dark:bg-black/70" wire:click="closeEdit"></div>
+            <div class="fixed inset-0 bg-black/50 dark:bg-black/70" wire:click="closeEdit"></div>
 
-            <div class="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-neutral-200 dark:border-zinc-700 z-10"
+            <div class="relative z-10 my-6 w-full max-w-2xl overflow-visible rounded-2xl border border-neutral-200 bg-white shadow-xl dark:border-zinc-700 dark:bg-zinc-900"
                  x-transition:enter="transition ease-out duration-200"
                  x-transition:enter-start="opacity-0 scale-95"
                  x-transition:enter-end="opacity-100 scale-100">
@@ -56,7 +56,7 @@
                     </button>
                 </div>
 
-                <form wire:submit="updateParticipant" class="px-6 py-5 flex flex-col gap-5">
+                <form wire:submit="updateParticipant" class="relative z-20 flex flex-col gap-5 overflow-visible px-6 py-5">
 
                     {{-- ── Datos básicos ── --}}
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -121,7 +121,7 @@
                     </div>
 
                     {{-- ── Roles / Estamentos ── --}}
-                    <div class="border-t border-neutral-200 dark:border-zinc-700 pt-4">
+                    <div class="relative z-20 overflow-visible border-t border-neutral-200 dark:border-zinc-700 pt-4">
                         <div class="flex items-center justify-between mb-3">
                             <h4 class="text-sm font-semibold text-gray-900 dark:text-white">Roles / Estamentos</h4>
                             <button type="button" wire:click="addRole"
@@ -131,12 +131,14 @@
                             </button>
                         </div>
 
-                        <div class="flex flex-col gap-3">
+                        <div class="relative flex flex-col gap-3 overflow-visible">
                             @foreach($editRoles as $index => $role)
                                 @php
                                     $typeCategory = $this->getTypeCategory($role['participant_type_id']);
                                 @endphp
-                                <div class="relative rounded-xl border border-neutral-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 p-4" wire:key="role-{{ $index }}">
+                                <div class="relative overflow-visible rounded-xl border border-neutral-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 p-4"
+                                     style="z-index: {{ count($editRoles) - $index + 20 }}"
+                                     wire:key="role-{{ $index }}">
 
                                     {{-- Botón eliminar rol --}}
                                     @if(count($editRoles) > 1)
@@ -147,9 +149,9 @@
                                         </button>
                                     @endif
 
-                                    <div class="flex flex-col gap-3">
+                                    <div class="relative flex flex-col gap-3 overflow-visible">
                                         {{-- Estamento --}}
-                                        <div class="flex flex-col gap-1.5">
+                                        <div class="relative z-40 flex flex-col gap-1.5">
                                             <label class="text-xs font-medium text-gray-600 dark:text-gray-400">
                                                 Estamento <span class="text-red-500">*</span>
                                             </label>
@@ -167,7 +169,7 @@
 
                                         {{-- Programa (Estudiante, Graduado, Docente) --}}
                                         @if($typeCategory === 'program')
-                                            <div class="flex flex-col gap-1.5">
+                                            <div class="relative z-30 flex flex-col gap-1.5">
                                                 <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Programa</label>
                                                 <x-ui.searchable-select
                                                     wire:key="program-select-{{ $index }}"
@@ -181,7 +183,7 @@
 
                                         {{-- Dependencia (Administrativo) --}}
                                         @if($typeCategory === 'dependency')
-                                            <div class="flex flex-col gap-1.5">
+                                            <div class="relative z-30 flex flex-col gap-1.5">
                                                 <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Dependencia</label>
                                                 <x-ui.searchable-select
                                                     wire:key="dependency-select-{{ $index }}"
@@ -195,7 +197,7 @@
 
                                         {{-- Organización (Comunidad Externa) --}}
                                         @if($typeCategory === 'organization')
-                                            <div class="flex flex-col gap-1.5 relative"
+                                            <div class="relative z-30 flex flex-col gap-1.5"
                                                  x-data="{ orgOpen: false }"
                                                  x-on:click.outside="orgOpen = false"
                                                  x-effect="if ($wire.organizationSearchIndex === {{ $index }} && $wire.organizationSuggestions.length > 0) orgOpen = true">
@@ -213,7 +215,7 @@
 
                                                 <ul x-show="orgOpen && $wire.organizationSearchIndex === {{ $index }} && $wire.organizationSuggestions.length > 0"
                                                     x-transition x-cloak
-                                                    class="absolute z-20 top-full mt-1 w-full rounded-lg border border-neutral-200 bg-white shadow-lg dark:border-zinc-600 dark:bg-zinc-700 max-h-40 overflow-y-auto">
+                                                    class="absolute z-[70] top-full mt-1 w-full rounded-lg border border-neutral-200 bg-white shadow-lg dark:border-zinc-600 dark:bg-zinc-700 max-h-40 overflow-y-auto">
                                                     <template x-for="org in $wire.organizationSuggestions" :key="org.id">
                                                         <li>
                                                             <button type="button"
@@ -232,7 +234,7 @@
 
                                         {{-- Vinculación (Estudiante, Graduado, Docente, Administrativo) --}}
                                         @if(in_array($typeCategory, ['program', 'dependency']))
-                                            <div class="flex flex-col gap-1.5">
+                                            <div class="relative z-20 flex flex-col gap-1.5">
                                                 <label class="text-xs font-medium text-gray-600 dark:text-gray-400">Vinculación</label>
                                                 <x-ui.searchable-select
                                                     wire:key="affiliation-select-{{ $index }}"
