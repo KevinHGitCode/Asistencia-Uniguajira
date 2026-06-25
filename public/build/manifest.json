@@ -1,21 +1,29 @@
 {
-  "_ProgramParticipantsPie-DlmX1T2O.js": {
-    "file": "assets/ProgramParticipantsPie-DlmX1T2O.js",
+  "_ProgramParticipantsPie-BSniWFOA.js": {
+    "file": "assets/ProgramParticipantsPie-BSniWFOA.js",
     "name": "ProgramParticipantsPie",
     "imports": [
-      "_index-BwNU8OnE.js"
+      "_index-BI4Z70xQ.js",
+      "_index-rNu0Arf-.js"
     ]
   },
-  "_index-BwNU8OnE.js": {
-    "file": "assets/index-BwNU8OnE.js",
+  "_index-BI4Z70xQ.js": {
+    "file": "assets/index-BI4Z70xQ.js",
     "name": "index"
+  },
+  "_index-rNu0Arf-.js": {
+    "file": "assets/index-rNu0Arf-.js",
+    "name": "index",
+    "imports": [
+      "_index-BI4Z70xQ.js"
+    ]
   },
   "_text-filter-BFKzOpYq.js": {
     "file": "assets/text-filter-BFKzOpYq.js",
     "name": "text-filter"
   },
   "resources/css/app.css": {
-    "file": "assets/app-CSwgGZfl.css",
+    "file": "assets/app-D_j--FwN.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "names": [
@@ -23,12 +31,12 @@
     ]
   },
   "resources/js/administration/formats/pdf-mapper.jsx": {
-    "file": "assets/pdf-mapper-CQWPlb0W.js",
+    "file": "assets/pdf-mapper-C7zXIJm1.js",
     "name": "pdf-mapper",
     "src": "resources/js/administration/formats/pdf-mapper.jsx",
     "isEntry": true,
     "imports": [
-      "_index-BwNU8OnE.js"
+      "_index-BI4Z70xQ.js"
     ]
   },
   "resources/js/app.js": {
@@ -82,13 +90,14 @@
     "isDynamicEntry": true
   },
   "resources/js/events/index.jsx": {
-    "file": "assets/index-BxC5EOka.js",
+    "file": "assets/index-DRwaEgq1.js",
     "name": "index",
     "src": "resources/js/events/index.jsx",
     "isEntry": true,
     "imports": [
-      "_index-BwNU8OnE.js",
-      "_ProgramParticipantsPie-DlmX1T2O.js"
+      "_index-BI4Z70xQ.js",
+      "_ProgramParticipantsPie-BSniWFOA.js",
+      "_index-rNu0Arf-.js"
     ]
   },
   "resources/js/events/show.js": {
@@ -98,23 +107,25 @@
     "isEntry": true
   },
   "resources/js/participants/index.jsx": {
-    "file": "assets/index-Bgp_k98Z.js",
+    "file": "assets/index-DARqv7QC.js",
     "name": "index",
     "src": "resources/js/participants/index.jsx",
     "isEntry": true,
     "imports": [
-      "_index-BwNU8OnE.js"
+      "_index-BI4Z70xQ.js",
+      "_index-rNu0Arf-.js"
     ]
   },
   "resources/js/statistics/index.jsx": {
-    "file": "assets/index-CLxop-O8.js",
+    "file": "assets/index-Doup5ID7.js",
     "name": "index",
     "src": "resources/js/statistics/index.jsx",
     "isEntry": true,
     "imports": [
-      "_index-BwNU8OnE.js",
+      "_index-BI4Z70xQ.js",
       "_text-filter-BFKzOpYq.js",
-      "_ProgramParticipantsPie-DlmX1T2O.js"
+      "_ProgramParticipantsPie-BSniWFOA.js",
+      "_index-rNu0Arf-.js"
     ]
   },
   "resources/js/users/users-create.js": {
