@@ -227,7 +227,9 @@ Route::middleware(['auth', 'verified', 'role:admin,superadmin'])
         Route::post('/participants/import', [ParticipantImportController::class, 'import'])->name('participants-import.import');
         Route::get('/participants/download-skipped', [ParticipantImportController::class, 'downloadSkipped'])->name('participants-import.download-skipped');
         Route::get('/participants/download-template', [ParticipantImportController::class, 'downloadTemplate'])->name('participants-import.download-template');
-        Route::get('/participants/download-export', [ParticipantImportController::class, 'downloadExport'])->name('participants-import.download-export');
+        Route::get('/participants/download-export', [ParticipantImportController::class, 'downloadExport'])
+            ->middleware('role:superadmin')
+            ->name('participants-import.download-export');
         Route::post('/participants', [ParticipantImportController::class, 'store'])->name('participants-import.store');
 
         // Pasarela de revisión de importación (ADR-0004)
