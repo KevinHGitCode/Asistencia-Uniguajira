@@ -52,7 +52,7 @@
                                 type="search"
                                 name="q"
                                 value="{{ $search }}"
-                                placeholder="Buscar usuario..."
+                                placeholder="Buscar usuario…"
                                 x-on:input.debounce.600ms="$el.closest('form').submit()"
                                 x-on:keydown.enter.prevent="$el.closest('form').submit()"
                                 class="w-full rounded-lg border border-neutral-200 bg-white py-1.5 pl-9 pr-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white" />
