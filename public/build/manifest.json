@@ -15,7 +15,7 @@
     "name": "text-filter"
   },
   "resources/css/app.css": {
-    "file": "assets/app-CphlNXpU.css",
+    "file": "assets/app-C1fgiYut.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "names": [
@@ -32,7 +32,7 @@
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-Pws5fUnQ.js",
+    "file": "assets/app-BQQWwyyU.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,

@@ -30,6 +30,22 @@ class EventsGroupComponentTest extends TestCase
         $response->assertSee('Conferencia de Prueba');
     }
 
+    public function test_el_contenedor_expone_datos_y_boton_de_filtros(): void
+    {
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        Event::factory()->create([
+            'title' => 'Evento Filtrable',
+            'date' => now()->addDays(3)->toDateString(),
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('events.list'));
+
+        $response->assertOk();
+        $response->assertSee('data-status=', false);  // estado para filtro de cliente
+        $response->assertSee('data-date=', false);     // fecha para rango
+        $response->assertSee('Filtros', false);        // botón de filtros estructurados
+    }
+
     public function test_information_enlaza_eventos_con_origen_usuario(): void
     {
         $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);

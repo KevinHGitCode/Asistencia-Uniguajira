@@ -6,9 +6,9 @@ actualizado: 2026-06-20
 
 # ADR-0012 · Búsqueda y filtros en eventos
 
-- **Estado:** 🟢 Implementado (MVP — contenedor con búsqueda)
+- **Estado:** 🟢 Implementado (búsqueda + filtros estructurados de cliente)
 - **Fecha:** 2026-06-20
-- **Implementado:** 2026-06-21
+- **Implementado:** 2026-06-21 (búsqueda) · 2026-06-24 (filtros estructurados)
 - **Contexto del repo:** `resources/views/events/admin-events.blade.php` ("Todos los eventos",
   ruta `admin.events.index`) y `resources/views/users/information.blade.php` (eventos del usuario)
   **no tienen buscador ni filtros**. `events/list.blade.php` ("Tus eventos") conviene revisar.
@@ -71,16 +71,32 @@ filtro de cliente por contenedor es suficiente, instantáneo y mucho más simple
 eventos"** (`admin-events`, React) el filtrado **ya es server-side** (`useAdminEventos`), así que
 queda fuera de este contenedor.
 
+## Filtros estructurados (2026-06-24)
+Se extendió el **mismo contenedor de cliente** (sin servidor, coherente con el MVP):
+- **`<x-events.card>`** ahora expone `data-date` (`Y-m-d`), `data-status` (`abierto`/`proximo`/
+  `finalizado`, derivado de `hasNotStarted()`/`isOpenForAttendance()`/`ended_at`), `data-dependency`,
+  `data-area` y `data-creator`.
+- **`<x-events.group>`** añade un botón **"Filtros"** (con badge de filtros activos) y un panel
+  colapsable: **rango de fechas** (Desde/Hasta) siempre, y selects de **Estado**, **Dependencia**,
+  **Área** y **Creador** que solo se renderizan si el grupo tiene **más de un** valor distinto
+  (opciones derivadas de la propia colección). Botón "Limpiar filtros".
+- **`events-group.js`**: estado Alpine (`q`, `dateFrom`, `dateTo`, `status`, `dependency`, `area`,
+  `creator`) con `$watch` que re-aplica el filtrado combinado (AND) sobre las tarjetas; `countLabel`
+  y `activeFilterCount` reactivos. Sin persistencia en URL (igual que la búsqueda).
+- **Tests:** `EventsGroupComponentTest` verifica los `data-*` y el botón de filtros.
+
+> Nota: sigue siendo filtrado de cliente por contenedor (colecciones acotadas). "Todos los eventos"
+> (`admin-events`, React) ya filtra server-side aparte y queda fuera.
+
 ### Fuera del MVP / futuro
-- Filtros estructurados (rango de fechas, dependencia/área, estado, creador) sobre el mismo
-  contenedor — hoy es búsqueda de texto.
+- (Si alguna lista creciera mucho) mover esa vista a filtrado server-side, como participantes (ADR-0008).
 - **Participantes (ADR-0011):** es otro modelo de datos y ya tiene su propio listado con búsqueda
   y filtros (`ParticipantsList`). Este contenedor es de **eventos**; 0011 sigue aparte.
 
 ## Pendiente para aceptar
 - [x] Confirmar qué vistas entran → "Tus eventos" y detalle de usuario (admin-events es React).
 - [x] Rama: `feat/eventos-busqueda-filtros`.
-- [ ] (Futuro) Filtros estructurados además de la búsqueda de texto.
+- [x] Filtros estructurados además de la búsqueda de texto (2026-06-24).
 
 ## Relacionado
 [[mapa-de-modulos]] · [[adr-0013-breadcrumbs-detalle-evento]] · [[adr-0011-mejores-filtros-en-participantes]]
