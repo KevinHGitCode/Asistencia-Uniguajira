@@ -62,9 +62,11 @@ Nuevo servicio `app/Services/UserActivityService.php` (sin migraciones; lee `ses
 
 **Frente 2 — usuarios activos en vivo:**
 - [x] `onlineUserIds()` / `onlineCount()` / `isOnline()` desde `sessions` (`last_activity` reciente).
-- [x] `UserController::index` pasa `$onlineUserIds`; `users/index` muestra **punto verde** en el avatar
-  (desktop + móvil) y "En línea" en la columna Estado.
-- [x] Componente Livewire `User\OnlineCount` (`wire:poll.30s`) con badge "N usuarios en línea" en el header.
+- [x] Componente Livewire `User\OnlineCount` (`wire:poll.30s="refresh"`) con badge "N usuarios en
+  línea" en el header; en cada poll emite el evento `online-users-updated` con los IDs en línea.
+- [x] `UserController::index` pasa `$onlineUserIds` (snapshot inicial); en `users/index` cada avatar
+  (desktop + móvil) muestra un **punto verde en vivo**: Alpine inicializa `onlineIds` con el snapshot
+  y lo actualiza al escuchar `online-users-updated`, así el punto **aparece/desaparece sin recargar**.
 
 **Frente 3 — estadísticas de uso por usuario** (en `users/information`):
 - [x] `usageFor($user)`: estado en línea, última actividad, nº de inicios de sesión, último inicio,

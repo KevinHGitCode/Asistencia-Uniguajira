@@ -1,4 +1,4 @@
-<div wire:poll.30s
+<div wire:poll.30s="refresh"
      class="inline-flex items-center gap-2 rounded-full border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1.5 text-sm font-medium text-emerald-700 dark:text-emerald-300">
     <span class="relative flex size-2.5">
         @if($count > 0)

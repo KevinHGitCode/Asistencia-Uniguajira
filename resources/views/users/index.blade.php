@@ -64,7 +64,9 @@
                 </div>
             </div>
 
-            <div class="relative h-full flex-1 rounded-2xl border bg-zinc-50 dark:bg-zinc-900 border-neutral-200 dark:border-neutral-700">
+            <div class="relative h-full flex-1 rounded-2xl border bg-zinc-50 dark:bg-zinc-900 border-neutral-200 dark:border-neutral-700"
+                 x-data="{ onlineIds: @js($onlineUserIds) }"
+                 x-on:online-users-updated.window="onlineIds = $event.detail.ids">
 
                 {{-- Desktop table --}}
                 <div class="hidden md:block p-4">
@@ -103,9 +105,7 @@
                                                             </span>
                                                         </div>
                                                     @endif
-                                                    @if(in_array($user->id, $onlineUserIds))
-                                                        <span title="En línea" class="absolute -bottom-0.5 -right-0.5 size-3 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-zinc-900"></span>
-                                                    @endif
+                                                    <span x-show="onlineIds.includes({{ $user->id }})" x-cloak title="En línea" class="absolute -bottom-0.5 -right-0.5 size-3 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-zinc-900"></span>
                                                 </div>
                                                 <div class="min-w-0">
                                                     <p class="truncate font-semibold text-zinc-900 dark:text-zinc-100">{{ $user->name }}</p>
@@ -246,9 +246,7 @@
                                             </span>
                                         </div>
                                     @endif
-                                    @if(in_array($user->id, $onlineUserIds))
-                                        <span title="En línea" class="absolute -bottom-0.5 -right-0.5 size-3 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-zinc-800"></span>
-                                    @endif
+                                    <span x-show="onlineIds.includes({{ $user->id }})" x-cloak title="En línea" class="absolute -bottom-0.5 -right-0.5 size-3 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-zinc-800"></span>
                                 </div>
 
                                 {{-- Main info --}}
