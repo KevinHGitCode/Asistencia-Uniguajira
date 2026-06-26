@@ -234,6 +234,7 @@ Route::middleware(['auth', 'verified', 'role:admin,superadmin'])
 
         // Pasarela de revisión de importación (ADR-0004)
         Route::get('/participants/imports', [ParticipantImportController::class, 'batches'])->name('participants-import.batches');
+        Route::get('/participants/imports/{batch}/status', [ParticipantImportController::class, 'status'])->name('participants-import.status');
         Route::get('/participants/imports/{batch}', [ParticipantImportController::class, 'review'])->name('participants-import.review');
         Route::get('/participants/imports/{batch}/skipped', [ParticipantImportController::class, 'downloadBatchSkipped'])->name('participants-import.batch-skipped');
         Route::post('/participants/imports/{batch}/approve', [ParticipantImportController::class, 'approve'])->name('participants-import.approve');

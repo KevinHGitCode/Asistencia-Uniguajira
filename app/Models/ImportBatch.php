@@ -16,6 +16,7 @@ class ImportBatch extends Model
         'new_count',
         'update_count',
         'skipped_count',
+        'error_message',
         'duration_ms',
         'applied_at',
     ];
@@ -37,5 +38,15 @@ class ImportBatch extends Model
     public function isPending(): bool
     {
         return $this->status === 'en_revision';
+    }
+
+    public function isProcessing(): bool
+    {
+        return $this->status === 'procesando';
+    }
+
+    public function isFailed(): bool
+    {
+        return $this->status === 'error';
     }
 }

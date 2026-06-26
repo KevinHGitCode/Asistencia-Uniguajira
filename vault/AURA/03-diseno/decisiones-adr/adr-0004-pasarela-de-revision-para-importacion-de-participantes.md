@@ -6,7 +6,8 @@ actualizado: 2026-06-25
 
 # ADR-0004 · Pasarela de revisión para importación de participantes
 
-- **Estado:** 🟢 Aceptada — núcleo implementado (síncrono); encolado/async pendiente
+- **Estado:** 🟢 Aceptada — núcleo + encolado híbrido implementados (2026-06-25, rama
+  `feat/importacion-participantes-async`)
 - **Fecha:** 2026-06-20
 - **Contexto del repo:** `app/Http/Controllers/Configuration/ParticipantImportController.php`
   (`participants-import.import`), formulario en `resources/views/administration/participants/index.blade.php`
@@ -111,24 +112,49 @@ Introducir una **pasarela de revisión** (staging) entre la carga y el commit:
 > Stored procedure descartado: durante el parseo los datos aún no están en la BD y no sería
 > portable (SQLite local / MySQL en Hostinger). El commit ya es rápido por la transacción.
 
-**Pendiente (solo para archivos `.xlsx` grandes o no bloquear el request):**
-- [ ] **Encolar el parseo** (`ShouldQueue`) → quita la espera del request; en Hostinger compartido,
-  vía cron + `queue:work --stop-when-empty`. El progreso pasaría a poll del estado del lote.
-- [ ] Lectura por *chunks* para `.xlsx` muy grandes (o recomendar exportar a CSV, que ya es ~19× más rápido).
-- [ ] Política de retención/limpieza de lotes y prueba en navegador con un Excel real.
+**Incremento 5 — encolado híbrido + retención (2026-06-25):**
+- [x] **Parseo extraído** a `App\Services\ParticipantImportParser` (+ DTO `App\Support\ImportContext`
+  y excepción `App\Exceptions\ImportParseException`), reutilizable desde el request y desde la cola.
+- [x] **Encolado híbrido** en `ParticipantImportController::import`: los **CSV** y los **`.xlsx`
+  pequeños** (≤ 256 KB, `QUEUE_THRESHOLD_BYTES`) se parsean **inline** (respuesta inmediata, sin
+  latencia de cron); los **`.xlsx` grandes** se despachan a `App\Jobs\ParseParticipantImportJob`
+  (`ShouldQueue`, `tries=1`, `timeout=1800`). El lote nace en estado **`procesando`**.
+- [x] **Estados nuevos del lote:** `procesando` (parseando) y `error` (con `error_message`; migración
+  `2026_06_25_000001`). La vista de revisión muestra un panel "Procesando…" que hace **poll** a
+  `participants-import.status` (JSON) y recarga al quedar `en_revision`; y un panel de error legible.
+- [x] **Aviso al terminar (ADR-0018):** el job notifica al usuario con `ImportBatchReady` →
+  campana in-app. El flujo inline no notifica (el usuario ya aterriza en la revisión).
+- [x] **Archivo temporal** guardado en `storage/app/imports/` y borrado al terminar (inline y job);
+  los huérfanos los recoge la retención.
+- [x] **Retención:** comando `imports:limpiar` (`App\Console\Commands\PruneImportBatches`) borra
+  lotes `aprobado/rechazado/error` con más de N días (`config('notifications.import_retention_days')`,
+  30 por defecto) — los `staged_participants` caen por cascade — y barre archivos huérfanos de
+  `imports/`. Programado a diario en `routes/console.php`.
+- [x] **Cron único en Hostinger:** `schedule:run` dispara `queue:work --stop-when-empty`
+  (procesa el parseo encolado), el escaneo de eventos y las limpiezas. Ver
+  [[adr-0018-centro-de-notificaciones-in-app]].
+- [x] **Tests** (`ParticipantImportAsyncTest`): encolado deja `procesando` sin tocar la tabla, CSV
+  inline sin encolar, el job parsea+notifica y limpia el archivo, marca `error` con archivo vacío, y
+  el endpoint `status`.
 
-> **Aviso de "lote listo" → ADR-0018.** Cuando el parseo se encole, el usuario no debería tener que
-> quedarse en la pantalla esperando. La notificación de que **el lote ya está en revisión** es el
+> ⚠️ **Chunks de `.xlsx` — parcial.** No se implementó lectura *streaming* por chunks: el job sigue
+> cargando el `.xlsx` completo vía PhpSpreadsheet, pero con `memory_limit` alto y **fuera del request**
+> (ya no bloquea ni hace timeout al usuario). Para volúmenes extremos, la recomendación sigue siendo
+> **subir CSV** (fast-path nativo, ~8× más rápido). El staging ya inserta por lotes de 500.
+
+> **Aviso de "lote listo" → ADR-0018.** La notificación de que el lote ya está en revisión es el
 > primer consumidor del centro de notificaciones in-app
-> ([[adr-0018-centro-de-notificaciones-in-app]]): ambos comparten el **mismo cron de Hostinger**
-> (`schedule:run` dispara `queue:work --stop-when-empty` + el escaneo) y la misma política de
-> retención/housekeeping.
+> ([[adr-0018-centro-de-notificaciones-in-app]]); comparten cron y housekeeping.
 
-## Pendiente para aceptar
-- [ ] Si se encola el parseo: definir el mecanismo en **Hostinger** (cron + `queue:work --stop-when-empty`,
-  ya que el hosting compartido no mantiene workers permanentes).
-- [ ] Definir política de retención/limpieza de lotes ya aprobados/rechazados.
-- [ ] Rama sugerida: `feat/pasarela-importacion-participantes` (🔴 crea migraciones).
+## Resuelto al implementar (2026-06-25)
+- [x] Mecanismo en **Hostinger**: un solo cron `* * * * * php artisan schedule:run`; el scheduler
+  corre `queue:work --stop-when-empty --max-time=280 --tries=3` cada minuto (`withoutOverlapping`).
+- [x] Política de retención: `imports:limpiar` diario (30 días por defecto, configurable).
+- [x] Rama: `feat/importacion-participantes-async` (🔴 crea migraciones).
+
+## Pendiente (opcional, no bloqueante)
+- [ ] Lectura *streaming* real por chunks para `.xlsx` extremos (hoy: encolado con memoria alta).
+- [ ] Prueba en navegador con un `.xlsx` grande real contra un worker por cron.
 
 ## Relacionado
 [[mapa-de-modulos]] · [[modelo-de-datos]] · [[brechas-conocidas]] · [[nombres-de-rama-sugeridos]]

@@ -447,6 +447,12 @@
         </flux:dropdown>
     </flux:header>
 
+    {{-- Campana de notificaciones (ADR-0018) — única instancia, fija arriba a la
+         derecha. En móvil se corre a la izquierda del perfil del header. --}}
+    <div class="fixed top-3 right-16 lg:right-4 z-50">
+        <livewire:notification-bell />
+    </div>
+
     {{ $slot }}
 
     {{-- Paleta de comandos para administradores (ADR-0007) — Cmd/Ctrl+K --}}

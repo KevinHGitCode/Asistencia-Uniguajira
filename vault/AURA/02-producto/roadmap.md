@@ -36,7 +36,8 @@ Iniciativas formalizadas como ADR o seguimiento vivo. Ramas sugeridas en
 
 - **Migracion multi-sede progresiva** -> [[adr-0009-migracion-multi-sede-progresiva]] y
   [[migracion-multi-sede]].
-- **Pasarela de revision para importar participantes** -> [[adr-0004-pasarela-de-revision-para-importacion-de-participantes]].
+- ~~**Pasarela de revision para importar participantes**~~ ✅ núcleo + encolado híbrido hechos
+  2026-06-25 (rama `feat/importacion-participantes-async`) -> [[adr-0004-pasarela-de-revision-para-importacion-de-participantes]].
 - **Rate limiting anti-abuso** -> [[adr-0005-rate-limiting-anti-abuso]].
 - **Formularios en modal centrado** -> [[adr-0006-formularios-en-modal-centrado]].
 - **Paleta de comandos para administradores** -> [[adr-0007-paleta-de-comandos-admin]].
@@ -46,7 +47,8 @@ Iniciativas formalizadas como ADR o seguimiento vivo. Ramas sugeridas en
 - ~~**Busqueda y filtros en eventos**~~ ✅ hecho 2026-06-24 (búsqueda + filtros estructurados) -> [[adr-0012-busqueda-y-filtros-en-eventos]].
 - **Breadcrumbs correctos en detalle de evento** -> [[adr-0013-breadcrumbs-detalle-evento]].
 - **Proteger/retirar rutas API de prueba sin auth** -> [[adr-0014-proteger-rutas-api-de-prueba-sin-auth]].
-- **Centro de notificaciones in-app (campana)** -> [[adr-0018-centro-de-notificaciones-in-app]]
+- ~~**Centro de notificaciones in-app (campana)**~~ ✅ implementado 2026-06-25 (rama
+  `feat/importacion-participantes-async`) -> [[adr-0018-centro-de-notificaciones-in-app]]
   (promovido desde el candidato "Notificaciones reales"; primer consumidor: ADR-0004).
 
 ### Módulo de formatos (propuestas 2026-06-24)

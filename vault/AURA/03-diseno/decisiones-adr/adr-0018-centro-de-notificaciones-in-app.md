@@ -6,7 +6,7 @@ actualizado: 2026-06-25
 
 # ADR-0018 · Centro de notificaciones in-app (campana)
 
-- **Estado:** 🟡 Propuesta
+- **Estado:** 🟢 Aceptada — implementado (2026-06-25, rama `feat/importacion-participantes-async`)
 - **Fecha:** 2026-06-25
 - **Contexto del repo:** `app/Models/User.php` (ya usa el trait `Notifiable`),
   `resources/views/components/layouts/app/sidebar.blade.php` (menú de usuario al pie del sidebar en
@@ -124,17 +124,39 @@ retención de lotes de ADR-0004 (misma sección de housekeeping del cron). → *
   campana que se pidió. Queda como posible segundo canal del mismo `Notification`.
 - **Tabla de notificaciones propia:** reinventa lo que `Notifiable` + canal `database` ya dan.
 
-## Pendiente para aceptar
-- [ ] **Ubicación de la campana** en escritorio (franja superior derecha nueva / campana fija
-  flotante / dentro del sidebar). Móvil va en el `flux:header`.
-- [ ] **Idempotencia de avisos de tiempo:** columnas `reminder_notified_at` / `ending_notified_at`
-  en `events` **vs.** dedupe consultando `notifications`.
-- [ ] **Ventanas de aviso:** cuánto antes de `start_date` ("próximo") y de `end_date`
-  ("por finalizar"). Configurable.
-- [ ] **Frecuencia del poll** (30s vs 60s) y **retención** (N días de notificaciones leídas).
-- [ ] **Destinatarios extendidos** (¿solo el responsable del evento, o también admins de la sede?).
-- [ ] Rama sugerida: `feat/centro-notificaciones` (🔴 crea migraciones). Ver
-  [[nombres-de-rama-sugeridos]].
+## Implementación (2026-06-25)
+
+**Hecho:**
+- [x] Tabla `notifications` estándar (canal `database`; migración `2026_06_25_000002`).
+- [x] Notificaciones `App\Notifications\{ImportBatchReady, EventStartingSoon, EventEndingSoon}`
+  (`toArray`: `tipo`, `titulo`, `mensaje`, `url`, `icono`).
+- [x] Campana `App\Livewire\NotificationBell` (+ `resources/views/livewire/notification-bell.blade.php`):
+  badge de no leídas, `wire:poll.30s`, `markAsRead` (marca + navega), `markAllAsRead`.
+- [x] **Comando** `notifications:escanear-eventos` (`App\Console\Commands\ScanEventNotifications`),
+  idempotente vía `events.reminder_notified_at` / `ending_notified_at` (migración `2026_06_25_000003`).
+- [x] **Retención** `notifications:limpiar` (`PruneNotifications`, borra leídas viejas).
+- [x] **Config** `config/notifications.php` (ventanas de aviso y retención, vía `.env`).
+- [x] **Schedule** en `routes/console.php` (escaneo c/5 min, limpiezas diarias, `queue:work` c/min).
+- [x] Tests `NotificationCenterTest` (campana muestra/marca, escaneo crea e idempotente, retención).
+
+**Decisiones tomadas (afinan la propuesta):**
+- **Campana = una sola instancia**, fija arriba a la derecha (`fixed top-3 right-16 lg:right-4 z-50`),
+  visible en todos los tamaños (en móvil se corre a la izquierda del perfil del header). Se descartó
+  montarla dos veces (escritorio + header móvil) porque **duplicaba el coste de Livewire por página**
+  y rompía `PagePerformanceTest` en `/usuarios`. Por la misma razón, la **lista se carga perezosamente**
+  al abrir el desplegable (`loadItems`); el `mount` solo hace un `COUNT` indexado de no leídas.
+- **Campos reales del evento:** `date` + `start_time` / `end_time` (no `start_date`/`end_date`); el
+  cálculo fecha+hora se hace en PHP (`Event::startsAt()` / `endsAt()`) para ser portable SQLite/MySQL.
+- **Idempotencia:** se eligieron columnas `*_notified_at` en `events` (más baratas que consultar
+  `notifications`).
+- **Ventanas por defecto:** 60 min ("próximo"), 30 min ("por finalizar"); poll 30s; retención 30 días.
+- **Destinatario:** el responsable del evento (`Event->user`) — alcance a admins de sede queda abierto.
+
+## Pendiente (opcional)
+- [ ] Página `/notificaciones` con historial paginado completo.
+- [ ] Segundo canal `mail` reutilizando los mismos `Notification` (si se quiere aviso por correo).
+- [ ] Revisar que la campana fija no tape acciones en la esquina superior derecha de algunas vistas.
+- [ ] Destinatarios extendidos (admins de la sede además del responsable).
 
 ## Relacionado
 [[adr-0004-pasarela-de-revision-para-importacion-de-participantes]] · [[mapa-de-modulos]] ·

@@ -24,10 +24,14 @@ class Event extends Model
         'dependency_id',
         'area_id',
         'campus_id',
+        'reminder_notified_at',
+        'ending_notified_at',
     ];
 
     protected $casts = [
         'ended_at' => 'datetime',
+        'reminder_notified_at' => 'datetime',
+        'ending_notified_at' => 'datetime',
     ];
 
     public function user()
@@ -116,5 +120,21 @@ class Event extends Model
         $date = \Carbon\Carbon::parse($this->date)->toDateString();
 
         return \Carbon\Carbon::parse($date.' '.($time ?: '00:00:00'));
+    }
+
+    /**
+     * Momento de inicio (fecha + hora de inicio), o null si no tiene hora.
+     */
+    public function startsAt(): ?\Carbon\Carbon
+    {
+        return $this->start_time === null ? null : $this->eventDateTime($this->start_time);
+    }
+
+    /**
+     * Momento de fin (fecha + hora de fin), o null si no tiene hora.
+     */
+    public function endsAt(): ?\Carbon\Carbon
+    {
+        return $this->end_time === null ? null : $this->eventDateTime($this->end_time);
     }
 }
