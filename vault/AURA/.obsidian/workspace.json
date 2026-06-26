@@ -182,6 +182,20 @@
   },
   "active": "d9ee707228cba5b0",
   "lastOpenFiles": [
+    "03-diseno/decisiones-adr/adr-0029-navegacion-por-semestre-en-el-calendario.md",
+    "03-diseno/decisiones-adr/adr-0028-corregir-salto-del-menu-al-animar-el-logo.md",
+    "03-diseno/decisiones-adr/adr-0027-sonidos-de-feedback.md",
+    "03-diseno/decisiones-adr/adr-0026-subpestanas-por-sede-en-dependencias.md",
+    "03-diseno/decisiones-adr/adr-0025-componente-select-personalizado.md",
+    "03-diseno/decisiones-adr/adr-0025-componente-select-personalizado.md.tmp.32568.ac3f671bef99",
+    "03-diseno/decisiones-adr/adr-0024-mejorar-imagen-copiada-de-graficas.md",
+    "03-diseno/decisiones-adr/adr-0024-mejorar-imagen-copiada-de-graficas.md.tmp.32568.f52f559b642b",
+    "03-diseno/decisiones-adr/adr-0023-alternar-tipo-de-grafica-circular-barras.md",
+    "03-diseno/decisiones-adr/adr-0022-asistencias-en-tiempo-real-evento-en-curso.md",
+    "03-diseno/decisiones-adr/adr-0021-direccion-adaptativa-del-desplegable-buscable.md",
+    "03-diseno/decisiones-adr/adr-0020-traduccion-de-frases-inspiradoras-con-cache-en-bd.md",
+    "03-diseno/decisiones-adr/adr-0020-traduccion-de-frases-inspiradoras-con-cache-en-bd.md.tmp.32568.8426b4bdc5de",
+    "03-diseno/decisiones-adr/adr-0019-solicitud-de-correccion-de-datos-del-participante.md",
     "02-producto/historias-de-usuario/hu-0003-participante-unico-vs-asistencias.md",
     "02-producto/historias-de-usuario/hu-0002-no-repetir-datos-en-cada-asistencia.md",
     "02-producto/historias-de-usuario/hu-0001-registro-asistencia-qr.md",
@@ -197,9 +211,6 @@
     "03-diseno/decisiones-adr/adr-0007-paleta-de-comandos-admin.md",
     "03-diseno/decisiones-adr/adr-0006-formularios-en-modal-centrado.md",
     "03-diseno/decisiones-adr/adr-0005-rate-limiting-anti-abuso.md.tmp.8484.6b1bea4eb41b",
-    "99-plantillas/plantilla-caso-de-prueba.md",
-    "01-estado-actual/brechas-conocidas.md",
-    "Inicio.md",
-    "Bienvenido.md"
+    "99-plantillas/plantilla-caso-de-prueba.md"
   ]
 }

@@ -57,6 +57,19 @@ Iniciativas formalizadas como ADR o seguimiento vivo. Ramas sugeridas en
 - ~~**UX de edición de formato con muchas dependencias**~~ ✅ hecho 2026-06-24 -> [[adr-0016-edicion-formato-muchas-dependencias]].
 - **Guardar los PDF de formato en la BD** -> [[adr-0017-pdf-de-formato-en-bd]].
 
+### Mejoras de experiencia y nuevas ideas (propuestas 2026-06-25)
+- **Solicitud de corrección de datos del participante (cupo de intentos)** -> [[adr-0019-solicitud-de-correccion-de-datos-del-participante]].
+- **Traducir frases inspiradoras (API + caché en BD)** -> [[adr-0020-traduccion-de-frases-inspiradoras-con-cache-en-bd]].
+- **Dirección adaptativa del select buscable (arriba/abajo)** -> [[adr-0021-direccion-adaptativa-del-desplegable-buscable]].
+- **Asistencias en tiempo real + indicador de evento en curso** -> [[adr-0022-asistencias-en-tiempo-real-evento-en-curso]].
+- **Alternar gráfica circular/barras** -> [[adr-0023-alternar-tipo-de-grafica-circular-barras]].
+- **Mejorar la imagen copiada de las gráficas** -> [[adr-0024-mejorar-imagen-copiada-de-graficas]].
+- **Componente de select personalizado (reemplazar `<select>` nativo)** -> [[adr-0025-componente-select-personalizado]].
+- **Sub-pestañas por sede en Dependencias** -> [[adr-0026-subpestanas-por-sede-en-dependencias]].
+- **Sonidos de feedback** -> [[adr-0027-sonidos-de-feedback]].
+- **Corregir salto del menú al animar el logo AURA** (bug) -> [[adr-0028-corregir-salto-del-menu-al-animar-el-logo]].
+- **Navegación por semestre en el calendario** -> [[adr-0029-navegacion-por-semestre-en-el-calendario]].
+
 ## 🚀 Candidatos de producto
 - ~~Notificaciones reales.~~ → promovido a ADR ([[adr-0018-centro-de-notificaciones-in-app]]).
 - Auto-registro de participantes internos.
