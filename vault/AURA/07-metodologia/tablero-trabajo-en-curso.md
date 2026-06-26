@@ -18,6 +18,7 @@ que dos personas/IAs choquen, sobre todo en cambios 🔴 que tocan el esquema.
 ## 🟦 En curso
 | Tarea | Responsable | Rama | Tipo | Desde |
 |---|---|---|---|---|
+| Importación asíncrona (ADR-0004) + Centro de notificaciones (ADR-0018) — **implementado y con tests verdes en la rama; pendiente de revisión/merge** | equipo | `feat/importacion-participantes-async` | 🔴 | 2026-06-25 |
 | Mejoras módulo usuarios · diseño/UX (ADR-0010) | equipo | `feat/modulo-usuarios-mejoras` | 🟢 | 2026-06-24 |
 | Migración multi-sede progresiva (ADR-0009) | equipo | `feat/multi-sede-*` | 🔴 | 2026-06-21 |
 
@@ -55,6 +56,11 @@ que dos personas/IAs choquen, sobre todo en cambios 🔴 que tocan el esquema.
 - Retiro de rutas API de prueba (`fix/retirar-rutas-api-de-prueba`, ADR-0014): se **eliminaron** 12
   endpoints publicos sin auth de `routes/api.php` (`/api/events`, `/api/participants`, `/api/users`,
   `/api/programs`, `/api/dependencies`, etc.). Si los necesitabas, recrealos bajo `['web','auth']`.
+- Importación asíncrona + notificaciones (`feat/importacion-participantes-async`, ADR-0004/0018,
+  2026-06-25): **nuevas migraciones** `notifications`, `import_batches.error_message`,
+  `events.reminder_notified_at`/`ending_notified_at`; nuevos estados de lote `procesando`/`error`;
+  nueva ruta `participants-import.status`. Si tocas eventos, imports o el layout `app/sidebar`,
+  coordina. Producción requiere el cron `schedule:run` activo.
 - Retiro de asistencia legacy (ADR-0003, 2026-06-24): se **eliminaron** las rutas publicas
   `attendance.store` (POST) y `attendance.confirmation` (GET), el `AttendanceController` y la vista
   `events/confirmation`. El registro publico unico es `events.access` + Livewire. Efecto colateral:

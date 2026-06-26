@@ -29,7 +29,45 @@
     @endif
 
     {{-- Estado del lote --}}
-    @if($batch->status !== 'en_revision')
+    @if($batch->status === 'procesando')
+        {{-- Parseo en segundo plano (ADR-0004): poll al estado y recarga al terminar. --}}
+        <div x-data="{
+                poll: null,
+                init() {
+                    this.poll = setInterval(() => {
+                        fetch('{{ route('participants-import.status', $batch) }}', { headers: { 'Accept': 'application/json' } })
+                            .then(r => r.json())
+                            .then(d => { if (d.status !== 'procesando') { clearInterval(this.poll); window.location.reload(); } })
+                            .catch(() => {});
+                    }, 2500);
+                },
+                destroy() { if (this.poll) clearInterval(this.poll); }
+             }"
+             class="flex items-start gap-3 px-4 py-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 text-sm">
+            <svg class="size-5 shrink-0 animate-spin mt-0.5" viewBox="0 0 24 24" fill="none">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4z"></path>
+            </svg>
+            <div>
+                <strong>Procesando el archivo…</strong>
+                <p class="mt-0.5 text-blue-600/90 dark:text-blue-300/80">
+                    Esto puede tardar con listas grandes. Puedes salir de esta página y seguir usando el sistema;
+                    te avisaremos con una notificación cuando esté listo. Esta página se actualizará sola al terminar.
+                </p>
+            </div>
+        </div>
+    @elseif($batch->status === 'error')
+        <div class="flex items-start gap-3 px-4 py-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">
+            <flux:icon.x-circle class="size-5 shrink-0 mt-0.5" />
+            <div>
+                <strong>No se pudo procesar el archivo.</strong>
+                <p class="mt-0.5">{{ $batch->error_message ?? 'Ocurrió un error inesperado al procesar el archivo.' }}</p>
+                <a href="{{ route('participants-import.index') }}" class="inline-flex items-center gap-1 mt-2 font-medium underline">
+                    <flux:icon.arrow-left class="size-3.5" /> Volver e intentar de nuevo
+                </a>
+            </div>
+        </div>
+    @elseif($batch->status !== 'en_revision')
         <div class="flex items-center gap-3 px-4 py-3 rounded-lg bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-gray-600 dark:text-gray-300 text-sm">
             <flux:icon.information-circle class="size-5 shrink-0" />
             Este lote está <strong class="mx-1">{{ $batch->status }}</strong>; ya no se puede volver a procesar.
@@ -42,6 +80,7 @@
         </div>
     @endif
 
+    @if(! in_array($batch->status, ['procesando', 'error'], true))
     {{-- Contadores + filtros --}}
     @php
         $chips = [
@@ -148,6 +187,7 @@
     {{-- Paginación --}}
     @if($rows->hasPages())
         <div>{{ $rows->links() }}</div>
+    @endif
     @endif
 
     {{-- Acciones --}}

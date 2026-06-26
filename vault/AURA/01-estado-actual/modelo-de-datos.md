@@ -1,7 +1,7 @@
 ---
 tipo: estado-actual
 descripcion: Modelo de datos real derivado de migraciones y modelos Eloquent
-actualizado: 2026-06-20
+actualizado: 2026-06-25
 ---
 
 # Modelo de datos
@@ -27,7 +27,8 @@ que esta incompleta (ver [[brechas-conocidas]]).
 ### Eventos y asistencia
 - **events** - `title`, `description`, `date`, `start_time`, `end_time`, `ended_at`,
   `location`, **`link`** (slug publico del QR), `user_id` (dueno), `dependency_id`
-  nullable, `area_id` nullable, `campus_id` nullable durante migracion.
+  nullable, `area_id` nullable, `campus_id` nullable durante migracion. `reminder_notified_at`
+  / `ending_notified_at` (idempotencia de avisos in-app, ADR-0018).
 - **participants** - global. `document` unico, `student_code` unico nullable,
   `first_name`, `last_name`, `email` unico nullable. No filtrar directamente por sede.
 - **attendances** - `event_id` + `participant_id`, unico por evento/participante.
@@ -53,10 +54,20 @@ que esta incompleta (ver [[brechas-conocidas]]).
 - **formats** - global. `name`, `slug` unico, `file` (plantilla PDF), `mapping` JSON.
   Pivot **dependency_format**. No filtrar `formats` directamente por sede.
 
+### Importacion y notificaciones (ADR-0004 / ADR-0018)
+- **import_batches** - un lote por carga: `user_id?`, `original_filename`, `status`
+  (`procesando` → `en_revision` → `aprobado` / `rechazado`, o `error`), contadores
+  (`new_count` / `update_count` / `skipped_count`), `error_message?`, `duration_ms?`, `applied_at?`.
+- **staged_participants** - una fila por registro en staging: `import_batch_id` (cascade),
+  `status` (`nuevo` / `actualiza` / `omitido`), datos parseados, `roles` JSON, `error?`, `raw` JSON.
+- **notifications** - tabla estandar de Laravel (canal `database`): `uuid`, `type`,
+  `notifiable_type/id` (morph al `User`), `data` JSON (`tipo`, `titulo`, `mensaje`, `url`, `icono`),
+  `read_at?`. La campana (`NotificationBell`) la lee por poll; retencion via `notifications:limpiar`.
+
 ### Auditoria y soporte
 - **activity_logs** - auditoria: `user_id?`, `participant_id?`, `action`, `module`,
   `description`, `subject_type/id`, `ip_address`, `user_agent`, `metadata` JSON.
-- **personal_access_tokens** (Sanctum), **cache**, **jobs**.
+- **personal_access_tokens** (Sanctum), **cache**, **jobs** (cola del parseo encolado).
 
 ## Diagrama mental
 
