@@ -99,4 +99,46 @@ class UserIndexFiltersTest extends TestCase
             ->assertSee('Usuario Maicao')
             ->assertDontSee('Usuario Riohacha');
     }
+
+    public function test_listado_parcial_de_usuarios_devuelve_solo_la_tabla_filtrada(): void
+    {
+        $admin = User::factory()->create([
+            'name' => 'Admin Principal',
+            'role' => User::ROLE_ADMIN,
+            'email_verified_at' => now(),
+        ]);
+
+        User::factory()->create(['name' => 'Ana Parcial']);
+        User::factory()->create(['name' => 'Bruno Completo']);
+
+        $this->actingAs($admin)
+            ->withHeader('X-Requested-With', 'XMLHttpRequest')
+            ->get(route('users.index', ['q' => 'Ana']))
+            ->assertOk()
+            ->assertSee('Ana Parcial')
+            ->assertDontSee('Bruno Completo')
+            ->assertDontSee('Users list');
+    }
+
+    public function test_filtro_de_dependencias_muestra_solo_el_nombre_guardado(): void
+    {
+        $campus = Campus::factory()->create(['name' => 'Maicao']);
+        $admin = User::factory()->create([
+            'role' => User::ROLE_ADMIN,
+            'campus_id' => $campus->id,
+            'email_verified_at' => now(),
+        ]);
+        $dependency = Dependency::factory()->forCampus($campus)->create([
+            'name' => 'Bienestar - Maicao',
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('users.index'))
+            ->assertOk()
+            ->assertViewHas('filterDependencies', [
+                $dependency->id => 'Bienestar - Maicao',
+            ])
+            ->assertSee('Bienestar - Maicao', false)
+            ->assertDontSee('Bienestar - Maicao - Maicao', false);
+    }
 }

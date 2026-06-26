@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Api;
 
+use App\Models\Campus;
+use App\Models\Dependency;
 use App\Models\Participant;
 use App\Models\ParticipantRole;
 use App\Models\ParticipantType;
@@ -112,5 +114,20 @@ class ParticipantsApiTest extends TestCase
             ->assertJsonStructure(['types', 'programs', 'affiliations', 'dependencies'])
             ->assertJsonFragment(['name' => 'Estudiante'])
             ->assertJsonFragment(['name' => 'Derecho']);
+    }
+
+    public function test_filter_options_devuelve_dependencias_sin_concatenar_sede(): void
+    {
+        $campus = Campus::create(['name' => 'Maicao']);
+        $dependency = Dependency::factory()->create([
+            'name' => 'Biblioteca - Maicao',
+            'campus_id' => $campus->id,
+        ]);
+
+        $this->actingAs($this->admin())
+            ->getJson('/api/participants/filter-options')
+            ->assertOk()
+            ->assertJsonFragment(['id' => $dependency->id, 'name' => 'Biblioteca - Maicao'])
+            ->assertJsonMissing(['name' => 'Biblioteca - Maicao - Maicao']);
     }
 }

@@ -38,6 +38,26 @@ window.searchableSelect = function (config) {
         init() {
             this.value = this.leerValor();
             this.$nextTick(() => this.syncHiddenInput());
+            this.externalSyncHandler = (event) => {
+                const name = config.name || null;
+                const values = event.detail?.values || {};
+
+                if (!name || !Object.prototype.hasOwnProperty.call(values, name)) {
+                    return;
+                }
+
+                this.value = values[name] == null ? '' : String(values[name]);
+                this.search = '';
+                this.close();
+                this.syncHiddenInput();
+            };
+            window.addEventListener('searchable-select-sync', this.externalSyncHandler);
+        },
+
+        destroy() {
+            if (this.externalSyncHandler) {
+                window.removeEventListener('searchable-select-sync', this.externalSyncHandler);
+            }
         },
 
         leerValor() {
@@ -78,6 +98,9 @@ window.searchableSelect = function (config) {
         commit(val) {
             this.value = val == null ? '' : String(val);
             this.syncHiddenInput();
+            if (this.$refs.hiddenInput) {
+                this.$refs.hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+            }
             if (this.hasWire && this.model) {
                 this.$wire.set(this.model, val, this.live); // diferido salvo wire:model.live
             }

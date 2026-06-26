@@ -46,6 +46,7 @@
         'emptyLabel' => $emptyLabel,
         'placeholder' => $placeholder,
         'initialValue' => $value,
+        'name' => $name,
         'disabled' => (bool) $disabled,
     ];
 @endphp
