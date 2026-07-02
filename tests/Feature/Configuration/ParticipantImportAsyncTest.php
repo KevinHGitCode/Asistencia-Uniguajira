@@ -106,6 +106,89 @@ class ParticipantImportAsyncTest extends TestCase
             ->assertSee('Procesando el archivo', false);
     }
 
+    public function test_panel_de_participantes_avisa_si_hay_un_excel_en_proceso(): void
+    {
+        $campus = $this->seedCatalogs();
+        $uploader = User::factory()->create([
+            'name' => 'Admin Que Sube',
+            'role' => 'admin',
+            'campus_id' => $campus->id,
+        ]);
+        $viewer = User::factory()->create([
+            'role' => 'admin',
+            'campus_id' => $campus->id,
+        ]);
+
+        $batch = ImportBatch::create([
+            'user_id' => $uploader->id,
+            'original_filename' => 'participantes-grande.xlsx',
+            'status' => 'procesando',
+        ]);
+
+        $this->actingAs($viewer)
+            ->get(route('participants-import.index'))
+            ->assertOk()
+            ->assertSee('Hay una carga masiva de participantes en proceso')
+            ->assertSee('participantes-grande.xlsx')
+            ->assertSee('Admin Que Sube')
+            ->assertSee('statusUrls', false)
+            ->assertSee('Esta p&aacute;gina se actualizar&aacute; sola al terminar', false)
+            ->assertSee('La carga est&aacute; deshabilitada', false);
+    }
+
+    public function test_no_permite_subir_otro_excel_mientras_un_lote_esta_procesando(): void
+    {
+        Queue::fake();
+        $campus = $this->seedCatalogs();
+        $admin = User::factory()->create(['role' => 'admin', 'campus_id' => $campus->id]);
+
+        ImportBatch::create([
+            'user_id' => $admin->id,
+            'original_filename' => 'ya-procesando.xlsx',
+            'status' => 'procesando',
+        ]);
+
+        $file = UploadedFile::fake()->createWithContent('participantes.csv', $this->csvContent());
+
+        $this->actingAs($admin)
+            ->post(route('participants-import.import'), ['excel_file' => $file])
+            ->assertRedirect(route('participants-import.index'))
+            ->assertSessionHas('error', 'Ya hay una carga masiva de participantes procesándose. Espera a que termine antes de subir otro Excel.');
+
+        $this->assertSame(1, ImportBatch::count());
+        Queue::assertNothingPushed();
+    }
+
+    public function test_panel_de_participantes_muestra_fecha_y_hora_de_lotes_pendientes(): void
+    {
+        $campus = $this->seedCatalogs();
+        $admin = User::factory()->create(['role' => 'admin', 'campus_id' => $campus->id]);
+
+        ImportBatch::create([
+            'user_id' => $admin->id,
+            'original_filename' => 'ultim csr.xlsx',
+            'status' => 'en_revision',
+            'new_count' => 0,
+            'update_count' => 52225,
+            'skipped_count' => 636,
+            'created_at' => '2026-07-02 14:35:00',
+            'updated_at' => '2026-07-02 14:35:00',
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->get(route('participants-import.index'))
+            ->assertOk()
+            ->assertSee('Tienes lotes de importación pendientes de revisión')
+            ->assertSee('ultim csr.xlsx')
+            ->assertSee('Cargado el')
+            ->assertSee('0 nuevos · 52225 actualizan · 636 omitidos');
+
+        $this->assertMatchesRegularExpression(
+            '/Cargado el\s+02\/07\/2026\s+\d{2}:\d{2}/',
+            strip_tags($response->getContent()),
+        );
+    }
+
     public function test_el_job_parsea_a_staging_y_notifica_al_terminar(): void
     {
         $campus = $this->seedCatalogs();

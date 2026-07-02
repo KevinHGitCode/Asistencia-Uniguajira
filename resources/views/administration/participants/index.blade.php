@@ -37,7 +37,10 @@
              url.searchParams.set('tab', tab);
              window.history.replaceState({}, '', url);
          },
-     }">
+      }">
+    @php
+        $hasProcessingBatch = !empty($processingBatches) && $processingBatches->isNotEmpty();
+    @endphp
 
     {{-- Header --}}
     <div>
@@ -95,6 +98,63 @@
     @endif
 
     {{-- Resultado de importación --}}
+    @if($hasProcessingBatch)
+        <div x-data="{
+                statusUrls: @js($processingBatches->map(fn ($batch) => route('participants-import.status', $batch))->values()),
+                poll: null,
+                init() {
+                    this.checkProcessingBatches();
+                    this.poll = setInterval(() => this.checkProcessingBatches(), 2500);
+                },
+                checkProcessingBatches() {
+                    Promise.all(this.statusUrls.map((url) =>
+                        fetch(url, { headers: { 'Accept': 'application/json' } })
+                            .then((response) => response.json())
+                            .catch(() => ({ status: 'procesando' }))
+                    )).then((batches) => {
+                        if (batches.length > 0 && batches.every((batch) => batch.status !== 'procesando')) {
+                            clearInterval(this.poll);
+                            window.location.reload();
+                        }
+                    });
+                },
+                destroy() { if (this.poll) clearInterval(this.poll); }
+             }"
+             class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-800 shadow-sm dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div class="flex items-start gap-3">
+                    <span class="mt-0.5 inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300">
+                        <flux:icon.arrow-path class="size-5 animate-spin" />
+                    </span>
+                    <div>
+                        <p class="text-sm font-semibold">Hay una carga masiva de participantes en proceso</p>
+                        <p class="mt-1 text-sm text-amber-700 dark:text-amber-300">
+                            Espera a que termine antes de subir otro Excel. Te avisaremos con una notificaci&oacute;n cuando est&eacute; listo para revisar.
+                            Esta p&aacute;gina se actualizar&aacute; sola al terminar.
+                        </p>
+                        <div class="mt-2 flex flex-col gap-1 text-xs text-amber-700 dark:text-amber-300">
+                            @foreach($processingBatches as $batch)
+                                <span>
+                                    <strong>#{{ $batch->id }}</strong>
+                                    {{ $batch->original_filename }}
+                                    @if($batch->user)
+                                        &middot; subido por {{ $batch->user->name }}
+                                    @endif
+                                    &middot; {{ $batch->created_at->diffForHumans() }}
+                                </span>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+                <a href="{{ route('participants-import.review', $processingBatches->first()) }}"
+                   class="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg bg-amber-600 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-amber-700">
+                    <flux:icon.eye class="size-3.5" />
+                    Ver estado
+                </a>
+            </div>
+        </div>
+    @endif
+
     @if(session('import_result'))
         @php $result = session('import_result'); @endphp
         <div class="flex flex-col gap-3">
@@ -164,6 +224,9 @@
                     <li class="flex flex-wrap items-center gap-x-3 gap-y-1 py-1.5 text-sm">
                         <span class="font-medium text-gray-700 dark:text-gray-300">#{{ $pb->id }}</span>
                         <span class="text-gray-600 dark:text-gray-400 truncate max-w-[16rem]">{{ $pb->original_filename }}</span>
+                        <span class="text-xs text-gray-500 dark:text-zinc-500">
+                            Cargado el {{ $pb->created_at->format('d/m/Y H:i') }}
+                        </span>
                         <span class="text-xs text-gray-500 dark:text-zinc-500">
                             {{ $pb->new_count }} nuevos · {{ $pb->update_count }} actualizan · {{ $pb->skipped_count }} omitidos
                         </span>
@@ -289,6 +352,7 @@
                 <form action="{{ route('participants-import.import') }}" method="POST" enctype="multipart/form-data"
                       x-data="{ fileName: '', dragging: false, submitting: false, fileError: false }"
                       @submit="
+                          if (@js($hasProcessingBatch)) { $event.preventDefault(); return; }
                           if (submitting) { $event.preventDefault(); return; }
                           if (!$refs.fileInput.files || $refs.fileInput.files.length === 0) {
                               $event.preventDefault();
@@ -302,15 +366,16 @@
 
                     {{-- Drop zone --}}
                     <div
-                        @dragover.prevent="dragging = true"
+                        @dragover.prevent="if (!@js($hasProcessingBatch)) dragging = true"
                         @dragleave.prevent="dragging = false"
                         @drop.prevent="
+                            if (@js($hasProcessingBatch)) return;
                             dragging = false;
                             const file = $event.dataTransfer.files[0];
                             if (file) { fileName = file.name; fileError = false; $refs.fileInput.files = $event.dataTransfer.files; }
                         "
                         :class="dragging ? 'border-[#3b82f6] bg-blue-50 dark:bg-blue-900/20' : 'border-neutral-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50'"
-                        class="relative flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-8 transition-colors text-center cursor-pointer">
+                        class="relative flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-8 transition-colors text-center {{ $hasProcessingBatch ? 'cursor-not-allowed opacity-60' : 'cursor-pointer' }}">
 
                         <flux:icon.document-arrow-up class="size-10 text-gray-400 dark:text-zinc-500" />
                         <div>
@@ -327,11 +392,17 @@
                             type="file"
                             name="excel_file"
                             accept=".xlsx,.xls,.csv"
-                            class="absolute inset-0 opacity-0 cursor-pointer"
+                            @disabled($hasProcessingBatch)
+                            class="absolute inset-0 opacity-0 {{ $hasProcessingBatch ? 'cursor-not-allowed' : 'cursor-pointer' }}"
                             @change="fileName = $event.target.files[0]?.name ?? ''; fileError = false" />
                     </div>
 
                     <div class="flex flex-col items-end gap-2">
+                        @if($hasProcessingBatch)
+                            <p class="text-xs text-amber-600 dark:text-amber-400 text-right">
+                                La carga est&aacute; deshabilitada hasta que finalice el Excel que est&aacute; en proceso.
+                            </p>
+                        @endif
                         <p x-show="fileError" x-cloak class="text-xs text-red-500">
                             Selecciona un archivo Excel antes de importar.
                         </p>
@@ -339,7 +410,7 @@
                             Procesando el archivo… esto puede tardar con listas grandes.
                             No cierres ni recargues la página.
                         </p>
-                        <button type="submit" :disabled="submitting"
+                        <button type="submit" :disabled="submitting || @js($hasProcessingBatch)"
                             class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#3b82f6] hover:bg-blue-700 text-white text-sm font-medium transition-colors shadow-sm cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
                             {{-- Spinner mientras procesa --}}
                             <svg x-show="submitting" x-cloak class="size-4 animate-spin" viewBox="0 0 24 24" fill="none">

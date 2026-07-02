@@ -46,13 +46,20 @@ class ParticipantImportController extends Controller
         // bajo el título y que se distinga de un vistazo si hay datos o no.
         $participantsCount = Participant::count();
 
-        // Lotes de importación pendientes de revisión o aún procesándose (ADR-0004).
-        $pendingBatches = ImportBatch::whereIn('status', ['en_revision', 'procesando'])
+        // Lotes de importación que aún ocupan el pipeline de carga masiva.
+        $processingBatches = ImportBatch::with('user:id,name')
+            ->where('status', 'procesando')
+            ->latest()
+            ->take(3)
+            ->get();
+
+        // Lotes ya parseados y pendientes de revisión/aprobación (ADR-0004).
+        $pendingBatches = ImportBatch::where('status', 'en_revision')
             ->latest()
             ->take(5)
             ->get();
 
-        return view('administration.participants.index', compact('programs', 'dependencies', 'affiliations', 'estamentos', 'participantsCount', 'pendingBatches'));
+        return view('administration.participants.index', compact('programs', 'dependencies', 'affiliations', 'estamentos', 'participantsCount', 'processingBatches', 'pendingBatches'));
     }
 
     public function downloadTemplate()
@@ -84,6 +91,14 @@ class ParticipantImportController extends Controller
      */
     public function import(Request $request, CampusScopeService $campusScope, ParticipantImportParser $parser)
     {
+        $processingBatch = ImportBatch::where('status', 'procesando')->latest()->first();
+
+        if ($processingBatch !== null) {
+            return redirect()
+                ->route('participants-import.index')
+                ->with('error', 'Ya hay una carga masiva de participantes procesándose. Espera a que termine antes de subir otro Excel.');
+        }
+
         $request->validate([
             'excel_file' => 'required|file|mimes:xlsx,xls,csv|max:20480',
         ], [
