@@ -86,6 +86,25 @@ class NotificationCenterTest extends TestCase
         $this->assertSame(0, $user->unreadNotifications()->count());
     }
 
+    public function test_eliminar_una_notificacion_la_quita_de_la_lista_y_actualiza_conteo(): void
+    {
+        $user = User::factory()->create();
+        $this->notify($user, ['titulo' => 'A', 'mensaje' => 'a']);
+        $this->notify($user, ['titulo' => 'B', 'mensaje' => 'b']);
+        $id = DB::table('notifications')->where('notifiable_id', $user->id)->value('id');
+
+        Livewire::actingAs($user)
+            ->test(NotificationBell::class)
+            ->assertSet('unreadCount', 2)
+            ->call('loadItems')
+            ->call('deleteNotification', $id)
+            ->assertSet('unreadCount', 1)
+            ->assertCount('items', 1);
+
+        $this->assertDatabaseMissing('notifications', ['id' => $id]);
+        $this->assertSame(1, $user->unreadNotifications()->count());
+    }
+
     public function test_el_escaneo_crea_aviso_de_evento_proximo_y_es_idempotente(): void
     {
         $user = User::factory()->create();

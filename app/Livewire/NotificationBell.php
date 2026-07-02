@@ -89,6 +89,19 @@ class NotificationBell extends Component
         $this->load();
     }
 
+    public function deleteNotification(string $id): void
+    {
+        if (! $this->notificationsTableExists()) {
+            $this->unreadCount = 0;
+            $this->items = [];
+
+            return;
+        }
+
+        auth()->user()?->notifications()->whereKey($id)->delete();
+        $this->load();
+    }
+
     private function load(): void
     {
         $user = auth()->user();
