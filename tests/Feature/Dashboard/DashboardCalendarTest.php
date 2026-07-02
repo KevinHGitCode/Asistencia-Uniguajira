@@ -91,6 +91,67 @@ class DashboardCalendarTest extends TestCase
             ->assertJsonStructure([['date', 'count']]);
     }
 
+    public function test_eventos_json_con_navegacion_retorna_periodo_y_semestres_disponibles(): void
+    {
+        $user = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        Event::factory()->create(['user_id' => $user->id, 'date' => '2025-10-10']);
+        Event::factory()->create(['user_id' => $user->id, 'date' => '2026-03-15']);
+        Event::factory()->create(['user_id' => $user->id, 'date' => '2026-07-15']);
+
+        $this->actingAs($user)
+            ->getJson('/api/eventos-json?year=2026&semester=1&include_navigation=1')
+            ->assertOk()
+            ->assertJsonPath('period.label', 'Semestre I 2026')
+            ->assertJsonPath('period.start', '2026-01-01')
+            ->assertJsonPath('period.end', '2026-06-30')
+            ->assertJsonPath('navigation.previous.label', 'Semestre II 2025')
+            ->assertJsonPath('navigation.previous.has_events', true)
+            ->assertJsonPath('navigation.next.label', 'Semestre II 2026')
+            ->assertJsonPath('navigation.next.has_events', true)
+            ->assertJsonFragment(['date' => '2026-03-15', 'count' => 1]);
+    }
+
+    public function test_eventos_json_deshabilita_semestre_sin_eventos_visibles_para_la_sede(): void
+    {
+        [$maicao, $riohacha] = $this->createCampuses();
+        $admin = User::factory()->create([
+            'role' => User::ROLE_ADMIN,
+            'campus_id' => $maicao->id,
+        ]);
+
+        Event::factory()->create([
+            'user_id' => $admin->id,
+            'campus_id' => $maicao->id,
+            'date' => '2026-03-15',
+        ]);
+        Event::factory()->create([
+            'user_id' => $admin->id,
+            'campus_id' => $riohacha->id,
+            'date' => '2026-07-15',
+        ]);
+
+        $this->actingAs($admin)
+            ->getJson('/api/eventos-json?year=2026&semester=1&include_navigation=1')
+            ->assertOk()
+            ->assertJsonPath('navigation.next.has_events', false);
+    }
+
+    public function test_mis_eventos_json_respeta_periodo_solicitado(): void
+    {
+        $user = User::factory()->create(['role' => User::ROLE_USER]);
+        Event::factory()->create(['user_id' => $user->id, 'date' => '2026-03-15']);
+        Event::factory()->create(['user_id' => $user->id, 'date' => '2026-07-15']);
+
+        $response = $this->actingAs($user)
+            ->getJson('/api/mis-eventos-json?year=2026&semester=2');
+
+        $dates = collect($response->json('eventos'))->pluck('date')->all();
+
+        $response->assertOk();
+        $this->assertContains('2026-07-15', $dates);
+        $this->assertNotContains('2026-03-15', $dates);
+    }
+
     public function test_eventos_json_retorna_array_vacio_sin_eventos_en_el_semestre(): void
     {
         $user = User::factory()->create(['role' => User::ROLE_ADMIN]);

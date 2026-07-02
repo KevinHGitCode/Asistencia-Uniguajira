@@ -7,14 +7,35 @@ export function clearCalendarContainer() {
     }
 }
 
-export async function fetchEventsAndPaintCalendar() {
-    const response = await fetch('/api/eventos-json');
-    const eventos = await response.json();
-    return eventos;
+function periodParams(period = null) {
+    const params = new URLSearchParams();
+
+    if (period?.year && period?.semester) {
+        params.set('year', period.year);
+        params.set('semester', period.semester);
+    }
+
+    return params;
 }
 
-export async function fetchMyEventsAndPaintCalendar() {
-    const response = await fetch('/api/mis-eventos-json');
+export async function fetchEventsAndPaintCalendar(period = null) {
+    const params = periodParams(period);
+    params.set('include_navigation', '1');
+
+    const response = await fetch(`/api/eventos-json?${params.toString()}`);
+    const payload = await response.json();
+
+    if (Array.isArray(payload)) {
+        return { events: payload, period: getSemesterInfo(), navigation: null };
+    }
+
+    return payload;
+}
+
+export async function fetchMyEventsAndPaintCalendar(period = null) {
+    const params = periodParams(period);
+    const query = params.toString();
+    const response = await fetch(`/api/mis-eventos-json${query ? `?${query}` : ''}`);
     if (!response.ok) {
         console.error("Error al traer eventos", response.status);
         return [];
@@ -42,5 +63,14 @@ export const getSemesterInfo = () => {
         range = 6; // 6 meses
     }
 
-    return { startDate, range };
+    const semester = currentMonth >= 0 && currentMonth <= 5 ? 1 : 2;
+
+    return {
+        year: currentYear,
+        semester,
+        label: `Semestre ${semester === 1 ? 'I' : 'II'} ${currentYear}`,
+        start: startDate.toISOString().split('T')[0],
+        startDate,
+        range
+    };
 };

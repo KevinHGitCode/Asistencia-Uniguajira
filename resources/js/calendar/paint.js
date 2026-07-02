@@ -19,10 +19,66 @@ let calInstance = null;
 let isCalendarInitialized = false;
 let isCalendarPainting = false;
 let pendingPaintTheme = null;
+let pendingPaintPeriod = null;
+let activePeriod = null;
+let activeNavigation = null;
+let controlsBound = false;
 
-export async function paintCalendar(forcedTheme = null) {
+function parseLocalDate(value) {
+    const [year, month, day] = value.split('-').map(Number);
+    return new Date(year, month - 1, day);
+}
+
+function currentPeriodFallback() {
+    const semesterInfo = getSemesterInfo();
+
+    return {
+        year: semesterInfo.year,
+        semester: semesterInfo.semester,
+    };
+}
+
+function bindSemesterControls() {
+    if (controlsBound) return;
+
+    document.querySelectorAll('[data-calendar-nav]').forEach((button) => {
+        button.addEventListener('click', () => {
+            const direction = button.dataset.calendarNav;
+            const target = activeNavigation?.[direction];
+
+            if (!target?.has_events) return;
+
+            paintCalendar(null, {
+                year: target.year,
+                semester: target.semester,
+            });
+        });
+    });
+
+    controlsBound = true;
+}
+
+function updateSemesterControls(period, navigation) {
+    const label = document.querySelector('[data-calendar-period-label]');
+    if (label && period?.label) {
+        label.textContent = period.label;
+    }
+
+    document.querySelectorAll('[data-calendar-nav]').forEach((button) => {
+        const direction = button.dataset.calendarNav;
+        const target = navigation?.[direction];
+        const disabled = !target?.has_events;
+
+        button.disabled = disabled;
+        button.title = target?.label ?? (direction === 'previous' ? 'Semestre anterior' : 'Semestre siguiente');
+        button.setAttribute('aria-disabled', disabled ? 'true' : 'false');
+    });
+}
+
+export async function paintCalendar(forcedTheme = null, requestedPeriod = null) {
     if (isCalendarPainting) {
         pendingPaintTheme = forcedTheme;
+        pendingPaintPeriod = requestedPeriod;
         console.log('📅 Calendar already painting, skipping...');
         return;
     }
@@ -51,13 +107,29 @@ export async function paintCalendar(forcedTheme = null) {
         const isDarkTheme = forcedTheme ?? document.documentElement.classList.contains('dark');
         console.log(`📅 Painting calendar: isDarkTheme=${isDarkTheme}`);
 
-        const events = await fetchEventsAndPaintCalendar();
+        bindSemesterControls();
+
+        if (requestedPeriod) {
+            activePeriod = requestedPeriod;
+        } else {
+            activePeriod ??= currentPeriodFallback();
+        }
+
+        const calendarPayload = await fetchEventsAndPaintCalendar(activePeriod);
+        const events = calendarPayload.events ?? [];
+        activePeriod = {
+            year: calendarPayload.period?.year ?? activePeriod.year,
+            semester: calendarPayload.period?.semester ?? activePeriod.semester,
+        };
+        activeNavigation = calendarPayload.navigation;
+        updateSemesterControls(calendarPayload.period, activeNavigation);
+
         const dimensions = getResponsiveDimensions();
-        const myevents = await fetchMyEventsAndPaintCalendar();
+        const myevents = await fetchMyEventsAndPaintCalendar(activePeriod);
         console.log(myevents);
 
         const highlightDates = myevents.map(e => new Date(e.date));
-        const semesterInfo = getSemesterInfo();
+        const semesterInfo = calendarPayload.period ?? getSemesterInfo();
         const today = getTodayAsDate();
 
         calInstance = new CalHeatmap();
@@ -104,7 +176,7 @@ export async function paintCalendar(forcedTheme = null) {
                 y: 'count'
             },
             date: {
-                start: semesterInfo.startDate,
+                start: semesterInfo.start ? parseLocalDate(semesterInfo.start) : semesterInfo.startDate,
                 highlight: [
                     ...highlightDates,
                     today
@@ -187,10 +259,12 @@ export async function paintCalendar(forcedTheme = null) {
     } finally {
         isCalendarPainting = false;
 
-        if (pendingPaintTheme !== null) {
+        if (pendingPaintTheme !== null || pendingPaintPeriod !== null) {
             const nextTheme = pendingPaintTheme;
+            const nextPeriod = pendingPaintPeriod;
             pendingPaintTheme = null;
-            setTimeout(() => paintCalendar(nextTheme), 0);
+            pendingPaintPeriod = null;
+            setTimeout(() => paintCalendar(nextTheme, nextPeriod), 0);
         }
     }
 };

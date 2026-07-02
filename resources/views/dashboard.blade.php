@@ -202,15 +202,41 @@
              flux:main (toda la página). --}}
         <div class="relative shrink-0 border border-neutral-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-2xl shadow-md overflow-hidden">
             <!-- Header del calendario -->
-            <div class="px-3 sm:px-6 py-3 border-b border-neutral-200 dark:border-neutral-700 bg-zinc-50 dark:bg-zinc-900 text-center">
-                <h2 class="flex items-center justify-center gap-2 text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
-                    <flux:icon.calendar-check class="size-6 text-[#e2a542]" />
-                    <span>Calendario Semestral de Eventos</span>
-                </h2>
+            <div class="px-3 sm:px-6 py-3 border-b border-neutral-200 dark:border-neutral-700 bg-zinc-50 dark:bg-zinc-900">
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <button
+                        type="button"
+                        data-calendar-nav="previous"
+                        class="inline-flex size-9 items-center justify-center self-center rounded-full border border-neutral-200 bg-white text-gray-700 shadow-sm transition hover:border-[#62a9b6] hover:text-[#62a9b6] disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
+                        title="Semestre anterior"
+                        disabled
+                    >
+                        <span class="sr-only">Semestre anterior</span>
+                        <flux:icon.chevron-left class="size-5" />
+                    </button>
 
-                <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    Visualiza tu actividad de eventos a lo largo del año
-                </p>
+                    <div class="text-center">
+                        <h2 class="flex items-center justify-center gap-2 text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
+                            <flux:icon.calendar-check class="size-6 text-[#e2a542]" />
+                            <span>Calendario Semestral de Eventos</span>
+                        </h2>
+
+                        <p data-calendar-period-label class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
+                            Visualiza tu actividad de eventos a lo largo del año
+                        </p>
+                    </div>
+
+                    <button
+                        type="button"
+                        data-calendar-nav="next"
+                        class="inline-flex size-9 items-center justify-center self-center rounded-full border border-neutral-200 bg-white text-gray-700 shadow-sm transition hover:border-[#62a9b6] hover:text-[#62a9b6] disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
+                        title="Semestre siguiente"
+                        disabled
+                    >
+                        <span class="sr-only">Semestre siguiente</span>
+                        <flux:icon.chevron-right class="size-5" />
+                    </button>
+                </div>
             </div>
 
             <!-- Contenedor con scroll -->

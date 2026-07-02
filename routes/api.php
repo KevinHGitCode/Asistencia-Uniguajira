@@ -6,6 +6,7 @@ use App\Http\Controllers\EventController;
 use App\Http\Controllers\StatisticsController;
 use App\Models\Event;
 use App\Models\User;
+use App\Services\AcademicSemesterService;
 use App\Services\CampusScopeService;
 use App\Services\StatisticsFilterResolver;
 use Illuminate\Http\Request;
@@ -75,46 +76,60 @@ $authorizeStatisticsEvent = function (int $eventId, CampusScopeService $campusSc
 };
 
 // Ruta para obtener eventos en formato JSON para el calendario
-Route::middleware(['web', 'auth'])->get('/eventos-json', function (CampusScopeService $campusScope) use ($applyCalendarVisibility) {
+Route::middleware(['web', 'auth'])->get('/eventos-json', function (Request $request, CampusScopeService $campusScope, AcademicSemesterService $semesters) use ($applyCalendarVisibility) {
     $user = Auth::user();
-    $now = now();
-    $year = $now->year;
-    if ($now->month >= 1 && $now->month <= 6) {
-        // Primer semestre: 1 de enero a 30 de junio
-        $start = "$year-01-01";
-        $end = "$year-06-30";
-    } else {
-        // Segundo semestre: 1 de julio a 31 de diciembre
-        $start = "$year-07-01";
-        $end = "$year-12-31";
-    }
+    $period = $semesters->periodFromRequest($request);
+    [$start, $end] = $semesters->bounds($period);
     $query = Event::query()
         ->selectRaw('DATE(date) as date, COUNT(*) as count')
         ->whereBetween('date', [$start, $end]);
 
     $applyCalendarVisibility($query, $user, $campusScope);
 
-    return $query
+    $events = $query
         ->groupBy('date')
         ->get();
+
+    if (! $request->boolean('include_navigation')) {
+        return $events;
+    }
+
+    $hasEvents = function (array $targetPeriod) use ($applyCalendarVisibility, $campusScope, $semesters, $user): bool {
+        [$targetStart, $targetEnd] = $semesters->bounds($targetPeriod);
+        $targetQuery = Event::query()->whereBetween('date', [$targetStart, $targetEnd]);
+
+        $applyCalendarVisibility($targetQuery, $user, $campusScope);
+
+        return $targetQuery->exists();
+    };
+
+    $previous = $semesters->adjacentPeriod($period, -1);
+    $next = $semesters->adjacentPeriod($period, 1);
+
+    return response()->json([
+        'events' => $events,
+        'period' => $semesters->metadata($period),
+        'navigation' => [
+            'previous' => [
+                ...$semesters->metadata($previous),
+                'has_events' => $hasEvents($previous),
+            ],
+            'next' => [
+                ...$semesters->metadata($next),
+                'has_events' => $hasEvents($next),
+            ],
+        ],
+    ]);
 });
 
 // Ruta para obtener eventos por fecha específica
 Route::middleware(['web', 'auth'])->get('/events/{date}', [EventController::class, 'getByDate']);
 
 // Ruta para obtener eventos del usuario autenticado en formato JSON para el calendario
-Route::middleware(['web', 'auth'])->get('/mis-eventos-json', function (CampusScopeService $campusScope) {
+Route::middleware(['web', 'auth'])->get('/mis-eventos-json', function (Request $request, CampusScopeService $campusScope, AcademicSemesterService $semesters) {
     $user = Auth::user();
-    $now = now();
-    $year = $now->year;
-
-    if ($now->month <= 6) {
-        $start = "$year-01-01";
-        $end = "$year-06-30";
-    } else {
-        $start = "$year-07-01";
-        $end = "$year-12-31";
-    }
+    $period = $semesters->periodFromRequest($request);
+    [$start, $end] = $semesters->bounds($period);
 
     return response()->json([
         'auth_id' => Auth::id(),
