@@ -13,6 +13,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
 
@@ -49,7 +50,7 @@ class ParseParticipantImportJob implements ShouldQueue
             $parser->parse($this->batch, $absolutePath, $this->extension, $this->context);
 
             // Aviso in-app: el lote ya está listo para revisar (ADR-0018).
-            $this->batch->user?->notify(new ImportBatchReady($this->batch->fresh()));
+            $this->notifyUser();
         } catch (ImportParseException $e) {
             // Error esperado (archivo vacío / columnas faltantes): no es una falla
             // dura del job; se marca el lote para que el usuario lo vea.
@@ -88,6 +89,19 @@ class ParseParticipantImportJob implements ShouldQueue
             Storage::disk($this->disk)->delete($this->relativePath);
         } catch (Throwable $e) {
             // El barrido de retención lo recogerá después; no interrumpimos.
+        }
+    }
+
+    private function notifyUser(): void
+    {
+        try {
+            if (! Schema::hasTable('notifications')) {
+                return;
+            }
+
+            $this->batch->user?->notify(new ImportBatchReady($this->batch->fresh()));
+        } catch (Throwable $e) {
+            Log::warning('No se pudo notificar que el lote de participantes esta listo: '.$e->getMessage());
         }
     }
 }

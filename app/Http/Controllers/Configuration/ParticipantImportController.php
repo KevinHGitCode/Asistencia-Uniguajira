@@ -328,6 +328,18 @@ class ParticipantImportController extends Controller
         $estado = $request->query('estado');
         $estado = in_array($estado, ['nuevo', 'actualiza', 'omitido'], true) ? $estado : null;
 
+        if (in_array($batch->status, ['procesando', 'error'], true)) {
+            return view('administration.participants.review', [
+                'batch' => $batch,
+                'rows' => null,
+                'estado' => $estado,
+                'typeNames' => collect(),
+                'programNames' => collect(),
+                'dependencyNames' => collect(),
+                'affiliationNames' => collect(),
+            ]);
+        }
+
         $rows = $batch->stagedParticipants()
             ->when($estado, fn ($q) => $q->where('status', $estado))
             ->orderBy('id')

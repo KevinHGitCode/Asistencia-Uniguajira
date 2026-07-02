@@ -15,6 +15,7 @@ use App\Support\ImportContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -88,6 +89,23 @@ class ParticipantImportAsyncTest extends TestCase
         Queue::assertNothingPushed();
     }
 
+    public function test_la_revision_de_un_lote_procesando_no_consulta_staging(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'campus_id' => Campus::create(['name' => 'X'])->id]);
+        $batch = ImportBatch::create([
+            'user_id' => $admin->id,
+            'original_filename' => 'grande.xlsx',
+            'status' => 'procesando',
+        ]);
+
+        Schema::dropIfExists('staged_participants');
+
+        $this->actingAs($admin)
+            ->get(route('participants-import.review', $batch))
+            ->assertOk()
+            ->assertSee('Procesando el archivo', false);
+    }
+
     public function test_el_job_parsea_a_staging_y_notifica_al_terminar(): void
     {
         $campus = $this->seedCatalogs();
@@ -117,6 +135,30 @@ class ParticipantImportAsyncTest extends TestCase
 
         // El archivo temporal se limpia al terminar.
         Storage::disk('local')->assertMissing('imports/job.csv');
+    }
+
+    public function test_el_job_no_falla_si_no_existe_la_tabla_de_notificaciones(): void
+    {
+        $campus = $this->seedCatalogs();
+        $admin = User::factory()->create(['role' => 'admin', 'campus_id' => $campus->id]);
+
+        $batch = ImportBatch::create([
+            'user_id' => $admin->id,
+            'original_filename' => 'grande.csv',
+            'status' => 'procesando',
+        ]);
+
+        Storage::disk('local')->put('imports/job-sin-notificaciones.csv', $this->csvContent());
+        Schema::dropIfExists('notifications');
+
+        $ctx = ImportContext::fromUser($admin->fresh(), $campus->id);
+        (new ParseParticipantImportJob($batch, 'local', 'imports/job-sin-notificaciones.csv', 'csv', $ctx))
+            ->handle(app(ParticipantImportParser::class));
+
+        $batch->refresh();
+        $this->assertSame('en_revision', $batch->status);
+        $this->assertSame(1, $batch->new_count);
+        Storage::disk('local')->assertMissing('imports/job-sin-notificaciones.csv');
     }
 
     public function test_el_job_marca_error_cuando_el_archivo_esta_vacio(): void
