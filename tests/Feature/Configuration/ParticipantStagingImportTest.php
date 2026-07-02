@@ -361,6 +361,34 @@ class ParticipantStagingImportTest extends TestCase
         $this->assertNotNull($batch->fresh()->applied_at);
     }
 
+    public function test_aprobar_reclasifica_como_actualizacion_un_participante_creado_despues_del_staging(): void
+    {
+        $campus = $this->seedCatalogs();
+        $admin = User::factory()->create(['role' => 'admin', 'campus_id' => $campus->id, 'password' => 'secret-123']);
+
+        $this->actingAs($admin)->post(route('participants-import.import'), [
+            'excel_file' => $this->csv(['2001,Ana,Perez,Estudiante,ana2@u.co,Ingenieria de sistemas,Pregrado,']),
+        ]);
+
+        $batch = ImportBatch::latest()->firstOrFail();
+        $this->assertSame('nuevo', $batch->stagedParticipants()->firstOrFail()->status);
+
+        Participant::create([
+            'document' => '2001',
+            'first_name' => 'Ana',
+            'last_name' => 'Perez',
+            'email' => 'ana2@u.co',
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('participants-import.approve', $batch), ['password' => 'secret-123'])
+            ->assertRedirect(route('participants-import.index'));
+
+        $this->assertSame(1, Participant::where('document', '2001')->count());
+        $this->assertSame(1, ParticipantRole::count());
+        $this->assertSame('aprobado', $batch->fresh()->status);
+    }
+
     public function test_rechazar_no_crea_participantes(): void
     {
         $campus = $this->seedCatalogs();

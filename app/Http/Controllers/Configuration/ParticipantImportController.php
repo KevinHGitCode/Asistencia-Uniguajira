@@ -418,7 +418,12 @@ class ParticipantImportController extends Controller
                 }
             });
 
-        $result = DB::transaction(fn () => $this->commitPlan($newParticipants, $newRoles, $excelRolesForExisting));
+        $result = DB::transaction(function () use (&$newParticipants, &$newRoles, &$excelRolesForExisting) {
+            $reconcileResult = $this->reconcileNewParticipantsForApproval($newParticipants, $newRoles, $excelRolesForExisting);
+            $commitResult = $this->commitPlan($newParticipants, $newRoles, $excelRolesForExisting);
+
+            return $commitResult + $reconcileResult;
+        });
 
         $batch->update(['status' => 'aprobado', 'applied_at' => now()]);
 
@@ -432,6 +437,78 @@ class ParticipantImportController extends Controller
         return redirect()->route('participants-import.index')
             ->with('active_tab', 'list')
             ->with('import_result', $result + ['skipped' => $batch->skipped_count]);
+    }
+
+    /**
+     * Un lote puede quedar desactualizado entre la revisión y la aprobación:
+     * otro admin pudo crear/aprobar el mismo participante primero. Antes del
+     * insert final, convierte esos "nuevo" en actualizaciones de roles y omite
+     * conflictos de correo que pertenezcan a otro documento.
+     */
+    private function reconcileNewParticipantsForApproval(array &$newParticipants, array &$newRoles, array &$excelRolesForExisting): array
+    {
+        if (empty($newParticipants)) {
+            return ['participants_skipped_conflict' => 0];
+        }
+
+        $documents = array_keys($newParticipants);
+        $emails = collect($newParticipants)
+            ->pluck('email')
+            ->filter()
+            ->map(fn ($email) => mb_strtolower((string) $email, 'UTF-8'))
+            ->unique()
+            ->values()
+            ->all();
+
+        $existingByDocument = [];
+        foreach (array_chunk($documents, 500) as $chunk) {
+            DB::table('participants')
+                ->whereIn('document', $chunk)
+                ->get(['id', 'document'])
+                ->each(function ($participant) use (&$existingByDocument) {
+                    $existingByDocument[$participant->document] = (int) $participant->id;
+                });
+        }
+
+        $existingByEmail = [];
+        foreach (array_chunk($emails, 500) as $chunk) {
+            DB::table('participants')
+                ->whereNotNull('email')
+                ->whereIn('email', $chunk)
+                ->get(['id', 'document', 'email'])
+                ->each(function ($participant) use (&$existingByEmail) {
+                    $existingByEmail[mb_strtolower((string) $participant->email, 'UTF-8')] = [
+                        'id' => (int) $participant->id,
+                        'document' => (string) $participant->document,
+                    ];
+                });
+        }
+
+        $skippedConflicts = 0;
+
+        foreach ($newParticipants as $document => $participant) {
+            $participantId = $existingByDocument[$document] ?? null;
+
+            if ($participantId) {
+                $excelRolesForExisting[$participantId] = array_replace(
+                    $excelRolesForExisting[$participantId] ?? [],
+                    $newRoles[$document] ?? [],
+                );
+                unset($newParticipants[$document], $newRoles[$document]);
+
+                continue;
+            }
+
+            $email = $participant['email'] ? mb_strtolower((string) $participant['email'], 'UTF-8') : null;
+            $emailOwner = $email ? ($existingByEmail[$email] ?? null) : null;
+
+            if ($emailOwner && $emailOwner['document'] !== (string) $document) {
+                unset($newParticipants[$document], $newRoles[$document]);
+                $skippedConflicts++;
+            }
+        }
+
+        return ['participants_skipped_conflict' => $skippedConflicts];
     }
 
     /**

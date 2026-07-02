@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use Illuminate\Support\Facades\Schema;
 use Livewire\Component;
 
 /**
@@ -49,11 +50,19 @@ class NotificationBell extends Component
 
     private function countUnread(): int
     {
+        if (! $this->notificationsTableExists()) {
+            return 0;
+        }
+
         return (int) (auth()->user()?->unreadNotifications()->count() ?? 0);
     }
 
     public function markAsRead(string $id)
     {
+        if (! $this->notificationsTableExists()) {
+            return null;
+        }
+
         $user = auth()->user();
         $notification = $user?->notifications()->whereKey($id)->first();
 
@@ -69,6 +78,13 @@ class NotificationBell extends Component
 
     public function markAllAsRead(): void
     {
+        if (! $this->notificationsTableExists()) {
+            $this->unreadCount = 0;
+            $this->items = [];
+
+            return;
+        }
+
         auth()->user()?->unreadNotifications->markAsRead();
         $this->load();
     }
@@ -77,7 +93,7 @@ class NotificationBell extends Component
     {
         $user = auth()->user();
 
-        if (! $user) {
+        if (! $user || ! $this->notificationsTableExists()) {
             $this->unreadCount = 0;
             $this->items = [];
 
@@ -100,6 +116,15 @@ class NotificationBell extends Component
                 'fecha' => $n->created_at->diffForHumans(),
             ])
             ->all();
+    }
+
+    private function notificationsTableExists(): bool
+    {
+        try {
+            return Schema::hasTable('notifications');
+        } catch (\Throwable) {
+            return false;
+        }
     }
 
     public function render()

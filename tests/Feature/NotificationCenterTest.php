@@ -9,6 +9,7 @@ use App\Notifications\EventEndingSoon;
 use App\Notifications\EventStartingSoon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -42,6 +43,18 @@ class NotificationCenterTest extends TestCase
             ->assertSet('loaded', true)
             ->assertSee('Hola')
             ->assertSee('Mensaje');
+    }
+
+    public function test_la_campana_no_rompe_si_falta_la_tabla_de_notificaciones(): void
+    {
+        $user = User::factory()->create();
+        Schema::dropIfExists('notifications');
+
+        Livewire::actingAs($user)
+            ->test(NotificationBell::class)
+            ->assertSet('unreadCount', 0)
+            ->call('loadItems')
+            ->assertSet('items', []);
     }
 
     public function test_marcar_todas_como_leidas_pone_el_conteo_en_cero(): void
