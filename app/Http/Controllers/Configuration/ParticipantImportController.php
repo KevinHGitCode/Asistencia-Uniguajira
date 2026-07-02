@@ -237,8 +237,16 @@ class ParticipantImportController extends Controller
                 ->where('is_active', 1)
                 ->get(['id', 'participant_id', 'participant_type_id', 'program_id', 'dependency_id', 'affiliation_id'])
                 ->each(function ($r) use (&$activeRoles) {
-                    $key = ($r->participant_type_id ?? 0).'|'.($r->program_id ?? 0).'|'.($r->dependency_id ?? 0).'|'.($r->affiliation_id ?? 0);
-                    $activeRoles[$r->participant_id][$key] = $r->id;
+                    $key = $this->roleStorageKey([
+                        'participant_type_id' => $r->participant_type_id,
+                        'program_id' => $r->program_id,
+                        'dependency_id' => $r->dependency_id,
+                        'affiliation_id' => $r->affiliation_id,
+                    ]);
+                    $activeRoles[$r->participant_id][$key] = [
+                        'id' => $r->id,
+                        'affiliation_id' => $r->affiliation_id,
+                    ];
                 });
         }
 
@@ -254,8 +262,24 @@ class ParticipantImportController extends Controller
             $currentKeys = array_keys($currentRoleKeys);
 
             $toActivate = array_diff($wantedKeys, $currentKeys);
+            $toUpdate = array_intersect($wantedKeys, $currentKeys);
 
             $changed = false;
+
+            foreach ($toUpdate as $roleKey) {
+                $role = $wantedRoles[$roleKey];
+                $currentRole = $currentRoleKeys[$roleKey] ?? null;
+
+                if ($currentRole && (int) ($currentRole['affiliation_id'] ?? 0) !== (int) ($role['affiliation_id'] ?? 0)) {
+                    DB::table('participant_roles')
+                        ->where('id', $currentRole['id'])
+                        ->update([
+                            'affiliation_id' => $role['affiliation_id'],
+                            'updated_at' => $now,
+                        ]);
+                    $changed = true;
+                }
+            }
 
             foreach ($toActivate as $roleKey) {
                 $role = $wantedRoles[$roleKey];
@@ -269,11 +293,12 @@ class ParticipantImportController extends Controller
                     ->where(fn ($q) => $role['dependency_id']
                         ? $q->where('dependency_id', $role['dependency_id'])
                         : $q->whereNull('dependency_id'))
-                    ->where(fn ($q) => $role['affiliation_id']
-                        ? $q->where('affiliation_id', $role['affiliation_id'])
-                        : $q->whereNull('affiliation_id'))
                     ->where('is_active', 0)
-                    ->update(['is_active' => 1, 'updated_at' => $now]);
+                    ->update([
+                        'affiliation_id' => $role['affiliation_id'],
+                        'is_active' => 1,
+                        'updated_at' => $now,
+                    ]);
 
                 if ($updated) {
                     $rolesActivated++;
@@ -305,6 +330,21 @@ class ParticipantImportController extends Controller
             'roles_created' => $rolesCreated,
             'roles_skipped_conflict' => $rolesSkippedConflict,
         ];
+    }
+
+    private function roleStorageKey(array $role): string
+    {
+        $typeId = (int) ($role['participant_type_id'] ?? 0);
+
+        if (! empty($role['program_id'])) {
+            return $typeId.'|program|'.(int) $role['program_id'];
+        }
+
+        if (! empty($role['dependency_id'])) {
+            return $typeId.'|dependency|'.(int) $role['dependency_id'];
+        }
+
+        return $typeId.'|affiliation|'.(int) ($role['affiliation_id'] ?? 0);
     }
 
     /**
@@ -389,13 +429,13 @@ class ParticipantImportController extends Controller
         $rebuildRoles = function ($rolesJson): array {
             $roles = [];
             foreach (($rolesJson ?? []) as $r) {
-                $key = ($r['participant_type_id'] ?? 0).'|'.($r['program_id'] ?? 0).'|'.($r['dependency_id'] ?? 0).'|'.($r['affiliation_id'] ?? 0);
-                $roles[$key] = [
+                $role = [
                     'participant_type_id' => $r['participant_type_id'] ?? null,
                     'program_id' => $r['program_id'] ?? null,
                     'dependency_id' => $r['dependency_id'] ?? null,
                     'affiliation_id' => $r['affiliation_id'] ?? null,
                 ];
+                $roles[$this->roleStorageKey($role)] = $role;
             }
 
             return $roles;

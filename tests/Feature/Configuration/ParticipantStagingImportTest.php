@@ -389,6 +389,52 @@ class ParticipantStagingImportTest extends TestCase
         $this->assertSame('aprobado', $batch->fresh()->status);
     }
 
+    public function test_aprobar_actualiza_vinculacion_sin_duplicar_rol_de_dependencia_existente(): void
+    {
+        $campus = Campus::create(['name' => 'Maicao']);
+        $admin = User::factory()->create(['role' => 'admin', 'campus_id' => $campus->id, 'password' => 'secret-123']);
+        $type = ParticipantType::create(['name' => 'Administrativo']);
+        $oldAffiliation = Affiliation::create(['name' => 'Contratista']);
+        $newAffiliation = Affiliation::create(['name' => 'Planta']);
+        $dependency = Dependency::create([
+            'name' => 'Biblioteca',
+            'campus_id' => $campus->id,
+        ]);
+        $participant = Participant::create([
+            'document' => '9001',
+            'first_name' => 'Ana',
+            'last_name' => 'Perez',
+            'email' => 'ana.admin@u.co',
+        ]);
+        ParticipantRole::create([
+            'participant_id' => $participant->id,
+            'participant_type_id' => $type->id,
+            'dependency_id' => $dependency->id,
+            'affiliation_id' => $oldAffiliation->id,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($admin)->post(route('participants-import.import'), [
+            'excel_file' => $this->csv(['9001,Ana,Perez,Administrativo,ana.admin@u.co,Biblioteca,,Planta']),
+        ]);
+
+        $batch = ImportBatch::latest()->firstOrFail();
+
+        $this->actingAs($admin)
+            ->post(route('participants-import.approve', $batch), ['password' => 'secret-123'])
+            ->assertRedirect(route('participants-import.index'));
+
+        $this->assertSame(1, ParticipantRole::where('participant_id', $participant->id)->count());
+        $this->assertDatabaseHas('participant_roles', [
+            'participant_id' => $participant->id,
+            'participant_type_id' => $type->id,
+            'dependency_id' => $dependency->id,
+            'affiliation_id' => $newAffiliation->id,
+            'is_active' => true,
+        ]);
+        $this->assertSame('aprobado', $batch->fresh()->status);
+    }
+
     public function test_rechazar_no_crea_participantes(): void
     {
         $campus = $this->seedCatalogs();
