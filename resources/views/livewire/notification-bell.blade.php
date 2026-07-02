@@ -1,4 +1,9 @@
 <div wire:poll.30s="refresh" class="relative" x-data="{ open: false }" @keydown.escape.window="open = false">
+    @php
+        $dropdownClasses = $placement === 'mobile'
+            ? 'fixed left-3 right-3 top-14 mt-0 w-auto rounded-xl border border-neutral-200 bg-white shadow-xl dark:border-zinc-700 dark:bg-zinc-900 z-50 overflow-hidden'
+            : 'absolute right-0 top-full mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-xl border border-neutral-200 bg-white shadow-xl dark:border-zinc-700 dark:bg-zinc-900 z-50 overflow-hidden';
+    @endphp
 
     {{-- Botón campana --}}
     <button type="button" @click="open = !open; if (open && !$wire.loaded) { $wire.loadItems() }"
@@ -17,7 +22,7 @@
          x-transition:enter="transition ease-out duration-150"
          x-transition:enter-start="opacity-0 -translate-y-1"
          x-transition:enter-end="opacity-100 translate-y-0"
-         class="fixed left-3 right-3 top-14 mt-0 w-auto max-w-none rounded-xl border border-neutral-200 bg-white shadow-xl dark:border-zinc-700 dark:bg-zinc-900 z-50 overflow-hidden sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-80 sm:max-w-[calc(100vw-2rem)]">
+         class="{{ $dropdownClasses }}">
 
         <div class="flex items-center justify-between px-4 py-2.5 border-b border-neutral-100 dark:border-zinc-800">
             <span class="text-sm font-semibold text-gray-800 dark:text-gray-100">Notificaciones</span>

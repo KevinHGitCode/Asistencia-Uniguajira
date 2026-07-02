@@ -18,6 +18,12 @@
     {{-- Fix: extender el fondo del sidebar en toda la altura de la página --}}
     <style>
         @media (min-width: 1024px) {
+            .aura-mobile-header {
+                display: none !important;
+            }
+        }
+
+        @media (min-width: 1024px) {
             body:has([data-flux-sidebar])::before {
                 content: '';
                 position: absolute;
@@ -391,10 +397,14 @@
     </flux:sidebar>
 
     <!-- Mobile User Menu -->
-    <flux:header class="lg:hidden border-b border-neutral-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-white">
+    <flux:header class="aura-mobile-header border-b border-neutral-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-white">
         <flux:sidebar.toggle class="lg:hidden" icon="bars-2" inset="left" />
 
         <flux:spacer />
+
+        <div class="mr-2 flex">
+            <livewire:notification-bell placement="mobile" :key="'notification-bell-mobile'" />
+        </div>
 
         <flux:dropdown position="top" align="end">
 
@@ -447,10 +457,10 @@
         </flux:dropdown>
     </flux:header>
 
-    {{-- Campana de notificaciones (ADR-0018) — única instancia, fija arriba a la
-         derecha. En móvil se corre a la izquierda del perfil del header. --}}
-    <div class="fixed top-3 right-24 lg:right-4 z-50">
-        <livewire:notification-bell />
+    {{-- Campana de notificaciones (ADR-0018). En móvil vive dentro del header;
+         en escritorio queda fija arriba a la derecha. --}}
+    <div class="hidden lg:block fixed top-3 right-4 z-50">
+        <livewire:notification-bell placement="desktop" :key="'notification-bell-desktop'" />
     </div>
 
     {{ $slot }}

@@ -15,6 +15,8 @@ use Livewire\Component;
  */
 class NotificationBell extends Component
 {
+    public string $placement = 'desktop';
+
     public int $unreadCount = 0;
 
     /** @var array<int, array<string, mixed>> */
@@ -27,8 +29,9 @@ class NotificationBell extends Component
      */
     public bool $loaded = false;
 
-    public function mount(): void
+    public function mount(string $placement = 'desktop'): void
     {
+        $this->placement = in_array($placement, ['desktop', 'mobile'], true) ? $placement : 'desktop';
         $this->unreadCount = $this->countUnread();
     }
 

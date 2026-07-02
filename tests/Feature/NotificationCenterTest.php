@@ -41,8 +41,35 @@ class NotificationCenterTest extends TestCase
             ->assertSet('unreadCount', 1)
             ->call('loadItems')
             ->assertSet('loaded', true)
+            ->assertSee('absolute right-0 top-full', false)
+            ->assertDontSee('fixed left-3 right-3 top-14', false)
+            ->assertDontSee('max-[420px]:-right-20', false)
             ->assertSee('Hola')
             ->assertSee('Mensaje');
+    }
+
+    public function test_la_campana_movil_usa_modal_fijo_dentro_del_viewport(): void
+    {
+        $user = User::factory()->create();
+
+        Livewire::actingAs($user)
+            ->test(NotificationBell::class, ['placement' => 'mobile'])
+            ->call('loadItems')
+            ->assertSee('fixed left-3 right-3 top-14', false)
+            ->assertDontSee('absolute right-0 top-full', false);
+    }
+
+    public function test_la_campana_responsive_se_separa_por_header_movil_y_fijo_desktop(): void
+    {
+        $layout = file_get_contents(resource_path('views/components/layouts/app/sidebar.blade.php'));
+
+        $this->assertStringContainsString('.aura-mobile-header', $layout);
+        $this->assertStringContainsString('<flux:header class="aura-mobile-header', $layout);
+        $this->assertStringContainsString('<div class="mr-2 flex">', $layout);
+        $this->assertStringContainsString('placement="mobile"', $layout);
+        $this->assertStringContainsString('<div class="hidden lg:block fixed top-3 right-4 z-50">', $layout);
+        $this->assertStringContainsString('placement="desktop"', $layout);
+        $this->assertStringNotContainsString('fixed top-3 right-24', $layout);
     }
 
     public function test_la_campana_no_rompe_si_falta_la_tabla_de_notificaciones(): void
