@@ -6,7 +6,7 @@ actualizado: 2026-06-24
 
 # ADR-0015 · Mapeo de formatos: única fuente de verdad en BD + sincronía al cambiar el PDF
 
-- **Estado:** 🟡 Propuesta
+- **Estado:** 🟢 Aceptada — núcleo implementado (2026-06-25, rama `feat/importacion-participantes-async`)
 - **Fecha:** 2026-06-24
 - **Contexto del repo:** `app/Http/Controllers/Configuration/FormatController.php`
   (`store`, `update`, `mapper`, `saveMapping`, `updateConfigFile`, `removeFromConfigFile`,
@@ -72,10 +72,36 @@ redundante** (salvo el `default`, que solo vive en `config`).
   `config/` en producción. No resuelve la causa raíz.
 - **No hacer nada:** persiste el bug de PDF descuadrado tras cambiar el archivo.
 
-## Pendiente para aceptar
-- [ ] Decidir representación del estado "mapeo desactualizado" y del `default`.
-- [ ] Backfill de mapeos desde `config/attendance_formats.php` a `formats.mapping`.
-- [ ] Rama sugerida: `feat/formatos-mapeo-en-bd` (🔴 toca generación de PDF + migración de datos).
+## Implementación (2026-06-25) — núcleo
+
+Se implementó la parte de **mayor valor y menor riesgo**, sin tocar el camino de
+generación del PDF (`AttendancePdfService::getConfig` ya prefería la BD):
+
+- [x] **Se retiró la escritura en runtime a `config/`**: eliminados
+  `updateConfigFile`, `removeFromConfigFile`, `arrayToPhp`, `isSmallArray`,
+  `arrayToInlinePhp`, el `.lock` y los `Artisan::call('config:clear')` de
+  `FormatController` (`saveMapping`/`destroy`). Ya **no** se muta `config/` en
+  producción → robusto en Hostinger y compatible con `config:cache`.
+- [x] **BD = fuente de verdad** de lo que se edita: `saveMapping` solo hace
+  `$format->update(['mapping' => …, 'mapping_outdated' => false])`.
+  `config/attendance_formats.php` queda como **respaldo estático de solo lectura**
+  (para el `default` y los formatos legado), no editable en runtime.
+- [x] **Estado "mapeo desactualizado":** columna `formats.mapping_outdated`
+  (migración `2026_06_25_000004`). `update()` la marca en `true` cuando se sube un
+  `pdf_file` nuevo y ya había mapeo; `saveMapping()` la vuelve `false`.
+- [x] **Aviso al usuario:** flash al guardar ("el mapeo quedó pendiente") + badge
+  **"Mapeo pendiente"** en el listado (`administration/formats/index.blade.php`).
+  Helper `Format::needsMapping()`.
+- [x] **Tests** (`FormatMappingSourceOfTruthTest`): guardar mapeo no reescribe el
+  config; cambiar el PDF marca pendiente (y no lo hace si no había mapeo);
+  eliminar funciona sin el espejo.
+
+## Pendiente (opcional, no bloqueante)
+- [ ] **Backfill** de los formatos legado de `config/attendance_formats.php`
+  (general, bienestar, proyeccion_social, capacitacion_externa) a filas en
+  `formats` para poder retirar del todo el archivo de config (hoy sigue como
+  respaldo de solo lectura). Conlleva migración de datos → hacer con cuidado.
+- [ ] Mover el `default` a constante/seed y que `getConfig` no dependa de `config()`.
 
 ## Relacionado
 [[adr-0016-edicion-formato-muchas-dependencias]] · [[adr-0017-pdf-de-formato-en-bd]] ·

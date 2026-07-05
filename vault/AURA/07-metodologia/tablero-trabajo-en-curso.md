@@ -61,6 +61,10 @@ que dos personas/IAs choquen, sobre todo en cambios 🔴 que tocan el esquema.
   `events.reminder_notified_at`/`ending_notified_at`; nuevos estados de lote `procesando`/`error`;
   nueva ruta `participants-import.status`. Si tocas eventos, imports o el layout `app/sidebar`,
   coordina. Producción requiere el cron `schedule:run` activo.
+- Mapeo de formatos en BD (misma rama, ADR-0015, 2026-06-25): migración
+  `formats.mapping_outdated`; `FormatController` **ya no escribe** `config/attendance_formats.php`
+  en runtime (se quitaron `updateConfigFile`/`removeFromConfigFile`/`arrayToPhp`). El `config/` queda
+  como respaldo de solo lectura. Si tocas formatos o generación de PDF, coordina.
 - Retiro de asistencia legacy (ADR-0003, 2026-06-24): se **eliminaron** las rutas publicas
   `attendance.store` (POST) y `attendance.confirmation` (GET), el `AttendanceController` y la vista
   `events/confirmation`. El registro publico unico es `events.access` + Livewire. Efecto colateral:

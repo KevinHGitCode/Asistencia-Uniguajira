@@ -52,7 +52,8 @@ Iniciativas formalizadas como ADR o seguimiento vivo. Ramas sugeridas en
   (promovido desde el candidato "Notificaciones reales"; primer consumidor: ADR-0004).
 
 ### Módulo de formatos (propuestas 2026-06-24)
-- **Mapeo de formatos como única fuente de verdad en BD + sincronía al cambiar el PDF** ->
+- ~~**Mapeo de formatos como única fuente de verdad en BD + sincronía al cambiar el PDF**~~ ✅ núcleo
+  hecho 2026-06-25 (retirada la escritura a config/ + flag "mapeo pendiente") ->
   [[adr-0015-mapeo-de-formatos-fuente-de-verdad-en-bd]].
 - ~~**UX de edición de formato con muchas dependencias**~~ ✅ hecho 2026-06-24 -> [[adr-0016-edicion-formato-muchas-dependencias]].
 - **Guardar los PDF de formato en la BD** -> [[adr-0017-pdf-de-formato-en-bd]].

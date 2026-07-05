@@ -107,6 +107,13 @@
                                         <flux:icon name="document-text" class="size-6 text-[#e2a542]" />
                                     </div>
                                     <span class="font-medium text-gray-900 dark:text-white">{{ $format->name }}</span>
+                                    @if($format->mapping_outdated)
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:text-amber-300"
+                                              title="Cambiaste el PDF; las coordenadas guardadas ya no corresponden. Entra a «Mapear coordenadas» y vuelve a guardarlo.">
+                                            <flux:icon.exclamation-triangle class="size-3" />
+                                            Mapeo pendiente
+                                        </span>
+                                    @endif
                                 </div>
                             </td>
                             <td class="px-4 sm:px-6 py-4">
