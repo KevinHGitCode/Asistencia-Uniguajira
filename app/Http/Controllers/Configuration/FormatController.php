@@ -83,6 +83,13 @@ class FormatController extends Controller
 
         $format = Format::create($data);
 
+        // Guarda una copia del PDF en la BD (ADR-0017): fuente durable que
+        // sobrevive aunque se borre la carpeta public/formats. El disco queda
+        // como caché/respaldo secundario.
+        if ($request->hasFile('pdf_file') && isset($data['file'])) {
+            $format->storePdf(Storage::disk('formats')->get($data['file']));
+        }
+
         if ($request->has('dependencies')) {
             $format->dependencies()->sync($request->dependencies);
         }
@@ -144,6 +151,11 @@ class FormatController extends Controller
 
         $format->update($data);
         $format->dependencies()->sync($request->dependencies ?? []);
+
+        // Actualiza la copia del PDF en la BD cuando se sube uno nuevo (ADR-0017).
+        if ($request->hasFile('pdf_file') && isset($data['file'])) {
+            $format->storePdf(Storage::disk('formats')->get($data['file']));
+        }
 
         $changes = [];
         foreach ($original as $field => $oldValue) {

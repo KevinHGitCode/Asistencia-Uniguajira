@@ -56,7 +56,8 @@ Iniciativas formalizadas como ADR o seguimiento vivo. Ramas sugeridas en
   hecho 2026-06-25 (retirada la escritura a config/ + flag "mapeo pendiente") ->
   [[adr-0015-mapeo-de-formatos-fuente-de-verdad-en-bd]].
 - ~~**UX de edición de formato con muchas dependencias**~~ ✅ hecho 2026-06-24 -> [[adr-0016-edicion-formato-muchas-dependencias]].
-- **Guardar los PDF de formato en la BD** -> [[adr-0017-pdf-de-formato-en-bd]].
+- ~~**Guardar los PDF de formato en la BD**~~ ✅ hecho 2026-06-25 (tabla `format_files`, generación
+  vía StreamReader, backfill `formats:pdf-a-bd`) -> [[adr-0017-pdf-de-formato-en-bd]].
 
 ### Mejoras de experiencia y nuevas ideas (propuestas 2026-06-25)
 - **Solicitud de corrección de datos del participante (cupo de intentos)** -> [[adr-0019-solicitud-de-correccion-de-datos-del-participante]].

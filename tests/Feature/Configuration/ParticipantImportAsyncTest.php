@@ -164,6 +164,10 @@ class ParticipantImportAsyncTest extends TestCase
         $campus = $this->seedCatalogs();
         $admin = User::factory()->create(['role' => 'admin', 'campus_id' => $campus->id]);
 
+        // `created_at` no es fillable en ImportBatch, así que se fija el "ahora"
+        // de prueba para que la fecha del lote sea determinista (si no, tomaría
+        // la fecha real del día y el test sería frágil).
+        \Illuminate\Support\Carbon::setTestNow('2026-07-02 14:35:00');
         ImportBatch::create([
             'user_id' => $admin->id,
             'original_filename' => 'ultim csr.xlsx',
@@ -171,9 +175,8 @@ class ParticipantImportAsyncTest extends TestCase
             'new_count' => 0,
             'update_count' => 52225,
             'skipped_count' => 636,
-            'created_at' => '2026-07-02 14:35:00',
-            'updated_at' => '2026-07-02 14:35:00',
         ]);
+        \Illuminate\Support\Carbon::setTestNow();
 
         $response = $this->actingAs($admin)
             ->get(route('participants-import.index'))

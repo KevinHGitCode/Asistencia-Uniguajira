@@ -65,6 +65,9 @@ que dos personas/IAs choquen, sobre todo en cambios 🔴 que tocan el esquema.
   `formats.mapping_outdated`; `FormatController` **ya no escribe** `config/attendance_formats.php`
   en runtime (se quitaron `updateConfigFile`/`removeFromConfigFile`/`arrayToPhp`). El `config/` queda
   como respaldo de solo lectura. Si tocas formatos o generación de PDF, coordina.
+- PDF de formato en BD (misma rama, ADR-0017, 2026-06-25): nueva tabla `format_files` (PDF en base64);
+  `AttendancePdfService` genera desde la BD (StreamReader) con el disco como respaldo; comando
+  `formats:pdf-a-bd`. Ejecutar el backfill una vez en producción.
 - Retiro de asistencia legacy (ADR-0003, 2026-06-24): se **eliminaron** las rutas publicas
   `attendance.store` (POST) y `attendance.confirmation` (GET), el `AttendanceController` y la vista
   `events/confirmation`. El registro publico unico es `events.access` + Livewire. Efecto colateral:

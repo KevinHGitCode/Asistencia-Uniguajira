@@ -169,13 +169,23 @@ class AttendancePdfService
         $cfg = $this->getConfig($formatSlug);
 
         $pdf = new Fpdi;
-        $path = public_path("formats/{$cfg['file']}");
 
-        if (! file_exists($path)) {
-            throw new \Exception("File not found at $path");
+        // Fuente del PDF (ADR-0017): la BD manda (sobrevive al borrado de la
+        // carpeta); si no hay copia en BD, se cae al archivo en disco.
+        $format = \App\Models\Format::where('slug', $formatSlug)->first();
+        $dbBytes = $format?->pdfContents();
+
+        if ($dbBytes !== null && $dbBytes !== '') {
+            $pdf->setSourceFile(\setasign\Fpdi\PdfParser\StreamReader::createByString($dbBytes));
+        } else {
+            $path = public_path("formats/{$cfg['file']}");
+
+            if (! file_exists($path)) {
+                throw new \Exception("File not found at $path");
+            }
+
+            $pdf->setSourceFile($path);
         }
-
-        $pdf->setSourceFile($path);
         $tplIdx = $pdf->importPage(1);
         $size = $pdf->getTemplateSize($tplIdx);
 
