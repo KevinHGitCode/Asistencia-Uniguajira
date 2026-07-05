@@ -37,9 +37,24 @@ php artisan test
 # Migraciones con seeders
 php artisan migrate --seed
 
-# Linter PHP
+# Linter PHP (NO ejecutar de forma automática — ver regla abajo)
 ./vendor/bin/pint
 ```
+
+## Regla de edición: NADA de cambios solo de formato
+
+**Prohibido hacer cambios que sean únicamente de formato/estilo.** Cambia **solo** las líneas
+necesarias para la tarea y **respeta el estilo del código que ya existe alrededor**.
+
+Concretamente, **NO**:
+- Ejecutar `./vendor/bin/pint` (ni ningún formateador) sobre archivos como parte de una tarea; toca
+  líneas ajenas al cambio, no aporta valor y gasta tokens.
+- Reformatear líneas que no estás modificando (espacios, `new Clase()` ↔ `new Clase`, espaciado de
+  concatenaciones `.`, comillas, orden de `use`, saltos de línea, etc.).
+- "Aprovechar" para limpiar estilo de código vecino.
+
+Si un archivo ya tiene un estilo (aunque no sea el de Pint), **mantenlo**. El formateo global, si
+se quiere, es una tarea aparte y explícita del equipo, no un efecto colateral de otro cambio.
 
 ## Arquitectura
 
