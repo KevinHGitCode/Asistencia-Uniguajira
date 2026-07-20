@@ -21,6 +21,7 @@ que dos personas/IAs choquen, sobre todo en cambios 🔴 que tocan el esquema.
 | Importación asíncrona (ADR-0004) + Centro de notificaciones (ADR-0018) — **implementado y con tests verdes en la rama; pendiente de revisión/merge** | equipo | `feat/importacion-participantes-async` | 🔴 | 2026-06-25 |
 | Mejoras módulo usuarios · diseño/UX (ADR-0010) | equipo | `feat/modulo-usuarios-mejoras` | 🟢 | 2026-06-24 |
 | Migración multi-sede progresiva (ADR-0009) | equipo | `feat/multi-sede-*` | 🔴 | 2026-06-21 |
+| Estadísticas del evento en vivo · polling (ADR-0015) | equipo | `feat/estadisticas-evento-en-vivo` | 🟢 | 2026-06-24 |
 
 ## 🟨 En revisión (PR abierto)
 | Tarea | Responsable | Rama | PR |

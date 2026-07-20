@@ -10,7 +10,7 @@ let mountedContainer = null; // referencia al nodo DOM actual
  * Detecta si wire:navigate reemplazó el contenedor (nuevo nodo DOM)
  * y en ese caso crea un root nuevo en lugar de reutilizar el anterior.
  */
-function mount(eventId) {
+function mount(eventId, open) {
   const container = document.getElementById('event-charts-react-root');
   if (!container) return;
 
@@ -21,7 +21,7 @@ function mount(eventId) {
     mountedContainer = container;
   }
 
-  root.render(<EventChartsApp eventId={eventId} />);
+  root.render(<EventChartsApp eventId={eventId} open={open} />);
 }
 
 /**
@@ -35,11 +35,11 @@ function unmount() {
   }
 }
 
-// Extract event ID from data attribute
-const eventId = document.getElementById('event-charts-react-root')?.dataset?.eventId;
+// Extract event ID + estado (abierto) del data attribute
+const rootEl = document.getElementById('event-charts-react-root');
 
 // Mount on initial load
-mount(eventId);
+mount(rootEl?.dataset?.eventId, rootEl?.dataset?.eventOpen === '1');
 
 // Support Livewire 3 wire:navigate
 document.addEventListener('livewire:navigated', () => {
@@ -47,7 +47,7 @@ document.addEventListener('livewire:navigated', () => {
   const newEventId = container?.dataset?.eventId;
 
   if (container && newEventId) {
-    mount(newEventId);
+    mount(newEventId, container.dataset.eventOpen === '1');
   } else {
     unmount();
   }

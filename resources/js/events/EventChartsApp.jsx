@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 import { ChartCard } from '../statistics/components/ChartCard.jsx';
 // Gráfico de torta/dona unificado del módulo de estadísticas (con legend lateral, groupTopN, etc.)
 import { ProgramParticipantsPie } from '../statistics/charts/ProgramParticipantsPie.jsx';
 
 import { CHART_HEIGHTS } from '../statistics/config.js';
+
+// Cada cuánto se refrescan las estadísticas mientras el evento sigue abierto.
+const POLL_MS = 20000;
 
 // ---------------------------------------------------------------------------
 // Descripciones
@@ -31,11 +34,25 @@ function SectionTitle({ children }) {
   );
 }
 
+// Indicador "en vivo": el evento está abierto y las estadísticas se refrescan solas.
+function LiveBadge({ updatedAt }) {
+  return (
+    <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+      <span className="relative flex h-2.5 w-2.5">
+        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+        <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
+      </span>
+      <span className="font-medium text-emerald-600 dark:text-emerald-400">En vivo</span>
+      <span>· se actualiza automáticamente{updatedAt ? ` · ${updatedAt}` : ''}</span>
+    </div>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Componente principal
 // ---------------------------------------------------------------------------
 
-export default function EventChartsApp({ eventId }) {
+export default function EventChartsApp({ eventId, open = false }) {
   const [isDark, setIsDark]           = useState(false);
   const [programData, setProgramData] = useState([]);
   const [roleData, setRoleData]       = useState([]);
@@ -45,6 +62,7 @@ export default function EventChartsApp({ eventId }) {
   const [groupData, setGroupData]     = useState([]);
   const [loading, setLoading]         = useState(true);
   const [error, setError]             = useState(null);
+  const [updatedAt, setUpdatedAt]     = useState(null);
 
   // Detectar modo oscuro
   useEffect(() => {
@@ -56,20 +74,20 @@ export default function EventChartsApp({ eventId }) {
     return () => observer.disconnect();
   }, []);
 
-  // Cargar datos del evento
-  useEffect(() => {
-    if (!eventId) return;
-    setLoading(true);
-    setError(null);
+  // Carga de datos. `silent` = refresco de polling (no muestra el spinner ni
+  // pisa los datos actuales si falla).
+  const fetchData = useCallback((signal, { silent = false } = {}) => {
+    if (!eventId) return Promise.resolve();
+    if (!silent) { setLoading(true); setError(null); }
 
     const base = `/api/statistics/event/${eventId}`;
-    Promise.all([
-      fetch(`${base}/programs`).then(r => r.json()),
-      fetch(`${base}/roles`).then(r => r.json()),
-      fetch(`${base}/dependencies`).then(r => r.json()),
-      fetch(`${base}/organizations`).then(r => r.json()),
-      fetch(`${base}/sex`).then(r => r.json()),
-      fetch(`${base}/group`).then(r => r.json()),
+    return Promise.all([
+      fetch(`${base}/programs`, { signal }).then(r => r.json()),
+      fetch(`${base}/roles`, { signal }).then(r => r.json()),
+      fetch(`${base}/dependencies`, { signal }).then(r => r.json()),
+      fetch(`${base}/organizations`, { signal }).then(r => r.json()),
+      fetch(`${base}/sex`, { signal }).then(r => r.json()),
+      fetch(`${base}/group`, { signal }).then(r => r.json()),
     ])
       .then(([programs, roles, deps, orgs, sex, group]) => {
         setProgramData(programs.map(d => ({ name: d.program, value: d.count })));
@@ -78,10 +96,36 @@ export default function EventChartsApp({ eventId }) {
         setOrgData(orgs.map(d => ({ name: d.label,     value: d.count })));
         setSexData(sex.map(d => ({ name: d.label,      value: d.count })));
         setGroupData(group.map(d => ({ name: d.label,   value: d.count })));
+        setError(null);
+        setUpdatedAt(new Date().toLocaleTimeString('es-CO'));
       })
-      .catch(err => setError(err.message))
-      .finally(() => setLoading(false));
+      .catch(err => {
+        if (err.name === 'AbortError') return;
+        if (!silent) setError(err.message);
+      })
+      .finally(() => { if (!silent) setLoading(false); });
   }, [eventId]);
+
+  // Carga inicial
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchData(controller.signal);
+    return () => controller.abort();
+  }, [fetchData]);
+
+  // Refresco automático mientras el evento sigue abierto (polling).
+  useEffect(() => {
+    if (!open || !eventId) return undefined;
+
+    let controller = null;
+    const id = setInterval(() => {
+      if (document.hidden) return; // no refrescar en pestaña oculta
+      controller = new AbortController();
+      fetchData(controller.signal, { silent: true });
+    }, POLL_MS);
+
+    return () => { clearInterval(id); if (controller) controller.abort(); };
+  }, [open, eventId, fetchData]);
 
   if (error) {
     return (
@@ -91,8 +135,33 @@ export default function EventChartsApp({ eventId }) {
     );
   }
 
+  const hasAnyData = programData.length || roleData.length || depData.length
+    || orgData.length || sexData.length || groupData.length;
+
+  // Evento en curso sin asistentes aún: estado de espera que se llenará solo.
+  if (!loading && !hasAnyData) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-3 py-12 text-center text-gray-500 dark:text-gray-400">
+        {open && <LiveBadge updatedAt={updatedAt} />}
+        <svg className="w-16 h-16 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <div>
+          <h3 className="text-lg font-semibold">Esperando asistentes</h3>
+          <p className="text-sm">
+            {open
+              ? 'Las estadísticas aparecerán automáticamente al registrarse asistencias.'
+              : 'No hay asistentes registrados.'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-8">
+
+      {open && <LiveBadge updatedAt={updatedAt} />}
 
       {/* ══ Asistentes por Estamento — ancho completo ══ */}
       <section>

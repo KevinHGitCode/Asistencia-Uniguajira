@@ -297,10 +297,12 @@
                                     <p class="text-sm">Las estadísticas se mostrarán cuando el evento comience.</p>
                                 </div>
                             </div>
-                        @elseif($asistenciasCount > 0)
-                            {{-- El evento ha iniciado y hay asistentes --}}
-                            {{-- Punto de montaje de la app React de gráficos de eventos --}}
-                            <div id="event-charts-react-root" data-event-id="{{ $event->id }}"></div>
+                        @elseif($asistenciasCount > 0 || ! $eventHasEnded)
+                            {{-- Iniciado con asistentes, o en curso (abierto): isla React.
+                                 Si sigue abierto (data-event-open=1) se refresca sola por polling. --}}
+                            <div id="event-charts-react-root"
+                                 data-event-id="{{ $event->id }}"
+                                 data-event-open="{{ $eventHasEnded ? '0' : '1' }}"></div>
                             @vite(['resources/js/events/index.jsx'])
                         @else
                             {{-- El evento ha iniciado/finalizado pero no hay asistentes --}}

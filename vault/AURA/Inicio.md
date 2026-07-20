@@ -33,18 +33,19 @@ nota; cada nota es una idea. Lee primero [[README]] si es tu primera vez.
 - Decisiones (ADR):
   - [[adr-0001-react-islands-estadisticas]] 🟢
   - [[adr-0002-snapshot-demografico-attendance-details]] 🟢
-  - [[adr-0003-retirar-flujo-legacy-de-asistencia]] 🟡
+  - [[adr-0003-retirar-flujo-legacy-de-asistencia]] 🟢
   - [[adr-0004-pasarela-de-revision-para-importacion-de-participantes]] 🟢
   - [[adr-0005-rate-limiting-anti-abuso]] 🟢
   - [[adr-0006-formularios-en-modal-centrado]] 🟢
   - [[adr-0007-paleta-de-comandos-admin]] 🟢
-  - [[adr-0008-listado-participantes-en-react]] 🟡
+  - [[adr-0008-listado-participantes-en-react]] 🟢
   - [[adr-0009-migracion-multi-sede-progresiva]] 🟢
-  - [[adr-0010-mejoras-modulo-usuarios]] 🟡
-  - [[adr-0011-mejores-filtros-en-participantes]] 🟡
+  - [[adr-0010-mejoras-modulo-usuarios]] 🟢
+  - [[adr-0011-mejores-filtros-en-participantes]] 🟢
   - [[adr-0012-busqueda-y-filtros-en-eventos]] 🟢
   - [[adr-0013-breadcrumbs-detalle-evento]] 🟢
   - [[adr-0014-proteger-rutas-api-de-prueba-sin-auth]] 🟢
+  - [[adr-0015-estadisticas-evento-en-vivo]] 🟢
 
 ## 04 - Calidad
 - [[estrategia-de-pruebas]] - que probamos y por que
