@@ -46,6 +46,11 @@ nota; cada nota es una idea. Lee primero [[README]] si es tu primera vez.
   - [[adr-0013-breadcrumbs-detalle-evento]] 🟢
   - [[adr-0014-proteger-rutas-api-de-prueba-sin-auth]] 🟢
   - [[adr-0015-estadisticas-evento-en-vivo]] 🟢
+  - [[adr-0017-pdf-de-formato-en-bd]] 🟢
+  - [[adr-0030-banner-de-anuncios-en-registro-publico]] 🟢
+  - [[adr-0031-estadisticas-diarias-de-banners]] 🟢
+  - [[adr-0032-anuncios-de-red-solo-sobre-contenido-propio]] 🟢 decidida, sin implementar
+  - [[adr-0033-prueba-del-consentimiento-de-datos]] 🟢 decidida, sin implementar
 
 ## 04 - Calidad
 - [[estrategia-de-pruebas]] - que probamos y por que

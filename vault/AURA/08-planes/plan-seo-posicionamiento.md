@@ -41,10 +41,16 @@ Las búsquedas **de marca** tienen poquísima competencia: básicamente el sitio
 `uniguajira.edu.co` y redes sociales. Con lo técnico bien hecho + una señal de autoridad
 (Fase 5), el primer puesto es realista en semanas, no años.
 
+> **Nota 2026-07-20:** la landing de la Fase 1 dejó de ser solo una pieza de SEO — también es el
+> **único inventario válido para anuncios de red**, según
+> [[adr-0032-anuncios-de-red-solo-sobre-contenido-propio]]. Kevin define primero su diseño;
+> hasta entonces no se construye.
+
 ## Fase 0 — Requisito previo
 
 1. **👤 Kevin:** confirmar el **dominio definitivo** de producción y anotarlo aquí:
-   `__________` (¿subdominio de `uniguajira.edu.co`? ¿dominio propio?). Todo el plan lo usa.
+   `desarrollougmaicao.com` (verificado en el servidor el 2026-07-19; confirmar si es el
+   definitivo o si se busca un subdominio de `uniguajira.edu.co`, que heredaría su autoridad).
    - Si se puede lograr un subdominio institucional (ej. `aura.uniguajira.edu.co`), es la
      ventaja más grande de todo el plan: hereda la autoridad del dominio de la universidad.
 

@@ -47,8 +47,11 @@ anuncios de entrada:
 - ➖ Conseguir patrocinadores es trabajo comercial, no técnico.
 - ⚠️ **Pendiente no técnico:** aclarar la **autorización institucional** para mostrar publicidad
   en una página del dominio de la universidad, antes de vender espacios reales.
-- 🔁 Si más adelante se aprueba una red (AdSense), se enchufa en el mismo hueco del parcial;
-  requerirá política de privacidad + consentimiento.
+- 🔁 ~~Si más adelante se aprueba una red (AdSense), se enchufa en el mismo hueco del parcial~~
+  → **Revisado el 2026-07-20:** no se hará. La política de AdSense prohíbe anuncios en páginas
+  sin contenido propio, y la del QR es un formulario. Los anuncios de red irán en una landing
+  aparte; esta superficie se queda **solo con banners propios**
+  ([[adr-0032-anuncios-de-red-solo-sobre-contenido-propio]]).
 
 ## Alternativas consideradas
 
