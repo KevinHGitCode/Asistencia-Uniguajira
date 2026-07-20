@@ -48,6 +48,12 @@
 
             banner.hidden = false;
 
+            // Impresión honesta (ADR-0030 fase 2): se reporta solo cuando el
+            // banner realmente se mostró. sendBeacon no bloquea la página y
+            // sobrevive al cierre de la pestaña.
+            var payload = new URLSearchParams({ _token: '{{ csrf_token() }}' });
+            navigator.sendBeacon('{{ route('banners.impression', $banner) }}', payload);
+
             document.getElementById('ad-banner-close').addEventListener('click', function () {
                 banner.remove();
                 try { sessionStorage.setItem(KEY, '1'); } catch (e) { /* sin persistencia */ }

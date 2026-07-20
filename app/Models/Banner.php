@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
@@ -13,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  */
 class Banner extends Model
 {
-    protected $fillable = ['name', 'target_url', 'starts_at', 'ends_at', 'active'];
+    protected $fillable = ['name', 'target_url', 'starts_at', 'ends_at', 'active', 'weight'];
 
     protected $casts = [
         'starts_at' => 'date',
@@ -24,6 +25,35 @@ class Banner extends Model
     public function fileRecord(): HasOne
     {
         return $this->hasOne(BannerFile::class);
+    }
+
+    public function dailyStats(): HasMany
+    {
+        return $this->hasMany(BannerDailyStat::class);
+    }
+
+    /**
+     * Elige el banner a mostrar: aleatorio ponderado por `weight` entre los
+     * vigentes (weight 3 = el triple de probabilidad que weight 1).
+     */
+    public static function pickVigente(): ?self
+    {
+        $candidates = static::vigentes()->get();
+
+        if ($candidates->isEmpty()) {
+            return null;
+        }
+
+        $ticket = random_int(1, max(1, $candidates->sum('weight')));
+
+        foreach ($candidates as $banner) {
+            $ticket -= max(1, $banner->weight);
+            if ($ticket <= 0) {
+                return $banner;
+            }
+        }
+
+        return $candidates->last();
     }
 
     /** Banners activos y dentro de su ventana de vigencia (fechas opcionales). */

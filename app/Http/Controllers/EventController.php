@@ -218,12 +218,10 @@ class EventController extends Controller
     {
         $event = Event::where('link', $slug)->firstOrFail();
 
-        // Banner de patrocinio (ADR-0030): uno al azar entre los vigentes.
-        // Se cuenta la impresión con el query builder para no tocar updated_at.
-        $banner = Banner::vigentes()->inRandomOrder()->first();
-        if ($banner) {
-            Banner::whereKey($banner->id)->increment('impressions');
-        }
+        // Banner de patrocinio (ADR-0030): aleatorio ponderado entre los
+        // vigentes. La impresión NO se cuenta aquí: la reporta la página con
+        // sendBeacon solo si el banner se muestra de verdad (fase 2).
+        $banner = Banner::pickVigente();
 
         return view('events.access', compact('event', 'banner'));
     }

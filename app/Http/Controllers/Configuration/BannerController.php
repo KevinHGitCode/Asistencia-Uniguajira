@@ -2,10 +2,14 @@
 
 namespace App\Http\Controllers\Configuration;
 
+use App\Exports\BannerReportExport;
 use App\Http\Controllers\Controller;
 use App\Models\Banner;
+use App\Models\BannerDailyStat;
 use App\Services\ActivityLogService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
 
 class BannerController extends Controller
 {
@@ -24,6 +28,7 @@ class BannerController extends Controller
             'image' => 'required|file|mimes:jpg,jpeg,png,webp|max:2048',
             'starts_at' => 'nullable|date',
             'ends_at' => 'nullable|date|after_or_equal:starts_at',
+            'weight' => 'nullable|integer|min:1|max:100',
         ], [
             'name.required' => 'El nombre del banner es obligatorio.',
             'target_url.url' => 'El enlace debe ser una URL válida (incluye https://).',
@@ -39,6 +44,7 @@ class BannerController extends Controller
             'starts_at' => $request->starts_at,
             'ends_at' => $request->ends_at,
             'active' => $request->boolean('active'),
+            'weight' => $request->integer('weight') ?: 1,
         ]);
 
         $file = $request->file('image');
@@ -57,6 +63,7 @@ class BannerController extends Controller
             'image' => 'nullable|file|mimes:jpg,jpeg,png,webp|max:2048',
             'starts_at' => 'nullable|date',
             'ends_at' => 'nullable|date|after_or_equal:starts_at',
+            'weight' => 'nullable|integer|min:1|max:100',
         ], [
             'name.required' => 'El nombre del banner es obligatorio.',
             'target_url.url' => 'El enlace debe ser una URL válida (incluye https://).',
@@ -65,7 +72,7 @@ class BannerController extends Controller
             'ends_at.after_or_equal' => 'La fecha de fin no puede ser anterior a la de inicio.',
         ]);
 
-        $original = $banner->only(['name', 'target_url', 'starts_at', 'ends_at', 'active']);
+        $original = $banner->only(['name', 'target_url', 'starts_at', 'ends_at', 'active', 'weight']);
 
         $banner->update([
             'name' => $request->name,
@@ -73,6 +80,7 @@ class BannerController extends Controller
             'starts_at' => $request->starts_at,
             'ends_at' => $request->ends_at,
             'active' => $request->boolean('active'),
+            'weight' => $request->integer('weight') ?: 1,
         ]);
 
         if ($request->hasFile('image')) {
@@ -122,6 +130,19 @@ class BannerController extends Controller
     }
 
     /**
+     * Registra una impresión real (ruta pública). La página la reporta con
+     * sendBeacon solo cuando el banner se mostró de verdad (ADR-0030 fase 2).
+     */
+    public function impression(Banner $banner)
+    {
+        // Query builder (no el modelo) para no tocar updated_at en cada hit.
+        Banner::whereKey($banner->id)->increment('impressions');
+        BannerDailyStat::bump($banner->id, 'impressions');
+
+        return response()->noContent();
+    }
+
+    /**
      * Registra el clic y redirige al enlace del patrocinador (ruta pública).
      */
     public function click(Banner $banner)
@@ -130,7 +151,61 @@ class BannerController extends Controller
 
         // Query builder (no el modelo) para no tocar updated_at en cada clic.
         Banner::whereKey($banner->id)->increment('clicks');
+        BannerDailyStat::bump($banner->id, 'clicks');
 
         return redirect()->away($banner->target_url);
+    }
+
+    /**
+     * Reporte por rango de fechas para el patrocinador (ADR-0031).
+     */
+    public function report(Request $request, Banner $banner)
+    {
+        [$dateFrom, $dateTo, $days, $totals] = $this->reportData($request, $banner);
+
+        return view('administration.banners.report', compact('banner', 'dateFrom', 'dateTo', 'days', 'totals'));
+    }
+
+    public function reportExport(Request $request, Banner $banner)
+    {
+        [$dateFrom, $dateTo, $days, $totals] = $this->reportData($request, $banner);
+
+        $fileName = 'reporte-banner-'.Str::slug($banner->name).'-'.$dateFrom.'-a-'.$dateTo.'.xlsx';
+
+        return Excel::download(
+            new BannerReportExport($banner, $days, $totals, $dateFrom, $dateTo),
+            $fileName,
+        );
+    }
+
+    /**
+     * Resuelve el rango (últimos 30 días por defecto), las filas por día y los
+     * totales con CTR. Devuelve [dateFrom, dateTo, days, totals].
+     */
+    private function reportData(Request $request, Banner $banner): array
+    {
+        $request->validate([
+            'dateFrom' => 'nullable|date',
+            'dateTo' => 'nullable|date|after_or_equal:dateFrom',
+        ]);
+
+        $dateFrom = $request->input('dateFrom') ?: now()->subDays(29)->toDateString();
+        $dateTo = $request->input('dateTo') ?: now()->toDateString();
+
+        $days = $banner->dailyStats()
+            ->whereDate('date', '>=', $dateFrom)
+            ->whereDate('date', '<=', $dateTo)
+            ->orderBy('date')
+            ->get();
+
+        $impressions = $days->sum('impressions');
+        $clicks = $days->sum('clicks');
+        $totals = [
+            'impressions' => $impressions,
+            'clicks' => $clicks,
+            'ctr' => $impressions > 0 ? round($clicks / $impressions * 100, 2) : 0.0,
+        ];
+
+        return [$dateFrom, $dateTo, $days, $totals];
     }
 }

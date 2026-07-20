@@ -79,6 +79,7 @@
                         <th class="px-4 sm:px-6 py-3 text-left font-medium">Vista previa</th>
                         <th class="px-4 sm:px-6 py-3 text-center font-medium">Vigencia</th>
                         <th class="px-4 sm:px-6 py-3 text-center font-medium">Estado</th>
+                        <th class="px-4 sm:px-6 py-3 text-center font-medium" title="Peso de la rotación: 3 aparece el triple que 1">Peso</th>
                         <th class="px-4 sm:px-6 py-3 text-center font-medium">Impresiones</th>
                         <th class="px-4 sm:px-6 py-3 text-center font-medium">Clics</th>
                         <th class="px-4 sm:px-6 py-3 text-right font-medium">Acciones</th>
@@ -136,6 +137,9 @@
                                 @endif
                             </td>
                             <td class="px-4 sm:px-6 py-4 text-center font-mono text-xs text-gray-600 dark:text-gray-300">
+                                ×{{ $banner->weight }}
+                            </td>
+                            <td class="px-4 sm:px-6 py-4 text-center font-mono text-xs text-gray-600 dark:text-gray-300">
                                 {{ number_format($banner->impressions, 0, ',', '.') }}
                             </td>
                             <td class="px-4 sm:px-6 py-4 text-center font-mono text-xs text-gray-600 dark:text-gray-300">
@@ -143,8 +147,13 @@
                             </td>
                             <td class="px-4 sm:px-6 py-4">
                                 <div class="flex items-center justify-end gap-2">
+                                    <a href="{{ route('banners.report', $banner) }}"
+                                       class="p-1.5 rounded-lg text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400 transition-colors cursor-pointer"
+                                       title="Reporte de impresiones y clics">
+                                        <flux:icon name="chart-bar" class="size-4" />
+                                    </a>
                                     <button
-                                        @click="openEdit({{ $banner->id }}, {{ Js::from($banner->name) }}, {{ Js::from($banner->target_url) }}, {{ Js::from($banner->starts_at?->format('Y-m-d')) }}, {{ Js::from($banner->ends_at?->format('Y-m-d')) }}, {{ $banner->active ? 'true' : 'false' }}, {{ Js::from(route('banners.image', $banner)) }})"
+                                        @click="openEdit({{ $banner->id }}, {{ Js::from($banner->name) }}, {{ Js::from($banner->target_url) }}, {{ Js::from($banner->starts_at?->format('Y-m-d')) }}, {{ Js::from($banner->ends_at?->format('Y-m-d')) }}, {{ $banner->active ? 'true' : 'false' }}, {{ Js::from(route('banners.image', $banner)) }}, {{ $banner->weight }})"
                                         class="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 dark:hover:text-blue-400 transition-colors cursor-pointer"
                                         title="Editar">
                                         <flux:icon.pencil-square class="size-4" />
@@ -160,7 +169,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="px-6 py-16 text-center">
+                            <td colspan="9" class="px-6 py-16 text-center">
                                 <div class="flex flex-col items-center gap-3 text-gray-400 dark:text-zinc-500">
                                     <flux:icon name="megaphone" class="size-12 opacity-30" />
                                     <p class="text-sm">No hay banners registrados aún.</p>
@@ -253,6 +262,13 @@
                 </div>
                 <p class="-mt-2 text-xs text-gray-400">Fechas opcionales: sin fechas, el banner rota mientras esté activo.</p>
 
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Peso en la rotación</label>
+                    <input type="number" name="weight" x-model="formWeight" min="1" max="100" step="1"
+                        class="w-24 px-3 py-2 text-sm rounded-lg border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition" />
+                    <p class="mt-1 text-xs text-gray-400">Un banner con peso 3 aparece el triple de veces que uno con peso 1.</p>
+                </div>
+
                 <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
                     <input type="checkbox" name="active" value="1" x-model="formActive"
                         class="rounded border-neutral-300 dark:border-zinc-600 text-[#f97316] focus:ring-[#f97316]" />
@@ -344,6 +360,7 @@
             formStartsAt: '',
             formEndsAt: '',
             formActive: true,
+            formWeight: 1,
 
             showDelete: false,
             deleteId: null,
@@ -357,9 +374,10 @@
                 this.formStartsAt = '';
                 this.formEndsAt = '';
                 this.formActive = true;
+                this.formWeight = 1;
                 this.showForm = true;
             },
-            openEdit(id, name, url, startsAt, endsAt, active, imageUrl) {
+            openEdit(id, name, url, startsAt, endsAt, active, imageUrl, weight) {
                 this.editId = id;
                 this.editImageUrl = imageUrl;
                 this.formName = name;
@@ -367,6 +385,7 @@
                 this.formStartsAt = startsAt ?? '';
                 this.formEndsAt = endsAt ?? '';
                 this.formActive = active;
+                this.formWeight = weight ?? 1;
                 this.showForm = true;
             },
             closeForm() { this.showForm = false; },

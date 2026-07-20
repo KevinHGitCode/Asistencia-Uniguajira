@@ -93,6 +93,9 @@ Route::get('/banners/{banner}/imagen', [BannerController::class, 'image'])
 Route::get('/banners/{banner}/ir', [BannerController::class, 'click'])
     ->middleware('throttle:public')
     ->name('banners.click');
+Route::post('/banners/{banner}/impresion', [BannerController::class, 'impression'])
+    ->middleware('throttle:public')
+    ->name('banners.impression');
 
 /**
  * ================================================================
@@ -196,6 +199,8 @@ Route::middleware(['auth', 'verified', 'role:admin,superadmin'])
             Route::post('/banners', [BannerController::class, 'store'])->name('banners.store');
             Route::post('/banners/edit/{banner}', [BannerController::class, 'update'])->name('banners.update');
             Route::delete('/banners/{banner}', [BannerController::class, 'destroy'])->name('banners.destroy');
+            Route::get('/banners/{banner}/reporte', [BannerController::class, 'report'])->name('banners.report');
+            Route::get('/banners/{banner}/reporte/export', [BannerController::class, 'reportExport'])->name('banners.report-export');
         });
 
         // Rutas de afiliaciones

@@ -6,6 +6,11 @@ actualizado: 2026-07-19
 
 # Plan · Banner de anuncios hasta su funcionamiento total
 
+> **Bitácora:** Fases 2, 3 y 4 implementadas el 2026-07-19 (impresión vía `sendBeacon` +
+> `POST /banners/{id}/impresion`, reporte por rango con export — ver
+> [[adr-0031-estadisticas-diarias-de-banners]] — y rotación por `weight`). Pendientes:
+> Fase 1 (rama, decisión 👤), Fase 5 (despliegue) y Fase 6 (autorización y patrocinadores).
+
 Continúa lo implementado en [[adr-0030-banner-de-anuncios-en-registro-publico]]. Cada paso
 está marcado con quién lo hace: **🤖 IA** (Claude u otra IA ejecutora) o **👤 Kevin**.
 
