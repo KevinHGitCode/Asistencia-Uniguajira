@@ -2,17 +2,18 @@
 
 Sistema web para gestión y control de asistencias en la Universidad de La Guajira.
 
-## Stack
+**Stack:** Laravel 12 (PHP 8.2+) · Livewire 3 (Volt + Flux) + Blade + Tailwind CSS v4 ·
+React 19 + Recharts (islas de estadísticas) · Vite 7 · MySQL (tests en SQLite `:memory:`) ·
+FPDI + TFPDF (PDF) · simple-qrcode · maatwebsite/excel · Sanctum · laravel-lang (es / es_CO).
 
-- **Backend:** Laravel 12, PHP 8.2+
-- **Frontend:** Livewire (Volt + Flux), Blade, Tailwind CSS v4
-- **Base de datos:** SQLite (local), configurable a MySQL/Postgres via `.env`
-- **Build:** Vite 7, NPM
-- **PDF:** setasign/FPDI + TFPDF
-- **QR:** simplesoftwareio/simple-qrcode
-- **Exportación:** maatwebsite/excel
-- **Auth:** Laravel Sanctum + Livewire starter kit
-- **Internacionalización:** laravel-lang (es / es_CO por defecto)
+## Instrucciones por carpeta
+
+Además de este archivo, hay CLAUDE.md con convenciones propias en:
+
+| Carpeta | Cubre |
+|---|---|
+| `resources/js/` | Islas React (estadísticas, participantes, eventos), tema, puente con Livewire |
+| `resources/views/administration/` | Patrón de 2 pestañas, importación/exportación Excel |
 
 ## Comandos de desarrollo
 
@@ -56,72 +57,45 @@ Concretamente, **NO**:
 Si un archivo ya tiene un estilo (aunque no sea el de Pint), **mantenlo**. El formateo global, si
 se quiere, es una tarea aparte y explícita del equipo, no un efecto colateral de otro cambio.
 
-## Arquitectura
+## Roles y visibilidad de datos (aplica en todo el código)
 
-### Modelos y relaciones clave
+- Tres niveles: `superadmin`, `admin` y usuario normal (constantes `User::ROLE_*`).
+- `RoleMiddleware` (`role:admin,...`): pedir `admin` **incluye automáticamente** a `superadmin`
+  (se auto-expande); solo `role:superadmin` excluye a los admin.
+- Solo superadmin: campuses, formatos PDF, registros de actividad, exportar participantes.
+- Visibilidad de eventos para usuarios normales: eventos propios (`user_id`) **o** de sus
+  dependencias (`User` ↔ `Dependency` es **belongsToMany**, no una sola dependencia), más el
+  alcance por sede vía `CampusScopeService`. Toda consulta nueva de eventos/estadísticas debe
+  aplicar este alcance — no basta filtrar por `user_id`.
+- `SetLocale` aplica el locale de sesión en cada request.
 
-| Modelo | Tabla | Relaciones principales |
-|---|---|---|
-| `User` | `users` | belongsTo `Dependency`, hasMany `Event` |
-| `Dependency` | `dependencies` | hasMany `User`, hasMany `Event` |
-| `Event` | `events` | belongsTo `User`, belongsTo `Dependency`, hasMany `Attendance`, belongsToMany `Participant` |
-| `Participant` | `participants` | hasMany `Attendance`, belongsToMany `Event` |
-| `Attendance` | `attendances` | belongsTo `Event`, belongsTo `Participant` |
-| `Program` | `programs` | hasMany `Participant` |
-
-### Roles de usuario
-
-- `admin` — acceso completo, gestión de usuarios (`/usuarios/*` con middleware `role:admin`)
-- Usuarios normales — ven sus propios eventos y los de su dependencia
-
-### Middleware personalizado
-
-- `RoleMiddleware` — restringe rutas por rol (`role:admin`)
-- `SetLocale` — aplica el locale de sesión en cada request
-
-## Estructura de rutas (`routes/web.php`)
+## Mapa de rutas
 
 | Grupo | Prefijo | Acceso |
 |---|---|---|
 | Dashboard | `/dashboard` | auth + verified |
 | Eventos (CRUD) | `/eventos/*` | auth + verified |
-| Acceso público al evento (QR) | `/events/acceso/{slug}` | público |
-| Confirmación de asistencia | `/events/acceso/{slug}/confirmacion/{id}` | público |
-| Estadísticas | `/estadisticas`, `/graficos/tipos` | auth + verified |
-| Gestión de usuarios | `/usuarios/*` | auth + verified + `role:admin` |
-| Configuración | `/settings/*` | auth |
+| Acceso público al evento (QR) | `/events/acceso/{slug}` | público + `throttle:public` |
+| Estadísticas (subpáginas por tema) | `/estadisticas/*` | auth + verified (`usuarios` solo admin) |
+| API de estadísticas y participantes | `/api/statistics/*`, `/api/participants` | `web + auth` (+ throttle / rol) |
+| Gestión de usuarios | `/usuarios/*` | auth + verified + `role:admin,superadmin` |
+| Administración del sistema | `/administracion/*` | auth + verified + `role:admin,superadmin` |
+| Configuración de cuenta | `/settings/*` | auth |
+
+El registro de asistencia por QR lo gestiona el componente Livewire `AttendanceRegistration`
+montado en `events/access.blade.php` (el flujo por controlador se retiró — ADR-0003).
 
 ## Convenciones del proyecto
 
-- **Idioma de código y rutas:** español (variables, vistas, rutas nombradas)
-- **Idioma de la UI:** español (locale `es`)
-- **Livewire Volt:** componentes de clase en `app/Livewire/`, vistas en `resources/views/livewire/`
-- **PDF de asistencias:** generado con FPDI/TFPDF en `EventController::descargarAsistencia()`
-- **Eventos:** filtrado por `user_id` (propios) y `dependency_id` (de la dependencia del usuario)
-- **Slugs de eventos:** usados para URLs públicas de registro de asistencia
-- **Branch:** trabajar siempre en develop
-
-## Directorios importantes
-
-```
-app/
-  Http/Controllers/     # Controladores tradicionales
-  Livewire/             # Componentes Livewire (Volt, class-based)
-  Models/               # Modelos Eloquent
-  Traits/               # Traits reutilizables (AppliesStatisticsFilters, etc.)
-database/
-  migrations/           # Migraciones en orden cronológico
-  seeders/              # Seeders de datos de prueba
-resources/views/
-  events/               # Vistas de eventos
-  users/                # Vistas de usuarios
-  statistics/           # Vistas de estadísticas y gráficos
-  calendar/             # Vista de calendario
-  livewire/             # Componentes Blade de Livewire
-routes/
-  web.php               # Rutas principales
-  auth.php              # Rutas de autenticación (generadas por starter kit)
-```
+- **Idioma de código, rutas y UI:** español (locale `es`).
+- **Livewire Volt:** componentes de clase en `app/Livewire/`, vistas en `resources/views/livewire/`.
+- **PDF de asistencias:** FPDI/TFPDF en `EventController::descargarAsistencia()`; los formatos y
+  sus coordenadas de mapeo viven en base de datos (`Format`, `FormatFile` — ADR-15/17).
+- **Slugs de eventos:** usados para las URLs públicas de registro de asistencia.
+- **Ramas:** `develop` es la rama base de integración; el trabajo va en ramas `feat/*`, `fix/*`,
+  `refactor/*` que salen de develop.
+- **Vault AURA:** `vault/AURA/` es la documentación viva del proyecto (Obsidian: ADRs, diseño,
+  tablero); al cambiar arquitectura o cerrar funcionalidades, actualizarla.
 
 ## Variables de entorno relevantes
 
@@ -129,49 +103,14 @@ routes/
 APP_NAME='Asistencia Uniguajira'
 APP_LOCALE=es
 APP_FAKER_LOCALE=es_CO
-DB_CONNECTION=sqlite        # SQLite en local
+DB_CONNECTION=mysql         # ver .env.example; los tests usan SQLite :memory: (phpunit.xml)
 SESSION_DRIVER=database
 QUEUE_CONNECTION=database
 ```
 
-## Módulo de administración — patrón de vistas
-
-Todas las vistas en `resources/views/administration/` (excepto `formats/`) siguen el patrón de **2 pestañas**:
-
-| Pestaña | Contenido |
-|---|---|
-| **Listado** | Tabla de registros con búsqueda en tiempo real (Alpine.js) |
-| **Importar / Exportar** | Drop zone para Excel + botón de descarga del listado actual |
-
-El botón "Nuevo X" se mantiene en el header, no como pestaña.
-
-### Clases de exportación (`app/Exports/`)
-
-| Clase | Uso |
-|---|---|
-| `DependencyExport` | Descarga el listado actual de dependencias |
-| `AreaExport` | Descarga el listado actual de áreas |
-| `ProgramExport` | Descarga el listado actual de programas (Nombre + Tipo) |
-| `AffiliationExport` | Descarga el listado actual de afiliaciones |
-| `ParticipantTypeExport` | Descarga el listado actual de estamentos |
-| `*TemplateExport` | Plantillas vacías para carga masiva |
-
-### Importación masiva — rutas
-
-Todas bajo `/administracion` con middleware `auth + verified + role:admin`:
-
-| Entidad | Import POST | Template GET | Export GET |
-|---|---|---|---|
-| Dependencias | `dependencies.import` | `dependencies.download-template` | `dependencies.download-export` |
-| Áreas | `areas.import` | `areas.download-template` | `areas.download-export` |
-| Programas | `programs.import` | `programs.download-template` | `programs.download-export` |
-| Afiliaciones | `affiliations.import` | `affiliations.download-template` | `affiliations.download-export` |
-| Estamentos | `participant-types.import` | `participant-types.download-template` | `participant-types.download-export` |
-
 ## Notas importantes
 
-- La base de datos SQLite local está en `database/database.sqlite`
-- El despliegue en producción es via Hostinger (hosting compartido)
-- Los reportes PDF de asistencia incluyen: info del evento, dependencia y lista de participantes
-- Los participantes se registran públicamente vía QR (sin necesidad de cuenta)
-- El calendario utiliza animaciones CSS personalizadas para el indicador "Hoy"
+- El despliegue en producción es via Hostinger (hosting compartido) — sin procesos residentes.
+- Los participantes se registran públicamente vía QR (sin necesidad de cuenta).
+- La importación masiva de participantes es asíncrona (queue) con pasarela de revisión
+  (`ImportBatch` / `StagedParticipant` — ADR-0004).
