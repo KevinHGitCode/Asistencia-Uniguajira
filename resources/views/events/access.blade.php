@@ -346,7 +346,15 @@
             <p class="relative z-10 mt-6 text-center text-[11px] text-gray-400 dark:text-zinc-500 lg:hidden">
                 &copy; {{ date('Y') }} Universidad de La Guajira
             </p>
+
+            {{-- Espacio para que el banner fijo no tape el final del formulario --}}
+            @if($banner ?? null)
+                <div class="h-16 shrink-0" aria-hidden="true"></div>
+            @endif
         </main>
+
+        {{-- Banner discreto de patrocinio (ADR-0030) --}}
+        @include('partials.ad-banner', ['banner' => $banner ?? null])
 
     </div>
 </x-layouts.app-nosidebar>

@@ -4,6 +4,7 @@ use App\Http\Controllers\Configuration\ActivityLogController;
 use App\Http\Controllers\Configuration\AdministrationController;
 use App\Http\Controllers\Configuration\AffiliationController;
 use App\Http\Controllers\Configuration\AreaController;
+use App\Http\Controllers\Configuration\BannerController;
 use App\Http\Controllers\Configuration\CampusController;
 use App\Http\Controllers\Configuration\DependencyController;
 use App\Http\Controllers\Configuration\FormatController;
@@ -83,6 +84,15 @@ Route::middleware(['auth', 'verified', 'role:admin,superadmin'])->group(function
 Route::get('/events/acceso/{slug}', [EventController::class, 'access'])
     ->middleware('throttle:public')
     ->name('events.access');
+
+// Banner de anuncios en el registro público (ADR-0030): imagen servida desde
+// la BD y redirección con conteo de clics.
+Route::get('/banners/{banner}/imagen', [BannerController::class, 'image'])
+    ->middleware('throttle:public')
+    ->name('banners.image');
+Route::get('/banners/{banner}/ir', [BannerController::class, 'click'])
+    ->middleware('throttle:public')
+    ->name('banners.click');
 
 /**
  * ================================================================
@@ -180,6 +190,12 @@ Route::middleware(['auth', 'verified', 'role:admin,superadmin'])
 
             Route::get('/formats/{format}/mapper', [FormatController::class, 'mapper'])->name('formats.mapper');
             Route::post('/formats/{format}/mapping', [FormatController::class, 'saveMapping'])->name('formats.save-mapping');
+
+            // Rutas de banners de anuncios (ADR-0030)
+            Route::get('/banners', [BannerController::class, 'index'])->name('banners.index');
+            Route::post('/banners', [BannerController::class, 'store'])->name('banners.store');
+            Route::post('/banners/edit/{banner}', [BannerController::class, 'update'])->name('banners.update');
+            Route::delete('/banners/{banner}', [BannerController::class, 'destroy'])->name('banners.destroy');
         });
 
         // Rutas de afiliaciones

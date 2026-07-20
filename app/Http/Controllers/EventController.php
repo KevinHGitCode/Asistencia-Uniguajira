@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Attendance;
+use App\Models\Banner;
 use App\Models\Campus;
 use App\Models\Dependency;
 use App\Models\Event;
@@ -217,7 +218,14 @@ class EventController extends Controller
     {
         $event = Event::where('link', $slug)->firstOrFail();
 
-        return view('events.access', compact('event'));
+        // Banner de patrocinio (ADR-0030): uno al azar entre los vigentes.
+        // Se cuenta la impresión con el query builder para no tocar updated_at.
+        $banner = Banner::vigentes()->inRandomOrder()->first();
+        if ($banner) {
+            Banner::whereKey($banner->id)->increment('impressions');
+        }
+
+        return view('events.access', compact('event', 'banner'));
     }
 
     public function destroy($id, CampusScopeService $campusScope)
