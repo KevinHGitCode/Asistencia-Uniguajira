@@ -97,6 +97,23 @@ montado en `events/access.blade.php` (el flujo por controlador se retiró — AD
 - **Vault AURA:** `vault/AURA/` es la documentación viva del proyecto (Obsidian: ADRs, diseño,
   tablero); al cambiar arquitectura o cerrar funcionalidades, actualizarla.
 
+## Subir una actualización a Hostinger (lo ejecuta Kevin, a mano)
+
+Referencia para cuando se va a desplegar. **No es un paso automático tras tocar frontend:**
+nadie compila ni fuerza el `add` por su cuenta. `public/build` está gitignored, por eso el
+`-f` — sin él producción se queda con CSS/JS viejos.
+
+```bash
+npm run build
+git add .
+git add -f public/build
+git commit -m "update"
+git push
+```
+
+Del lado del servidor (pasos posteriores, `sparse-checkout` para no bajar `vault/`, `.claude/`,
+`tests/`…): `vault/AURA/07-metodologia/guia-de-actualizacion-hostinger.md`.
+
 ## Variables de entorno relevantes
 
 ```

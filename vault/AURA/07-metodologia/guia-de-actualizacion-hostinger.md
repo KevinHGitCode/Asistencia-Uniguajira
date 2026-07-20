@@ -10,6 +10,39 @@ Tras subir una versión nueva a producción hay datos que **no se poblan solos**
 **PDF de formato**). Esta guía deja el sistema **completamente funcional** con las últimas
 actualizaciones (ADR-0004, 0015, 0017, 0018). Hosting compartido, sin workers permanentes.
 
+## Paso 0 (local, antes de subir): compilar y versionar assets
+
+`public/build` está en `.gitignore`, así que el build **hay que añadirlo a la fuerza** o
+producción se queda con CSS/JS viejos (clases de Tailwind nuevas ni existen — pasó con el
+banner de anuncios). Secuencia estándar acordada (2026-07-19):
+
+```bash
+npm run build
+git add .
+git add -f public/build
+git commit -m "update"   # mejor un mensaje según [[convencion-de-commits]]
+git push
+```
+
+## El servidor solo necesita el código de la app (sparse-checkout)
+
+El repo trae carpetas que no pintan nada en producción (`vault/`, `.claude/`, `tests/`,
+`CLAUDE.md`…). En el clon **del servidor**, una sola vez:
+
+```bash
+git sparse-checkout set --no-cone '/*' \
+    '!/vault/' '!/.claude/' '!/tests/' \
+    '!/CLAUDE.md' '!/AGENTS.md' '!/TEST.md'
+git checkout
+```
+
+Desde entonces, cada `git pull` trae las actualizaciones **sin materializar** esas rutas
+(y borra las que ya estuvieran). Para revertir: `git sparse-checkout disable`.
+Candidatas adicionales según se quiera: `'!/docs/'`, `'!/tools/'`.
+
+⚠️ Esto es comodidad, no seguridad: si el repo vive dentro del docroot público, verificar
+igualmente que el dominio apunte a `public/` y que nada fuera de `public/` sea navegable.
+
 ## Pasos (en orden)
 
 1. **Mantenimiento (opcional):** `php artisan down`.

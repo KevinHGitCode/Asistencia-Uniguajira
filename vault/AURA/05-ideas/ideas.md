@@ -27,6 +27,11 @@ Espacio de bajo compromiso. Una idea que madura y tiene consecuencias se promuev
 - Tests de feature del componente `AttendanceRegistration`.
 - Caché de agregados de estadísticas para eventos grandes.
 - Unificar el estilo de UI (reducir la convivencia Blade/Alpine/React donde no aporte).
+- **Guía portable del módulo de banners** (pedida por Kevin, 2026-07-19): un Markdown
+  autocontenido que explique cómo replicar el módulo de anuncios ([[adr-0030-banner-de-anuncios-en-registro-publico]]
+  + [[adr-0031-estadisticas-diarias-de-banners]]) en otros proyectos Laravel: esquema,
+  rutas, parcial público con `sendBeacon`, reporte y decisiones (imagen en BD, rotación
+  ponderada). Sirve también para anuncios internos, no solo patrocinadores.
 
 ## Navegación (derivadas de ADR-0013)
 - **Origen calendario en breadcrumb**: `EventController::getByDate` (L307) genera `show_url`
