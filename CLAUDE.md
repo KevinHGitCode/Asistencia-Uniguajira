@@ -110,7 +110,9 @@ QUEUE_CONNECTION=database
 
 ## Notas importantes
 
-- El despliegue en producción es via Hostinger (hosting compartido) — sin procesos residentes.
+- **La aplicación ya está en producción** (Hostinger, hosting compartido — sin procesos
+  residentes). Consecuencia: las migraciones deben ser **aditivas**; jamás `migrate:fresh`,
+  `migrate:refresh`, `db:wipe` ni seeders destructivos sobre una base con datos reales.
 - Los participantes se registran públicamente vía QR (sin necesidad de cuenta).
 - La importación masiva de participantes es asíncrona (queue) con pasarela de revisión
   (`ImportBatch` / `StagedParticipant` — ADR-0004).
