@@ -55,3 +55,16 @@ es candidata a ticket, idea ([[ideas]]) o decision ([[plantilla-adr]]).
   auditoria.
 - Riesgo: una query sin `CampusScopeService` puede mezclar Maicao/Riohacha/Fonseca/Villanueva.
 - Fuente viva de verdad: [[migracion-multi-sede]].
+
+## 9. El mapper de formatos aún depende del PDF en disco 📄
+- ADR-0017 promete que los PDF sobreviven al borrado de `public/formats`: cierto **solo para
+  generar** la asistencia (`AttendancePdfService` lee de `format_files` y cae al disco solo si
+  no hay copia en BD).
+- **El mapper visual sí lee del disco:** `resources/views/administration/formats/mapper.blade.php`
+  arma el visor con `asset('formats/'.$format->file)`. Sin el archivo, el mapper sale en blanco.
+- Consecuencia práctica: **no borrar `public/formats`** aunque el backfill esté hecho.
+- Pendiente acordado (2026-07-19): servir el PDF del mapper desde la BD por una ruta dedicada
+  —igual que `banners.image` sirve la imagen del banner— para que nada dependa del
+  almacenamiento del hosting.
+- Verificado en producción el 2026-07-19: los 4 formatos tienen `mapping` y `format_files`
+  (`%PDF-` correcto), así que `config/attendance_formats.php` ya no es carga viva.

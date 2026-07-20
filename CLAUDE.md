@@ -94,6 +94,11 @@ montado en `events/access.blade.php` (el flujo por controlador se retiró — AD
 - **Slugs de eventos:** usados para las URLs públicas de registro de asistencia.
 - **Ramas:** `develop` es la rama base de integración; el trabajo va en ramas `feat/*`, `fix/*`,
   `refactor/*` que salen de develop.
+- **Módulo nuevo = tres accesos, no uno.** Una funcionalidad no está terminada hasta que se
+  puede llegar a ella por los caminos que ya existen: barra lateral
+  (`components/layouts/app/sidebar.blade.php`), paleta de comandos
+  (`components/command-palette.blade.php`) y, si es de administración, su tarjeta en el índice.
+  Checklist completa en `resources/views/administration/CLAUDE.md`.
 - **Vault AURA:** `vault/AURA/` es la documentación viva del proyecto (Obsidian: ADRs, diseño,
   tablero); al cambiar arquitectura o cerrar funcionalidades, actualizarla.
 

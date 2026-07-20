@@ -40,3 +40,41 @@ Una tripleta por entidad, con nombres predecibles:
 - `{Entidad}TemplateExport` — plantilla vacía para carga masiva.
 - `Skipped{Entidad}Export` — filas omitidas de la importación (solo entidades que lo soportan:
   dependencias, programas, organizaciones, participantes).
+
+## Módulo nuevo — checklist de alta ⚠️
+
+Crear el CRUD **no basta**: hay **tres accesos distintos** al mismo módulo y los tres se
+mantienen a mano. El módulo de banners (ADR-0030) se entregó con la tarjeta pero sin sidebar
+ni paleta, y quedó invisible para quien navega por ahí.
+
+| # | Qué | Dónde |
+|---|---|---|
+| 1 | Rutas bajo `/administracion` | `routes/web.php` |
+| 2 | Vista del módulo | `resources/views/administration/{modulo}/index.blade.php` |
+| 3 | Tarjeta en el índice | `resources/views/administration/index.blade.php` |
+| 4 | Punto en la «Guía rápida» | misma vista, bloque del final |
+| 5 | **Entrada en la barra lateral** | `resources/views/components/layouts/app/sidebar.blade.php`, grupo Administración |
+| 6 | **Comando en la paleta** | `resources/views/components/command-palette.blade.php`, `'group' => 'Administración'` |
+| 7 | Test de la paleta si es solo-superadmin | `tests/Feature/CommandPaletteTest.php` |
+| 8 | Breadcrumb en la vista + `ActivityLogService` en crear/editar/eliminar | vista y controlador |
+
+**La visibilidad por rol debe coincidir en los tres sitios.** Para un módulo solo-superadmin:
+
+```blade
+{{-- tarjeta y sidebar --}}
+@if(auth()->user()->isSuperadmin())
+    <flux:navlist.item :href="route('banners.index')" :current="request()->routeIs('banners.*')" wire:navigate>
+        {{ __('Banners') }}
+    </flux:navlist.item>
+@endif
+```
+
+```php
+// paleta de comandos: el patrón es ternario a null, no @if
+$isSuperadmin
+    ? ['label' => 'Banners', 'group' => 'Administración', 'url' => route('banners.index'), 'search' => 'anuncios publicidad patrocinadores']
+    : null,
+```
+
+El campo `search` son las palabras alternativas por las que se encontrará el comando; ponle los
+sinónimos que usaría alguien que no recuerda el nombre exacto del módulo.
