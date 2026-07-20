@@ -65,5 +65,9 @@ nota; cada nota es una idea. Lee primero [[README]] si es tu primera vez.
 - [[tablero-trabajo-en-curso]] - reserva tu tarea antes de tocar codigo
 - [[nombres-de-rama-sugeridos]] - ramas propuestas por funcionalidad
 
+## 08 - Planes
+- [[plan-banner-anuncios]] - completar la monetización con banners (ADR-0030), paso a paso con enseñanzas
+- [[plan-seo-posicionamiento]] - ser el primer resultado para "asistencia/aura uniguajira" en Colombia
+
 ## 99 - Plantillas
 - [[plantilla-historia-de-usuario]] · [[plantilla-caso-de-uso]] · [[plantilla-caso-de-prueba]] · [[plantilla-adr]] · [[plantilla-nota-de-modulo]]
