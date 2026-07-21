@@ -14,6 +14,11 @@
     <link rel="canonical" href="{{ $siteUrl }}">
     <meta name="robots" content="index, follow">
 
+    {{-- Verificación de propiedad en Google Search Console. NO quitar: Google
+         re-verifica cada cierto tiempo y sin esta etiqueta se pierde el acceso
+         a la propiedad. El token es público por diseño. --}}
+    <meta name="google-site-verification" content="5OT2xYIo8iV3-y-b9AyJcpKlng2X4BsvKZ6nskEA6eA" />
+
     {{-- Open Graph --}}
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Asistencia Uniguajira">
