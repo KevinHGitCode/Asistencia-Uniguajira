@@ -43,24 +43,44 @@
 @php
 echo json_encode([
     '@context' => 'https://schema.org',
-    '@graph' => [[
-        '@type' => 'WebApplication',
-        'name' => 'AURA — Asistencia Uniguajira',
-        'url' => $siteUrl,
-        'applicationCategory' => 'BusinessApplication',
-        'operatingSystem' => 'Web',
-        'inLanguage' => 'es',
-        'description' => 'Sistema de control de asistencia a eventos de la Universidad de La Guajira: registro por código QR, estadísticas en tiempo real y reportes en PDF y Excel.',
-        'author' => [
+    '@graph' => [
+        [
+            // Quién es AURA. `alternateName` cubre las dos formas con que la
+            // gente busca la marca, y `parentOrganization` ata el nombre
+            // (que es una palabra común) a la universidad.
             '@type' => 'Organization',
-            'name' => 'Semillero SIIS2 — Universidad de La Guajira, sede Maicao',
+            '@id' => $siteUrl.'/#organizacion',
+            'name' => 'AURA — Asistencia Uniguajira',
+            'alternateName' => ['AURA', 'Asistencia Uniguajira', 'AURA Uniguajira'],
+            'url' => $siteUrl,
+            'logo' => asset('images/aura_negro.png'),
+            'parentOrganization' => [
+                '@type' => 'CollegeOrUniversity',
+                'name' => 'Universidad de La Guajira',
+                'alternateName' => 'Uniguajira',
+                'url' => 'https://uniguajira.edu.co',
+            ],
+            'areaServed' => [
+                '@type' => 'AdministrativeArea',
+                'name' => 'La Guajira, Colombia',
+            ],
         ],
-        'publisher' => [
-            '@type' => 'CollegeOrUniversity',
-            'name' => 'Universidad de La Guajira',
-            'url' => 'https://uniguajira.edu.co',
+        [
+            '@type' => 'WebApplication',
+            '@id' => $siteUrl.'/#app',
+            'name' => 'AURA — Asistencia Uniguajira',
+            'url' => $siteUrl,
+            'applicationCategory' => 'BusinessApplication',
+            'operatingSystem' => 'Web',
+            'inLanguage' => 'es',
+            'description' => 'Sistema de control de asistencia a eventos de la Universidad de La Guajira: registro por código QR, estadísticas en tiempo real y reportes en PDF y Excel.',
+            'author' => [
+                '@type' => 'Organization',
+                'name' => 'Semillero SIIS2 — Universidad de La Guajira, sede Maicao',
+            ],
+            'publisher' => ['@id' => $siteUrl.'/#organizacion'],
         ],
-    ]],
+    ],
 ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
 @endphp
     </script>

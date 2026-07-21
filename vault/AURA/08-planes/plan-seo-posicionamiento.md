@@ -48,10 +48,13 @@ Las búsquedas **de marca** tienen poquísima competencia: básicamente el sitio
 > **Bitácora (2026-07-20):**
 > - ✅ **Fase 1** — landing pública en `GET /` (`resources/views/landing.blade.php`), con
 >   metadatos, Open Graph y JSON-LD. Autenticado → dashboard; anónimo → landing.
-> - ✅ **Fase 2 (parte técnica)** — `robots.txt` y `sitemap.xml` como **rutas** en `web.php`
->   (usan `url()`, se retiró `public/robots.txt`), y `noindex, follow` en la página de registro
->   por QR (`events/access.blade.php` vía `@push('head-scripts')`). Falta el `hreflang`/OG image
->   dedicada si se quiere pulir.
+> - ✅ **Fase 2** — `robots.txt` y `sitemap.xml` como **rutas** en `web.php` (usan `url()`, se
+>   retiró `public/robots.txt`), y `noindex, follow` en la página de registro por QR
+>   (`events/access.blade.php` vía `@push('head-scripts')`). Queda pulir una imagen OG dedicada.
+> - ✅ **Fase 3** — JSON-LD en la landing: nodos `Organization` (con `logo`, `alternateName`
+>   "AURA" / "Asistencia Uniguajira" / "AURA Uniguajira" y `parentOrganization` = Universidad de
+>   La Guajira) + `WebApplication` enlazado por `@id`. Se construyó junto con la Fase 1 porque
+>   vive en el mismo `<head>`.
 > - ⏳ **Fase 4 (👤 Kevin)** — Search Console: verificar dominio, enviar el sitemap, solicitar
 >   indexación. **Requisito previo:** `APP_URL` en producción debe ser el dominio real, porque
 >   `canonical`, `og:url` y las URLs del sitemap se derivan de él.
