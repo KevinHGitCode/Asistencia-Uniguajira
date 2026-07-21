@@ -20,7 +20,7 @@ banner de anuncios). Secuencia estándar acordada (2026-07-19):
 npm run build
 git add .
 git add -f public/build
-git commit -m "update"   # mejor un mensaje según [[convencion-de-commits]]
+git commit -m "chore: update assets"
 git push
 ```
 
