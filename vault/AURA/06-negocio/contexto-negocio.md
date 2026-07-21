@@ -7,9 +7,11 @@ actualizado: 2026-06-20
 # Contexto de negocio
 
 ## Organización
-- **Universidad de La Guajira (Uniguajira)** — institución pública en Riohacha, La Guajira,
-  Colombia.
-- Desarrollado por el **semillero SIIS2** (aparece como "Soporte SIIS2" en la página pública).
+- **Universidad de La Guajira (Uniguajira)** — institución pública de La Guajira, Colombia; su
+  sede principal está en Riohacha, pero es multi-sede (Maicao, Riohacha, Fonseca, Villanueva).
+- **AURA fue desarrollado por el semillero SIIS2 de la sede Maicao** (aparece como "Soporte
+  SIIS2" en la página pública). Producción en `desarrollougmaicao.com`. Al hablar del origen del
+  sistema, la sede es **Maicao**, no Riohacha.
 - Marca pública del sistema: **AURA** (logo en el registro de asistencia). Ver nota sobre el
   solapamiento de nombre en [[brechas-conocidas]] #6.
 
