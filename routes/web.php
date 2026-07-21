@@ -38,6 +38,54 @@ Route::get('/', function () {
     return view('landing');
 })->name('home');
 
+/**
+ * ================================================================
+ *  SEO: robots.txt y sitemap.xml (rutas, no archivos estáticos, para
+ *  que las URLs absolutas usen APP_URL y no haya que tocarlas si cambia
+ *  el dominio). Se retiró public/robots.txt para que estas respondan.
+ * ================================================================
+ */
+Route::get('/robots.txt', function () {
+    // Se indexan solo la landing y (con noindex) las páginas públicas de QR;
+    // el resto es privado y no aporta a la búsqueda.
+    $disallow = [
+        '/dashboard', '/administracion', '/estadisticas', '/usuarios',
+        '/eventos', '/settings', '/banners/',
+        '/login', '/register', '/forgot-password', '/reset-password',
+        '/confirm-password', '/verify-email',
+    ];
+
+    $lines = array_merge(
+        ['User-agent: *'],
+        array_map(fn ($path) => "Disallow: {$path}", $disallow),
+        ['', 'Sitemap: '.url('/sitemap.xml'), ''],
+    );
+
+    return response(implode("\n", $lines), 200, ['Content-Type' => 'text/plain']);
+})->name('robots');
+
+Route::get('/sitemap.xml', function () {
+    $urls = [
+        ['loc' => url('/'), 'changefreq' => 'monthly', 'priority' => '1.0'],
+    ];
+
+    $xml = '<?xml version="1.0" encoding="UTF-8"?>'."\n"
+        .'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'."\n";
+
+    foreach ($urls as $u) {
+        $xml .= "  <url>\n"
+            .'    <loc>'.e($u['loc']).'</loc>'."\n"
+            .'    <lastmod>'.now()->toDateString().'</lastmod>'."\n"
+            .'    <changefreq>'.$u['changefreq'].'</changefreq>'."\n"
+            .'    <priority>'.$u['priority'].'</priority>'."\n"
+            ."  </url>\n";
+    }
+
+    $xml .= '</urlset>'."\n";
+
+    return response($xml, 200, ['Content-Type' => 'application/xml']);
+})->name('sitemap');
+
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('dashboard');

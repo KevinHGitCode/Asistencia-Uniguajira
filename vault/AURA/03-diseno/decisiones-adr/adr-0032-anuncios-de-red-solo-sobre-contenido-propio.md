@@ -20,7 +20,7 @@ conseguir patrocinadores.
 Al revisar los requisitos aparecieron dos bloqueos, uno de trámite y otro de política:
 
 1. AdSense exige **cuenta aprobada** y verificación del dominio (producción corre en
-   `desarrollougmaicao.com`). Es un trámite humano, no técnico.
+   `asistencia.desarrollougmaicao.com`). Es un trámite humano, no técnico.
 2. **La política "Valuable Inventory / No content" de AdSense prohíbe servir anuncios en
    pantallas sin contenido propio**: páginas de utilidad, formularios, confirmaciones, logins.
    La página del QR es exactamente eso — un formulario y nada más. Colocar anuncios ahí

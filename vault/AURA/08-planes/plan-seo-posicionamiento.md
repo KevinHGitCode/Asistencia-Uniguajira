@@ -43,14 +43,31 @@ Las búsquedas **de marca** tienen poquísima competencia: básicamente el sitio
 
 > **Nota 2026-07-20:** la landing de la Fase 1 dejó de ser solo una pieza de SEO — también es el
 > **único inventario válido para anuncios de red**, según
-> [[adr-0032-anuncios-de-red-solo-sobre-contenido-propio]]. Kevin define primero su diseño;
-> hasta entonces no se construye.
+> [[adr-0032-anuncios-de-red-solo-sobre-contenido-propio]].
+>
+> **Bitácora (2026-07-20):**
+> - ✅ **Fase 1** — landing pública en `GET /` (`resources/views/landing.blade.php`), con
+>   metadatos, Open Graph y JSON-LD. Autenticado → dashboard; anónimo → landing.
+> - ✅ **Fase 2 (parte técnica)** — `robots.txt` y `sitemap.xml` como **rutas** en `web.php`
+>   (usan `url()`, se retiró `public/robots.txt`), y `noindex, follow` en la página de registro
+>   por QR (`events/access.blade.php` vía `@push('head-scripts')`). Falta el `hreflang`/OG image
+>   dedicada si se quiere pulir.
+> - ⏳ **Fase 4 (👤 Kevin)** — Search Console: verificar dominio, enviar el sitemap, solicitar
+>   indexación. **Requisito previo:** `APP_URL` en producción debe ser el dominio real, porque
+>   `canonical`, `og:url` y las URLs del sitemap se derivan de él.
 
 ## Fase 0 — Requisito previo
 
-1. **👤 Kevin:** confirmar el **dominio definitivo** de producción y anotarlo aquí:
-   `desarrollougmaicao.com` (verificado en el servidor el 2026-07-19; confirmar si es el
-   definitivo o si se busca un subdominio de `uniguajira.edu.co`, que heredaría su autoridad).
+1. **Dominio de producción (confirmado por Kevin, 2026-07-20):**
+   **`https://asistencia.desarrollougmaicao.com`** — es un **subdominio**, no el dominio raíz.
+   - ⚠️ `APP_URL` en el `.env` **de producción** debe ser exactamente esa URL: de ella se derivan
+     el `canonical`, el `og:url` y los `<loc>` del sitemap. Si está mal, el SEO apunta a un sitio
+     que no existe.
+   - En Search Console hay que verificar **ese subdominio** (una propiedad de
+     `desarrollougmaicao.com` no cubre automáticamente el subdominio salvo que sea propiedad
+     de dominio por DNS).
+   - Sigue abierto si a futuro conviene un subdominio de `uniguajira.edu.co`, que heredaría la
+     autoridad institucional (Fase 5).
    - Si se puede lograr un subdominio institucional (ej. `aura.uniguajira.edu.co`), es la
      ventaja más grande de todo el plan: hereda la autoridad del dominio de la universidad.
 

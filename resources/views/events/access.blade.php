@@ -1,5 +1,12 @@
 <x-layouts.app-nosidebar :title="$event->title ?? __('Registro de asistencia')">
 
+    {{-- SEO: la página de registro por QR es una utilidad de un evento concreto;
+         que Google la lea (para respetar el noindex) pero no la muestre en
+         resultados ni compita con la landing (ADR-0032). --}}
+    @push('head-scripts')
+        <meta name="robots" content="noindex, follow">
+    @endpush
+
     {{-- ══════════════════════════════════════════════════════════════════
          ESTILOS — decoraciones y animaciones suaves
     ══════════════════════════════════════════════════════════════════ --}}
