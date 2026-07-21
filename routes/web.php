@@ -29,8 +29,13 @@ use Illuminate\Support\Facades\Route;
  *  RUTAS PRINCIPALES DEL SISTEMA
  * ================================================================
  */
-Route::middleware('auth')->get('/', function () {
-    return redirect()->route('dashboard');
+Route::get('/', function () {
+    // Visitante anónimo → landing pública (SEO). Autenticado → su panel.
+    if (auth()->check()) {
+        return redirect()->route('dashboard');
+    }
+
+    return view('landing');
 })->name('home');
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
